@@ -47,9 +47,14 @@ import moe.rukamori.archivetune.innertube.models.response.PlayerResponse
 import moe.rukamori.archivetune.utils.potoken.BotGuardTokenGenerator
 import moe.rukamori.archivetune.utils.potoken.PoTokenResult
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import timber.log.Timber
+import java.io.IOException
+import java.net.Proxy
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 object YTPlayerUtils {
     private const val logTag = "YTPlayerUtils"
@@ -59,6 +64,66 @@ object YTPlayerUtils {
     private const val PLAYBACK_DATA_RESOLUTION_MUTEX_COUNT = 32
     const val STREAM_URL_EXPIRY_SAFETY_MS = 60_000L
     private val RETRYABLE_STREAM_RESPONSE_CODES = setOf(403, 404, 410, 416)
+    private const val VALIDATION_CHUNK_LENGTH = 512 * 1024L
+
+    private val probeHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .proxy(YouTube.proxy ?: Proxy.NO_PROXY)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build()
+    }
+
+    private fun validateStatus(
+        url: String,
+        contentLength: Long? = null,
+        label: String = "",
+    ): Boolean {
+        Timber.tag(logTag).d("Validating stream URL status %s", label)
+        try {
+            val range =
+                if (contentLength != null && contentLength > 0) {
+                    "bytes=${contentLength - 1}-${contentLength - 1}"
+                } else {
+                    "bytes=0-${VALIDATION_CHUNK_LENGTH - 1}"
+                }
+            val requestBuilder =
+                Request.Builder()
+                    .head()
+                    .url(url)
+                    .addHeader("Range", range)
+
+            val requestProfile = StreamClientUtils.resolveRequestProfile(url)
+            StreamClientUtils.applyRequestProfile(requestBuilder, requestProfile)
+
+            YouTube.cookie?.let { cookie ->
+                requestBuilder.addHeader("Cookie", cookie)
+            }
+
+            val response = probeHttpClient.newCall(requestBuilder.build()).execute()
+            response.close()
+            val code = response.code
+            val accepted = response.isSuccessful || code == 405
+            when {
+                !accepted ->
+                    Timber.tag(logTag).w("Stream URL REJECTED: code=$code range=$range $label")
+                !response.isSuccessful ->
+                    Timber.tag(logTag).w("Stream URL accepted on non-2xx code=$code (HEAD refused) range=$range $label")
+                else ->
+                    Timber.tag(logTag).d("Stream URL validation: code=$code range=$range accepted $label")
+            }
+            return accepted
+        } catch (e: IOException) {
+            Timber.tag(logTag).w(e, "Stream URL HEAD probe failed (IO); accepting optimistically")
+            return true
+        } catch (e: Exception) {
+            Timber.tag(logTag).e(e, "Stream URL validation failed with exception")
+            reportException(e)
+        }
+        return false
+    }
 
     private fun extractExpireTimestampMsFromUrl(url: String): Long? {
         val expireTimestamp =
@@ -145,32 +210,19 @@ object YTPlayerUtils {
 
     /**
      * Clients used for fallback streams in case the streams of the main client do not work.
+     * Ordered by measured ability to serve whole playable streams without 403 or throttling.
      */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> =
         arrayOf(
-            ANDROID_VR_NO_AUTH,
+            VISIONOS,
             ANDROID_VR_1_65_10,
-            ANDROID_VR_1_61_48,
+            ANDROID_MUSIC,
+            TVHTML5,
             ANDROID_VR_1_43_32,
-            TVHTML5_DOWNGRADED,
-            WEB_EMBEDDED,
+            IPADOS,
+            IOS,
             WEB_CREATOR,
             WEB_REMIX,
-            MWEB,
-            WEB,
-            WEB_PRIMARY,
-            TVHTML5,
-            TVHTML5_SIMPLY,
-            IOS,
-            MOBILE,
-            ANDROID_MUSIC,
-            IOS_MUSIC,
-            ANDROID_CREATOR,
-            ANDROID_TESTSUITE,
-            ANDROID_UNPLUGGED,
-            IPADOS,
-            VISIONOS,
-            TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         )
 
     private data class CachedStreamUrl(
@@ -506,19 +558,23 @@ object YTPlayerUtils {
     ): YouTubeClient =
         when (preferredStreamClient) {
             PlayerStreamClient.ANDROID_VR -> {
-                ANDROID_VR_NO_AUTH
+                ANDROID_VR_1_65_10
+            }
+
+            PlayerStreamClient.ANDROID_MUSIC -> {
+                ANDROID_MUSIC
             }
 
             PlayerStreamClient.WEB_REMIX -> {
-                WEB_REMIX
+                VISIONOS
             }
 
             PlayerStreamClient.ARCHIVETUNE_EXTRACTOR -> {
-                if (authState.hasPlaybackLoginContext) ANDROID_MUSIC else WEB_REMIX
+                if (authState.hasPlaybackLoginContext) ANDROID_MUSIC else VISIONOS
             }
 
             PlayerStreamClient.HI_RES_LOSSLESS -> {
-                WEB_REMIX
+                VISIONOS
             }
 
             PlayerStreamClient.IOS -> {
@@ -529,12 +585,8 @@ object YTPlayerUtils {
                 TVHTML5
             }
 
-            PlayerStreamClient.ANDROID_MUSIC -> {
-                ANDROID_MUSIC
-            }
-
             else -> {
-                WEB_REMIX
+                VISIONOS
             }
         }
 
@@ -569,9 +621,6 @@ object YTPlayerUtils {
                 ?.let { add(it) }
             addAll(orderedFallbackClients)
             if (preferredYouTubeClient != MAIN_CLIENT) add(MAIN_CLIENT)
-            if (preferredStreamClient == PlayerStreamClient.WEB_REMIX) {
-                addAll(STREAM_FALLBACK_CLIENTS)
-            }
         }.distinct()
     }
 
@@ -779,11 +828,12 @@ object YTPlayerUtils {
 
     private val downloadPreferredStreamClientAttempts: List<PlayerStreamClient> =
         listOf(
+            PlayerStreamClient.ANDROID_VR,
+            PlayerStreamClient.ANDROID_MUSIC,
+            PlayerStreamClient.TVHTML5,
+            PlayerStreamClient.IOS,
             PlayerStreamClient.WEB_REMIX,
             PlayerStreamClient.HI_RES_LOSSLESS,
-            PlayerStreamClient.IOS,
-            PlayerStreamClient.TVHTML5,
-            PlayerStreamClient.ANDROID_MUSIC,
         )
 
     private suspend fun refreshIpRotationForBotDetection(
@@ -1211,6 +1261,17 @@ object YTPlayerUtils {
                     continue
                 }
                 val candidateUrl = candidateResult.getOrThrow()
+                val isLastClient = index == streamClients.size - 1
+                val isPrivatelyOwned = streamPlayerResponse.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
+                val contentLength = candidate.contentLength ?: candidate.approxDurationMs?.toLongOrNull()
+                if (!isLastClient && !isPrivatelyOwned && !validateStatus(candidateUrl, contentLength, "[client=${client.clientName}, itag=${candidate.itag}]")) {
+                    Timber.tag(logTag).w(
+                        "Stream candidate URL validation failed for %s, itag=%d; trying next candidate",
+                        describeClient(client),
+                        candidate.itag,
+                    )
+                    continue
+                }
                 selectedFormat = candidate
                 selectedUrl = candidateUrl
                 break

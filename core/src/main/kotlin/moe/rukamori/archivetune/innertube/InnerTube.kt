@@ -189,8 +189,8 @@ class InnerTube {
         authState: PlaybackAuthState = currentAuthState(),
         includeVisitorData: Boolean = true,
     ) {
-        val requestOrigin = client.requestOrigin()
-        val requestReferer = client.requestReferer()
+        val requestOrigin = YouTubeClient.ORIGIN_YOUTUBE_MUSIC
+        val requestReferer = YouTubeClient.REFERER_YOUTUBE_MUSIC
         contentType(ContentType.Application.Json)
         headers {
             append("X-Goog-Api-Format-Version", "1")
@@ -364,7 +364,7 @@ class InnerTube {
         setLogin: Boolean,
         authState: PlaybackAuthState,
         includeDataSyncId: Boolean,
-    ) = httpClient.post(client.requestApiUrl("player")) {
+    ) = httpClient.post(YouTubeClient.API_URL_YOUTUBE_MUSIC + "player") {
         ytClient(client = client, setLogin = setLogin, authState = authState)
         setBody(
             PlayerBody(
@@ -379,7 +379,7 @@ class InnerTube {
                                 it.copy(
                                     thirdParty =
                                         Context.ThirdParty(
-                                            embedUrl = "https://www.reddit.com/",
+                                            embedUrl = "https://www.youtube.com/watch?v=$videoId",
                                         ),
                                 )
                             } else {
@@ -389,7 +389,7 @@ class InnerTube {
                 videoId = videoId,
                 playlistId = playlistId,
                 playbackContext =
-                    if (client.useSignatureTimestamp) {
+                    if (client.useSignatureTimestamp && signatureTimestamp != null) {
                         PlayerBody.PlaybackContext(
                             PlayerBody.PlaybackContext.ContentPlaybackContext(
                                 signatureTimestamp,
@@ -399,8 +399,10 @@ class InnerTube {
                         null
                     },
                 serviceIntegrityDimensions =
-                    poToken?.let {
-                        PlayerBody.ServiceIntegrityDimensions(poToken = it)
+                    if (client.useWebPoTokens && poToken != null) {
+                        PlayerBody.ServiceIntegrityDimensions(poToken = poToken)
+                    } else {
+                        null
                     },
             ),
         )
