@@ -58,6 +58,47 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.random.Random
+import com.google.common.collect.ImmutableList
+import com.archm.player.home.HomeAction
+import com.archm.player.home.HomeScreenState
+import com.archm.player.home.HomeUiState
+import com.archm.player.home.HomePresentationPreferences
+import com.archm.player.home.ObserveHomePresentationPreferencesUseCase
+import com.archm.player.home.HomeRepository
+import com.archm.player.R
+
+private data class HomeLocalContent(
+    val quickPicks: List<Song>,
+    val speedDialItems: List<LocalItem>,
+    val forgottenFavorites: List<Song>,
+    val keepListening: List<LocalItem>,
+)
+
+private data class HomeRemoteContent(
+    val homePage: HomePage?,
+    val remoteQuickPicks: HomePage.Section?,
+    val similarRecommendations: List<SimilarRecommendation>,
+    val accountPlaylists: List<PlaylistItem>,
+    val accountName: String,
+    val accountImageUrl: String?,
+)
+
+private data class HomeContent(
+    val local: HomeLocalContent,
+    val remote: HomeRemoteContent,
+    val selectedChip: HomePage.Chip?,
+) {
+    val hasContent: Boolean
+        get() =
+            local.quickPicks.isNotEmpty() ||
+                local.speedDialItems.isNotEmpty() ||
+                local.forgottenFavorites.isNotEmpty() ||
+                local.keepListening.isNotEmpty() ||
+                remote.remoteQuickPicks?.items?.isNotEmpty() == true ||
+                remote.similarRecommendations.isNotEmpty() ||
+                remote.accountPlaylists.isNotEmpty() ||
+                remote.homePage?.sections?.any { it.items.isNotEmpty() } == true
+}
 
 data class DailyDiscoverItem(
     val seed: Song,
@@ -235,6 +276,134 @@ class HomeViewModel @Inject constructor(
 
     val accountName = MutableStateFlow("Guest")
     val accountImageUrl = MutableStateFlow<String?>(null)
+    val remoteQuickPicks = MutableStateFlow<HomePage.Section?>(null)
+    private val loadError = MutableStateFlow<Int?>(null)
+
+    private val presentationPreferences = ObserveHomePresentationPreferencesUseCase(HomeRepository(context))()
+
+    private val localContent =
+        combine(
+            quickPicks,
+            keepListening,
+            forgottenFavorites,
+        ) { qPicks, kListening, fFavorites ->
+            HomeLocalContent(
+                quickPicks = qPicks.orEmpty(),
+                speedDialItems = kListening.orEmpty().take(24),
+                forgottenFavorites = fFavorites.orEmpty(),
+                keepListening = kListening.orEmpty(),
+            )
+        }
+
+    private val remoteContent =
+        combine(
+            homePage,
+            remoteQuickPicks,
+            similarRecommendations,
+            accountPlaylists,
+            accountName,
+        ) { hPage, rQuickPicks, sRecs, aPlaylists, aName ->
+            HomeRemoteContent(
+                homePage = hPage,
+                remoteQuickPicks = rQuickPicks,
+                similarRecommendations = sRecs.orEmpty(),
+                accountPlaylists = aPlaylists.orEmpty(),
+                accountName = aName,
+                accountImageUrl = null,
+            )
+        }.combine(accountImageUrl) { content, imgUrl ->
+            content.copy(accountImageUrl = imgUrl)
+        }
+
+    private val homeContent =
+        combine(
+            localContent,
+            remoteContent,
+            selectedChip,
+        ) { local, remote, chip ->
+            HomeContent(
+                local = local,
+                remote = remote,
+                selectedChip = chip,
+            )
+        }
+
+    val screenState: StateFlow<HomeScreenState> =
+        combine(
+            homeContent,
+            presentationPreferences,
+            isLoading,
+            loadError,
+        ) { content, prefs, loading, err ->
+            if (!content.hasContent) {
+                if (err != null) {
+                    HomeScreenState.Error(err)
+                } else if (loading) {
+                    HomeScreenState.Loading
+                } else {
+                    HomeScreenState.Empty
+                }
+            } else {
+                HomeScreenState.Success(
+                    HomeUiState(
+                        quickPicks = ImmutableList.copyOf(content.local.quickPicks),
+                        speedDialItems = ImmutableList.copyOf(content.local.speedDialItems),
+                        forgottenFavorites = ImmutableList.copyOf(content.local.forgottenFavorites),
+                        keepListening = ImmutableList.copyOf(content.local.keepListening),
+                        similarRecommendations = ImmutableList.copyOf(content.remote.similarRecommendations),
+                        accountPlaylists = ImmutableList.copyOf(content.remote.accountPlaylists),
+                        homePage = content.remote.homePage,
+                        remoteQuickPicks = content.remote.remoteQuickPicks,
+                        selectedChip = content.selectedChip,
+                        accountName = content.remote.accountName,
+                        accountImageUrl = content.remote.accountImageUrl,
+                        quickPicksDisplayMode = prefs.quickPicksDisplayMode,
+                        quickPicksMode = prefs.quickPicksMode,
+                        showCategoryChips = prefs.showCategoryChips,
+                        showTonalBackdrop = prefs.showTonalBackdrop,
+                        isRefreshing = false,
+                        isLoadingMore = false,
+                    )
+                )
+            }
+        }.combine(
+            combine(isRefreshing, _isLoadingMore) { refreshing, loadingMore ->
+                refreshing to loadingMore
+            }
+        ) { state, loadingPair ->
+            if (state is HomeScreenState.Success) {
+                state.copy(
+                    uiState = state.uiState.copy(
+                        isRefreshing = loadingPair.first,
+                        isLoadingMore = loadingPair.second,
+                    )
+                )
+            } else {
+                state
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = HomeScreenState.Loading,
+        )
+
+    fun onAction(action: HomeAction) {
+        when (action) {
+            HomeAction.Refresh -> refresh()
+            is HomeAction.SelectChip -> toggleChip(action.chip)
+            is HomeAction.LoadMore -> loadMoreYouTubeItems(action.continuation)
+        }
+    }
+
+    private fun HomePage.extractQuickPicks(): Pair<HomePage, HomePage.Section?> {
+        val quickPicksIndex = sections.indexOfFirst { section ->
+            section.title.equals(context.getString(R.string.quick_picks), ignoreCase = true) ||
+                section.title.contains("quick pick", ignoreCase = true)
+        }
+        if (quickPicksIndex < 0) return this to null
+
+        return copy(sections = sections.toMutableList().apply { removeAt(quickPicksIndex) }) to sections[quickPicksIndex]
+    }
 
     fun togglePin(item: YTItem) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -537,8 +706,10 @@ class HomeViewModel @Inject constructor(
             launch(Dispatchers.IO) { loadSimilarRecommendations() }
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
-                    homePage.value = page.copy(
-                        sections = page.sections.mapNotNull { section ->
+                    val (pageWithoutQuickPicks, quickPicksSection) = page.extractQuickPicks()
+                    remoteQuickPicks.value = quickPicksSection
+                    homePage.value = pageWithoutQuickPicks.copy(
+                        sections = pageWithoutQuickPicks.sections.mapNotNull { section ->
                             val filteredItems = section.items
                                 .filterExplicit(hideExplicit)
                                 .filterVideoSongs(hideVideoSongs)

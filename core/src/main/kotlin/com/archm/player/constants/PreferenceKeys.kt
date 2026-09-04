@@ -73,6 +73,15 @@ enum class SliderStyle {
     SLIM
 }
 
+enum class QuickPicksDisplayMode {
+    CARD,
+    LIST,
+}
+
+val QuickPicksDisplayModeKey = stringPreferencesKey("quickPicksDisplayMode")
+val ShowHomeCategoryChipsKey = booleanPreferencesKey("showHomeCategoryChips")
+val DisableBlurKey = booleanPreferencesKey("disableBlur")
+
 const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"
 val AppLanguageKey = stringPreferencesKey("appLanguage")
 val ContentLanguageKey = stringPreferencesKey("contentLanguage")

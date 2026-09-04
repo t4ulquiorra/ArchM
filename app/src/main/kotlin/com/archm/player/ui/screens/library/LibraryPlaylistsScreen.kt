@@ -1,39 +1,56 @@
-
+/*
+ * ArchiveTune (2026)
+ * © Rukamori — github.com/rukamori
+ * GPL-3.0 License | Contributors: see git history
+ * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
+ */
 
 package com.archm.player.ui.screens.library
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,459 +58,917 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.music.innertube.utils.parseCookieString
+import androidx.palette.graphics.Palette
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
+import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
-import com.archm.player.constants.CONTENT_TYPE_HEADER
-import com.archm.player.constants.CONTENT_TYPE_PLAYLIST
-import com.archm.player.constants.GridItemSize
-import com.archm.player.constants.GridItemsSizeKey
-import com.archm.player.constants.GridThumbnailHeight
-import com.archm.player.constants.InnerTubeCookieKey
-import com.archm.player.constants.LibraryViewType
+import com.archm.player.constants.PlaylistEditLockKey
 import com.archm.player.constants.PlaylistSortDescendingKey
 import com.archm.player.constants.PlaylistSortType
 import com.archm.player.constants.PlaylistSortTypeKey
-import com.archm.player.constants.PlaylistViewTypeKey
-import com.archm.player.constants.ShowCachedPlaylistKey
-import com.archm.player.constants.ShowExportedPlaylistKey
-import com.archm.player.constants.ShowDownloadedPlaylistKey
-import com.archm.player.constants.ShowLikedPlaylistKey
-import com.archm.player.constants.ShowTopPlaylistKey
-import com.archm.player.constants.ShowUploadedPlaylistKey
-import com.archm.player.constants.YtmSyncKey
+import com.archm.player.constants.PureBlackKey
 import com.archm.player.db.entities.Playlist
-import com.archm.player.db.entities.PlaylistEntity
+import com.archm.player.extensions.move
+import com.archm.player.extensions.toMediaItem
+import com.music.innertube.models.PlaylistItem
+import com.music.innertube.models.WatchEndpoint
+import com.archm.player.playback.queues.ListQueue
 import com.archm.player.ui.component.CreatePlaylistDialog
-import com.archm.player.ui.component.HideOnScrollFAB
-import com.archm.player.ui.component.LibraryPlaylistGridItem
-import com.archm.player.ui.component.LibraryPlaylistListItem
+import com.archm.player.ui.component.ExpressivePullToRefreshBox
+import com.archm.player.ui.component.ItemThumbnail
 import com.archm.player.ui.component.LocalMenuState
-import com.archm.player.ui.component.PlaylistGridItem
-import com.archm.player.ui.component.PlaylistListItem
-import com.archm.player.ui.component.SortHeader
+import com.archm.player.ui.menu.PlaylistMenu
+import com.archm.player.ui.menu.YouTubePlaylistMenu
+import com.archm.player.ui.theme.PlayerColorExtractor
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.LibraryPlaylistsViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.util.UUID
-import com.archm.player.ui.component.AutoPlaylistButton
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.material3.IconButton
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LibraryPlaylistsScreen(
     navController: NavController,
-    filterContent: @Composable () -> Unit,
+    filterContent: (@Composable () -> Unit)?,
+    selectedTagIds: Set<String>,
     viewModel: LibraryPlaylistsViewModel = hiltViewModel(),
-    initialTextFieldValue: String? = null,
-    allowSyncing: Boolean = true,
 ) {
+    val context = LocalContext.current
     val menuState = LocalMenuState.current
+    val coroutineScope = rememberCoroutineScope()
+    val database = LocalDatabase.current
+    val playerConnection = LocalPlayerConnection.current
     val haptic = LocalHapticFeedback.current
 
-    val coroutineScope = rememberCoroutineScope()
-
-    var viewType by rememberEnumPreference(PlaylistViewTypeKey, LibraryViewType.GRID)
-    val (sortType, onSortTypeChange) = rememberEnumPreference(
-        PlaylistSortTypeKey,
-        PlaylistSortType.CREATE_DATE
-    )
-    val (sortDescending, onSortDescendingChange) = rememberPreference(
-        PlaylistSortDescendingKey,
-        true
-    )
-    val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
-
-    val playlists by viewModel.allPlaylists.collectAsState()
-
-    val topSize by viewModel.topValue.collectAsState(initial = 50)
-
-    val likedPlaylist =
-        Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.liked)
-            ),
-            songCount = 0,
-            songThumbnails = emptyList(),
+    val (sortType, onSortTypeChange) =
+        rememberEnumPreference(
+            PlaylistSortTypeKey,
+            PlaylistSortType.CUSTOM,
         )
+    val (sortDescending, onSortDescendingChange) = rememberPreference(PlaylistSortDescendingKey, true)
+    var locked by rememberPreference(PlaylistEditLockKey, defaultValue = true)
+    val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
+    val filteredPlaylistIds = emptyList<String>()
 
-    val downloadPlaylist =
-        Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.offline)
-            ),
-            songCount = 0,
-            songThumbnails = emptyList(),
-        )
+    var showHidden by rememberSaveable { mutableStateOf(false) }
 
-    val topPlaylist =
-        Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.my_top) + " $topSize"
-            ),
-            songCount = 0,
-            songThumbnails = emptyList(),
-        )
+    val visiblePlaylists =
+        remember(playlists, selectedTagIds, filteredPlaylistIds, showHidden) {
+            playlists.filter { playlist ->
+                val name = playlist.playlist.name
+                val matchesName = !name.contains("episode", ignoreCase = true)
+                val matchesTags = selectedTagIds.isEmpty() || playlist.id in filteredPlaylistIds
+                val matchesVisibility = showHidden || !playlist.playlist.isHidden
+                matchesName && matchesTags && matchesVisibility
+            }
+        }
+    val mutablePlaylists = remember { mutableStateListOf<Playlist>() }
 
-    val cachePlaylist =
-        Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.cached_playlist)
-            ),
-            songCount = 0,
-            songThumbnails = emptyList(),
-        )
-        
-    val uploadedPlaylist =
-        Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.uploaded_playlist)
-            ),
-            songCount = 0,
-            songThumbnails = emptyList(),
-        )
-
-    val (showLiked) = rememberPreference(ShowLikedPlaylistKey, true)
-    val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)
-    val (showExported) = rememberPreference(ShowExportedPlaylistKey, true)
-    val (showTop) = rememberPreference(ShowTopPlaylistKey, true)
-    val (showCached) = rememberPreference(ShowCachedPlaylistKey, true)
-
-
+    var isGridView by rememberSaveable { mutableStateOf(false) }
+    var showCreatePlaylistDialog by rememberSaveable { mutableStateOf(false) }
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
-    val lazyGridState = rememberLazyGridState()
-
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val scrollToTop =
-        backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsState()
-
-    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
-
-    val (ytmSync) = rememberPreference(YtmSyncKey, true)
-
-    LaunchedEffect(Unit) {
-        if (ytmSync) {
-            withContext(Dispatchers.IO) {
-                viewModel.sync()
+    var pendingPlaylistOrderUpdate by remember { mutableStateOf(false) }
+    val reorderableState =
+        rememberReorderableLazyListState(
+            lazyListState = lazyListState,
+            scrollThresholdPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+        ) { from, to ->
+            if (from.index in mutablePlaylists.indices && to.index in mutablePlaylists.indices) {
+                mutablePlaylists.move(from.index, to.index)
+                pendingPlaylistOrderUpdate = true
             }
         }
+
+    LaunchedEffect(visiblePlaylists) {
+        mutablePlaylists.clear()
+        mutablePlaylists.addAll(visiblePlaylists)
     }
 
-    LaunchedEffect(scrollToTop?.value) {
-        if (scrollToTop?.value == true) {
-            when (viewType) {
-                LibraryViewType.LIST -> lazyListState.animateScrollToItem(0)
-                LibraryViewType.GRID -> lazyGridState.animateScrollToItem(0)
-            }
-            backStackEntry?.savedStateHandle?.set("scrollToTop", false)
-        }
-    }
-    val headerContent = @Composable {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = 16.dp),
-        ) {
-            SortHeader(
-                sortType = sortType,
-                sortDescending = sortDescending,
-                onSortTypeChange = onSortTypeChange,
-                onSortDescendingChange = onSortDescendingChange,
-                sortTypeText = { sortType ->
-                    when (sortType) {
-                        PlaylistSortType.CREATE_DATE -> R.string.sort_by_create_date
-                        PlaylistSortType.NAME -> R.string.sort_by_name
-                        PlaylistSortType.SONG_COUNT -> R.string.sort_by_song_count
-                        PlaylistSortType.LAST_UPDATED -> R.string.sort_by_last_updated
-                    }
-                },
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Text(
-                text = pluralStringResource(
-                    R.plurals.n_playlist,
-                    playlists.size,
-                    playlists.size
+    LaunchedEffect(reorderableState.isAnyItemDragging) {
+        if (!reorderableState.isAnyItemDragging && pendingPlaylistOrderUpdate) {
+            viewModel.updateCustomPlaylistOrder(
+                mergeVisiblePlaylistOrder(
+                    currentOrder = playlists,
+                    visibleOrder = mutablePlaylists,
                 ),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.secondary,
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
+            pendingPlaylistOrderUpdate = false
         }
     }
 
-    Box(
+    // Dialog launcher
+    if (showCreatePlaylistDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreatePlaylistDialog = false },
+        )
+    }
+
+    // Issue 2: player-aware bottom padding
+    val playerAwareBottomPadding =
+        LocalPlayerAwareWindowInsets.current
+            .only(WindowInsetsSides.Bottom)
+            .asPaddingValues()
+            .calculateBottomPadding() + 12.dp
+
+    ExpressivePullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.sync() },
         modifier = Modifier.fillMaxSize(),
+        indicatorOffset = LibraryPullToRefreshIndicatorOffset,
     ) {
-        when (viewType) {
-            LibraryViewType.LIST -> {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = LibraryHeaderContentPadding),
+        ) {
+            // Control row (Sort dropdown, grid/list layout toggle, + add button)
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Left: Sort dropdown
+                var showSortMenu by remember { mutableStateOf(false) }
+                val currentSortLabel =
+                    when (sortType) {
+                        PlaylistSortType.CREATE_DATE -> {
+                            stringResource(R.string.recently_added)
+                        }
+
+                        PlaylistSortType.NAME -> {
+                            if (sortDescending) stringResource(R.string.sort_z_to_a) else stringResource(R.string.sort_a_to_z)
+                        }
+
+                        PlaylistSortType.SONG_COUNT -> {
+                            stringResource(R.string.tracks_count_label)
+                        }
+
+                        PlaylistSortType.LAST_UPDATED -> {
+                            stringResource(R.string.recently_updated)
+                        }
+
+                        PlaylistSortType.CUSTOM -> {
+                            stringResource(R.string.custom_order)
+                        }
+                    }
+
+                val showSortDirection = sortType != PlaylistSortType.CUSTOM
+                val sortDirectionRotation by animateFloatAsState(
+                    targetValue = if (sortDescending) 0f else 180f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+                    label = "PlaylistSortDirectionRotation",
+                )
+
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                    .clickable { showSortMenu = true }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = currentSortLabel,
+                                modifier = Modifier.weight(1f, fill = false),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                painter = painterResource(id = R.drawable.expand_more),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false },
+                        ) {
+                            PlaylistSortType.entries.forEach { type ->
+                                val label =
+                                    when (type) {
+                                        PlaylistSortType.CREATE_DATE -> stringResource(R.string.recently_added)
+                                        PlaylistSortType.NAME -> stringResource(R.string.sort_a_to_z)
+                                        PlaylistSortType.SONG_COUNT -> stringResource(R.string.tracks_count_label)
+                                        PlaylistSortType.LAST_UPDATED -> stringResource(R.string.recently_updated)
+                                        PlaylistSortType.CUSTOM -> stringResource(R.string.custom_order)
+                                    }
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        onSortTypeChange(type)
+                                        if (type == PlaylistSortType.NAME) {
+                                            onSortDescendingChange(false)
+                                        }
+                                        showSortMenu = false
+                                    },
+                                )
+                            }
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.hidden_playlists)) },
+                                onClick = {
+                                    showHidden = !showHidden
+                                    showSortMenu = false
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.visibility_off),
+                                        contentDescription = null,
+                                    )
+                                },
+                                trailingIcon = {
+                                    if (showHidden) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.check),
+                                            contentDescription = null,
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+
+                    if (showSortDirection) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        IconButton(
+                            onClick = { onSortDescendingChange(!sortDescending) },
+                            colors =
+                                IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.arrow_downward),
+                                contentDescription =
+                                    stringResource(
+                                        if (sortDescending) {
+                                            R.string.sort_order_descending
+                                        } else {
+                                            R.string.sort_order_ascending
+                                        },
+                                    ),
+                                modifier =
+                                    Modifier
+                                        .size(16.dp)
+                                        .graphicsLayer { rotationZ = sortDirectionRotation },
+                            )
+                        }
+                    }
+                }
+
+                // Right: list/grid toggle & add button
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (sortType == PlaylistSortType.CUSTOM) {
+                        IconButton(
+                            onClick = { locked = !locked },
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(if (locked) R.drawable.lock else R.drawable.lock_open),
+                                contentDescription = null,
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
+                    // List/Grid Toggle
+                    Row(
+                        modifier =
+                            Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 4.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(if (!isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                    .clickable { isGridView = false },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.queue_music),
+                                contentDescription = stringResource(R.string.list_view),
+                                tint = if (!isGridView) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                    .clickable { isGridView = true },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.album),
+                                contentDescription = stringResource(R.string.grid_view),
+                                tint = if (isGridView) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    IconButton(
+                        onClick = { showCreatePlaylistDialog = true },
+                        colors =
+                            IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.add),
+                            contentDescription = stringResource(R.string.create_playlist),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+
+            val playlistTagFilterContent = filterContent
+            if (playlistTagFilterContent != null) {
+                playlistTagFilterContent()
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Main Content
+            if (isGridView) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = playerAwareBottomPadding),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(
+                        items = visiblePlaylists,
+                        key = { playlist -> playlist.id },
+                        contentType = { "playlist_grid" },
+                    ) { playlist ->
+                        PlaylistGridCard(
+                            playlist = playlist,
+                            onClick = {
+                                openPlaylist(navController, playlist)
+                            },
+                            onPlay = {
+                                playerConnection?.let { conn ->
+                                    coroutineScope.launch {
+                                        database.playlistSongs(playlist.id).firstOrNull()?.let { songs ->
+                                            if (songs.isNotEmpty()) {
+                                                conn.playQueue(ListQueue(items = songs.map { it.song.toMediaItem() }))
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    triggerPlaylistMenu(playlist, coroutineScope, menuState)
+                                }
+                            },
+                        )
+                    }
+                }
+            } else {
+                val listPlaylists = if (sortType == PlaylistSortType.CUSTOM) mutablePlaylists else visiblePlaylists
+                val showDragHandles = sortType == PlaylistSortType.CUSTOM && !locked
                 LazyColumn(
                     state = lazyListState,
-                    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = playerAwareBottomPadding),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize(),
                 ) {
-                    item(
-                        key = "filter",
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        filterContent()
-                    }
-
-                    item(
-                        key = "header",
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        headerContent()
-                    }
-
-                    item(
-                        key = "auto_playlists_grid",
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        FlowRow(
-                            maxItemsInEachRow = 2,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                    itemsIndexed(
+                        items = listPlaylists,
+                        key = { _, playlist -> playlist.id },
+                        contentType = { _, _ -> "playlist_list" },
+                    ) { _, playlist ->
+                        ReorderableItem(
+                            state = reorderableState,
+                            key = playlist.id,
+                            modifier =
+                                Modifier.graphicsLayer {
+                                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
+                                },
                         ) {
-                            val itemModifier = Modifier.weight(1f)
-                            if (showLiked) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.liked),
-                                    icon = R.drawable.favorite,
-                                    iconTint = Color(0xFFE57373),
-                                    onClick = { navController.navigate("auto_playlist/liked") },
-                                    modifier = itemModifier
-                                )
-                            }
-                            if (showDownloaded) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.offline),
-                                    icon = R.drawable.offline,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("auto_playlist/downloaded") },
-                                    modifier = itemModifier
-                                )
-                            }
-                            if (showExported) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.action_exported),
-                                    icon = R.drawable.download,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("auto_playlist/exported") },
-                                    modifier = itemModifier
-                                )
-                            }
-                            if (showCached) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.cached_playlist),
-                                    icon = R.drawable.cached,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("cache_playlist/cached") },
-                                    modifier = itemModifier
-                                )
-                            }
-
-                            if (showTop) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.my_top) + " $topSize",
-                                    icon = R.drawable.trending_up,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("top_playlist/$topSize") },
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.5f)
-                                        .padding(end = 4.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    item(
-                        key = "playlists_header",
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        androidx.compose.material3.Text(
-                            text = "Playlists",
-                            style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-                        )
-                    }
-
-                    playlists.let { playlists ->
-                        if (playlists.isEmpty()) {
-                            item(key = "empty_placeholder") {
-                            }
-                        }
-
-                        items(
-                            items = playlists.distinctBy { it.id },
-                            key = { it.id },
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) { playlist ->
-                            LibraryPlaylistListItem(
-                                navController = navController,
-                                menuState = menuState,
-                                coroutineScope = coroutineScope,
+                            PlaylistListCard(
                                 playlist = playlist,
-                                modifier = Modifier.animateItem()
-                            )
-                        }
-                    }
-                }
-            }
-
-            LibraryViewType.GRID -> {
-                LazyVerticalGrid(
-                    state = lazyGridState,
-                    columns =
-                    GridCells.Adaptive(
-                        minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp,
-                    ),
-                    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-                ) {
-                    item(
-                        key = "filter",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        filterContent()
-                    }
-
-                    item(
-                        key = "header",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        headerContent()
-                    }
-
-                    item(
-                        key = "auto_playlists_grid",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        FlowRow(
-                            maxItemsInEachRow = 2,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            val itemModifier = Modifier.weight(1f)
-                            if (showLiked) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.liked),
-                                    icon = R.drawable.favorite,
-                                    iconTint = Color(0xFFE57373),
-                                    onClick = { navController.navigate("auto_playlist/liked") },
-                                    modifier = itemModifier
-                                )
-                            }
-                            if (showDownloaded) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.offline),
-                                    icon = R.drawable.offline,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("auto_playlist/downloaded") },
-                                    modifier = itemModifier
-                                )
-                            }
-                            if (showExported) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.action_exported),
-                                    icon = R.drawable.download,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("auto_playlist/exported") },
-                                    modifier = itemModifier
-                                )
-                            }
-                            if (showCached) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.cached_playlist),
-                                    icon = R.drawable.cached,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("cache_playlist/cached") },
-                                    modifier = itemModifier
-                                )
-                            }
-
-                            if (showTop) {
-                                AutoPlaylistButton(
-                                    title = stringResource(R.string.my_top) + " $topSize",
-                                    icon = R.drawable.trending_up,
-                                    iconTint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-                                    onClick = { navController.navigate("top_playlist/$topSize") },
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.5f)
-                                        .padding(end = 4.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    item(
-                        key = "playlists_header",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = CONTENT_TYPE_HEADER,
-                    ) {
-                        androidx.compose.material3.Text(
-                            text = "Playlists",
-                            style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-                        )
-                    }
-
-                    playlists.let { playlists ->
-                        if (playlists.isEmpty()) {
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                            }
-                        }
-
-                        items(
-                            items = playlists.distinctBy { it.id },
-                            key = { it.id },
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) { playlist ->
-                            LibraryPlaylistGridItem(
-                                navController = navController,
-                                menuState = menuState,
-                                coroutineScope = coroutineScope,
-                                playlist = playlist,
-                                modifier = Modifier.animateItem()
+                                onClick = {
+                                    openPlaylist(navController, playlist)
+                                },
+                                onPlay = {
+                                    playerConnection?.let { conn ->
+                                        coroutineScope.launch {
+                                            database.playlistSongs(playlist.id).firstOrNull()?.let { songs ->
+                                                if (songs.isNotEmpty()) {
+                                                    conn.playQueue(ListQueue(items = songs.map { it.song.toMediaItem() }))
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                onMenuClick = {
+                                    menuState.show {
+                                        triggerPlaylistMenu(playlist, coroutineScope, menuState)
+                                    }
+                                },
+                                showDragHandle = showDragHandles,
+                                dragHandleModifier =
+                                    Modifier
+                                        .draggableHandle()
+                                        .graphicsLayer { alpha = 0.99f },
                             )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private fun mergeVisiblePlaylistOrder(
+    currentOrder: List<Playlist>,
+    visibleOrder: List<Playlist>,
+): List<Playlist> {
+    if (visibleOrder.isEmpty()) return currentOrder
+
+    val visibleIds = visibleOrder.mapTo(HashSet(visibleOrder.size)) { playlist -> playlist.id }
+    val reorderedVisible = visibleOrder.iterator()
+    return currentOrder.map { playlist ->
+        if (playlist.id in visibleIds) {
+            reorderedVisible.next()
+        } else {
+            playlist
+        }
+    }
+}
+
+private fun openPlaylist(
+    navController: NavController,
+    playlist: Playlist,
+) {
+    if (!playlist.playlist.isEditable && playlist.songCount == 0 && playlist.playlist.remoteSongCount != 0) {
+        navController.navigate("online_playlist/${playlist.playlist.browseId}")
+    } else {
+        navController.navigate("local_playlist/${playlist.id}")
+    }
+}
+
+@Composable
+private fun triggerPlaylistMenu(
+    playlist: Playlist,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    menuState: com.archm.player.ui.component.MenuState,
+) {
+    if (playlist.playlist.isEditable || playlist.songCount != 0) {
+        PlaylistMenu(
+            playlist = playlist,
+            coroutineScope = coroutineScope,
+            onDismiss = menuState::dismiss,
+        )
+    } else {
+        playlist.playlist.browseId?.let { browseId ->
+            YouTubePlaylistMenu(
+                playlist =
+                    PlaylistItem(
+                        id = browseId,
+                        title = playlist.playlist.name,
+                        author = null,
+                        songCountText = null,
+                        thumbnail = playlist.thumbnails.getOrNull(0) ?: "",
+                        playEndpoint =
+                            WatchEndpoint(
+                                playlistId = browseId,
+                                params = playlist.playlist.playEndpointParams,
+                            ),
+                        shuffleEndpoint =
+                            WatchEndpoint(
+                                playlistId = browseId,
+                                params = playlist.playlist.shuffleEndpointParams,
+                            ),
+                        radioEndpoint =
+                            WatchEndpoint(
+                                playlistId = "RDAMPL$browseId",
+                                params = playlist.playlist.radioEndpointParams,
+                            ),
+                        isEditable = false,
+                    ),
+                coroutineScope = coroutineScope,
+                onDismiss = menuState::dismiss,
+            )
+        }
+    }
+}
+
+@Composable
+fun rememberArtworkGradient(
+    thumbnailUrl: String?,
+    fallbackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+): List<Color> {
+    val context = LocalContext.current
+    var colors by remember(thumbnailUrl) { mutableStateOf(listOf(fallbackColor, fallbackColor.copy(alpha = 0.5f))) }
+
+    LaunchedEffect(thumbnailUrl) {
+        if (thumbnailUrl == null) return@LaunchedEffect
+        val request =
+            ImageRequest
+                .Builder(context)
+                .data(thumbnailUrl)
+                .size(PlayerColorExtractor.Config.IMAGE_SIZE, PlayerColorExtractor.Config.IMAGE_SIZE)
+                .allowHardware(false)
+                .build()
+
+        val result =
+            runCatching {
+                context.imageLoader.execute(request)
+            }.getOrNull()
+
+        if (result != null) {
+            val bitmap = result.image?.toBitmap()
+            if (bitmap != null) {
+                val palette =
+                    withContext(Dispatchers.Default) {
+                        Palette
+                            .from(bitmap)
+                            .maximumColorCount(PlayerColorExtractor.Config.MAX_COLOR_COUNT)
+                            .resizeBitmapArea(PlayerColorExtractor.Config.BITMAP_AREA)
+                            .generate()
+                    }
+
+                val extractedColors =
+                    PlayerColorExtractor.extractGradientColors(
+                        palette = palette,
+                        fallbackColor = fallbackColor.toArgb(),
+                    )
+                if (extractedColors.size >= 2) {
+                    colors = extractedColors
+                } else if (extractedColors.isNotEmpty()) {
+                    colors = listOf(extractedColors[0], extractedColors[0].copy(alpha = 0.5f))
+                }
+            }
+        }
+    }
+    return colors
+}
+
+@Composable
+fun rememberArtworkCardColor(
+    thumbnailUrl: String?,
+    fallbackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+): Color {
+    val gradientColors =
+        rememberArtworkGradient(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = fallbackColor,
+        )
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val useDarkTheme = remember(surfaceColor) { ColorUtils.calculateLuminance(surfaceColor.toArgb()) < 0.5 }
+    val pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
+
+    return remember(gradientColors, useDarkTheme, pureBlack) {
+        val baseColor = gradientColors.firstOrNull() ?: fallbackColor
+        val baseArgb = baseColor.toArgb()
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(baseArgb, hsv)
+        val hue = hsv[0]
+
+        if (useDarkTheme) {
+            // Issue 6/3 fix: increased brightness for visibility in pure black mode
+            val s = (hsv[1] * 0.45f).coerceIn(0.06f, 0.20f)
+            val v = if (pureBlack) 0.18f else 0.12f
+            Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, s, v)))
+        } else {
+            val s = (hsv[1] * 0.30f).coerceIn(0.03f, 0.12f)
+            val v = 0.95f
+            Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, s, v)))
+        }
+    }
+}
+
+@Composable
+fun PlaylistListCard(
+    playlist: Playlist,
+    onClick: () -> Unit,
+    onPlay: () -> Unit,
+    onMenuClick: () -> Unit,
+    showDragHandle: Boolean = false,
+    dragHandleModifier: Modifier = Modifier,
+) {
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = playlist.thumbnails.getOrNull(0),
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "PlaylistListCardScale",
+    )
+
+    val hiddenAlpha = if (playlist.playlist.isHidden) 0.45f else 1f
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = hiddenAlpha
+                }.clip(RoundedCornerShape(32.dp))
+                .background(cardBgColor)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ).padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Thumbnail
+        ItemThumbnail(
+            thumbnailUrl = playlist.thumbnails.getOrNull(0),
+            isActive = false,
+            isPlaying = false,
+            shape = RoundedCornerShape(24.dp),
+            contentScale = ContentScale.Crop,
+            showPlaceholder = true,
+            modifier =
+                Modifier
+                    .size(72.dp),
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Text & details
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = playlist.playlist.name,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                // Tag pill
+                val tagText =
+                    if (playlist.playlist.isEditable) {
+                        stringResource(
+                            R.string.personal_label,
+                        )
+                    } else {
+                        stringResource(R.string.youtube_synced)
+                    }
+                val tagColor = if (playlist.playlist.isEditable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                Box(
+                    modifier =
+                        Modifier
+                            .clip(CircleShape)
+                            .background(tagColor.copy(alpha = 0.12f))
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = tagText,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = tagColor,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                if (playlist.playlist.isHidden) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        painter = painterResource(id = R.drawable.visibility_off),
+                        contentDescription = stringResource(R.string.hide_playlist),
+                        modifier = Modifier.size(12.dp),
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                    )
+                }
+            }
+        }
+
+        // Play Button
+        IconButton(
+            onClick = onPlay,
+            colors =
+                IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    contentColor = MaterialTheme.colorScheme.primary,
+                ),
+            modifier = Modifier.size(36.dp),
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.play),
+                contentDescription = stringResource(R.string.play),
+                modifier = Modifier.size(16.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        // Options Button
+        IconButton(
+            onClick = onMenuClick,
+            modifier = Modifier.size(36.dp),
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.more_vert),
+                contentDescription = stringResource(R.string.options_label),
+            )
+        }
+
+        if (showDragHandle) {
+            Spacer(modifier = Modifier.width(4.dp))
+            IconButton(
+                onClick = {},
+                modifier = dragHandleModifier.size(36.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.drag_handle),
+                    contentDescription = null,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun PlaylistGridCard(
+    playlist: Playlist,
+    onClick: () -> Unit,
+    onPlay: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = playlist.thumbnails.getOrNull(0),
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "PlaylistGridCardScale",
+    )
+
+    val hiddenAlpha = if (playlist.playlist.isHidden) 0.45f else 1f
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = hiddenAlpha
+                }.clip(RoundedCornerShape(32.dp))
+                .background(cardBgColor)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ).padding(12.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(26.dp)),
+        ) {
+            ItemThumbnail(
+                thumbnailUrl = playlist.thumbnails.getOrNull(0),
+                isActive = false,
+                isPlaying = false,
+                shape = RoundedCornerShape(26.dp),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            // Play overlay on bottom right of grid cover
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .clickable(onClick = onPlay),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.play),
+                    contentDescription = stringResource(R.string.play),
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+
+            if (playlist.playlist.isHidden) {
+                Icon(
+                    painter = painterResource(id = R.drawable.visibility_off),
+                    contentDescription = stringResource(R.string.hide_playlist),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(16.dp),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = playlist.playlist.name,
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+        )
     }
 }
