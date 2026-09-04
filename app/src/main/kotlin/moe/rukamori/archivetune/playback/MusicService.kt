@@ -369,7 +369,12 @@ class MusicService :
         PlayerStreamClientKey,
         PlayerStreamClient.ANDROID_VR,
     )
-    private val playbackUrlCache = ConcurrentHashMap<String, AuthScopedCacheValue>()
+    private val songUrlCache = ConcurrentHashMap<String, Pair<String, Long>>()
+
+    private fun invalidateSongUrl(mediaId: String) {
+        songUrlCache.keys.filter { it.startsWith("${mediaId}_") }.forEach { songUrlCache.remove(it) }
+    }
+
     private val extractorPlaybackUrlCache = ConcurrentHashMap<String, AuthScopedCacheValue>()
     private val prefetchedStreamCache = LruCache<String, PlaybackStreamData>(64)
     private var adjacentPrefetchJob: Job? = null
@@ -3671,16 +3676,13 @@ class MusicService :
         val requestProfile = StreamClientUtils.resolveRequestProfile(failedUrl)
         val authFingerprint = YouTube.currentPlaybackAuthState().fingerprint
         val extractorAuthFingerprint = ArchiveTuneExtractorCacheFingerprintPrefix + authFingerprint
-        val cachedFailedUrl = playbackUrlCache[mediaId]?.takeIf { it.url == failedUrl }
+        val cachedFailedUrl = songUrlCache.entries.find { it.key.startsWith("${mediaId}_") }?.value?.takeIf { it.first == failedUrl }
         val cachedExtractorFailedUrl = extractorPlaybackUrlCache[mediaId]?.takeIf { it.url == failedUrl }
         val failedExpiredUrl =
             YTPlayerUtils.isExpiredOrNearExpiredStreamUrl(failedUrl) ||
                 (
                     cachedFailedUrl?.let {
-                        !it.isValidFor(
-                            authFingerprint = authFingerprint,
-                            minimumRemainingMs = YTPlayerUtils.STREAM_URL_EXPIRY_SAFETY_MS,
-                        )
+                        it.second <= System.currentTimeMillis() + YTPlayerUtils.STREAM_URL_EXPIRY_SAFETY_MS
                     } == true
                 ) ||
                 (
@@ -3695,7 +3697,7 @@ class MusicService :
         synchronized(prefetchedStreamCache) {
             prefetchedStreamCache.remove(mediaId)
         }
-        playbackUrlCache.remove(mediaId)
+        invalidateSongUrl(mediaId)
         extractorPlaybackUrlCache.remove(mediaId)
         YTPlayerUtils.invalidateCachedStreamUrls(mediaId)
         if (!failedExpiredUrl && cachedExtractorFailedUrl == null && requestProfile.clientKey.isNotEmpty()) {
@@ -3726,7 +3728,7 @@ class MusicService :
         synchronized(prefetchedStreamCache) {
             prefetchedStreamCache.remove(mediaId)
         }
-        playbackUrlCache.remove(mediaId)
+        invalidateSongUrl(mediaId)
         extractorPlaybackUrlCache.remove(mediaId)
         YTPlayerUtils.invalidateCachedStreamUrls(mediaId)
 
@@ -4032,27 +4034,26 @@ class MusicService :
 
         clearAutomix()
         autoAddedMediaIds.clear()
+
+        val preloadItem = queue.preloadItem?.toMediaItem()
+        if (preloadItem != null) {
+            player.setMediaItem(preloadItem)
+            player.prepare()
+            player.playWhenReady = playWhenReady
+        }
+
         scope.launch(SilentHandler) {
             val hideExplicit = dataStore.get(HideExplicitKey, false)
             val hideVideo = dataStore.get(HideVideoKey, false)
             val autoLoadMoreEnabled = dataStore.get(AutoLoadMoreKey, true)
-            val preloadItem =
-                queue.preloadItem
-                    ?.toMediaItem()
-                    ?.takeUnless { item ->
-                        item.hasBlockedArtist(loadBlockedArtistIds())
-                    }
-            if (preloadItem != null) {
-                player.setMediaItem(preloadItem)
-                player.prepare()
-                player.playWhenReady = playWhenReady
-            }
             var initialStatus =
                 withContext(Dispatchers.IO) {
                     queue
                         .getInitialStatus()
                         .filterPlaybackContent(hideExplicit, hideVideo)
+                        .filterBlockedArtists(loadBlockedArtistIds())
                 }
+            if (preloadItem != null && player.playbackState == Player.STATE_IDLE) return@launch
             if (!autoLoadMoreEnabled && queue.shouldExpandToFullQueueWhenAutoLoadMoreDisabled() && queue.hasNextPage()) {
                 val expandedItems = initialStatus.items.toMutableList()
                 var pagesLoaded = 0
@@ -6905,10 +6906,9 @@ class MusicService :
             if (player.isPlaying || (player.playbackState == Player.STATE_READY && !player.playWhenReady)) {
                 playbackStreamRecoveryTracker.onPlaybackRecovered(currentMediaId)
             }
-            currentMediaId
-                ?.let(playbackUrlCache::get)
-                ?.url
-                ?.let(YTPlayerUtils::markStreamUrlSuccessful)
+            currentMediaId?.let { id ->
+                songUrlCache.entries.find { it.key.startsWith("${id}_") }?.value?.first?.let(YTPlayerUtils::markStreamUrlSuccessful)
+            }
             ensureAudiblePlaybackVolume("player_event")
         }
         if (events.containsAny(
@@ -7274,7 +7274,7 @@ class MusicService :
             synchronized(prefetchedStreamCache) {
                 prefetchedStreamCache.remove(currentMediaId)
             }
-            playbackUrlCache.remove(currentMediaId)
+            invalidateSongUrl(currentMediaId)
             extractorPlaybackUrlCache.remove(currentMediaId)
             contentLengthCache.remove(currentMediaId)
             YTPlayerUtils.invalidateCachedStreamUrls(currentMediaId)
@@ -7317,7 +7317,7 @@ class MusicService :
             synchronized(prefetchedStreamCache) {
                 prefetchedStreamCache.remove(currentMediaId)
             }
-            playbackUrlCache.remove(currentMediaId)
+            invalidateSongUrl(currentMediaId)
             extractorPlaybackUrlCache.remove(currentMediaId)
             YTPlayerUtils.invalidateCachedStreamUrls(currentMediaId)
             YTPlayerUtils.clearPlaybackAuthCaches()
@@ -7332,7 +7332,7 @@ class MusicService :
             synchronized(prefetchedStreamCache) {
                 prefetchedStreamCache.remove(currentMediaId)
             }
-            playbackUrlCache.remove(currentMediaId)
+            invalidateSongUrl(currentMediaId)
             extractorPlaybackUrlCache.remove(currentMediaId)
             YTPlayerUtils.invalidateCachedStreamUrls(currentMediaId)
             if (playbackStreamRecoveryTracker.registerRetryAttempt(currentMediaId)) {
@@ -7364,12 +7364,12 @@ class MusicService :
         if (!isLocalMedia && !isFullyDownloadedMedia && isRetryableRemoteParserFailure(error)) {
             val recoverySnapshot = capturePlaybackRecoverySnapshot()
             val failedUrl =
-                playbackUrlCache[currentMediaId]?.url
+                songUrlCache.entries.find { it.key.startsWith("${currentMediaId}_") }?.value?.first
                     ?: extractorPlaybackUrlCache[currentMediaId]?.url
             synchronized(prefetchedStreamCache) {
                 prefetchedStreamCache.remove(currentMediaId)
             }
-            playbackUrlCache.remove(currentMediaId)
+            invalidateSongUrl(currentMediaId)
             extractorPlaybackUrlCache.remove(currentMediaId)
             contentLengthCache.remove(currentMediaId)
             YTPlayerUtils.invalidateCachedStreamUrls(currentMediaId)
@@ -7439,59 +7439,9 @@ class MusicService :
         }
     }
 
-    private fun createPlayerCacheDataSourceFactory(cacheWriteEnabled: Boolean): CacheDataSource.Factory =
-        CacheDataSource
-            .Factory()
-            .setCache(playerCache)
-            .setUpstreamDataSourceFactory(createResolvedUpstreamDataSourceFactory())
-            .apply {
-                if (!cacheWriteEnabled) {
-                    setCacheWriteDataSinkFactory(null)
-                }
-            }.setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
-
-    private fun createCacheDataSource(): CacheDataSource.Factory =
-        CacheDataSource
-            .Factory()
-            .setCache(downloadCache)
-            .setUpstreamDataSourceFactory(
-                DataSource.Factory {
-                    createPlayerCacheDataSourceFactory(
-                        cacheWriteEnabled = !isLowDataModeActive(),
-                    ).createDataSource()
-                },
-            ).setCacheWriteDataSinkFactory(null)
-            .setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
-
-    private fun createDataSourceFactory(): DataSource.Factory {
-        val cachedFactory =
-            ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
-                resolvePlaybackDataSpec(
-                    dataSpec = dataSpec,
-                    allowCacheShortCircuit = true,
-                )
-            }
-        val directFactory = createResolvedUpstreamDataSourceFactory()
-
-        return DataSource.Factory {
-            SchemeRoutingDataSource(
-                cachedFactory = cachedFactory,
-                directFactory = directFactory,
-            )
-        }
-    }
-
-    private fun createResolvedUpstreamDataSourceFactory(): DataSource.Factory {
-        val youtubeMediaFactory =
-            DefaultDataSource.Factory(
-                this,
-                OkHttpDataSource.Factory(mediaOkHttpClient),
-            )
-        val extractorMediaFactory =
-            DefaultDataSource.Factory(
-                this,
-                OkHttpDataSource.Factory(extractorMediaOkHttpClient),
-            )
+    private fun createCacheDataSource(): CacheDataSource.Factory {
+        val youtubeMediaFactory = OkHttpDataSource.Factory(mediaOkHttpClient)
+        val extractorMediaFactory = OkHttpDataSource.Factory(extractorMediaOkHttpClient)
         val routingFactory =
             DataSource.Factory {
                 ResolvedUrlRoutingDataSource(
@@ -7501,11 +7451,30 @@ class MusicService :
                 )
             }
 
-        return ResolvingDataSource.Factory(routingFactory) { dataSpec ->
-            resolvePlaybackDataSpec(
-                dataSpec = dataSpec,
-                allowCacheShortCircuit = false,
-            )
+        val playerCacheFactory =
+            CacheDataSource
+                .Factory()
+                .setCache(playerCache)
+                .setUpstreamDataSourceFactory(routingFactory)
+                .apply {
+                    if (isLowDataModeActive()) {
+                        setCacheWriteDataSinkFactory(null)
+                    }
+                }.setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
+
+        return CacheDataSource
+            .Factory()
+            .setCache(downloadCache)
+            .setUpstreamDataSourceFactory(playerCacheFactory)
+            .setCacheWriteDataSinkFactory(null)
+            .setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
+    }
+
+    private fun createDataSourceFactory(): DataSource.Factory {
+        return ResolvingDataSource.Factory(
+            DefaultDataSource.Factory(this, createCacheDataSource()),
+        ) { dataSpec ->
+            resolvePlaybackDataSpec(dataSpec)
         }
     }
 
@@ -7538,11 +7507,7 @@ class MusicService :
                 .setUri(uri)
                 .setKey(mediaId)
                 .build()
-        val resolvedDataSpec =
-            resolvePlaybackDataSpec(
-                dataSpec = dataSpec,
-                allowCacheShortCircuit = false,
-            )
+        val resolvedDataSpec = resolvePlaybackDataSpec(dataSpec)
         val resolvedMimeType =
             localConfiguration.mimeType.toCastMimeType()
                 ?: castMimeTypeCache.get(mediaId)
@@ -7553,14 +7518,38 @@ class MusicService :
             .build()
     }
 
-    private fun resolvePlaybackDataSpec(
-        dataSpec: DataSpec,
-        allowCacheShortCircuit: Boolean,
-    ): DataSpec {
+    private fun resolvePlaybackDataSpec(dataSpec: DataSpec): DataSpec {
         if (dataSpec.uri.shouldBypassYouTubeResolver()) {
             return dataSpec
         }
         val mediaId = dataSpec.key ?: return dataSpec
+
+        if (preferredStreamClient == PlayerStreamClient.ARCHIVETUNE_EXTRACTOR) {
+            return resolveArchiveTuneExtractorDataSpec(
+                dataSpec = dataSpec,
+                mediaId = mediaId,
+            )
+        }
+
+        val lowDataModeActive = isLowDataModeActive()
+        val effectiveQuality = if (lowDataModeActive) AudioQuality.LOW else audioQuality
+        val cacheKey = "${mediaId}_${effectiveQuality.name}"
+
+        songUrlCache[cacheKey]?.let { (cachedUrl, expiresAt) ->
+            if (expiresAt > System.currentTimeMillis() + 60_000L) {
+                scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
+                return dataSpec.withUri(cachedUrl.toUri())
+            }
+        }
+
+        val authFingerprint = YouTube.currentPlaybackAuthState().fingerprint
+        val prefetched = synchronized(prefetchedStreamCache) { prefetchedStreamCache.get(mediaId) }
+        if (prefetched != null && prefetched.isValid(authFingerprint)) {
+            scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
+            songUrlCache[cacheKey] = prefetched.url to prefetched.expiresAtMs
+            return dataSpec.withUri(prefetched.url.toUri())
+        }
+
         val storedFormat =
             runBlocking(Dispatchers.IO) {
                 database.format(mediaId).first()
@@ -7582,91 +7571,12 @@ class MusicService :
 
         knownContentLength?.takeIf { it > 0L }?.let { contentLengthCache[mediaId] = it }
 
-        if (allowCacheShortCircuit) {
-            resolveCachedDataSpec(
-                dataSpec = dataSpec,
-                mediaId = mediaId,
-                knownContentLength = knownContentLength,
-            )?.let { cachedDataSpec ->
-                scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-                return cachedDataSpec
-            }
-        }
-
-        val requiredCachedLength =
-            if (dataSpec.length >= 0) {
-                dataSpec.length
-            } else {
-                knownContentLength?.let { nonNullContentLength ->
-                    (nonNullContentLength - dataSpec.position).takeIf { it > 0L }
-                }
-            }
-
-        if (allowCacheShortCircuit && requiredCachedLength != null) {
-            val isFullyCached =
-                downloadCache.isCached(mediaId, dataSpec.position, requiredCachedLength) ||
-                    playerCache.isCached(mediaId, dataSpec.position, requiredCachedLength)
-            if (isFullyCached) {
-                scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-                return dataSpec
-            }
-        }
-
-        val lowDataModeActive = isLowDataModeActive()
-        if (preferredStreamClient == PlayerStreamClient.ARCHIVETUNE_EXTRACTOR) {
-            return resolveArchiveTuneExtractorDataSpec(
-                dataSpec = dataSpec,
-                mediaId = mediaId,
-            )
-        }
-
-        val authFingerprint = YouTube.currentPlaybackAuthState().fingerprint
-        val prefetched = synchronized(prefetchedStreamCache) { prefetchedStreamCache.get(mediaId) }
-        if (prefetched != null && prefetched.isValid(authFingerprint)) {
-            scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-            val resolvedDataSpec = dataSpec.withUri(prefetched.url.toUri())
-            val length =
-                resolveStreamChunkLength(
-                    requestedLength = dataSpec.length,
-                    position = dataSpec.position,
-                    knownContentLength = knownContentLength ?: prefetched.contentLength,
-                    chunkLength = CHUNK_LENGTH,
-                    mimeType = storedFormat?.mimeType ?: prefetched.format?.mimeType,
-                )
-            return length?.let { nonNullLength ->
-                resolvedDataSpec.subrange(0L, nonNullLength)
-            } ?: resolvedDataSpec
-        }
-
-        playbackUrlCache[mediaId]
-            ?.takeUnless { lowDataModeActive }
-            ?.takeIf {
-                it.isValidFor(
-                    authFingerprint = authFingerprint,
-                    minimumRemainingMs = YTPlayerUtils.STREAM_URL_EXPIRY_SAFETY_MS,
-                )
-            }?.let {
-                scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-                val resolvedDataSpec = dataSpec.withUri(it.url.toUri())
-                val length =
-                    resolveStreamChunkLength(
-                        requestedLength = dataSpec.length,
-                        position = dataSpec.position,
-                        knownContentLength = knownContentLength,
-                        chunkLength = CHUNK_LENGTH,
-                        mimeType = storedFormat?.mimeType,
-                    )
-                return length?.let { nonNullLength ->
-                    resolvedDataSpec.subrange(0L, nonNullLength)
-                } ?: resolvedDataSpec
-            }
-
         val playbackData =
             runBlocking(Dispatchers.IO) {
                 retryWithoutPlaybackLoginContext {
                     YTPlayerUtils.playerResponseForPlayback(
                         mediaId,
-                        audioQuality = if (lowDataModeActive) AudioQuality.LOW else audioQuality,
+                        audioQuality = effectiveQuality,
                         connectivityManager = connectivityManager,
                         preferredStreamClient = preferredStreamClient,
                         networkMetered = lowDataModeActive,
@@ -7807,14 +7717,8 @@ class MusicService :
 
         val trackingExpiryMs = System.currentTimeMillis() + (nonNullPlayback.streamExpiresInSeconds * 1000L)
 
-        if (!lowDataModeActive) {
-            playbackUrlCache[mediaId] =
-                AuthScopedCacheValue(
-                    url = streamUrl,
-                    expiresAtMs = trackingExpiryMs,
-                    authFingerprint = nonNullPlayback.authFingerprint,
-                )
-        }
+        songUrlCache[cacheKey] = streamUrl to trackingExpiryMs
+
         val prefetchExpiryMs = minOf(trackingExpiryMs, System.currentTimeMillis() + PREFETCHED_CACHE_MAX_TTL_MS)
         val streamData =
             PlaybackStreamData(
@@ -7827,18 +7731,7 @@ class MusicService :
         synchronized(prefetchedStreamCache) {
             prefetchedStreamCache.put(mediaId, streamData)
         }
-        val resolvedDataSpec = dataSpec.withUri(streamUrl.toUri())
-        val length =
-            resolveStreamChunkLength(
-                requestedLength = dataSpec.length,
-                position = dataSpec.position,
-                knownContentLength = format.contentLength,
-                chunkLength = CHUNK_LENGTH,
-                mimeType = format.mimeType,
-            )
-        return length?.let { nonNullLength ->
-            resolvedDataSpec.subrange(0L, nonNullLength)
-        } ?: resolvedDataSpec
+        return dataSpec.withUri(streamUrl.toUri())
     }
 
     private fun resolveArchiveTuneExtractorDataSpec(
@@ -8029,13 +7922,14 @@ class MusicService :
             if (!coroutineContext.isActive) break
             if (mediaId.isBlank() || mediaId.isLocalMediaId()) continue
 
+            val effectiveQuality = if (isLowData) AudioQuality.LOW else audioQuality
+            val cacheKey = "${mediaId}_${effectiveQuality.name}"
+
             val isAlreadyCached =
-                synchronized(prefetchedStreamCache) {
-                    prefetchedStreamCache.get(mediaId)?.isValid(authFingerprint) == true
-                } || playbackUrlCache[mediaId]?.isValidFor(
-                    authFingerprint = authFingerprint,
-                    minimumRemainingMs = YTPlayerUtils.STREAM_URL_EXPIRY_SAFETY_MS,
-                ) == true
+                songUrlCache[cacheKey]?.let { it.second > System.currentTimeMillis() + 60_000L } == true ||
+                    synchronized(prefetchedStreamCache) {
+                        prefetchedStreamCache.get(mediaId)?.isValid(authFingerprint) == true
+                    }
 
             if (isAlreadyCached) continue
 
@@ -8090,7 +7984,7 @@ class MusicService :
                         retryWithoutPlaybackLoginContext {
                             YTPlayerUtils.playerResponseForPlayback(
                                 videoId = mediaId,
-                                audioQuality = if (isLowData) AudioQuality.LOW else audioQuality,
+                                audioQuality = effectiveQuality,
                                 connectivityManager = connectivityManager,
                                 preferredStreamClient = preferredStreamClient,
                                 networkMetered = isLowData,
@@ -8134,14 +8028,7 @@ class MusicService :
                         upsert(formatEntity)
                     }
 
-                    if (!isLowData) {
-                        playbackUrlCache[mediaId] =
-                            AuthScopedCacheValue(
-                                url = streamUrl,
-                                expiresAtMs = trackingExpiryMs,
-                                authFingerprint = playbackData.authFingerprint,
-                            )
-                    }
+                    songUrlCache[cacheKey] = streamUrl to trackingExpiryMs
 
                     val prefetchExpiryMs = minOf(trackingExpiryMs, System.currentTimeMillis() + PREFETCHED_CACHE_MAX_TTL_MS)
                     val streamData =
@@ -8164,71 +8051,6 @@ class MusicService :
         }
     }
 
-    private fun resolveCachedDataSpec(
-        dataSpec: DataSpec,
-        mediaId: String,
-        knownContentLength: Long?,
-    ): DataSpec? {
-        val requestedLength =
-            when {
-                dataSpec.length > 0L -> {
-                    dataSpec.length
-                }
-
-                knownContentLength != null && knownContentLength > dataSpec.position -> {
-                    knownContentLength - dataSpec.position
-                }
-
-                else -> {
-                    return null
-                }
-            }
-
-        val cachedLength =
-            getContinuousCachedLength(
-                mediaId = mediaId,
-                position = dataSpec.position,
-                requestedLength = requestedLength,
-            )
-
-        if (cachedLength < requestedLength) return null
-
-        return dataSpec.subrange(0L, requestedLength)
-    }
-
-    private fun getContinuousCachedLength(
-        mediaId: String,
-        position: Long,
-        requestedLength: Long,
-    ): Long {
-        val targetEnd = position.saturatingAdd(requestedLength)
-        var cursor = position
-        val spans =
-            (
-                runCatching { downloadCache.getCachedSpans(mediaId).toList() }.getOrNull().orEmpty() +
-                    runCatching { playerCache.getCachedSpans(mediaId).toList() }.getOrNull().orEmpty()
-            ).asSequence()
-                .filter { span -> span.position.saturatingAdd(span.length) > position }
-                .sortedBy { span -> span.position }
-                .toList()
-
-        for (span in spans) {
-            if (span.position > cursor) break
-            val spanEnd = span.position.saturatingAdd(span.length)
-            if (spanEnd > cursor) {
-                cursor = minOf(spanEnd, targetEnd)
-                if (cursor >= targetEnd) break
-            }
-        }
-
-        return (cursor - position).coerceAtLeast(0L)
-    }
-
-    private fun Long.saturatingAdd(value: Long): Long {
-        if (value <= 0L) return this
-        val result = this + value
-        return if (result < this) Long.MAX_VALUE else result
-    }
 
     private fun Uri.shouldBypassYouTubeResolver(): Boolean {
         val normalizedScheme = scheme?.lowercase(Locale.US)
@@ -8260,51 +8082,7 @@ class MusicService :
             DefaultExtractorsFactory(),
         )
 
-    private class SchemeRoutingDataSource(
-        private val cachedFactory: DataSource.Factory,
-        private val directFactory: DataSource.Factory,
-    ) : DataSource {
-        private val transferListeners = mutableListOf<TransferListener>()
-        private var delegate: DataSource? = null
 
-        override fun addTransferListener(transferListener: TransferListener) {
-            transferListeners += transferListener
-            delegate?.addTransferListener(transferListener)
-        }
-
-        override fun open(dataSpec: DataSpec): Long {
-            val normalizedScheme = dataSpec.uri.scheme?.lowercase(Locale.US)
-            val selectedFactory =
-                if (
-                    normalizedScheme == "content" ||
-                    normalizedScheme == "file" ||
-                    normalizedScheme == "android.resource"
-                ) {
-                    directFactory
-                } else {
-                    cachedFactory
-                }
-            val selectedDataSource = selectedFactory.createDataSource()
-            transferListeners.forEach(selectedDataSource::addTransferListener)
-            delegate = selectedDataSource
-            return selectedDataSource.open(dataSpec)
-        }
-
-        override fun read(
-            buffer: ByteArray,
-            offset: Int,
-            length: Int,
-        ): Int = checkNotNull(delegate).read(buffer, offset, length)
-
-        override fun getUri(): Uri? = delegate?.uri
-
-        override fun getResponseHeaders(): Map<String, List<String>> = delegate?.responseHeaders ?: emptyMap()
-
-        override fun close() {
-            delegate?.close()
-            delegate = null
-        }
-    }
 
     private class ResolvedUrlRoutingDataSource(
         private val defaultFactory: DataSource.Factory,

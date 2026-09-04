@@ -43,13 +43,7 @@ data class PlaybackAuthState(
                     visitorData.orEmpty(),
                     dataSyncId.orEmpty(),
                     poToken.orEmpty(),
-                    poTokenGvs.orEmpty(),
                     poTokenGvsSession.orEmpty(),
-                    poTokenGvsVideoId.orEmpty(),
-                    poTokenPlayer.orEmpty(),
-                    poTokenPlayerVideoId.orEmpty(),
-                    poTokenSubs.orEmpty(),
-                    poTokenSubsVideoId.orEmpty(),
                     webClientPoTokenEnabled.toString(),
                 ).joinToString(separator = "\u0000"),
             )

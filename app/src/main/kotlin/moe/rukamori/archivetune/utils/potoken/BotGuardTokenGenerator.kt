@@ -18,6 +18,7 @@ import androidx.collection.ArrayMap
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.NonCancellable
@@ -184,7 +185,18 @@ object BotGuardTokenGenerator {
             mutex.withLock {
                 !isEngineReadyForSession(sessionId)
             }
-        val timeout = if (requiresColdStart) COLD_START_TIMEOUT_MS else WARM_TIMEOUT_MS
+        if (requiresColdStart) {
+            Timber.tag(TAG).d("Engine requires cold start; queuing background warm-up and proceeding without blocking playback")
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    preWarm(sessionId)
+                } catch (e: Exception) {
+                    Timber.tag(TAG).w(e, "Background pre-warm failed")
+                }
+            }
+            return null
+        }
+        val timeout = WARM_TIMEOUT_MS
 
         return try {
             withTimeout(timeout) {

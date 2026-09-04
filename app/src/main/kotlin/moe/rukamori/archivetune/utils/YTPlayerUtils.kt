@@ -1085,6 +1085,14 @@ object YTPlayerUtils {
                 continue
             }
 
+            if (client.useWebPoTokens && authState.resolveGvsPoToken(client, videoId).isNullOrBlank()) {
+                Timber.tag(logTag).d(
+                    "Skipping client %s - requires PoToken which is not yet minted",
+                    describeClient(client),
+                )
+                continue
+            }
+
             streamPlayerResponse =
                 if (client == metadataClient) {
                     metadataPlayerResponse

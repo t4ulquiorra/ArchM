@@ -8,6 +8,7 @@
 package moe.rukamori.archivetune.playback.queues
 
 import androidx.media3.common.MediaItem
+import moe.rukamori.archivetune.extensions.metadata
 import moe.rukamori.archivetune.models.MediaMetadata
 
 class ListQueue(
@@ -16,7 +17,8 @@ class ListQueue(
     val startIndex: Int = 0,
     val position: Long = 0L,
 ) : Queue {
-    override val preloadItem: MediaMetadata? = null
+    override val preloadItem: MediaMetadata?
+        get() = if (items.isEmpty()) null else items.getOrNull(startIndex.coerceIn(items.indices))?.metadata
 
     override suspend fun getInitialStatus(): Queue.Status {
         val safeStartIndex =
