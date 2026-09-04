@@ -910,10 +910,11 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val currentTitle = when (navBackStackEntry?.destination?.route) {
-                    Screens.Home.route -> "Echo Music"
+                    Screens.Home.route -> stringResource(R.string.app_name)
                     Screens.Search.route -> stringResource(R.string.search)
                     Screens.Library.route -> stringResource(R.string.filter_library)
                     Screens.ListenTogether.route -> stringResource(R.string.together)
+                    Screens.Explore.route -> stringResource(R.string.explore)
                     else -> ""
                 }
 
@@ -996,13 +997,30 @@ class MainActivity : ComponentActivity() {
                                 Row {
                                     TopAppBar(
                                         title = {
-                                            Text(
-                                                text = currentTitle,
-                                                style = MaterialTheme.typography.titleLarge.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 24.sp
-                                                ),
-                                            )
+                                            if (navBackStackEntry?.destination?.route == Screens.Home.route) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.about_appbar),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(32.dp).padding(end = 8.dp),
+                                                    )
+                                                    Text(
+                                                        text = stringResource(R.string.app_name),
+                                                        style = MaterialTheme.typography.titleLarge.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 24.sp,
+                                                        ),
+                                                    )
+                                                }
+                                            } else {
+                                                Text(
+                                                    text = currentTitle,
+                                                    style = MaterialTheme.typography.titleLarge.copy(
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 24.sp,
+                                                    ),
+                                                )
+                                            }
                                         },
                                         actions = {
                                             if (showHistoryButton) {

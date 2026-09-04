@@ -66,56 +66,26 @@ fun WelcomeDialog(
                 // Main Header
                 WelcomeAppCard()
 
-                WelcomeSectionCard(title = "Follow Developer") {
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_instagram_new),
-                        title = "Instagram",
-                        subtitle = "@iad1tya",
-                        onClick = { uriHandler.openUri("https://instagram.com/iad1tya") }
-                    )
-                    WelcomeDivider()
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_x_new),
-                        title = "X (Twitter)",
-                        subtitle = "@xad1tya",
-                        onClick = { uriHandler.openUri("https://x.com/xad1tya") }
-                    )
-                    WelcomeDivider()
+                WelcomeSectionCard(title = "Project") {
                     WelcomeActionRow(
                         icon = painterResource(R.drawable.github),
                         title = "GitHub",
-                        subtitle = "iad1tya",
-                        onClick = { uriHandler.openUri("https://github.com/iad1tya") }
-                    )
-                }
-
-                WelcomeSectionCard(title = "Support Echo") {
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.coffee),
-                        title = "Buy Me a Coffee",
-                        subtitle = "buymeacoffee.com/iad1tya",
-                        onClick = { uriHandler.openUri("https://buymeacoffee.com/iad1tya") }
+                        subtitle = "t4ulquiorra/ArchM",
+                        onClick = { uriHandler.openUri("https://github.com/t4ulquiorra/ArchM") }
                     )
                     WelcomeDivider()
                     WelcomeActionRow(
-                        icon = painterResource(R.drawable.ic_patreon_new),
-                        title = "Patreon",
-                        subtitle = "patreon.com/cw/iad1tya",
-                        onClick = { uriHandler.openUri("https://www.patreon.com/cw/iad1tya") }
-                    )
-                    WelcomeDivider()
-                    WelcomeActionRow(
-                        icon = painterResource(R.drawable.upi_new),
-                        title = "UPI",
-                        subtitle = "iad1tya@upi",
-                        onClick = { uriHandler.openUri("https://intradeus.github.io/http-protocol-redirector/?r=upi://pay?pa=iad1tya@upi&pn=Aditya%20Yadav&am=&tn=Thank%20You%20so%20much%20for%20this%20support") }
+                        icon = painterResource(R.drawable.info),
+                        title = "License",
+                        subtitle = "GNU General Public License v3.0",
+                        onClick = { uriHandler.openUri("https://www.gnu.org/licenses/gpl-3.0.html") }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Button(
-                    onClick = { uriHandler.openUri("https://github.com/EchoMusicApp/Echo-Music") },
+                    onClick = { uriHandler.openUri("https://github.com/t4ulquiorra/ArchM") },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -129,7 +99,7 @@ fun WelcomeDialog(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Star the Repo", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text("Star on GitHub", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
 
                 Button(
@@ -176,7 +146,7 @@ private fun WelcomeAppCard() {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Echo Music",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,

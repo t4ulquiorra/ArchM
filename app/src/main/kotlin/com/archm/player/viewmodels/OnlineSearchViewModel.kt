@@ -27,7 +27,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
-import javax.inject.Inject
+enum class OnlineSearchSort {
+    DEFAULT,
+    VIEWS,
+}
 
 @HiltViewModel
 class OnlineSearchViewModel
@@ -121,4 +124,24 @@ constructor(
             }
         }
     }
+
+    fun sortedItems(
+        items: List<com.music.innertube.models.YTItem>,
+        sort: OnlineSearchSort = OnlineSearchSort.DEFAULT,
+    ): List<com.music.innertube.models.YTItem> =
+        when (sort) {
+            OnlineSearchSort.DEFAULT -> {
+                items
+            }
+
+            OnlineSearchSort.VIEWS -> {
+                items
+                    .withIndex()
+                    .sortedWith(
+                        compareByDescending<IndexedValue<com.music.innertube.models.YTItem>> {
+                            (it.value as? com.music.innertube.models.SongItem)?.viewCount ?: Long.MIN_VALUE
+                        }.thenBy { it.index },
+                    ).map { it.value }
+            }
+        }
 }

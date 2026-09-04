@@ -1,354 +1,358 @@
-
+/*
+ * ArchiveTune (2026)
+ * © Rukamori — github.com/rukamori
+ * GPL-3.0 License | Contributors: see git history
+ * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
+ */
 
 package com.archm.player.ui.screens.library
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavController
-import com.archm.player.R
-import com.archm.player.constants.ChipSortTypeKey
-import com.archm.player.constants.LibraryFilter
-import com.archm.player.ui.component.ChipsRow
-import com.archm.player.utils.rememberEnumPreference
-import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalDensity
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.archm.player.LocalPlayerAwareWindowInsets
-import com.archm.player.constants.FloatingToolbarBottomPadding
-import com.archm.player.constants.MiniPlayerBottomSpacing
-import com.archm.player.constants.MiniPlayerHeight
-import com.archm.player.constants.NavigationBarHeight
-import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.TextFieldDialog
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavController
+import kotlinx.coroutines.launch
+import com.archm.player.R
+import com.archm.player.constants.AppBarHeight
+import com.archm.player.constants.ChipSortTypeKey
+import com.archm.player.constants.DisableBlurKey
+import com.archm.player.constants.LibraryFilter
+import com.archm.player.utils.rememberEnumPreference
+import com.archm.player.utils.rememberPreference
+
+internal val LibraryHeaderContentPadding = 64.dp
+internal val LibraryPullToRefreshIndicatorOffset = 0.dp
 
 @Composable
 fun LibraryScreen(navController: NavController) {
-    var filterType by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
-    var showFabMenu by remember { mutableStateOf(false) }
-    var showImportMenu by remember { mutableStateOf(false) }
-    var showYoutubeImportDialog by remember { mutableStateOf(false) }
-    var showCreatePlaylistDialog by rememberSaveable { mutableStateOf(false) }
-    var showCreatePlaylistOptionsDialog by rememberSaveable { mutableStateOf(false) }
-    var showAiPlaylistDialog by rememberSaveable { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    BackHandler(enabled = filterType != LibraryFilter.LIBRARY) {
-        filterType = LibraryFilter.LIBRARY
+    val defaultFilter by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
+    val (disableBlur) = rememberPreference(DisableBlurKey, false)
+    val libraryFilters = remember {
+        listOf(
+            LibraryFilter.LIBRARY,
+            LibraryFilter.PLAYLISTS,
+            LibraryFilter.SONGS,
+            LibraryFilter.ARTISTS,
+            LibraryFilter.ALBUMS,
+        )
     }
 
-    val filterContent = @Composable {
-        Row {
-            ChipsRow(
-                chips =
-                listOf(
-                    LibraryFilter.PLAYLISTS to stringResource(R.string.filter_playlists),
-                    LibraryFilter.SONGS to stringResource(R.string.filter_songs),
-                    LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
-                    LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
-                    LibraryFilter.LOCAL to stringResource(R.string.filter_local),
-                ),
-                currentValue = filterType,
-                onValueUpdate = {
-                    filterType =
-                        if (filterType == it) {
-                            LibraryFilter.LIBRARY
-                        } else {
-                            it
-                        }
-                },
-                modifier = Modifier.weight(1f),
+    val pagerState =
+        rememberPagerState(
+            initialPage = libraryFilters.indexOf(defaultFilter).takeIf { it >= 0 } ?: 0,
+        ) { libraryFilters.size }
+
+    val currentFilter = libraryFilters.getOrElse(pagerState.currentPage) { LibraryFilter.LIBRARY }
+
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val tonalStart = MaterialTheme.colorScheme.primaryContainer
+    val tonalMiddle = MaterialTheme.colorScheme.secondaryContainer
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+    ) {
+        if (!disableBlur) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(430.dp)
+                        .align(Alignment.TopCenter)
+                        .drawWithCache {
+                            val brush =
+                                Brush.verticalGradient(
+                                    0f to tonalStart.copy(alpha = 0.30f),
+                                    0.42f to tonalMiddle.copy(alpha = 0.14f),
+                                    1f to Color.Transparent,
+                                )
+                            onDrawBehind { drawRect(brush) }
+                        },
             )
         }
-    }
 
-    val currentInsets = LocalPlayerAwareWindowInsets.current
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-    val fabHeightPlusSpacing = 128.dp
-    val newInsets = remember(currentInsets, density, layoutDirection) {
-        object : WindowInsets {
-            override fun getLeft(density: Density, layoutDirection: LayoutDirection) = currentInsets.getLeft(density, layoutDirection)
-            override fun getTop(density: Density) = currentInsets.getTop(density)
-            override fun getRight(density: Density, layoutDirection: LayoutDirection) = currentInsets.getRight(density, layoutDirection)
-            override fun getBottom(density: Density) = currentInsets.getBottom(density) + with(density) { fabHeightPlusSpacing.roundToPx() }
-        }
-    }
-
-    CompositionLocalProvider(LocalPlayerAwareWindowInsets provides newInsets) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            when (filterType) {
-                LibraryFilter.LIBRARY -> LibraryMixScreen(navController, filterContent)
-                LibraryFilter.PLAYLISTS -> LibraryPlaylistsScreen(navController, filterContent)
-                LibraryFilter.SONGS -> LibrarySongsScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY })
-
-                LibraryFilter.ALBUMS -> LibraryAlbumsScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY })
-
-                LibraryFilter.ARTISTS -> LibraryArtistsScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY })
-
-                LibraryFilter.LOCAL -> LocalSongScreen(
-                    navController,
-                    { filterType = LibraryFilter.LIBRARY },
-                    isEmbedded = true
-                )
-            }
-
-            val bottomPadding = with(density) { currentInsets.getBottom(density).toDp() }
-            Box(
-                modifier = Modifier
+        Column(
+            modifier =
+                Modifier
                     .fillMaxSize()
-                    .padding(
-                        end = 16.dp,
-                        bottom = bottomPadding + 20.dp
-                    )
-            ) {
-                Box(modifier = Modifier.align(Alignment.BottomEnd)) {
-                    androidx.compose.material3.FloatingActionButton(
-                        onClick = { showFabMenu = true },
-                        shape = CircleShape,
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ) {
-                        Icon(painter = painterResource(R.drawable.add), contentDescription = "Add")
-                    }
-
-                    DropdownMenu(
-                        expanded = showFabMenu,
-                        onDismissRequest = { showFabMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.create_playlist)) },
-                            leadingIcon = { Icon(painter = painterResource(R.drawable.add), contentDescription = null) },
-                            onClick = {
-                                showFabMenu = false
-                                showCreatePlaylistOptionsDialog = true
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.import_playlist)) },
-                            leadingIcon = { Icon(painter = painterResource(R.drawable.download), contentDescription = null) },
-                            onClick = {
-                                showFabMenu = false
-                                showImportMenu = true
-                            }
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showImportMenu,
-                        onDismissRequest = { showImportMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.import_from_spotify)) },
-                            onClick = {
-                                showImportMenu = false
-                                navController.navigate("settings/spotify_import")
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.import_from_youtube_music)) },
-                            onClick = {
-                                showImportMenu = false
-                                showYoutubeImportDialog = true
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    if (showYoutubeImportDialog) {
-        var url by remember { mutableStateOf(TextFieldValue("")) }
-        val invalidUrlMessage = stringResource(R.string.invalid_playlist_url)
-        com.archm.player.ui.component.TextFieldDialog(
-            icon = { Icon(painter = painterResource(R.drawable.link), contentDescription = null) },
-            title = {
-                Column {
-                    Text(text = stringResource(R.string.import_youtube_music_playlist_title))
-                    Text(
-                        text = stringResource(R.string.import_youtube_music_playlist_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            },
-            initialTextFieldValue = url,
-            autoFocus = true,
-            onDismiss = { showYoutubeImportDialog = false },
-            onDone = { finalUrl ->
-                val listId = Regex("[?&]list=([a-zA-Z0-9_-]+)").find(finalUrl)?.groupValues?.get(1)
-                if (listId != null) {
-                    navController.navigate("online_playlist/$listId")
-                } else {
-                    android.widget.Toast.makeText(context, invalidUrlMessage, android.widget.Toast.LENGTH_SHORT).show()
-                }
-                showYoutubeImportDialog = false
-            }
-        )
-    }
-
-    if (showCreatePlaylistDialog) {
-        com.archm.player.ui.component.CreatePlaylistDialog(
-            onDismiss = { showCreatePlaylistDialog = false },
-            initialTextFieldValue = null,
-            allowSyncing = true,
-            onPlaylistCreated = { playlistId ->
-                showCreatePlaylistDialog = false
-                navController.navigate("local_playlist/$playlistId")
-            }
-        )
-    }
-
-    if (showCreatePlaylistOptionsDialog) {
-        DefaultDialog(
-            onDismiss = { showCreatePlaylistOptionsDialog = false },
-            title = { Text(stringResource(R.string.create_playlist)) },
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = AppBarHeight),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                // Normally
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
+            val tabListState = rememberLazyListState()
+            val coroutineScope = rememberCoroutineScope()
+
+            LaunchedEffect(defaultFilter, libraryFilters) {
+                val selectedFilter = defaultFilter.takeIf { it in libraryFilters } ?: LibraryFilter.LIBRARY
+                val selectedPage = libraryFilters.indexOf(selectedFilter).takeIf { it >= 0 } ?: 0
+                if (pagerState.currentPage != selectedPage) {
+                    pagerState.scrollToPage(selectedPage)
+                }
+            }
+
+            // Sync Pager -> Preference & lazy list centering
+            LaunchedEffect(pagerState.currentPage, libraryFilters) {
+                val targetPage = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
+                val targetFilter = libraryFilters.getOrElse(targetPage) { LibraryFilter.LIBRARY }
+
+                val tabWidth =
+                    when (targetFilter) {
+                        LibraryFilter.LIBRARY -> 116.dp
+                        LibraryFilter.PLAYLISTS -> 132.dp
+                        LibraryFilter.SONGS -> 102.dp
+                        LibraryFilter.ARTISTS -> 116.dp
+                        LibraryFilter.ALBUMS -> 110.dp
+                        else -> 116.dp
+                    }
+                val screenWidth = configuration.screenWidthDp.dp
+                val targetOffsetDp = (screenWidth - tabWidth) / 2
+                val targetOffsetPx = with(density) { targetOffsetDp.roundToPx() }
+
+                tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
+            }
+
+            Box(
+                modifier =
+                    Modifier
                         .weight(1f)
-                        .padding(horizontal = 8.dp)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(28.dp)
-                        )
-                        .clip(RoundedCornerShape(28.dp))
-                        .clickable {
-                            showCreatePlaylistOptionsDialog = false
-                            showCreatePlaylistDialog = true
-                        }
-                        .padding(vertical = 20.dp, horizontal = 8.dp)
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(R.drawable.add),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp)
+                        .fillMaxWidth(),
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                ) { page ->
+                    when (libraryFilters.getOrElse(page) { LibraryFilter.LIBRARY }) {
+                        LibraryFilter.LIBRARY -> {
+                            LibraryMixScreen(
+                                navController = navController,
+                                filterContent = null,
+                                selectedTagIds = emptySet(),
+                                onTabSelected = { targetFilter ->
+                                    coroutineScope.launch {
+                                        val targetPage = libraryFilters.indexOf(targetFilter)
+                                        pagerState.animateScrollToPage(targetPage.takeIf { it >= 0 } ?: 0)
+                                    }
+                                },
                             )
                         }
+
+                        LibraryFilter.PLAYLISTS -> {
+                            LibraryPlaylistsScreen(
+                                navController = navController,
+                                filterContent = null,
+                                selectedTagIds = emptySet(),
+                            )
+                        }
+
+                        LibraryFilter.SONGS -> {
+                            LibrarySongsScreen(
+                                navController = navController,
+                                onDeselect = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(0)
+                                    }
+                                },
+                            )
+                        }
+
+                        LibraryFilter.ARTISTS -> {
+                            LibraryArtistsScreen(
+                                navController = navController,
+                                onDeselect = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(0)
+                                    }
+                                },
+                            )
+                        }
+
+                        LibraryFilter.ALBUMS -> {
+                            LibraryAlbumsScreen(
+                                navController = navController,
+                                onDeselect = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(0)
+                                    }
+                                },
+                            )
+                        }
+
+                        else -> Unit
                     }
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(R.string.create_playlist_normally),
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center
-                    )
                 }
 
-                // Create with AI
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(28.dp)
-                        )
-                        .clip(RoundedCornerShape(28.dp))
-                        .clickable {
-                            showCreatePlaylistOptionsDialog = false
-                            showAiPlaylistDialog = true
-                        }
-                        .padding(vertical = 20.dp, horizontal = 8.dp)
+                LazyRow(
+                    state = tabListState,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(R.drawable.sparks),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                    items(
+                        items = libraryFilters,
+                        key = { filter -> filter.name },
+                        contentType = { "library_filter_chip" },
+                    ) { filter ->
+                        val page = libraryFilters.indexOf(filter)
+                        val label =
+                            when (filter) {
+                                LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+                                LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+                                LibraryFilter.SONGS -> stringResource(R.string.songs)
+                                LibraryFilter.ARTISTS -> stringResource(R.string.artists)
+                                LibraryFilter.ALBUMS -> stringResource(R.string.albums)
+                                else -> filter.name
+                            }
+                        val iconRes =
+                            when (filter) {
+                                LibraryFilter.LIBRARY -> R.drawable.graphic_eq
+                                LibraryFilter.PLAYLISTS -> R.drawable.queue_music
+                                LibraryFilter.SONGS -> R.drawable.music_note
+                                LibraryFilter.ARTISTS -> R.drawable.person
+                                LibraryFilter.ALBUMS -> R.drawable.album
+                                else -> R.drawable.music_note
+                            }
+                        ExpressiveTabChip(
+                            label = label,
+                            iconRes = iconRes,
+                            selected = currentFilter == filter,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(page)
+                                }
+                            },
+                        )
                     }
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(R.string.create_playlist_with_ai),
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
         }
     }
+}
 
-    if (showAiPlaylistDialog) {
-        com.archm.player.ui.component.CreateAiPlaylistDialog(
-            onDismiss = { showAiPlaylistDialog = false },
-            onPlaylistCreated = { playlistId ->
-                showAiPlaylistDialog = false
-                navController.navigate("local_playlist/$playlistId")
-            }
+@Composable
+fun ExpressiveTabChip(
+    label: String,
+    iconRes: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue =
+            if (isPressed) {
+                0.92f
+            } else if (selected) {
+                1.05f
+            } else {
+                1.0f
+            },
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "TabChipScale",
+    )
+
+    val bgColor by animateColorAsState(
+        targetValue =
+            if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            },
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "TabChipBgColor",
+    )
+
+    val contentColor by animateColorAsState(
+        targetValue =
+            if (selected) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "TabChipContentColor",
+    )
+
+    Row(
+        modifier =
+            Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }.clip(CircleShape)
+                .background(bgColor)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ).padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            painter = painterResource(id = iconRes),
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = contentColor,
         )
     }
 }
