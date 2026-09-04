@@ -380,9 +380,10 @@ constructor(
 
             LibraryResult.ofItemList(
                 children.paginate(page, pageSize),
-                params.withContentStyleHints(),
+                params.withContentStyleHints(isAutomotive),
             )
         }
+    }
 
     override fun onGetItem(
         session: MediaLibrarySession,
@@ -1051,7 +1052,7 @@ constructor(
      * @receiver nullable library params to decorate; `null` yields defaults plus style hints when automotive
      * @return new [MediaLibraryService.LibraryParams] with style extras applied
      */
-    private fun MediaLibraryService.LibraryParams?.withContentStyleHints(isAutomotive: Boolean): MediaLibraryService.LibraryParams {
+    private fun MediaLibraryService.LibraryParams?.withContentStyleHints(isAutomotive: Boolean = false): MediaLibraryService.LibraryParams {
         val extras = Bundle(this?.extras ?: Bundle()).apply {
             if (isAutomotive) {
                 putInt(
