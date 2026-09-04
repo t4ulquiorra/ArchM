@@ -111,6 +111,11 @@ android {
         }
     }
 
+    val rootKeystore = rootProject.file("release.keystore")
+    val localKeystore = file("keystore/release.keystore")
+    val keystoreFile = if (rootKeystore.exists()) rootKeystore else localKeystore
+    val hasKeystore = keystoreFile.exists()
+
     signingConfigs {
         create("persistentDebug") {
             storeFile = file("persistent-debug.keystore")
@@ -118,14 +123,13 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
-        val rootKeystore = rootProject.file("release.keystore")
-        val localKeystore = file("keystore/release.keystore")
-        val hasKeystore = rootKeystore.exists() || localKeystore.exists()
-        create("release") {
-            storeFile = if (rootKeystore.exists()) rootKeystore else localKeystore
-            storePassword = System.getenv("STORE_PASSWORD") ?: "HabO7LttIWnWgDbQ3Qjgotq"
-            keyAlias = System.getenv("KEY_ALIAS") ?: "archmkey"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "HabO7LttIWnWgDbQ3Qjgotq"
+        if (hasKeystore) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = System.getenv("STORE_PASSWORD") ?: "HabO7LttIWnWgDbQ3Qjgotq"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "archmkey"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "HabO7LttIWnWgDbQ3Qjgotq"
+            }
         }
         getByName("debug") {
             keyAlias = "androiddebugkey"
@@ -141,7 +145,7 @@ android {
             isShrinkResources = true
             isCrunchPngs = false
             isDebuggable = false
-            if (hasKeystore) {
+            if (hasKeystore && signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(
