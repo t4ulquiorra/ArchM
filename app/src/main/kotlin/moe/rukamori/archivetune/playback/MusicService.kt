@@ -6666,13 +6666,9 @@ class MusicService :
         beginHistorySession(mediaItem?.mediaId, forceNew = true)
 
         val currentIndex = player.currentMediaItemIndex
-        val mediaItemsSnapshot = player.mediaItems
-        scope.launch(Dispatchers.Default) {
-            val lyricsMgr = lyricsPreloadManager ?: return@launch
-            val queue = mediaItemsSnapshot.map { it.metadata }
-            if (queue.any { it != null }) {
-                lyricsMgr.onSongChanged(currentIndex, queue)
-            }
+        val queue = player.mediaItems.map { it.metadata }
+        if (queue.any { it != null }) {
+            lyricsPreloadManager?.onSongChanged(currentIndex, queue)
         }
 
         prefetchAdjacentItems(currentIndex)
@@ -7967,16 +7963,23 @@ class MusicService :
             )
     }
 
-    private fun prefetchAdjacentItems(currentIndex: Int = player.currentMediaItemIndex) {
-        if (currentIndex < 0 || currentIndex >= player.mediaItemCount) return
-        if (currentIndex == lastPrefetchedIndex && adjacentPrefetchJob?.isActive == true) return
-        lastPrefetchedIndex = currentIndex
+    private fun prefetchAdjacentItems(currentIndex: Int? = null) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            scope.launch(Dispatchers.Main.immediate) {
+                prefetchAdjacentItems(currentIndex)
+            }
+            return
+        }
+        val actualIndex = currentIndex ?: player.currentMediaItemIndex
+        if (actualIndex < 0 || actualIndex >= player.mediaItemCount) return
+        if (actualIndex == lastPrefetchedIndex && adjacentPrefetchJob?.isActive == true) return
+        lastPrefetchedIndex = actualIndex
 
         val totalCount = player.mediaItemCount
         val candidateIds = mutableListOf<String>()
 
         // 1. Next track (highest priority)
-        val nextIndex = currentIndex + 1
+        val nextIndex = actualIndex + 1
         if (nextIndex < totalCount) {
             val nextMediaItem = player.getMediaItemAt(nextIndex)
             val id = nextMediaItem.localConfiguration?.customCacheKey ?: nextMediaItem.mediaId
@@ -7992,7 +7995,7 @@ class MusicService :
         }
 
         // 2. Previous track
-        val prevIndex = currentIndex - 1
+        val prevIndex = actualIndex - 1
         if (prevIndex >= 0) {
             val prevMediaItem = player.getMediaItemAt(prevIndex)
             val id = prevMediaItem.localConfiguration?.customCacheKey ?: prevMediaItem.mediaId
