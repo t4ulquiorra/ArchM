@@ -81,8 +81,6 @@ import com.archm.player.constants.NavigationBarHorizontalPadding
 import com.archm.player.extensions.togglePlayPause
 import com.archm.player.models.MediaMetadata
 import com.archm.player.playback.PlayerConnection
-import com.archm.player.together.isConnectedToSession
-import com.archm.player.utils.rememberLowDataModeActive
 import com.archm.player.utils.rememberPreference
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -102,8 +100,8 @@ data class MiniPlayerContentColors(
     val secondaryButtonContainer: Color,
     val buttonIcon: Color,
     val disabledButtonIcon: Color,
-    val togetherContainer: Color,
-    val togetherContent: Color,
+    val togetherContainer: Color = Color.Transparent,
+    val togetherContent: Color = Color.Transparent,
 )
 
 @Composable
@@ -371,15 +369,8 @@ private fun MiniPlayerArtwork(
         ) {
             val baseThumbnailUrl = mediaMetadata?.thumbnailUrl
             if (baseThumbnailUrl != null) {
-                val thumbnailSwapState =
-                    rememberThumbnailSwapState(
-                        videoId = mediaMetadata.id,
-                        ytmUrl = baseThumbnailUrl,
-                        lowDataMode = rememberLowDataModeActive(),
-                        isMusicVideo = mediaMetadata.isMusicVideo,
-                    )
                 AsyncImage(
-                    model = thumbnailSwapState.displayUrl,
+                    model = baseThumbnailUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -490,7 +481,7 @@ private fun MiniPlayerTransportControls(
     ) {
         MiniPlayerTransportButton(
             iconResId = R.drawable.skip_previous,
-            contentDescription = stringResource(R.string.widget_previous),
+            contentDescription = stringResource(R.string.previous),
             onClick = onPrevious,
             enabled = canSkipPrevious,
             colors = colors,
@@ -505,7 +496,7 @@ private fun MiniPlayerTransportControls(
                 },
             contentDescription =
                 stringResource(
-                    if (playbackState == Player.STATE_ENDED || !isPlaying) R.string.play else R.string.widget_pause,
+                    if (playbackState == Player.STATE_ENDED || !isPlaying) R.string.play else R.string.pause,
                 ),
             onClick = onPlayPause,
             isPrimary = true,
@@ -532,7 +523,6 @@ fun NewMiniPlayerContent(
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val playbackState by playerConnection.playbackState.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
-    val togetherSessionState by playerConnection.service.togetherSessionState.collectAsStateWithLifecycle()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
 
@@ -562,23 +552,6 @@ fun NewMiniPlayerContent(
                 colors = colors,
             )
         } ?: Spacer(Modifier.weight(1f))
-
-        if (togetherSessionState.isConnectedToSession) {
-            Surface(
-                shape = CircleShape,
-                color = colors.togetherContainer,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.all_inclusive),
-                    contentDescription = stringResource(R.string.music_together),
-                    tint = colors.togetherContent,
-                    modifier =
-                        Modifier
-                            .padding(7.dp)
-                            .size(14.dp),
-                )
-            }
-        }
 
         MiniPlayerTransportControls(
             isPlaying = isPlaying,
