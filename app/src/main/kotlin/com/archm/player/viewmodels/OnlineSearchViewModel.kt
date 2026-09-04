@@ -27,15 +27,15 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
+import javax.inject.Inject
+
 enum class OnlineSearchSort {
     DEFAULT,
     VIEWS,
 }
 
 @HiltViewModel
-class OnlineSearchViewModel
-@Inject
-constructor(
+class OnlineSearchViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
