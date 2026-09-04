@@ -1,1 +1,1 @@
-The Cutest Material 3 Music Player With Local & YouTube Support for Android.
+A modern Android music app with ad-free streaming, synced lyrics, offline playback, and an intuitive user experience.

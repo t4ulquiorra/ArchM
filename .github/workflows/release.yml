@@ -36,7 +36,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleGmsMobileUniversalRelease
+        run: ./gradlew assembleUniversalGmsRelease
 
       - name: Prepare APK for Signing
         id: prepare_apk

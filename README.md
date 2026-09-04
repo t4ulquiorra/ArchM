@@ -1,324 +1,285 @@
 <div align="center">
+  <img src="assets/Echo-new.png" alt="Echo Music Logo" width="120"/>
 
-  <img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/icon.png" width="160" height="160" alt="ArchiveTune Logo" style="border-radius: 22%">
+  <h1>Echo Music</h1>
 
-  <h1>ArchiveTune</h1>
-
-  <p align="center">
-    <a href="README.md">
-      <img src="https://img.shields.io/badge/🇺🇸%20English-6366f1?style=for-the-badge&labelColor=1e1e2e" />
-    </a>
-    <a href="README_JA.md">
-      <img src="https://img.shields.io/badge/🇯🇵%20日本語-6366f1?style=for-the-badge&labelColor=1e1e2e" />
-    </a>
-  </p>
-
-  <p align="center">
-    <strong>Redefining the YouTube Music Experience on Android.</strong>
-    <br />
-    <em>It’s high-performance, privacy-focused, and packed with features for people who really care about their experience.</em>
-  </p>
-
-  <p align="center">
-    <a href="https://archivetune.koiiverse.cloud"><b>Official Website</b></a> •
-    <a href="#features"><b>Features</b></a> •
-    <a href="https://archivetune.koiiverse.cloud/privacy"><b>Privacy</b></a> •
-    <a href="#download-now"><b>Download</b></a> •
-    <a href="#screenshots"><b>Screenshots</b></a> •
-    <a href="https://github.com/rukamori/ArchiveTune/issues/new/choose"><b>Support</b></a>
-  </p>
-
-  <div align="center">
-    <img src="https://img.shields.io/github/v/release/rukamori/ArchiveTune?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="Latest Version" />
-    <img src="https://img.shields.io/github/downloads/rukamori/ArchiveTune/total?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="Downloads" />
-    <img src="https://img.shields.io/github/stars/rukamori/ArchiveTune?style=for-the-badge&color=6366f1&labelColor=1e1e2e&logo=github" alt="Stars" />
-    <img src="https://img.shields.io/github/license/rukamori/ArchiveTune?style=for-the-badge&color=6366f1&labelColor=1e1e2e" alt="License" />
-    <img src="https://img.shields.io/badge/Architecture-MVVM-6366f1?style=for-the-badge&labelColor=1e1e2e&logo=kotlin" alt="MVVM Architecture" />
-    <img src="https://img.shields.io/badge/Language-Kotlin-7f52ff?style=for-the-badge&logo=kotlin&color=6366f1&labelColor=1e1e2e" alt="Kotlin Language" />
-    <img src="https://img.shields.io/badge/Toolkit-Jetpack_Compose-4285f4?style=for-the-badge&logo=jetpack-compose&color=6366f1&labelColor=1e1e2e" alt="Jetpack Compose Toolkit" />
-    <img src="https://img.shields.io/badge/Design-Material_3-000000?style=for-the-badge&logo=material-design&color=6366f1&labelColor=1e1e2e" alt="Material Design 3" />
-    <a href="https://www.virustotal.com/gui/file/176bea37aff02a606d04ff0a61478fabdb0bd079f9e97319645452af420e5d84/detection/f-176bea37aff02a606d04ff0a61478fabdb0bd079f9e97319645452af420e5d84-1778840479" target="_blank"><img src="https://img.shields.io/badge/VirusTotal-SAFE-green?style=for-the-badge&logo=virustotal&logoColor=white&labelColor=1e1e2e&color=5865F2" alt="VirusTotal" /></a>
-    <a href="https://t.me/ArchiveTuneGC"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram" /></a>
-    <a href="https://discord.gg/XF2fpb9rTq"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
-  </div>
-  
-  <br />
-
-  <a href="https://trendshift.io/repositories/17521" target="_blank">
-    <img src="https://trendshift.io/api/badge/repositories/17521" alt="ArchiveTune | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
-  </a>
-</div>
-
-<hr />
-
-> [!WARNING]
-**Forks are not supported in any way.**  
-We do not provide support, maintenance, troubleshooting, or assistance for any forked version of this project.
-If you choose to use a fork, you do so at your own risk.
-
-**ArchiveTune** isn’t just another generic YouTube Music wrapper. It’s a fully custom-built player made from the ground up, because we think your music should stay private, look clean, and work exactly the way you expect. If you care about sound quality and want something that actually feels good to use, this is it.
-
----
-
-> [!IMPORTANT]  
-> **Geographic Availability:** If YouTube Music is not supported in your region, a VPN or proxy set to a supported region is required for initial data fetching.
-
----
-
-## 📸 Showcase
-
-<div align="center">
-
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_1.jpg" alt="Browse" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_2.jpg" alt="Live Lyrics" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_3.jpg" alt="Theme Customization" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_4.jpg" alt="Live Statistics" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_5.jpg" alt="Artist" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_6.jpg" alt="Album" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_7.jpg" alt="Player" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_8.jpg" alt="Settings" width="30%" />
-<img src="https://github.com/rukamori/ArchiveTune/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_9.jpg" alt="Settings" width="30%" />
-
+  <p><b>A modern Android music app with ad-free streaming, synced lyrics, offline playback, and an intuitive user experience.</b></p>
 </div>
 
 ---
 
-## ✨ Features
+## Overview
 
-<div align="center">
+Echo Music delivers a seamless, premium listening experience by leveraging YouTube Music's vast library — without the ads. It adds powerful extras including offline downloads, real-time synchronized lyrics, and environment-aware music recognition.
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>Playback</h3>
-        <ul>
-          <li>Multiple account support with quick switching</li>
-          <li>Ad-free playback with background listening</li>
-          <li>Your playlists, liked songs, and subscriptions appear after sign-in</li>
-          <li>Support local file and local song playback
-          <li>Fast startup and lightweight performance</li>
-          <li>Built for a private, uninterrupted listening experience</li>
-        </ul>
-      </div>
-    </td>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>Audio</h3>
-        <ul>
-          <li>EBU R128 loudness normalization</li>
-          <li>Tempo, pitch, and playback speed controls</li>
-          <li>Crossfade between tracks</li>
-          <li>System equalizer and spatial audio integration</li>
-        </ul>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>Lyrics &amp; Discovery</h3>
-        <ul>
-          <li>Live synced lyrics</li>
-          <li>Lyrics translation, AI Lyrics translation and romanization</li>
-          <li>Music recognition for songs around you</li>
-          <li>Listening statistics whenever you want them</li>
-        </ul>
-      </div>
-    </td>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>Sync &amp; Social</h3>
-        <ul>
-          <li>Import playlist from spotify</li>
-          <li>YouTube Music account integration</li>
-          <li>Last.fm scrobbling</li>
-          <li>ListenBrainz history sync</li>
-          <li>Discord rich presence support</li>
-        </ul>
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>Interface</h3>
-        <ul>
-          <li>Material 3 design language</li>
-          <li>Album-art powered dynamic colors</li>
-          <li>Up to 9 different player styles</li>
-          <li>Up to 8 different player background styles</li>
-          <li>Responsive layouts for different screen sizes</li>
-          <li>Clean browsing, player, artist, album, and lyrics views</li>
-        </ul>
-      </div>
-    </td>
-    <td width="50%" valign="top">
-      <div align="left">
-        <h3>Customization</h3>
-        <ul>
-          <li>Deep playback and interface settings</li>
-          <li>Dynamic color theming options</li>
-          <li>Gesture customization</li>
-          <li>Animation and layout tuning</li>
-          <li>Flexible controls to shape the app around your workflow</li>
-        </ul>
-      </div>
-    </td>
-  </tr>
-</table>
+> [!IMPORTANT]
+> **In-app OTA updates have been permanently removed.** Please update manually via the website. Echo Music is completely free and ad-free; the few ads shown during a manual download help support the ongoing development of this project. Please do not open issues requesting to bring this back. Thank you for your support!
 
+> [!IMPORTANT]
+> **Update Schedule (Effective Sept 1, 2026):** Echo Music now receives bi-weekly updates! New releases roll out every Wednesday and Saturday (IST), featuring the latest improvements. This schedule helps us push crucial updates faster and keep a proper track of development. You can also track upcoming changes directly in the app by going to **Settings > System Update > Upcoming Update**.
+
+---
+- **Discord**: [Join the Echo Music Discord server](https://discord.gg/Xt5hgsJJuA)
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Features](#features)
+- [Installation & Setup](#installation--setup)
+- [Support the Project](#support-the-project)
+- [Contributors](#contributors)
+- [Special Thanks](#special-thanks)
+
+---
+
+## Screenshots
+
+<div align="left">
+  <table style="margin: 0 auto; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 15px; border: none;">
+        <b>Home Screen</b><br><br>
+        <img src="Screenshots/sc_1.png" alt="Home Screen" width="220" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/>
+      </td>
+      <td align="center" style="padding: 15px; border: none;">
+        <b>Music Player</b><br><br>
+        <img src="Screenshots/sc_2.png" alt="Music Player" width="220" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/>
+      </td>
+      <td align="center" style="padding: 15px; border: none;">
+        <b>Synchronized Lyrics</b><br><br>
+        <img src="Screenshots/sc_3.png" alt="Synchronized Lyrics" width="220" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding: 15px; border: none;">
+        <b>Search & Explore</b><br><br>
+        <img src="Screenshots/sc_4.png" alt="Search & Explore" width="220" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/>
+      </td>
+      <td align="center" style="padding: 15px; border: none;">
+        <b>Music Library</b><br><br>
+        <img src="Screenshots/sc_5.png" alt="Music Library" width="220" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/>
+      </td>
+      <td align="center" style="padding: 15px; border: none;">
+        <b>Echo Find (Recognition)</b><br><br>
+        <img src="Screenshots/sc_6.png" alt="Echo Find" width="220" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
 
-## 📥 Download Now
+## Features
 
-<div align="center">
+### What's New
 
-<h2>Stable Release</h2>
+> - **Data Saver Mode (Beta)** — Automatically reduces data usage during playback for limited connections.
+> - **Settings Search Index** — Quickly find and navigate to any settings option instantly.
+> - **Redesigned UI** — Cleaner, faster, and more intuitive interface from the ground up.
+> - **Import from Spotify** — Bring your playlists and tracks over with ease.
+> - **Listen Together** — Sync music in real time, similar to Spotify Jam.
+> - **Podcast Support** — Listen to podcasts alongside your music library.
+> - **Local Media Support** — Play music files stored directly on your device.
+> - **Dynamic Island Support** — Enhanced playback notifications on supported Android devices.
 
-<table>
-  <thead>
-    <tr>
-      <th align="center">Obtainium</th>
-      <th align="center">IzzyOnDroid</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center">
-        <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/rukamori/ArchiveTune/">
-          <img src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png" height="50" alt="Get ArchiveTune on Obtainium">
-        </a>
-      </td>
-      <td align="center">
-        <a href="https://apt.izzysoft.de/fdroid/index/apk/moe.rukamori.archivetune">
-          <img src="https://raw.githubusercontent.com/rukamori/ArchiveTune/757d5932832e1da27ced56de98c5ad1275cf0db1/assets/IzzyOnDroidButtonBorder.svg" height="50" alt="Get ArchiveTune on IzzyOnDroid">
-        </a>
-      </td>
-    </tr>
-    <tr>
-      <th align="center" colspan="2">GitHub</th>
-    </tr>
-    <tr>
-      <td align="center" colspan="2">
-        <a href="https://github.com/rukamori/ArchiveTune/releases/latest">
-          <img src="https://raw.githubusercontent.com/rukamori/ArchiveTune/refs/heads/main/assets/badge_github.png" height="50" alt="Get ArchiveTune on GitHub">
-        </a>
-      </td>
-    </tr>
-    <tr>
-      <th align="center">OpenAPK</th>
-      <th align="center">Unclouded</th>
-    </tr>
-    <tr>
-      <td align="center">
-        <a href="https://www.openapk.net/archivetune/moe.rukamori.archivetune/">
-          <img src="https://www.openapk.net/images/openapk-badge.png" height="75" alt="Get ArchiveTune on OpenAPK">
-        </a>
-      </td>
-      <td align="center">
-        <a href="https://unclouded.app/apps/archivetune/">
-          <img src="https://raw.githubusercontent.com/rukamori/ArchiveTune/refs/heads/dev/assets/badge_unclouded.png" height="50" alt="Get ArchiveTune on Unclouded">
-        </a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<br>
 
-<h2>Nightly Build</h2>
+<details>
+<summary><b>Streaming & Playback</b></summary>
+<br>
 
-<table>
-  <thead>
+- **Ad-Free** — Stream without any interruptions.
+- **Data Saver Mode** — Reduce data consumption when streaming on cellular networks.
+- **Seamless Playback** — Switch effortlessly between audio-only and video modes.
+- **Background Playback** — Listen while using other apps or with the screen off.
+- **Offline Mode** — Download tracks, albums, and playlists via a dedicated download manager.
+- **Crossfade** — Smooth transitions between tracks.
+- **Canvas Animations** — Visual animations while playing music.
+
+</details>
+
+<details>
+<summary><b>Discovery & Echo Find</b></summary>
+<br>
+
+- **Echo Find** — Identify songs playing around you using advanced audio recognition.
+- **Echo Brain** — An intelligent, on-device engine that analyzes your listening momentum and auto-injects perfectly aligned tracks into your queue. Read more in the [Echo Brain Documentation](ECHO_BRAIN_DOCS.md).
+- **Smart Recommendations** — Personalized suggestions based on your listening history.
+- **Comprehensive Browsing** — Explore Charts, Podcasts, Moods, and Genres.
+
+</details>
+
+<details>
+<summary><b>Lyrics</b></summary>
+<br>
+
+- **Multiple Lyric Animations** — Choose from various lyric display styles.
+- **Word-by-Word Lyrics** — Precise per-word synchronization.
+- **Lyrics+** — New lyrics provider for improved accuracy and coverage.
+- **AI Translation** — Built-in Google Translate integration for lyrics in any language.
+
+</details>
+
+<details>
+<summary><b>Integrations</b></summary>
+<br>
+
+- **Music Sharing via Odesli** — Share songs as Song.link for cross-platform listening.
+- **Set as Ringtone** — Directly set any song as your device ringtone.
+
+</details>
+
+<details>
+<summary><b>Smart Playback</b></summary>
+<br>
+
+- **Pause on Mute** — Auto-pause when your device is muted.
+- **Resume on Bluetooth** — Playback resumes when headphones or earbuds reconnect.
+
+</details>
+
+<details>
+<summary><b>Customization</b></summary>
+<br>
+
+- **UI Density Scale** — Adjust interface spacing to your preference.
+- **High Refresh Rate Support** — Smoother UI and animations on supported displays.
+- **Hide Player Thumbnail** — Keep the player minimal without album art.
+- **Crop Album Art** — Adjust album art display to fit your style.
+- **Hide Video Songs** — Filter out video content from your feed.
+- **Hide YouTube Shorts** — Keep Shorts out of your music browsing.
+
+</details>
+
+---
+
+## Installation & Setup
+
+### Android Installation
+
+Download the latest pre-compiled APK from the [Releases Page](https://github.com/iad1tya/Echo-Music/releases/latest).
+
+<details>
+<summary><b>Building from Source</b></summary>
+<br>
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/iad1tya/Echo-Music.git
+   cd Echo-Music
+   ```
+
+2. **Configure Android SDK**
+   Create a `local.properties` file:
+   ```bash
+   echo "sdk.dir=/path/to/your/android/sdk" > local.properties
+   ```
+   *(For detailed paths on Windows/macOS/Linux, refer to [SETUP.md](SETUP.md))*
+
+3. **Firebase Configuration (Optional)**
+   Firebase is required for analytics and crash reporting. See the instructions in [SETUP.md](SETUP.md#3-configure-firebase-optional) for adding your `google-services.json`.
+
+4. **Build the Application**
+   Echo Music has two build variants: **FOSS** (without Google Play Services / Cast) and **GMS** (with Cast support).
+   
+   - To build the **FOSS** Universal Debug variant:
+     ```bash
+     ./gradlew assembleUniversalFossDebug
+     ```
+   - To build the **GMS** Universal Debug variant:
+     ```bash
+     ./gradlew assembleUniversalGmsDebug
+     ```
+   *(For optimized ARM64 builds, release builds, or other options, refer to [SETUP.md](SETUP.md))*
+
+</details>
+
+---
+
+## Support the Project
+
+If Echo Music has been useful to you, consider supporting its development.
+
+<div align="left">
+  <table style="margin: 0 auto; border-collapse: collapse; border: none;">
     <tr>
-      <th align="center">GitHub Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center">
-        <a href="https://nightly.link/rukamori/ArchiveTune/workflows/build/dev/app-gms-mobile-universal-release">
-          <img src="https://raw.githubusercontent.com/rukamori/ArchiveTune/refs/heads/main/assets/badge_github.png" height="50" alt="Download the latest ArchiveTune nightly build">
-        </a>
+      <td align="center" style="padding: 15px; border: none;">
+        <a href="https://buymeacoffee.com/iad1tya" style="text-decoration:none;"><img src="assets/bmac.png" alt="Buy Me A Coffee Logo" width="140" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/></a>
+      </td>
+      <td align="center" style="padding: 15px; border: none;">
+        <a href="https://intradeus.github.io/http-protocol-redirector/?r=upi://pay?pa=iad1tya@upi&pn=Aditya%20Yadav&am=&tn=Thank%20You" style="text-decoration:none;"><img src="assets/upi.svg" alt="UPI Logo" width="100" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/></a>
+      </td>
+      <td align="center" style="padding: 15px; border: none;">
+        <a href="https://www.patreon.com/cw/iad1tya" style="text-decoration:none;"><img src="assets/patreon3.png" alt="Patreon Logo" width="100" style="border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);"/></a>
       </td>
     </tr>
-  </tbody>
-</table>
+  </table>
 </div>
 
-> [!WARNING]  
-> **Notes:** The trusted download source is listed above; we are not responsible for any risks you may encounter from downloading from other sources.
+<br>
 
-## ❓ Need Help or Have Questions?
-Join Our Telegram Channels or Discord Servers for Support and Discussion.
+<details>
+<summary><b>Cryptocurrency Options</b></summary>
+<br>
 
-[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ArchiveTuneGC)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/XF2fpb9rTq)
+| Network | Address |
+| :--- | :--- |
+| **Bitcoin** | `bc1qcvyr7eekha8uytmffcvgzf4h7xy7shqzke35fy` |
+| **Ethereum** | `0x51bc91022E2dCef9974D5db2A0e22d57B360e700` |
+| **Solana** | `9wjca3EQnEiqzqgy7N5iqS1JGXJiknMQv6zHgL96t94S` |
 
----
-
-## 🌍 Globalization
-
-ArchiveTune belongs to everyone. Help us localize the experience for your region.
-
-[![Static Badge](https://img.shields.io/badge/translate-help?style=for-the-badge&logo=weblate&labelColor=grey)](https://translate.codeberg.org/engage/archivetune/)
-
-<div align="center">
-  <a href="https://translate.codeberg.org/engage/archivetune/">
-    <img src="https://translate.codeberg.org/widget/archivetune/horizontal-blue.svg" alt="Translation status" />
-  </a>
-</div>
-
-### ✨ Project Contributors
-<a href="https://github.com/rukamori/ArchiveTune/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=rukamori/ArchiveTune&columns=6" />
-</a>
-
-### 🛠️ Development & Engineering
-Interested in building the project or contributing? ArchiveTune is built on a high-performance Kotlin stack.
-<a href="CONTRIBUTING.md"><b>Read the Build & Contribution Guide →</b></a>
+</details>
 
 ---
 
-### Open-Source Acknowledgments
+## Contributors
 
-ArchiveTune is made possible by the work of many open-source projects and communities:
+Without the support of this incredible open-source community, none of this would be possible. Thank you to everyone who has contributed to Echo Music!
 
-- **Metrolist** by [Mostafa Alagamy](https://github.com/mostafaalagamy/Metrolist) for the base framework.
-- **SimpMusic** by [maxrave-dev](https://github.com/maxrave-dev/SimpMusic) for the lyrics API provider.
-- [BetterLyrics](https://better-lyrics.boidu.dev/) for word-by-word lyrics, unison and artwork provider support.
-- [Material Color Utilities](https://github.com/material-foundation/material-color-utilities)
-- [Read You](https://github.com/Ashinch/ReadYou) and [Seal](https://github.com/JunkFood02/Seal) for UI component inspiration.
-- Translators, beta testers, contributors, and community members who continue to support the project.
+<a href="https://github.com/iad1tya"><img src="https://github.com/iad1tya.png" width="60" style="border-radius: 50%;" alt="iad1tya" /></a>
+<a href="https://github.com/soumya-99"><img src="https://github.com/soumya-99.png" width="60" style="border-radius: 50%;" alt="soumya-99" /></a>
+<a href="https://github.com/VardhmanSurana"><img src="https://github.com/VardhmanSurana.png" width="60" style="border-radius: 50%;" alt="VardhmanSurana" /></a>
 
 ---
 
-## ⚖️ Legal Disclaimer
+## Special Thanks
 
-ArchiveTune is an independent third-party client.
-- Not affiliated with Google LLC or YouTube.
-- Does not bypass YouTube's technical protections.
-- Users are encouraged to support artists by purchasing music via official channels.
+Echo Music stands on the shoulders of several excellent open-source projects. Sincere thanks to:
 
-## ⚖️ License, Copyright, and Trademark Notice
+| Project | Description |
+| :--- | :--- |
+| **[Metrolist](https://github.com/MetrolistGroup/Metrolist)** & **[Vivi Music](https://github.com/vivizzz007/vivi-music)** | Foundational inspiration and architecture reference |
+| **[ArchiveTune](https://github.com/koiverse/ArchiveTune)** | Material You UI inspiration |
+| **[Better Lyrics](https://better-lyrics.boidu.dev/)** | Lyrics enhancement and synchronization |
+| **[SimpMusic](https://github.com/maxrave-dev/SimpMusic)** | Lyrics implementation reference |
+| **[Music Recognizer](https://github.com/aleksey-saenko/MusicRecognizer)** | Audio recognition (Echo Find) |
+| **[BravePipe](https://github.com/bravepipeproject/BravePipe)** | Decryption handling and backup playback engine |
 
-ArchiveTune is licensed under the **GNU General Public License v3.0 (GPLv3)**.
+---
 
-You may copy, modify, and redistribute the source code, including commercially, provided that you comply with the GPLv3. This includes preserving applicable copyright and license notices, clearly identifying modified versions, and providing the corresponding source code when required.
+## Legal Disclaimer & Terms of Use
 
-Copyright © Rukamori and the ArchiveTune contributors for their respective original contributions.
+### 1. 100% Free, Open-Source & Strictly Non-Commercial
+Echo Music is a fully open-source project (FOSS) created purely for educational purposes and personal use. We do not sell this application, nor do we monetize it in any way. There are no advertisements, no premium features, no subscriptions, and no hidden fees within the app. This project has absolutely no commercial value or financial intent.
 
-The **ArchiveTune™** name, logo, application icon, and official branding are not licensed under the GPLv3. Unofficial forks must not present themselves as official ArchiveTune releases or imply endorsement by the ArchiveTune maintainers.
+### 2. A Custom Browser with Content Filtering
+Echo Music acts strictly as a specialized, third-party web browser and client. It simply parses the publicly available website content and APIs of YouTube and YouTube Music, rendering them in a custom user interface. The ad-free experience it provides is fundamentally no different from using a standard web browser (like Chrome, Firefox, or Brave) equipped with a common ad-blocking extension (such as uBlock Origin).
 
-See the [`LICENSE`](LICENSE) file for the complete GPLv3 terms.
+### 3. Support Content Creators
+We deeply respect the hard work of artists, musicians, and content creators. We strongly encourage all users to subscribe to [YouTube Premium](https://www.youtube.com/premium). Purchasing a Premium subscription is the best way to financially support the creators you listen to and ensure the continued growth of the platform. Echo Music is built as a proof-of-concept for developers and enthusiasts, not to harm creators' revenues.
 
+### 4. No Hosting of Copyrighted Material
+We do not host, upload, distribute, or store any audio, video, or copyrighted media files on our own servers. All content accessed through this application is stored entirely on Google's/YouTube's servers and remains the property of their respective copyright owners. The app merely acts as a conduit to stream publicly accessible links.
+
+### 5. User Responsibility & Legal Contact
+The software is provided "AS IS", without warranty of any kind. The developers of Echo Music do not encourage or condone piracy. Users are solely responsible for ensuring their usage of this app complies with their local copyright laws and the Terms of Service of the platforms they access.
+
+Because we do not host any media files, we cannot process DMCA takedown requests for audio or video content. However, if you represent a copyright holder or have legal concerns regarding the open-source code itself, please contact us via email at: [hello@echomusic.fun](mailto:hello@echomusic.fun)
 
 ---
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/rukamori/ArchiveTune/refs/heads/dev/fastlane/metadata/android/en-US/images/ArchiveTuneFull.png" alt="ArchiveTune Banner" style="width: 100%; max-width: 500px;">
-  <p><b>If ArchiveTune elevated your music experience, please consider giving us a ⭐</b></p>
-  <br />
-  <img src="https://raw.githubusercontent.com/rukamori/ArchiveTune/refs/heads/dev/assets/badge_part.png" alt="ArchiveTune Banner" style="width: 180px">
+  <p>Licensed under <a href="LICENSE">GPL-3.0</a></p>
 </div>

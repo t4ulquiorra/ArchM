@@ -1,0 +1,7 @@
+=== ARCHM RELEASE SIGNING INFO ===
+Keystore File: release.keystore
+Key Alias: archmkey
+Store Password: HabO7LttIWnWgDbQ3Qjgotq
+Key Password: HabO7LttIWnWgDbQ3Qjgotq
+Generated: Fri Sep  4 04:04:36 IST 2026
+==================================
