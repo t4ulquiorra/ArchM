@@ -5,6 +5,28 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# WEB_REMIX Streaming - WebView JavaScript interfaces
+-keepclassmembers class com.archm.player.utils.sabr.EjsNTransformSolver$SolverWebView {
+    @android.webkit.JavascriptInterface public *;
+}
+-keepclassmembers class com.archm.player.utils.cipher.CipherWebView {
+    @android.webkit.JavascriptInterface public *;
+}
+-keepclassmembers class com.archm.player.utils.potoken.PoTokenWebView {
+    @android.webkit.JavascriptInterface public *;
+}
+
+# Keep streaming utility classes
+-keep class com.archm.player.utils.cipher.** { *; }
+-keep class com.archm.player.utils.sabr.** { *; }
+-keep class com.archm.player.utils.potoken.** { *; }
+
+# Keep coroutine continuation for WebView callbacks
+-keepclassmembers class * {
+    void resume(...);
+    void resumeWithException(...);
+}
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
@@ -48,9 +70,6 @@
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
-## Markwon — optional GIF support (android-gif-drawable) not bundled
--dontwarn pl.droidsonroids.gif.**
-
 -dontwarn javax.servlet.ServletContainerInitializer
 -dontwarn org.bouncycastle.jsse.BCSSLParameters
 -dontwarn org.bouncycastle.jsse.BCSSLSocket
@@ -66,23 +85,14 @@
 ## Rules for NewPipeExtractor
 -keep class org.schabi.newpipe.extractor.services.youtube.protos.** { *; }
 -keep class org.schabi.newpipe.extractor.timeago.patterns.** { *; }
--keep class org.schabi.newpipe.extractor.** { *; }
--keepclassmembers class org.schabi.newpipe.extractor.** { *; }
 -keep class org.mozilla.javascript.** { *; }
 -keep class org.mozilla.javascript.engine.** { *; }
--keep class org.mozilla.classfile.ClassFileWriter
 -dontwarn org.mozilla.javascript.JavaToJSONConverters
 -dontwarn org.mozilla.javascript.tools.**
 -keep class javax.script.** { *; }
 -dontwarn javax.script.**
 -keep class jdk.dynalink.** { *; }
 -dontwarn jdk.dynalink.**
-
-## Essential for reflection/deserialization
--keepattributes Signature
--keepattributes *Annotation*
--keepattributes EnclosingMethod
--keepattributes InnerClasses
 
 ## Logging (does not affect Timber)
 -assumenosideeffects class android.util.Log {
@@ -101,18 +111,17 @@
 -dontwarn java.beans.IntrospectionException
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
--dontwarn java.lang.management.**
 
 # Keep all classes within the kuromoji package
 -keep class com.atilika.kuromoji.** { *; }
 
 ## Queue Persistence Rules
 # Keep queue-related classes to prevent serialization issues in release builds
--keep class moe.rukamori.archivetune.models.PersistQueue { *; }
--keep class moe.rukamori.archivetune.models.PersistPlayerState { *; }
--keep class moe.rukamori.archivetune.models.QueueData { *; }
--keep class moe.rukamori.archivetune.models.QueueType { *; }
--keep class moe.rukamori.archivetune.playback.queues.** { *; }
+-keep class com.archm.player.models.PersistQueue { *; }
+-keep class com.archm.player.models.PersistPlayerState { *; }
+-keep class com.archm.player.models.QueueData { *; }
+-keep class com.archm.player.models.QueueType { *; }
+-keep class com.archm.player.playback.queues.** { *; }
 
 # Keep serialization methods for queue persistence
 -keepclassmembers class * implements java.io.Serializable {
@@ -120,40 +129,58 @@
     private void readObject(java.io.ObjectInputStream);
 }
 
-## Media3 Protection Rules
-# Protect Guava from conflicts with system versions
--keep class com.google.common.** { *; }
--keep class com.google.common.util.concurrent.** { *; }
--keep class com.google.common.collect.** { *; }
--dontwarn com.google.common.**
+## UCrop Rules
+-dontwarn com.yalantis.ucrop**
+-keep class com.yalantis.ucrop** { *; }
+-keep interface com.yalantis.ucrop** { *; }
 
-# Protect Media3 from obfuscation
--keep class androidx.media3.** { *; }
--keep interface androidx.media3.** { *; }
--dontwarn androidx.media3.**
+## Google Cast Rules
+-keep class com.archm.player.cast.** { *; }
+-keep class com.google.android.gms.cast.** { *; }
+-keep class androidx.mediarouter.** { *; }
 
-## JAudioTagger - suppress missing AWT/ImageIO classes (not available on Android)
--dontwarn java.awt.**
--dontwarn javax.imageio.**
--dontwarn javax.swing.**
--keep class org.jaudiotagger.** { *; }
+## JSoup re2j optional dependency
+-dontwarn com.google.re2j.**
 
-## Jetpack Glance
-# Keep ActionCallback implementations and their no-arg constructors
--keep class * implements androidx.glance.appwidget.action.ActionCallback {
-    public <init>();
+# Vibra fingerprint library
+-keep class com.archm.player.recognition.VibraSignature { *; }
+-keepclassmembers class com.archm.player.recognition.VibraSignature {
+    native <methods>;
 }
--keep class * implements androidx.glance.action.ActionCallback {
-    public <init>();
-}
-# Keep GlanceAppWidget and its receiver
--keep class * extends androidx.glance.appwidget.GlanceAppWidget { *; }
--keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver { *; }
 
-# internal Ktor HTTP Client
+## Kotlin Reflection Fix
+-keep class kotlin.Metadata { *; }
+-keep class kotlin.reflect.** { *; }
+-dontwarn kotlin.reflect.**
+
+## Ktor Serialization
 -keep class io.ktor.** { *; }
+-keepclassmembers class io.ktor.** { *; }
 -dontwarn io.ktor.**
--keep class moe.rukamori.archivetune.moriextractor.BackendExtractorResponse { *; }
 
-# engine HTTP Android/OkHttp Ktor
--dontwarn kotlinx.coroutines.**
+## Shazam Models
+-keep class com.music.shazamkit.models.** { *; }
+-keepclassmembers class com.music.shazamkit.models.** {
+    *;
+}
+
+## Kotlinx Serialization
+-keepattributes *Annotation*
+-keepclassmembers class com.music.shazamkit.models.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.music.shazamkit.models.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+## Listen Together Serialization
+-keep class com.archm.player.listentogether.** { *; }
+-keepclassmembers class com.archm.player.listentogether.** {
+    *;
+}
+-keepclassmembers class com.archm.player.listentogether.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.archm.player.listentogether.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}

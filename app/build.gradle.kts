@@ -1,218 +1,180 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
-
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.kotlin.ksp)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.aboutlibraries.android)
-}
+import java.net.URL
 
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
+plugins {
+    id("com.android.application")
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.ksp)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.protobufPlugin)
+}
 
-fun String.asBuildConfigString(): String =
-    "\"${
-        replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t")
-    }\""
+val hasGoogleServicesConfig = file("google-services.json").exists()
 
-val fallbackDataServerUrl = "archive-tune-admin-remote.vercel.app"
-val dataServerUrl =
-    rootProject
-        .file("DataServer.txt")
-        .takeIf { it.isFile }
-        ?.readText()
-        ?.trim()
-        ?.takeIf { it.startsWith("https://") || it.startsWith("http://") }
-        ?: fallbackDataServerUrl
-val apiBearerToken = System.getenv("API_BEARER_TOKEN")?.trim()
-    ?: localProperties.getProperty("API_BEARER_TOKEN")?.trim()
-    ?: ""
+if (hasGoogleServicesConfig) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
 
-val discordApplicationId =
-    (
-        localProperties.getProperty("DISCORD_APPLICATION_ID")
-            ?: System.getenv("DISCORD_APPLICATION_ID")
-            ?: "1165706613961789445"
-        ).trim()
-val discordApplicationIdLong = discordApplicationId.toLongOrNull() ?: 1165706613961789445L
-val discordRedirectScheme = "discord-$discordApplicationId"
-val releaseKeystoreFile = file("keystore/release.keystore")
-val releaseStorePassword =
-    System.getenv("STORE_PASSWORD")?.takeIf { it.isNotBlank() }
-        ?: System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
-val releaseKeyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
-val releaseKeyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-val hasReleaseSigningConfig =
-    releaseKeystoreFile.isFile &&
-        releaseStorePassword != null &&
-        releaseKeyAlias != null &&
-        releaseKeyPassword != null
 android {
-    namespace = "moe.rukamori.archivetune"
-    compileSdk = 37
+    namespace = "com.archm.player"
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
+
 
     defaultConfig {
         applicationId = "com.archm.player"
         minSdk = 26
-        targetSdk = 37
-        versionCode = 140
-        versionName = "14.1.0"
+        targetSdk = 36
+        versionCode = 153
+        versionName = "1.2.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        val lastfmApiKey =
-            localProperties.getProperty("LASTFM_API_KEY")
-                ?: System.getenv("LASTFM_API_KEY")
-                ?: ""
-        val lastfmSecret =
-            localProperties.getProperty("LASTFM_SECRET")
-                ?: System.getenv("LASTFM_SECRET")
-                ?: ""
-        buildConfigField("String", "LASTFM_API_KEY", "\"$lastfmApiKey\"")
-        buildConfigField("String", "LASTFM_SECRET", "\"$lastfmSecret\"")
+        // LastFM API keys from GitHub Secrets
+        val lastFmKey = localProperties.getProperty("LASTFM_API_KEY") ?: System.getenv("LASTFM_API_KEY") ?: ""
+        val lastFmSecret = localProperties.getProperty("LASTFM_SECRET") ?: System.getenv("LASTFM_SECRET") ?: ""
 
-        val togetherBearerToken =
-            localProperties.getProperty("TOGETHER_BEARER_TOKEN")
-                ?: System.getenv("TOGETHER_BEARER_TOKEN")
-                ?: ""
-        buildConfigField("String", "TOGETHER_BEARER_TOKEN", "\"$togetherBearerToken\"")
+        buildConfigField("String", "LASTFM_API_KEY", "\"$lastFmKey\"")
+        buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
 
-        val canvasBearerToken =
-            localProperties.getProperty("CANVAS_BEARER_TOKEN")
-                ?: System.getenv("CANVAS_BEARER_TOKEN")
-                ?: ""
-        buildConfigField("String", "CANVAS_BEARER_TOKEN", "\"$canvasBearerToken\"")
+        // GitHub OAuth keys
+        val githubClientId = localProperties.getProperty("GH_CLIENT_ID") ?: System.getenv("GH_CLIENT_ID") ?: ""
+        val githubClientSecret = localProperties.getProperty("GH_CLIENT_SECRET") ?: System.getenv("GH_CLIENT_SECRET") ?: ""
+        buildConfigField("String", "GH_CLIENT_ID", "\"$githubClientId\"")
+        buildConfigField("String", "GH_CLIENT_SECRET", "\"$githubClientSecret\"")
 
-        val extractorBearer =
-            localProperties.getProperty("EXTRACTOR_BEARER")
-                ?: System.getenv("EXTRACTOR_BEARER")
-                ?: ""
-        buildConfigField("String", "EXTRACTOR_BEARER", "\"$extractorBearer\"")
+        buildConfigField("String", "FLOW_NEURO_BASE_URL", project.findProperty("FLOW_NEURO_BASE_URL")?.toString()?.let { "\"$it\"" } ?: "\"https://api.flowneuroengine.com\"")
+        buildConfigField("String", "FLOW_NEURO_API_KEY", project.findProperty("FLOW_NEURO_API_KEY")?.toString()?.let { "\"$it\"" } ?: "\"\"")
 
-        buildConfigField("String", "DATA_SERVER_URL", dataServerUrl.asBuildConfigString())
-        buildConfigField("String", "API_BEARER_TOKEN", apiBearerToken.asBuildConfigString())
-        buildConfigField("boolean", "GATEKEEPER_ENABLED", "false")
+//add nightly build label support
+        val isNightly = project.hasProperty("nightly") && project.property("nightly") == "true"
+        buildConfigField("Boolean", "IS_NIGHTLY", isNightly.toString())
 
-        val nightlyBuildHash =
-            (
-                localProperties.getProperty("NIGHTLY_BUILD_HASH")
-                    ?: System.getenv("NIGHTLY_BUILD_HASH")
-                    ?: ""
-                ).trim()
-        buildConfigField("String", "NIGHTLY_BUILD_HASH", "\"$nightlyBuildHash\"")
-        buildConfigField("String", "DISTRIBUTION", "\"gms\"")
-        buildConfigField("boolean", "UPDATER_AVAILABLE", "true")
+        val discordApplicationId = "1518210534070292541"
+        val discordApplicationIdLong = 1518210534070292541L
+        val discordRedirectScheme = "discord-$discordApplicationId"
+
+        buildConfigField("String", "DISCORD_APPLICATION_ID", "\"$discordApplicationId\"")
+        buildConfigField("long", "DISCORD_APPLICATION_ID_LONG", "${discordApplicationIdLong}L")
+        buildConfigField("String", "DISCORD_REDIRECT_SCHEME", "\"$discordRedirectScheme\"")
+        manifestPlaceholders["discordRedirectScheme"] = discordRedirectScheme
     }
 
-    flavorDimensions += listOf("distribution", "device", "abi")
+
+    flavorDimensions += listOf("abi", "variant")
     productFlavors {
-        create("gms") {
-            dimension = "distribution"
-            isDefault = true
-            buildConfigField("String", "DISTRIBUTION", "\"gms\"")
-            buildConfigField("boolean", "UPDATER_AVAILABLE", "true")
-            buildConfigField("String", "DISCORD_APPLICATION_ID", "\"$discordApplicationId\"")
-            buildConfigField("long", "DISCORD_APPLICATION_ID_LONG", "${discordApplicationIdLong}L")
-            buildConfigField("String", "DISCORD_REDIRECT_SCHEME", "\"$discordRedirectScheme\"")
-            manifestPlaceholders["discordRedirectScheme"] = discordRedirectScheme
-        }
+        // FOSS variant (default) - F-Droid compatible, no Google Play Services
         create("foss") {
-            dimension = "distribution"
-            buildConfigField("String", "DISTRIBUTION", "\"foss\"")
-            buildConfigField("boolean", "UPDATER_AVAILABLE", "true")
-            buildConfigField("String", "DISCORD_APPLICATION_ID", "\"$discordApplicationId\"")
-            buildConfigField("long", "DISCORD_APPLICATION_ID_LONG", "${discordApplicationIdLong}L")
-            buildConfigField("String", "DISCORD_REDIRECT_SCHEME", "\"$discordRedirectScheme\"")
-            manifestPlaceholders["discordRedirectScheme"] = discordRedirectScheme
+            dimension = "variant"
+            isDefault = true
+            buildConfigField("Boolean", "CAST_AVAILABLE", "false")
         }
-        create("mobile") {
-            dimension = "device"
-            buildConfigField("String", "DEVICE", "\"mobile\"")
+
+        // GMS variant - with Google Cast support (requires Google Play Services)
+        create("gms") {
+            dimension = "variant"
+            buildConfigField("Boolean", "CAST_AVAILABLE", "true")
         }
-        create("tv") {
-            dimension = "device"
-            buildConfigField("String", "DEVICE", "\"tv\"")
-        }
+
         create("universal") {
             dimension = "abi"
-            ndk {
-                abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            }
             buildConfigField("String", "ARCHITECTURE", "\"universal\"")
         }
         create("arm64") {
             dimension = "abi"
-            ndk { abiFilters += "arm64-v8a" }
             buildConfigField("String", "ARCHITECTURE", "\"arm64\"")
+            ndk { abiFilters.add("arm64-v8a") }
         }
         create("armeabi") {
             dimension = "abi"
-            ndk { abiFilters += "armeabi-v7a" }
             buildConfigField("String", "ARCHITECTURE", "\"armeabi\"")
+            ndk { abiFilters.add("armeabi-v7a") }
         }
         create("x86") {
             dimension = "abi"
-            ndk { abiFilters += "x86" }
             buildConfigField("String", "ARCHITECTURE", "\"x86\"")
+            ndk { abiFilters.add("x86") }
         }
         create("x86_64") {
             dimension = "abi"
-            ndk { abiFilters += "x86_64" }
             buildConfigField("String", "ARCHITECTURE", "\"x86_64\"")
+            ndk { abiFilters.add("x86_64") }
         }
     }
 
     signingConfigs {
+        create("persistentDebug") {
+            storeFile = file("persistent-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+        val rootKeystore = rootProject.file("release.keystore")
+        val localKeystore = file("keystore/release.keystore")
+        val hasKeystore = rootKeystore.exists() || localKeystore.exists()
         create("release") {
-            if (hasReleaseSigningConfig) {
-                storeFile = releaseKeystoreFile
-                storePassword = releaseStorePassword
-                keyAlias = releaseKeyAlias
-                keyPassword = releaseKeyPassword
-            }
+            storeFile = if (rootKeystore.exists()) rootKeystore else localKeystore
+            storePassword = System.getenv("STORE_PASSWORD") ?: "HabO7LttIWnWgDbQ3Qjgotq"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "archmkey"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "HabO7LttIWnWgDbQ3Qjgotq"
+        }
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storePassword = "android"
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
         }
     }
 
     buildTypes {
         release {
-            if (hasReleaseSigningConfig) {
-                signingConfig = signingConfigs.getByName("release")
-            }
             isMinifyEnabled = true
             isShrinkResources = true
+            isCrunchPngs = false
+            isDebuggable = false
+            if (hasKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "ARCHITECTURE", "\"release\"")
         }
         debug {
-            buildConfigField("boolean", "GATEKEEPER_ENABLED", "false")
             applicationIdSuffix = ".debug"
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("String", "ARCHITECTURE", "\"debug\"")
         }
     }
 
     compileOptions {
-        isCoreLibraryDesugaringEnabled = false
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    kotlin {
+        jvmToolchain(21)
+        compilerOptions {
+            freeCompilerArgs.add("-Xannotation-default-target=param-property")
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
-        prefab = true
     }
 
     dependenciesInfo {
@@ -233,7 +195,7 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
             keepDebugSymbols += listOf(
                 "**/libandroidx.graphics.path.so",
                 "**/libdatastore_shared_counter.so"
@@ -244,194 +206,156 @@ android {
             excludes += "META-INF/NOTICE.md"
             excludes += "META-INF/CONTRIBUTORS.md"
             excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+            excludes += "META-INF/DEPENDENCIES"
         }
     }
-
 }
 
-kotlin {
-    jvmToolchain(21)
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+                create("kotlin") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.addAll(
+            "-opt-in=kotlin.RequiresOptIn"
+        )
+        suppressWarnings.set(false)
+    }
 }
 
 dependencies {
+    implementation(project(":core"))
+    implementation(project(":playback"))
+
+
+
+    // Firebase - GMS flavor only (excluded from F-Droid / FOSS builds)
+    "gmsImplementation"(platform("com.google.firebase:firebase-bom:33.1.0"))
+    "gmsImplementation"("com.google.firebase:firebase-analytics")
+    "gmsImplementation"("com.google.firebase:firebase-crashlytics")
+
+    // Google Drive Sync - GMS flavor only
+    "gmsImplementation"(libs.play.services.auth)
+    "gmsImplementation"(libs.google.api.client.android)
+    "gmsImplementation"(libs.google.api.services.drive) {
+        exclude(group = "org.apache.httpcomponents")
+    }
+
+
+    implementation(libs.haze)
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)
 
     implementation(libs.activity)
-    implementation(libs.navigation)
     implementation(libs.hilt.navigation)
     implementation(libs.datastore)
-    implementation(libs.work.runtime)
-    implementation("androidx.browser:browser:1.10.0")
 
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.util)
-    compileOnly("androidx.compose.ui:ui-tooling-preview:${libs.versions.compose.get()}")
-    debugImplementation("androidx.compose.ui:ui-tooling-preview:${libs.versions.compose.get()}")
-    debugImplementation(libs.compose.ui.tooling)
+    implementation(libs.compose.ui.tooling)
     implementation(libs.compose.animation)
-    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.reorderable)
 
     implementation(libs.viewmodel)
     implementation(libs.viewmodel.compose)
-    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.process)
 
     implementation(libs.material3)
+    implementation(libs.androidx.adaptive)
+    implementation(libs.androidx.adaptive.layout)
+    implementation(libs.androidx.adaptive.navigation)
     implementation(libs.palette)
-    implementation(libs.androidsvg)
-    implementation(libs.aboutlibraries.core)
-    implementation(libs.markwon.core)
-    implementation(libs.markwon.ext.strikethrough)
-    implementation(libs.markwon.ext.tables)
-    implementation(libs.markwon.ext.tasklist)
-    implementation(libs.markwon.html)
-    implementation(libs.markwon.image)
-    implementation(libs.markwon.linkify)
-    implementation(libs.markwon.simple.ext)
+    implementation(libs.materialKolor)
+    implementation(libs.androidx.browser)
+
+    implementation(libs.appcompat)
 
     implementation(libs.coil)
-    implementation(libs.coil.gif)
     implementation(libs.coil.network.okhttp)
+
+    implementation(libs.ucrop)
 
     implementation(libs.shimmer)
 
-    // Glance Widget support
-    implementation("androidx.glance:glance:1.1.1")
-    implementation("androidx.glance:glance-appwidget:1.1.1")
-    implementation("androidx.glance:glance-material3:1.1.1")
-
     implementation(libs.media3)
-    implementation("androidx.media3:media3-exoplayer-hls:${libs.versions.media3.get()}")
     implementation(libs.media3.session)
+    implementation(libs.media3.hls)
+    implementation(libs.media3.ui)
     implementation(libs.media3.okhttp)
-    implementation("androidx.media3:media3-ui:${libs.versions.media3.get()}")
-    implementation("androidx.media3:media3-ui-compose:${libs.versions.media3.get()}")
-    add("gmsImplementation", libs.media3.cast)
-    add("gmsImplementation", libs.mediarouter)
-    implementation(libs.squigglyslider)
 
+    // Google Cast - only included in GMS flavor (not available in F-Droid/FOSS builds)
+    "gmsImplementation"(libs.mediarouter)
+    "gmsImplementation"(libs.cast.framework)
 
     implementation(libs.room.runtime)
     implementation(libs.kuromoji.ipadic)
-    ksp(libs.room.compiler)
+    implementation(libs.tinypinyin)
+
     implementation(libs.room.ktx)
 
     implementation(libs.apache.lang3)
 
     implementation(libs.hilt)
-    implementation(libs.re2j)
-    annotationProcessor(libs.kotlin.metadata.jvm)
+    implementation(libs.jsoup)
     ksp(libs.hilt.compiler)
-    ksp(libs.kotlin.metadata.jvm)
 
-    implementation(project(":core"))
-    implementation(project(":lyrics:kugou"))
-    implementation(project(":lyrics:lrclib"))
-    implementation(project(":lyrics:simpmusic"))
-    implementation(project(":lyrics:paxsenix"))
-    implementation(project(":lyrics:betterlyrics"))
-    implementation(project(":lyrics:unison"))
-    implementation(project(":lyrics:youlyplus"))
-    implementation(project(":lastfm"))
+    implementation(project(":innertube"))
+    implementation(project(":lyrics"))
+    implementation(project(":kugou"))
+    implementation(project(":lrclib"))
+    implementation(project(":betterlyrics"))
+    implementation(project(":simpmusic"))
+    implementation(project(":youlyplus"))
     implementation(project(":canvas"))
     implementation(project(":shazamkit"))
-    implementation(project(":spotifycore"))
-    implementation(project(":moriextractor"))
-    implementation(project(":morideobfuscator"))
-    implementation("com.materialkolor:material-kolor:5.0.0-alpha07")
+    implementation(project(":artistvideo"))
+    implementation(project(":applecanvas"))
+    implementation(project(":echomusiccanvas"))
+    implementation(project(":paxsenixlyrics"))
+    implementation(project(":unison"))
+
 
     implementation(libs.ktor.client.core)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
     implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.json)
-    implementation(libs.ktor.client.websockets)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)
-    implementation(libs.ktor.server.websockets)
-    implementation(libs.ktor.server.content.negotiation)
+
+    // Protobuf for message serialization (lite version for Android)
+    implementation(libs.protobuf.javalite)
+    implementation(libs.protobuf.kotlin.lite)
 
     coreLibraryDesugaring(libs.desugaring)
-
     implementation(libs.timber)
-    testImplementation(libs.junit)
-    testImplementation(libs.turbine)
-    implementation(libs.translator)
-    implementation("androidx.lifecycle:lifecycle-process:2.11.0")
-    implementation("androidx.compose.material3.adaptive:adaptive:1.3.0-rc01")
-    implementation(libs.accompanist.lyrics.ui)
-    implementation(libs.accompanist.lyrics.core)
+    implementation(libs.smoothCorner)
+    implementation(libs.lottie.compose)
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.ffmpeg.kit.audio)
 
-    implementation("org.json:json:20240303")
-}
-
-androidComponents {
-    onVariants(selector().all()) { variant ->
-        val capitalizedVariantName =
-            variant.name.replaceFirstChar { character ->
-                if (character.isLowerCase()) character.titlecase() else character.toString()
-            }
-        val generateIconPack =
-            tasks.register<GenerateIconPackTask>("generate${capitalizedVariantName}IconPack") {
-                metadataFile.set(rootProject.layout.projectDirectory.file("IconPack/metadata.json"))
-                svgDirectory.set(rootProject.layout.projectDirectory.dir("IconPack/svg"))
-                applicationId.set(variant.applicationId)
-                targetActivityClassName.set("moe.rukamori.archivetune.MainActivity")
-                resourceOutputDirectory.set(
-                    layout.buildDirectory.dir("generated/iconPack/${variant.name}/res"),
-                )
-                assetOutputDirectory.set(
-                    layout.buildDirectory.dir("generated/iconPack/${variant.name}/assets"),
-                )
-                manifestOutputFile.set(
-                    layout.buildDirectory.file(
-                        "generated/iconPack/${variant.name}/AndroidManifest.xml",
-                    ),
-                )
-            }
-
-        variant.sources.res?.addGeneratedSourceDirectory(
-            generateIconPack,
-            GenerateIconPackTask::resourceOutputDirectory,
-        )
-        variant.sources.assets?.addGeneratedSourceDirectory(
-            generateIconPack,
-            GenerateIconPackTask::assetOutputDirectory,
-        )
-        variant.sources.manifests.addGeneratedManifestFile(
-            generateIconPack,
-            GenerateIconPackTask::manifestOutputFile,
-        )
-    }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
-        optIn.add("androidx.compose.material3.ExperimentalMaterial3Api")
-        optIn.add("androidx.compose.material3.ExperimentalMaterial3ExpressiveApi")
-        freeCompilerArgs.addAll(
-            "-opt-in=kotlin.RequiresOptIn"
-        )
-        // Suppress warnings
-        suppressWarnings.set(true)
-    }
-}
-
-configurations.configureEach {
-    resolutionStrategy.force(
-        "androidx.compose.runtime:runtime:${libs.versions.compose.get()}",
-        "androidx.compose.foundation:foundation:${libs.versions.compose.get()}",
-        "androidx.compose.ui:ui:${libs.versions.compose.get()}",
-        "androidx.compose.ui:ui-util:${libs.versions.compose.get()}",
-        "androidx.compose.ui:ui-tooling:${libs.versions.compose.get()}",
-        "androidx.compose.animation:animation-graphics:${libs.versions.compose.get()}",
-        "org.jetbrains.kotlin:kotlin-metadata-jvm:${libs.versions.kotlinMetadata.get()}",
-    )
 }
