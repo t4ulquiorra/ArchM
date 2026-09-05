@@ -749,8 +749,6 @@ fun PlaylistListCard(
             isActive = false,
             isPlaying = false,
             shape = RoundedCornerShape(24.dp),
-            contentScale = ContentScale.Crop,
-            showPlaceholder = true,
             modifier =
                 Modifier
                     .size(72.dp),
@@ -919,7 +917,6 @@ fun PlaylistGridCard(
                 isActive = false,
                 isPlaying = false,
                 shape = RoundedCornerShape(26.dp),
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
             // Play overlay on bottom right of grid cover

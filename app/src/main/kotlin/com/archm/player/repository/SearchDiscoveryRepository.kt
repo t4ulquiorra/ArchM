@@ -87,7 +87,6 @@ class SearchDiscoveryRepository
                     .search(
                         query = query,
                         filter = filter,
-                        useAccountContext = false,
                     ).getOrThrow()
                     .items
                     .filterIsInstance<T>()
