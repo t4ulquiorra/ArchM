@@ -88,7 +88,6 @@ import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
-import com.archm.player.constants.PlaylistEditLockKey
 import com.archm.player.constants.PlaylistSortDescendingKey
 import com.archm.player.constants.PlaylistSortType
 import com.archm.player.constants.PlaylistSortTypeKey
@@ -130,10 +129,9 @@ fun LibraryPlaylistsScreen(
     val (sortType, onSortTypeChange) =
         rememberEnumPreference(
             PlaylistSortTypeKey,
-            PlaylistSortType.CUSTOM,
+            PlaylistSortType.CREATE_DATE,
         )
     val (sortDescending, onSortDescendingChange) = rememberPreference(PlaylistSortDescendingKey, true)
-    var locked by rememberPreference(PlaylistEditLockKey, defaultValue = true)
     val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
     val filteredPlaylistIds = emptyList<String>()
 
@@ -145,7 +143,7 @@ fun LibraryPlaylistsScreen(
                 val name = playlist.playlist.name
                 val matchesName = !name.contains("episode", ignoreCase = true)
                 val matchesTags = selectedTagIds.isEmpty() || playlist.id in filteredPlaylistIds
-                val matchesVisibility = showHidden || !playlist.playlist.isHidden
+                val matchesVisibility = true
                 matchesName && matchesTags && matchesVisibility
             }
         }
@@ -174,12 +172,6 @@ fun LibraryPlaylistsScreen(
 
     LaunchedEffect(reorderableState.isAnyItemDragging) {
         if (!reorderableState.isAnyItemDragging && pendingPlaylistOrderUpdate) {
-            viewModel.updateCustomPlaylistOrder(
-                mergeVisiblePlaylistOrder(
-                    currentOrder = playlists,
-                    visibleOrder = mutablePlaylists,
-                ),
-            )
             pendingPlaylistOrderUpdate = false
         }
     }
@@ -238,13 +230,9 @@ fun LibraryPlaylistsScreen(
                         PlaylistSortType.LAST_UPDATED -> {
                             stringResource(R.string.recently_updated)
                         }
-
-                        PlaylistSortType.CUSTOM -> {
-                            stringResource(R.string.custom_order)
-                        }
                     }
 
-                val showSortDirection = sortType != PlaylistSortType.CUSTOM
+                val showSortDirection = true
                 val sortDirectionRotation by animateFloatAsState(
                     targetValue = if (sortDescending) 0f else 180f,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
@@ -293,7 +281,6 @@ fun LibraryPlaylistsScreen(
                                         PlaylistSortType.NAME -> stringResource(R.string.sort_a_to_z)
                                         PlaylistSortType.SONG_COUNT -> stringResource(R.string.tracks_count_label)
                                         PlaylistSortType.LAST_UPDATED -> stringResource(R.string.recently_updated)
-                                        PlaylistSortType.CUSTOM -> stringResource(R.string.custom_order)
                                     }
                                 DropdownMenuItem(
                                     text = { Text(label) },
@@ -362,20 +349,6 @@ fun LibraryPlaylistsScreen(
 
                 // Right: list/grid toggle & add button
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (sortType == PlaylistSortType.CUSTOM) {
-                        IconButton(
-                            onClick = { locked = !locked },
-                            modifier = Modifier.size(40.dp),
-                        ) {
-                            Icon(
-                                painter = painterResource(if (locked) R.drawable.lock else R.drawable.lock_open),
-                                contentDescription = null,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-
                     // List/Grid Toggle
                     Row(
                         modifier =
@@ -486,8 +459,8 @@ fun LibraryPlaylistsScreen(
                     }
                 }
             } else {
-                val listPlaylists = if (sortType == PlaylistSortType.CUSTOM) mutablePlaylists else visiblePlaylists
-                val showDragHandles = sortType == PlaylistSortType.CUSTOM && !locked
+                val listPlaylists = visiblePlaylists
+                val showDragHandles = false
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = playerAwareBottomPadding),
@@ -538,23 +511,6 @@ fun LibraryPlaylistsScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-private fun mergeVisiblePlaylistOrder(
-    currentOrder: List<Playlist>,
-    visibleOrder: List<Playlist>,
-): List<Playlist> {
-    if (visibleOrder.isEmpty()) return currentOrder
-
-    val visibleIds = visibleOrder.mapTo(HashSet(visibleOrder.size)) { playlist -> playlist.id }
-    val reorderedVisible = visibleOrder.iterator()
-    return currentOrder.map { playlist ->
-        if (playlist.id in visibleIds) {
-            reorderedVisible.next()
-        } else {
-            playlist
         }
     }
 }
@@ -724,7 +680,7 @@ fun PlaylistListCard(
         label = "PlaylistListCardScale",
     )
 
-    val hiddenAlpha = if (playlist.playlist.isHidden) 0.45f else 1f
+    val hiddenAlpha = 1f
 
     Row(
         modifier =
@@ -806,16 +762,6 @@ fun PlaylistListCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-
-                if (playlist.playlist.isHidden) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        painter = painterResource(id = R.drawable.visibility_off),
-                        contentDescription = stringResource(R.string.hide_playlist),
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                    )
-                }
             }
         }
 
@@ -886,7 +832,7 @@ fun PlaylistGridCard(
         label = "PlaylistGridCardScale",
     )
 
-    val hiddenAlpha = if (playlist.playlist.isHidden) 0.45f else 1f
+    val hiddenAlpha = 1f
 
     Column(
         modifier =
@@ -936,19 +882,6 @@ fun PlaylistGridCard(
                     contentDescription = stringResource(R.string.play),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(16.dp),
-                )
-            }
-
-            if (playlist.playlist.isHidden) {
-                Icon(
-                    painter = painterResource(id = R.drawable.visibility_off),
-                    contentDescription = stringResource(R.string.hide_playlist),
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp)
-                            .size(16.dp),
-                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 )
             }
         }

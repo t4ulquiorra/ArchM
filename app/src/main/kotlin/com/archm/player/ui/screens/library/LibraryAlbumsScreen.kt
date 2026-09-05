@@ -170,55 +170,51 @@ fun LibraryAlbumsScreen(
             ) {
                 var showSortMenu by remember { mutableStateOf(false) }
                 val currentSortLabel =
-                    if (filter == AlbumFilter.DOWNLOADED_FULL) {
-                        stringResource(R.string.filter_downloaded)
-                    } else {
-                        when (sortType) {
-                            AlbumSortType.CREATE_DATE -> {
-                                if (sortDescending) {
-                                    stringResource(
-                                        R.string.newest_first,
-                                    )
-                                } else {
-                                    stringResource(R.string.oldest_first)
-                                }
+                    when (sortType) {
+                        AlbumSortType.CREATE_DATE -> {
+                            if (sortDescending) {
+                                stringResource(
+                                    R.string.newest_first,
+                                )
+                            } else {
+                                stringResource(R.string.oldest_first)
                             }
+                        }
 
-                            AlbumSortType.NAME -> {
-                                if (sortDescending) stringResource(R.string.sort_z_to_a) else stringResource(R.string.sort_a_to_z)
-                            }
+                        AlbumSortType.NAME -> {
+                            if (sortDescending) stringResource(R.string.sort_z_to_a) else stringResource(R.string.sort_a_to_z)
+                        }
 
-                            AlbumSortType.ARTIST -> {
-                                stringResource(R.string.sort_artist)
-                            }
+                        AlbumSortType.ARTIST -> {
+                            stringResource(R.string.sort_artist)
+                        }
 
-                            AlbumSortType.YEAR -> {
-                                if (sortDescending) stringResource(R.string.newest_year) else stringResource(R.string.oldest_year)
-                            }
+                        AlbumSortType.YEAR -> {
+                            if (sortDescending) stringResource(R.string.newest_year) else stringResource(R.string.oldest_year)
+                        }
 
-                            AlbumSortType.SONG_COUNT -> {
-                                if (sortDescending) {
-                                    stringResource(
-                                        R.string.most_tracks,
-                                    )
-                                } else {
-                                    stringResource(R.string.least_tracks)
-                                }
+                        AlbumSortType.SONG_COUNT -> {
+                            if (sortDescending) {
+                                stringResource(
+                                    R.string.most_tracks,
+                                )
+                            } else {
+                                stringResource(R.string.least_tracks)
                             }
+                        }
 
-                            AlbumSortType.LENGTH -> {
-                                if (sortDescending) {
-                                    stringResource(
-                                        R.string.longest_duration,
-                                    )
-                                } else {
-                                    stringResource(R.string.shortest_duration)
-                                }
+                        AlbumSortType.LENGTH -> {
+                            if (sortDescending) {
+                                stringResource(
+                                    R.string.longest_duration,
+                                )
+                            } else {
+                                stringResource(R.string.shortest_duration)
                             }
+                        }
 
-                            AlbumSortType.PLAY_TIME -> {
-                                stringResource(R.string.most_played_sort)
-                            }
+                        AlbumSortType.PLAY_TIME -> {
+                            stringResource(R.string.most_played_sort)
                         }
                     }
 
@@ -276,19 +272,6 @@ fun LibraryAlbumsScreen(
                                     },
                                 )
                             }
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.filter_downloaded)) },
-                                onClick = {
-                                    filter = AlbumFilter.DOWNLOADED_FULL
-                                    showSortMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.offline),
-                                        contentDescription = null,
-                                    )
-                                },
-                            )
                         }
                     }
 

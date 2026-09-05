@@ -84,6 +84,7 @@ import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
 import com.archm.player.constants.LibraryFilter
+import com.archm.player.db.entities.Song
 import com.archm.player.extensions.toMediaItem
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.ui.component.ExpressivePullToRefreshBox
@@ -113,7 +114,7 @@ fun LibraryMixScreen(
     val database = LocalDatabase.current
 
     val likedSongsCount by database.likedSongsCount().collectAsState(initial = 0)
-    val recentSongs by database.recentSongs(15).collectAsState(initial = emptyList())
+    val recentSongs by viewModel.recentSongs.collectAsState(initial = emptyList())
     val topSize by viewModel.topValue.collectAsStateWithLifecycle(initialValue = "50")
     val myTopTitle = stringResource(R.string.my_top)
     val topPlaylistTitle = remember(myTopTitle, topSize) { "$myTopTitle $topSize" }

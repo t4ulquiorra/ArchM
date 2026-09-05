@@ -101,6 +101,23 @@ constructor(
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
+    fun refresh(filter: SongFilter = SongFilter.LIKED) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            when (filter) {
+                SongFilter.LIKED -> syncUtils.syncLikedSongs()
+                SongFilter.LIBRARY -> syncUtils.syncLibrarySongs()
+                SongFilter.UPLOADED -> syncUtils.syncUploadedSongs()
+                else -> {}
+            }
+            kotlinx.coroutines.delay(500)
+            _isRefreshing.value = false
+        }
+    }
+
     fun syncLikedSongs() {
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLikedSongs() }
     }
@@ -138,8 +155,16 @@ constructor(
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     fun sync() {
-        viewModelScope.launch(Dispatchers.IO) { syncUtils.syncArtistsSubscriptions() }
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            syncUtils.syncArtistsSubscriptions()
+            kotlinx.coroutines.delay(500)
+            _isRefreshing.value = false
+        }
     }
 
     init {
@@ -193,8 +218,16 @@ constructor(
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     fun sync() {
-        viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLikedAlbums() }
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            syncUtils.syncLikedAlbums()
+            kotlinx.coroutines.delay(500)
+            _isRefreshing.value = false
+        }
     }
 
     init {
@@ -245,8 +278,16 @@ constructor(
                 database.playlists(sortType, descending).map { it.filterYoutubeShorts(hideYoutubeShorts) }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     fun sync() {
-        viewModelScope.launch(Dispatchers.IO) { syncUtils.syncSavedPlaylists() }
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            syncUtils.syncSavedPlaylists()
+            kotlinx.coroutines.delay(500)
+            _isRefreshing.value = false
+        }
     }
 
     val topValue =
@@ -296,10 +337,12 @@ constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
 
-    val syncAllLibrary = {
-         viewModelScope.launch(Dispatchers.IO) {
-             syncUtils.tryAutoSync()
-         }
+    fun syncAllLibrary() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isRefreshing.value = true
+            syncUtils.performFullSyncSuspend()
+            _isRefreshing.value = false
+        }
     }
 
     fun refresh() {
@@ -309,6 +352,14 @@ constructor(
             _isRefreshing.value = false
         }
     }
+
+    val recentSongs =
+        database
+            .events()
+            .map { events ->
+                events.map { it.song }.distinctBy { it.id }.take(15)
+            }
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val topValue =
         context.dataStore.data
