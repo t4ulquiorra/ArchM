@@ -118,6 +118,7 @@ class HomeViewModel @Inject constructor(
     val syncUtils: SyncUtils,
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
+    private val _isLoadingMore = MutableStateFlow(false)
     val isLoading = MutableStateFlow(false)
     val isRandomizing = MutableStateFlow(false)
 
@@ -748,7 +749,6 @@ class HomeViewModel @Inject constructor(
         isLoading.value = false
     }
 
-    private val _isLoadingMore = MutableStateFlow(false)
     fun loadMoreYouTubeItems(continuation: String?) {
         if (continuation == null || _isLoadingMore.value) return
         val hideExplicit = context.dataStore.get(HideExplicitKey, false)

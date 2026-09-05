@@ -165,10 +165,9 @@ fun LocalSongScreen(
         )
     val sortType = remember(sortTypeName) { LocalSongSortType.valueOf(sortTypeName) }
     val scanConfig =
-        remember(minimumDurationSeconds, includedFolders, excludedFolders) {
+        remember(minimumDurationSeconds, excludedFolders) {
             LocalSongScanConfig(
                 minimumDurationSeconds = minimumDurationSeconds,
-                includedFolders = includedFolders,
                 excludedFolders = excludedFolders,
             )
         }
@@ -484,7 +483,6 @@ fun LocalSongScreen(
                         song = song,
                         showInLibraryIcon = false,
                         showDownloadIcon = false,
-                        showSongIconPlaceholder = true,
                         isActive = song.id == mediaMetadata?.id,
                         isPlaying = isPlaying,
                         trailingContent = {

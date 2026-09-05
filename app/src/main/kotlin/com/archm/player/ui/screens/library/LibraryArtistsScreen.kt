@@ -523,8 +523,6 @@ fun LibraryArtistsScreen(
                         isActive = false,
                         isPlaying = false,
                         shape = CircleShape,
-                        contentScale = ContentScale.Crop,
-                        showPlaceholder = true,
                         modifier =
                             Modifier
                                 .size(52.dp),
@@ -619,7 +617,6 @@ fun LibraryArtistsScreen(
                                     isActive = false,
                                     isPlaying = false,
                                     shape = CircleShape,
-                                    contentScale = ContentScale.Crop,
                                     modifier =
                                         Modifier
                                             .size(60.dp),

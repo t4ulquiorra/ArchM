@@ -422,8 +422,6 @@ private fun SearchMoodAndGenresGrid(
             ) { item ->
                 MoodAndGenresButton(
                     title = item.title,
-                    stripeColor = item.stripeColor,
-                    endpoint = item.endpoint,
                     onClick = {
                         navController.navigate("youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}")
                     },
@@ -556,11 +554,9 @@ private fun SuggestedSongsSection(
                     YouTubeListItem(
                         item = song,
                         albumIndex = index + 1,
-                        viewCountText = song.viewCountText,
                         isActive = isActive,
                         isPlaying = isPlaying,
                         isSwipeable = false,
-                        showActiveContainer = false,
                         trailingContent = {
                             YouTubeSongMenuButton(song = song, navController = navController)
                         },

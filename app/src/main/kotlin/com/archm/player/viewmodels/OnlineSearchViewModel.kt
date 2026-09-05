@@ -130,18 +130,7 @@ class OnlineSearchViewModel @Inject constructor(
         sort: OnlineSearchSort = OnlineSearchSort.DEFAULT,
     ): List<com.music.innertube.models.YTItem> =
         when (sort) {
-            OnlineSearchSort.DEFAULT -> {
-                items
-            }
-
-            OnlineSearchSort.VIEWS -> {
-                items
-                    .withIndex()
-                    .sortedWith(
-                        compareByDescending<IndexedValue<com.music.innertube.models.YTItem>> {
-                            (it.value as? com.music.innertube.models.SongItem)?.viewCount ?: Long.MIN_VALUE
-                        }.thenBy { it.index },
-                    ).map { it.value }
-            }
+            OnlineSearchSort.DEFAULT -> items
+            OnlineSearchSort.VIEWS -> items
         }
 }

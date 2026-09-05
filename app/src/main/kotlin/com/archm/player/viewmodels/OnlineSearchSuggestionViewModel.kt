@@ -29,15 +29,23 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class OnlineSearchSuggestionViewModel
-@Inject
-constructor(
+class OnlineSearchSuggestionViewModel @Inject constructor(
     @ApplicationContext val context: Context,
-    database: MusicDatabase,
+    private val database: MusicDatabase,
 ) : ViewModel() {
     val query = MutableStateFlow("")
     private val _viewState = MutableStateFlow(SearchSuggestionViewState())
     val viewState = _viewState.asStateFlow()
+
+    fun updateQuery(query: String) {
+        this.query.value = query
+    }
+
+    fun deleteHistory(history: SearchHistory) {
+        database.query {
+            delete(history)
+        }
+    }
 
     init {
         viewModelScope.launch {

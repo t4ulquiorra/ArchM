@@ -1428,14 +1428,15 @@ fun SimilarRecommendationsTitle(
     navController: NavController,
     modifier: Modifier = Modifier,
 ) {
+    val title = recommendation.title
     HomeSectionHeader(
         label = stringResource(R.string.similar_to),
-        title = recommendation.title.title,
+        title = title.title,
         thumbnail =
-            recommendation.title.thumbnailUrl?.let { thumbnailUrl ->
+            title.thumbnailUrl?.let { thumbnailUrl ->
                 {
                     val shape =
-                        if (recommendation.title is Artist) {
+                        if (title is Artist) {
                             CircleShape
                         } else {
                             RoundedCornerShape(ThumbnailCornerRadius)
@@ -1451,17 +1452,17 @@ fun SimilarRecommendationsTitle(
                 }
             },
         onClick = {
-            when (recommendation.title) {
+            when (title) {
                 is Song -> {
-                    navController.navigate("album/${recommendation.title.album!!.id}")
+                    title.album?.id?.let { navController.navigate("album/$it") }
                 }
 
                 is Album -> {
-                    navController.navigate("album/${recommendation.title.id}")
+                    navController.navigate("album/${title.id}")
                 }
 
                 is Artist -> {
-                    navController.navigate("artist/${recommendation.title.id}")
+                    navController.navigate("artist/${title.id}")
                 }
 
                 is Playlist -> {}
