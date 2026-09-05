@@ -57,6 +57,7 @@ import com.archm.player.ui.screens.recognition.RecognitionScreen
 import com.archm.player.ui.screens.recognition.RecognitionHistoryScreen
 import com.archm.player.ui.screens.settings.UpdateSettings
 import com.archm.player.echomusic.updater.UpdateScreen
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.echomusic.changelog.ChangelogScreen
@@ -69,10 +70,15 @@ fun NavGraphBuilder.navigationBuilder(
     navController: NavHostController,
     scrollBehavior: TopAppBarScrollBehavior,
     activity: Activity,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    homeScrollConnection: NestedScrollConnection? = null,
 ) {
     composable(Screens.Home.route) {
-        HomeScreen(navController = navController, snackbarHostState = snackbarHostState)
+        HomeScreen(
+            navController = navController,
+            headerScrollConnection = homeScrollConnection,
+            snackbarHostState = snackbarHostState,
+        )
     }
 
     composable(Screens.Explore.route) {
@@ -127,6 +133,9 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("stats") {
         StatsScreen(navController)
+    }
+
+    composable("news") {
     }
 
     composable("mood_and_genres") {

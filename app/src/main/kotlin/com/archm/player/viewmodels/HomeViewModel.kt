@@ -396,6 +396,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun filterHomeChips(chips: List<HomePage.Chip>?): List<HomePage.Chip>? =
+        chips?.filterNot {
+            it.title.contains("podcasts", ignoreCase = true)
+        }
+
     private fun HomePage.extractQuickPicks(): Pair<HomePage, HomePage.Section?> {
         val quickPicksIndex = sections.indexOfFirst { section ->
             section.title.equals(context.getString(R.string.quick_picks), ignoreCase = true) ||
@@ -710,6 +715,7 @@ class HomeViewModel @Inject constructor(
                     val (pageWithoutQuickPicks, quickPicksSection) = page.extractQuickPicks()
                     remoteQuickPicks.value = quickPicksSection
                     homePage.value = pageWithoutQuickPicks.copy(
+                        chips = filterHomeChips(pageWithoutQuickPicks.chips),
                         sections = pageWithoutQuickPicks.sections.mapNotNull { section ->
                             val filteredItems = section.items
                                 .filterExplicit(hideExplicit)

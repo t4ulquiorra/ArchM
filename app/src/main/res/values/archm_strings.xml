@@ -58,4 +58,7 @@
     <string name="your_collection">Your Collection</string>
     <string name="your_playlists">Your Playlists</string>
     <string name="youtube_synced">YouTube synced</string>
+    <string name="news">News</string>
+    <string name="news_tooltip_title">New Announcements</string>
+    <string name="news_tooltip_body">You have unread announcements from developers.</string>
 </resources>
