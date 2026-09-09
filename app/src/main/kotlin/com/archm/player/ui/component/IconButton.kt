@@ -58,10 +58,10 @@ fun ResizableIconButton(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun IconButton(
+fun CombinedIconButton(
     onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onLongClick: () -> Unit = {},
     enabled: Boolean = true,
     colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -90,3 +90,22 @@ fun IconButton(
         CompositionLocalProvider(LocalContentColor provides contentColor, content = content)
     }
 }
+
+@Composable
+fun IconButton(
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable () -> Unit,
+) = CombinedIconButton(
+    onClick = onClick,
+    modifier = modifier,
+    onLongClick = onLongClick,
+    enabled = enabled,
+    colors = colors,
+    interactionSource = interactionSource,
+    content = content,
+)

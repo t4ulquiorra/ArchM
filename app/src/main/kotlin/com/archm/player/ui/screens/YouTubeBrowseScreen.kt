@@ -62,7 +62,7 @@ import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.YouTubeQueue
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.CombinedIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
 import com.archm.player.ui.component.YouTubeGridItem
@@ -165,7 +165,7 @@ fun YouTubeBrowseScreen(
                                             isPlaying = isPlaying,
                                             isSwipeable = false,
                                             trailingContent = {
-                                                IconButton(
+                                                CombinedIconButton(
                                                     onClick = {
                                                         menuState.show {
                                                             YouTubeSongMenu(
@@ -290,7 +290,7 @@ fun YouTubeBrowseScreen(
     TopAppBar(
         title = { Text(browseResult?.title.orEmpty()) },
         navigationIcon = {
-            IconButton(
+            CombinedIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {
