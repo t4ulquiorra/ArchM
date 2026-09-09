@@ -188,7 +188,6 @@ import com.archm.player.constants.DynamicThemeKey
 import com.archm.player.constants.EnableHighRefreshRateKey
 import com.archm.player.constants.FloatingToolbarBottomPadding
 import com.archm.player.constants.FloatingToolbarHorizontalPadding
-import com.archm.player.constants.ListenTogetherInTopBarKey
 import com.archm.player.constants.ListenTogetherUsernameKey
 import com.archm.player.constants.MiniPlayerBottomSpacing
 import com.archm.player.constants.MiniPlayerHeight
@@ -231,7 +230,6 @@ import com.archm.player.db.entities.Song
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
-import com.music.innertube.models.SongItem
 import kotlin.random.Random
 import com.archm.player.ui.component.*
 import com.archm.player.ui.component.backdrop.backdrops.rememberLayerBackdrop
@@ -854,13 +852,9 @@ class MainActivity : ComponentActivity() {
 
                 var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
 
-                LaunchedEffect(navBackStackEntry, listenTogetherInTopBar) {
+                LaunchedEffect(navBackStackEntry) {
                     val currentRoute = navBackStackEntry?.destination?.route
-                    val isListenTogetherScreen = currentRoute == Screens.ListenTogether.route || 
-                        currentRoute == "listen_together_from_topbar"
-                    shouldShowTopBar = currentRoute in topLevelScreens &&
-                        currentRoute != "settings" &&
-                        !(isListenTogetherScreen && listenTogetherInTopBar)
+                    shouldShowTopBar = currentRoute in topLevelScreens && currentRoute != "settings"
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -1364,7 +1358,7 @@ class MainActivity : ComponentActivity() {
 
                                                             is PlaylistItem -> {
                                                                 luckyItem.playEndpoint?.let {
-                                                                    playerConnection?.playQueue(YouTubeQueue.playlist(it))
+                                                                    playerConnection?.playQueue(YouTubeQueue(it))
                                                                 }
                                                             }
                                                         }
