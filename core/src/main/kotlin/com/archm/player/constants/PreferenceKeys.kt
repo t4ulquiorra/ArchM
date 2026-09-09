@@ -827,3 +827,17 @@ enum class MiniPlayerBackgroundStyle {
     GRADIENT,
     GLOW,
 }
+
+val SearchSourceKey = stringPreferencesKey("searchSource")
+
+enum class SearchSource {
+    LOCAL,
+    ONLINE,
+    ;
+
+    fun toggle() =
+        when (this) {
+            LOCAL -> ONLINE
+            ONLINE -> LOCAL
+        }
+}

@@ -39,6 +39,7 @@ import androidx.annotation.DrawableRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -239,6 +240,23 @@ import com.archm.player.ui.player.BottomSheetPlayer
 import com.archm.player.ui.screens.Screens
 import com.archm.player.ui.screens.WelcomeDialog
 import com.archm.player.ui.screens.navigationBuilder
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.TextFieldDefaults
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.archm.player.constants.SearchSource
+import com.archm.player.constants.SearchSourceKey
+import com.archm.player.ui.component.TopSearch
+import com.archm.player.ui.screens.search.LocalSearchScreen
+import com.archm.player.ui.screens.search.OnlineSearchScreen
+import com.archm.player.ui.screens.search.OnlineSearchResultArgument
+import com.archm.player.ui.screens.search.OnlineSearchResultRoutePrefix
+import com.archm.player.ui.screens.search.decodeOnlineSearchQuery
+import com.archm.player.ui.screens.search.onlineSearchResultRoute
+import com.archm.player.ui.utils.backToMain
+import com.archm.player.viewmodels.OnlineSearchSort
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.screens.settings.NavigationTab
 import com.archm.player.ui.theme.ColorSaver
@@ -671,24 +689,56 @@ class MainActivity : ComponentActivity() {
                     navigationItems.map(Screens::route) + "settings"
                 }
 
-                val (query, onQueryChange) = rememberSaveable(stateSaver = TextFieldValue.Saver) {
-                    mutableStateOf(TextFieldValue())
+                val (query, onQueryChange) =
+                    rememberSaveable(stateSaver = TextFieldValue.Saver) {
+                        mutableStateOf(TextFieldValue())
+                    }
+
+                var active by rememberSaveable {
+                    mutableStateOf(false)
                 }
 
-                val onSearch: (String) -> Unit = remember {
-                    { searchQuery ->
-                        if (searchQuery.isNotEmpty()) {
-                            navController.navigate("search/${URLEncoder.encode(searchQuery, "UTF-8")}")
+                val onActiveChange: (Boolean) -> Unit = { newActive ->
+                    active = newActive
+                    if (!newActive) {
+                        focusManager.clearFocus()
+                        if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
+                            onQueryChange(TextFieldValue())
+                        }
+                    }
+                }
 
-                            if (dataStore[PauseSearchHistoryKey] != true) {
-                                lifecycleScope.launch(Dispatchers.IO) {
-                                    database.query {
-                                        insert(SearchHistory(query = searchQuery))
-                                    }
+                var searchSource by rememberEnumPreference(SearchSourceKey, SearchSource.ONLINE)
+
+                val searchBarFocusRequester = remember { FocusRequester() }
+                var onlineSearchSort by rememberSaveable { mutableStateOf(OnlineSearchSort.DEFAULT) }
+
+                val onlineSearchEncodedQuery = navBackStackEntry?.arguments?.getString(OnlineSearchResultArgument)
+                LaunchedEffect(onlineSearchEncodedQuery) {
+                    onlineSearchSort = OnlineSearchSort.DEFAULT
+                }
+
+                val openSearch: () -> Unit = {
+                    onActiveChange(true)
+                    searchBarFocusRequester.requestFocus()
+                }
+
+                val onSearch: (String) -> Unit = {
+                    if (it.isNotEmpty()) {
+                        onActiveChange(false)
+                        navController.navigate(onlineSearchResultRoute(it))
+                        if (dataStore[PauseSearchHistoryKey] != true) {
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                database.query {
+                                    insert(SearchHistory(query = it))
                                 }
                             }
                         }
                     }
+                }
+
+                var openSearchImmediately: Boolean by remember {
+                    mutableStateOf(intent?.action == ACTION_SEARCH)
                 }
 
                 val currentRoute by remember {
@@ -696,14 +746,47 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val inSearchScreen by remember {
-                    derivedStateOf { currentRoute?.startsWith("search/") == true }
+                    derivedStateOf { active || currentRoute?.startsWith(OnlineSearchResultRoutePrefix) == true }
                 }
                 val navigationItemRoutes = remember(navigationItems) {
                     navigationItems.map { it.route }.toSet()
                 }
 
-                val shouldShowNavigationBar = remember(currentRoute, navigationItemRoutes) {
-                    currentRoute == null || navigationItemRoutes.contains(currentRoute)
+                val shouldShowNavigationBar =
+                    remember(currentRoute, navigationItemRoutes, active) {
+                        (currentRoute == null || navigationItemRoutes.contains(currentRoute)) && !active
+                    }
+
+                val shouldShowSearchBar =
+                    remember(active, navBackStackEntry) {
+                        active ||
+                            navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
+                            navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) == true
+                    }
+
+                LaunchedEffect(shouldShowSearchBar, openSearchImmediately) {
+                    if (shouldShowSearchBar && openSearchImmediately) {
+                        onActiveChange(true)
+                        try {
+                            delay(100)
+                            searchBarFocusRequester.requestFocus()
+                        } catch (_: Exception) {
+                        }
+                        openSearchImmediately = false
+                    }
+                }
+
+                val openSearchFromRoute =
+                    navBackStackEntry
+                        ?.savedStateHandle
+                        ?.getStateFlow("openSearch", false)
+                        ?.collectAsStateWithLifecycle()
+
+                LaunchedEffect(openSearchFromRoute?.value) {
+                    if (openSearchFromRoute?.value == true) {
+                        navBackStackEntry?.savedStateHandle?.set("openSearch", false)
+                        openSearch()
+                    }
                 }
 
                 val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
@@ -765,6 +848,15 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
+                val searchScrollBehavior =
+                    appBarScrollBehavior(
+                        canScroll = {
+                            !inSearchScreen &&
+                                navBackStackEntry?.destination?.route != Screens.Library.route &&
+                                (playerBottomSheetState.isCollapsed || playerBottomSheetState.isDismissed)
+                        },
+                    )
+
                 val topAppBarScrollBehavior =
                     appBarScrollBehavior(
                         canScroll = {
@@ -774,32 +866,33 @@ class MainActivity : ComponentActivity() {
                         },
                     )
 
-                
                 LaunchedEffect(navBackStackEntry) {
-                    if (inSearchScreen) {
-                        val searchQuery = withContext(Dispatchers.IO) {
-                            val rawQuery = navBackStackEntry?.arguments?.getString("query")!!
-                            try {
-                                URLDecoder.decode(rawQuery, "UTF-8")
-                            } catch (e: IllegalArgumentException) {
-                                rawQuery
-                            }
-                        }
+                    if (navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) == true) {
+                        val searchQuery =
+                            decodeOnlineSearchQuery(
+                                navBackStackEntry
+                                    ?.arguments
+                                    ?.getString(OnlineSearchResultArgument)
+                                    .orEmpty(),
+                            )
                         onQueryChange(
                             TextFieldValue(
                                 searchQuery,
-                                TextRange(searchQuery.length)
-                            )
+                                TextRange(searchQuery.length),
+                            ),
                         )
-                    } else if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
+                    } else if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } ||
+                        navBackStackEntry?.destination?.route in topLevelScreens
+                    ) {
                         onQueryChange(TextFieldValue())
                     }
 
-                    
                     if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
                         if (navigationItems.fastAny { it.route == previousTab }) {
                             if (navBackStackEntry?.destination?.route == Screens.Home.route) {
                                 homeScrollBehavior.state.resetHeightOffset()
+                            } else if (navBackStackEntry?.destination?.route == Screens.Search.route) {
+                                searchScrollBehavior.state.resetHeightOffset()
                             }
                             topAppBarScrollBehavior.state.resetHeightOffset()
                         }
@@ -807,12 +900,30 @@ class MainActivity : ComponentActivity() {
 
                     if (navBackStackEntry?.destination?.route == Screens.Home.route) {
                         homeScrollBehavior.state.resetHeightOffset()
+                    } else if (navBackStackEntry?.destination?.route == Screens.Search.route) {
+                        searchScrollBehavior.state.resetHeightOffset()
                     }
                     topAppBarScrollBehavior.state.resetHeightOffset()
 
-                    
                     navController.currentBackStackEntry?.destination?.route?.let {
                         setPreviousTab(it)
+                    }
+                }
+
+                LaunchedEffect(active) {
+                    if (active) {
+                        when (currentRoute) {
+                            Screens.Home.route -> {
+                                homeScrollBehavior.state.resetHeightOffset()
+                            }
+
+                            Screens.Search.route -> {
+                                searchScrollBehavior.state.resetHeightOffset()
+                            }
+
+                            else -> {}
+                        }
+                        searchBarFocusRequester.requestFocus()
                     }
                 }
 
@@ -852,9 +963,9 @@ class MainActivity : ComponentActivity() {
 
                 var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
 
-                LaunchedEffect(navBackStackEntry) {
+                LaunchedEffect(navBackStackEntry, active) {
                     val currentRoute = navBackStackEntry?.destination?.route
-                    shouldShowTopBar = currentRoute in topLevelScreens && currentRoute != "settings"
+                    shouldShowTopBar = !active && currentRoute in topLevelScreens && currentRoute != "settings"
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -989,6 +1100,7 @@ class MainActivity : ComponentActivity() {
                                 val currentScrollBehavior =
                                     when (navBackStackEntry?.destination?.route) {
                                         Screens.Home.route -> homeScrollBehavior
+                                        Screens.Search.route -> searchScrollBehavior
                                         else -> topAppBarScrollBehavior
                                     }
                                 val isLibraryRoute = navBackStackEntry?.destination?.route == Screens.Library.route
@@ -1167,21 +1279,215 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
+                            AnimatedVisibility(
+                                visible =
+                                    active ||
+                                        navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) == true,
+                                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                                exit = fadeOut(animationSpec = tween(durationMillis = 200)),
+                            ) {
+                                TopSearch(
+                                    query = query,
+                                    onQueryChange = onQueryChange,
+                                    onSearch = onSearch,
+                                    active = active,
+                                    onActiveChange = onActiveChange,
+                                    placeholder = {
+                                        Text(
+                                            text =
+                                                stringResource(
+                                                    when (searchSource) {
+                                                        SearchSource.LOCAL -> R.string.search_library
+                                                        SearchSource.ONLINE -> R.string.search_yt_music
+                                                    },
+                                                ),
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        IconButton(
+                                            onClick = {
+                                                when {
+                                                    active -> {
+                                                        onActiveChange(false)
+                                                    }
+
+                                                    !navigationItems.fastAny {
+                                                        it.route == navBackStackEntry?.destination?.route
+                                                    } -> {
+                                                        navController.navigateUp()
+                                                    }
+
+                                                    else -> {
+                                                        onActiveChange(true)
+                                                    }
+                                                }
+                                            },
+                                            onLongClick = {
+                                                when {
+                                                    active -> {}
+
+                                                    !navigationItems.fastAny {
+                                                        it.route == navBackStackEntry?.destination?.route
+                                                    } -> {
+                                                        navController.backToMain()
+                                                    }
+
+                                                    else -> {}
+                                                }
+                                            },
+                                        ) {
+                                            Icon(
+                                                painterResource(
+                                                    if (active ||
+                                                        !navigationItems.fastAny {
+                                                            it.route == navBackStackEntry?.destination?.route
+                                                        }
+                                                    ) {
+                                                        R.drawable.arrow_back
+                                                    } else {
+                                                        R.drawable.search
+                                                    },
+                                                ),
+                                                contentDescription = null,
+                                            )
+                                        }
+                                    },
+                                    trailingIcon = {
+                                        Row {
+                                            if (active) {
+                                                if (query.text.isNotEmpty()) {
+                                                    IconButton(
+                                                        onClick = {
+                                                            onQueryChange(
+                                                                TextFieldValue(
+                                                                    "",
+                                                                ),
+                                                            )
+                                                        },
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.close),
+                                                            contentDescription = null,
+                                                        )
+                                                    }
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        searchSource =
+                                                            if (searchSource == SearchSource.ONLINE) {
+                                                                SearchSource.LOCAL
+                                                            } else {
+                                                                SearchSource.ONLINE
+                                                            }
+                                                    },
+                                                ) {
+                                                    Icon(
+                                                        painter =
+                                                            painterResource(
+                                                                when (searchSource) {
+                                                                    SearchSource.LOCAL -> R.drawable.library_music
+                                                                    SearchSource.ONLINE -> R.drawable.language
+                                                                },
+                                                            ),
+                                                        contentDescription = null,
+                                                    )
+                                                }
+                                            } else if (currentRoute?.startsWith(OnlineSearchResultRoutePrefix) == true) {
+                                                OnlineSearchSortMenu(
+                                                    selectedSort = onlineSearchSort,
+                                                    onSortSelected = { onlineSearchSort = it },
+                                                )
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.focusRequester(searchBarFocusRequester),
+                                    focusRequester = searchBarFocusRequester,
+                                    colors =
+                                        if (pureBlack && active) {
+                                            SearchBarDefaults.colors(
+                                                containerColor = Color.Black,
+                                                dividerColor = Color.DarkGray,
+                                                inputFieldColors =
+                                                    TextFieldDefaults.colors(
+                                                        focusedTextColor = Color.White,
+                                                        unfocusedTextColor = Color.Gray,
+                                                        focusedContainerColor = Color.Transparent,
+                                                        unfocusedContainerColor = Color.Transparent,
+                                                        cursorColor = Color.White,
+                                                        focusedIndicatorColor = Color.Transparent,
+                                                        unfocusedIndicatorColor = Color.Transparent,
+                                                    ),
+                                            )
+                                        } else {
+                                            SearchBarDefaults.colors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                            )
+                                        },
+                                ) {
+                                    Crossfade(
+                                        targetState = searchSource,
+                                        animationSpec = tween(durationMillis = 300),
+                                        label = "",
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .padding(
+                                                    bottom = if (!playerBottomSheetState.isDismissed) MiniPlayerHeight else 0.dp,
+                                                ).navigationBarsPadding(),
+                                    ) { source ->
+                                        when (source) {
+                                            SearchSource.LOCAL -> {
+                                                LocalSearchScreen(
+                                                    query = query.text,
+                                                    navController = navController,
+                                                    onDismiss = { onActiveChange(false) },
+                                                    pureBlack = pureBlack,
+                                                )
+                                            }
+
+                                            SearchSource.ONLINE -> {
+                                                OnlineSearchScreen(
+                                                    query = query.text,
+                                                    onQueryChange = onQueryChange,
+                                                    navController = navController,
+                                                    onSearch = {
+                                                        navController.navigate(onlineSearchResultRoute(it))
+                                                        if (dataStore[PauseSearchHistoryKey] != true) {
+                                                            lifecycleScope.launch(Dispatchers.IO) {
+                                                                database.query {
+                                                                    insert(SearchHistory(query = it))
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    onDismiss = { onActiveChange(false) },
+                                                    pureBlack = pureBlack,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         },
                         bottomBar = {
-                            val onNavItemClick: (Screens, Boolean) -> Unit = remember(navController, coroutineScope, topAppBarScrollBehavior, homeScrollBehavior, playerBottomSheetState) {
+                            val onNavItemClick: (Screens, Boolean) -> Unit = remember(navController, coroutineScope, topAppBarScrollBehavior, homeScrollBehavior, searchScrollBehavior, playerBottomSheetState) {
                                 { screen: Screens, isSelected: Boolean ->
                                     if (playerBottomSheetState.isExpanded) {
                                         playerBottomSheetState.collapseSoft()
                                     }
 
                                     if (isSelected) {
-                                        navController.currentBackStackEntry?.savedStateHandle?.set("scrollToTop", true)
-                                        coroutineScope.launch {
-                                            if (screen == Screens.Home) {
-                                                homeScrollBehavior.state.resetHeightOffset()
-                                            } else {
-                                                topAppBarScrollBehavior.state.resetHeightOffset()
+                                        if (screen == Screens.Search) {
+                                            openSearch()
+                                            coroutineScope.launch { searchScrollBehavior.state.resetHeightOffset() }
+                                        } else {
+                                            navController.currentBackStackEntry?.savedStateHandle?.set("scrollToTop", true)
+                                            coroutineScope.launch {
+                                                if (screen == Screens.Home) {
+                                                    homeScrollBehavior.state.resetHeightOffset()
+                                                } else {
+                                                    topAppBarScrollBehavior.state.resetHeightOffset()
+                                                }
                                             }
                                         }
                                     } else {
@@ -1261,6 +1567,10 @@ class MainActivity : ComponentActivity() {
                                                 currentRoute == screen.route || currentRoute?.startsWith("${screen.route}/") == true
                                             },
                                             onItemClick = onNavItemClick,
+                                            onSearchItemDoubleClick = {
+                                                searchSource = SearchSource.ONLINE
+                                                openSearch()
+                                            },
                                         )
                                     }
 
@@ -1392,19 +1702,24 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         Row(Modifier.fillMaxSize()) {
-                            val onRailItemClick: (Screens, Boolean) -> Unit = remember(navController, coroutineScope, topAppBarScrollBehavior, homeScrollBehavior, playerBottomSheetState) {
+                            val onRailItemClick: (Screens, Boolean) -> Unit = remember(navController, coroutineScope, topAppBarScrollBehavior, homeScrollBehavior, searchScrollBehavior, playerBottomSheetState) {
                                 { screen: Screens, isSelected: Boolean ->
                                     if (playerBottomSheetState.isExpanded) {
                                         playerBottomSheetState.collapseSoft()
                                     }
 
                                     if (isSelected) {
-                                        navController.currentBackStackEntry?.savedStateHandle?.set("scrollToTop", true)
-                                        coroutineScope.launch {
-                                            if (screen == Screens.Home) {
-                                                homeScrollBehavior.state.resetHeightOffset()
-                                            } else {
-                                                topAppBarScrollBehavior.state.resetHeightOffset()
+                                        if (screen == Screens.Search) {
+                                            openSearch()
+                                            coroutineScope.launch { searchScrollBehavior.state.resetHeightOffset() }
+                                        } else {
+                                            navController.currentBackStackEntry?.savedStateHandle?.set("scrollToTop", true)
+                                            coroutineScope.launch {
+                                                if (screen == Screens.Home) {
+                                                    homeScrollBehavior.state.resetHeightOffset()
+                                                } else {
+                                                    topAppBarScrollBehavior.state.resetHeightOffset()
+                                                }
                                             }
                                         }
                                     } else {
@@ -1511,6 +1826,8 @@ class MainActivity : ComponentActivity() {
                                         activity = this@MainActivity,
                                         snackbarHostState = snackbarHostState,
                                         homeScrollConnection = homeScrollBehavior.nestedScrollConnection,
+                                        searchScrollConnection = searchScrollBehavior.nestedScrollConnection,
+                                        onlineSearchSort = onlineSearchSort,
                                     )
                                 }
                             }
@@ -1921,3 +2238,63 @@ private fun HomeOverflowMenuIcon(
         }
     }
 }
+
+@Composable
+private fun OnlineSearchSortMenu(
+    selectedSort: OnlineSearchSort,
+    onSortSelected: (OnlineSearchSort) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val options =
+        remember {
+            listOf(
+                OnlineSearchSort.DEFAULT,
+                OnlineSearchSort.VIEWS,
+            )
+        }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                painter = painterResource(R.drawable.filter_alt),
+                contentDescription = null,
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { sort ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text =
+                                stringResource(
+                                    when (sort) {
+                                        OnlineSearchSort.DEFAULT -> R.string.default_style
+                                        OnlineSearchSort.VIEWS -> R.string.views
+                                    },
+                                ),
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onSortSelected(sort)
+                    },
+                    leadingIcon = {
+                        if (sort == selectedSort) {
+                            Icon(
+                                painter = painterResource(R.drawable.done),
+                                contentDescription = null,
+                            )
+                        } else {
+                            Spacer(Modifier.size(24.dp))
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+

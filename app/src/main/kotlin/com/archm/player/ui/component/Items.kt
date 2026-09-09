@@ -145,6 +145,7 @@ inline fun ListItem(
     isSelected: Boolean? = false,
     isActive: Boolean = false,
     isAvailable: Boolean = true,
+    showActiveContainer: Boolean = true,
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
@@ -158,7 +159,7 @@ inline fun ListItem(
             .clip(shape)
             .background(
                 color = when {
-                    isActive -> MaterialTheme.colorScheme.secondaryContainer
+                    isActive && showActiveContainer -> MaterialTheme.colorScheme.secondaryContainer
                     isSelected == true && drawHighlight -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                     else -> color
                 }
@@ -227,6 +228,7 @@ fun ListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
     isActive: Boolean = false,
+    showActiveContainer: Boolean = true,
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
@@ -250,6 +252,7 @@ fun ListItem(
     modifier = modifier,
     isSelected = isSelected,
     isActive = isActive,
+    showActiveContainer = showActiveContainer,
     shape = shape,
     drawHighlight = drawHighlight,
     horizontalPadding = horizontalPadding,
@@ -267,6 +270,7 @@ fun ListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
     isActive: Boolean = false,
+    showActiveContainer: Boolean = true,
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
@@ -291,6 +295,7 @@ fun ListItem(
     modifier = modifier,
     isSelected = isSelected,
     isActive = isActive,
+    showActiveContainer = showActiveContainer,
     shape = shape,
     drawHighlight = drawHighlight,
     horizontalPadding = horizontalPadding,
@@ -1031,10 +1036,12 @@ fun YouTubeListItem(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.surfaceContainer,
     albumIndex: Int? = null,
+    viewCountText: String? = null,
     isSelected: Boolean = false,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
+    showActiveContainer: Boolean = true,
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
@@ -1066,7 +1073,7 @@ fun YouTubeListItem(
         ListItem(
             title = item.title,
             subtitle = when (item) {
-                is SongItem -> joinByBullet(item.artists.joinToString { it.name }, makeTimeString(item.duration?.times(1000L)))
+                is SongItem -> joinByBullet(item.artists.joinToString { it.name }, makeTimeString(item.duration?.times(1000L)), viewCountText)
                 is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
                 is ArtistItem -> null
                 is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
@@ -1087,6 +1094,7 @@ fun YouTubeListItem(
             modifier = modifier,
             isSelected = isSelected,
             isActive = isActive,
+            showActiveContainer = showActiveContainer,
             shape = shape,
             drawHighlight = drawHighlight
         )

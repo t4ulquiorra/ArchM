@@ -58,6 +58,7 @@ import com.archm.player.ui.screens.recognition.RecognitionHistoryScreen
 import com.archm.player.ui.screens.settings.UpdateSettings
 import com.archm.player.echomusic.updater.UpdateScreen
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import com.archm.player.viewmodels.OnlineSearchSort
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.echomusic.changelog.ChangelogScreen
@@ -72,6 +73,8 @@ fun NavGraphBuilder.navigationBuilder(
     activity: Activity,
     snackbarHostState: SnackbarHostState,
     homeScrollConnection: NestedScrollConnection? = null,
+    searchScrollConnection: NestedScrollConnection? = null,
+    onlineSearchSort: OnlineSearchSort = OnlineSearchSort.DEFAULT,
 ) {
     composable(Screens.Home.route) {
         HomeScreen(
@@ -97,7 +100,13 @@ fun NavGraphBuilder.navigationBuilder(
         }
         SearchScreen(
             navController = navController,
-            pureBlack = pureBlack
+            onSearchClick = {
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("openSearch", true)
+            },
+            headerScrollConnection = searchScrollConnection,
+            pureBlack = pureBlack,
         )
     }
 
@@ -139,7 +148,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("mood_and_genres") {
-        MoodAndGenresScreen(navController, scrollBehavior)
+        MoodAndGenresScreen(navController)
     }
 
     composable("account") {
@@ -201,7 +210,10 @@ fun NavGraphBuilder.navigationBuilder(
             fadeOut(tween(200))
         },
     ) {
-        OnlineSearchResult(navController)
+        OnlineSearchResult(
+            navController = navController,
+            searchSort = onlineSearchSort,
+        )
     }
 
     composable(

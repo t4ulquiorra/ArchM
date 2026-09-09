@@ -739,6 +739,28 @@ object YouTube {
         val response = innerTube.browse(WEB_REMIX, browseId = browseId, params = params).body<BrowseResponse>()
         BrowseResult(
             title = response.header?.musicHeaderRenderer?.title?.runs?.firstOrNull()?.text,
+            thumbnail = response.header
+                ?.musicImmersiveHeaderRenderer
+                ?.thumbnail
+                ?.musicThumbnailRenderer
+                ?.getThumbnailUrl()
+                ?: response.header
+                    ?.musicVisualHeaderRenderer
+                    ?.foregroundThumbnail
+                    ?.musicThumbnailRenderer
+                    ?.getThumbnailUrl()
+                ?: response.header
+                    ?.musicDetailHeaderRenderer
+                    ?.thumbnail
+                    ?.musicThumbnailRenderer
+                    ?.getThumbnailUrl()
+                ?: response.header
+                    ?.musicEditablePlaylistDetailHeaderRenderer
+                    ?.header
+                    ?.musicDetailHeaderRenderer
+                    ?.thumbnail
+                    ?.musicThumbnailRenderer
+                    ?.getThumbnailUrl(),
             items = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.mapNotNull { content ->
                 when {
                     content.gridRenderer != null -> {
