@@ -208,14 +208,15 @@ fun OnlineSearchScreen(
                 key = { item -> "item_${item.id}" },
                 contentType = { item -> item::class },
             ) { item ->
+                val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId
                 YouTubeListItem(
                     item = item,
                     containerColor = Color.Transparent,
                     color = Color.Transparent,
-                    showActiveContainer = false,
+                    showActiveContainer = true,
                     isActive =
                         when (item) {
-                            is SongItem -> mediaMetadata?.id == item.id
+                            is SongItem -> item.id == currentMediaId
                             is AlbumItem -> mediaMetadata?.album?.id == item.id
                             else -> false
                         },

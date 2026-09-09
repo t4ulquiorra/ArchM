@@ -155,8 +155,14 @@ object YouTube {
 
         val shelfSummaries = contents.mapNotNull { it ->
             if (it.musicCardShelfRenderer != null) {
+                val headerTitle = it.musicCardShelfRenderer.header?.musicCardShelfHeaderBasicRenderer?.title?.runs?.firstOrNull()?.text
+                val shelfTitle = if (headerTitle.isNullOrEmpty() || headerTitle.equals("Top result", ignoreCase = true)) {
+                    YouTubeConstants.DEFAULT_TOP_RESULT
+                } else {
+                    headerTitle
+                }
                 SearchSummary(
-                    title = it.musicCardShelfRenderer.header?.musicCardShelfHeaderBasicRenderer?.title?.runs?.firstOrNull()?.text ?: YouTubeConstants.DEFAULT_TOP_RESULT,
+                    title = shelfTitle,
                     items = listOfNotNull(SearchSummaryPage.fromMusicCardShelfRenderer(it.musicCardShelfRenderer))
                         .plus(
                             it.musicCardShelfRenderer.contents

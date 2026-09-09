@@ -68,14 +68,16 @@ fun List<Run>.oddElements() =
         index % 2 == 0
     }
 
-private val ViewCountRegex = Regex("""([\d.,]+)\s*([KMB]?)""", RegexOption.IGNORE_CASE)
+private val ViewCountRegex = Regex("""([\d.,]+)\s*([KMB])\s*(plays?|views?)?""", RegexOption.IGNORE_CASE)
+private val ViewsWordRegex = Regex("""([\d.,]+)\s*(plays?|views?)""", RegexOption.IGNORE_CASE)
 
 fun parseViewCount(text: String): Long? {
-    val match = ViewCountRegex.find(text) ?: return null
+    if (text.contains(":")) return null
+    val match = ViewCountRegex.find(text) ?: ViewsWordRegex.find(text) ?: return null
     val numberText = match.groupValues[1]
-    val suffix = match.groupValues[2].uppercase()
+    val suffix = if (match.groupValues.size > 2) match.groupValues[2].uppercase() else ""
     val value =
-        if (suffix.isNotEmpty()) {
+        if (suffix.isNotEmpty() && suffix in listOf("K", "M", "B")) {
             numberText.replace(',', '.').toDoubleOrNull()
         } else {
             numberText.filter(Char::isDigit).toDoubleOrNull()
@@ -92,9 +94,10 @@ fun parseViewCount(text: String): Long? {
 
 fun List<List<Run>>.viewCountText(): String? =
     firstNotNullOfOrNull { group ->
-        val text = group.joinToString(separator = "") { it.text }.trim()
+        val text = group.joinToString(separator = "") { it.text }.trim().removePrefix("•").trim()
         text.takeIf {
             group.none { run -> run.navigationEndpoint != null } &&
+                !it.contains(":") &&
                 it.parseTime() == null &&
                 it.toIntOrNull()?.let { value -> value !in 1900..2100 } != false &&
                 parseViewCount(it) != null

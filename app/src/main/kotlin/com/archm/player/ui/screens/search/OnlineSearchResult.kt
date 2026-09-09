@@ -124,7 +124,14 @@ fun OnlineSearchResult(
                 ?.summaries
                 ?.firstOrNull()
                 ?.takeIf { it.items.isNotEmpty() }
-                ?.let(::add)
+                ?.let { summary ->
+                    val title = if (summary.title.equals("Top result", ignoreCase = true)) {
+                        stringResource(R.string.top_result)
+                    } else {
+                        summary.title
+                    }
+                    add(summary.copy(title = title))
+                }
 
             listOf(
                 FILTER_SONG to stringResource(R.string.filter_songs),
@@ -200,15 +207,16 @@ fun OnlineSearchResult(
                 }
             }
         }
+        val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId
         YouTubeListItem(
             item = item,
             viewCountText = (item as? SongItem)?.viewCountText,
             containerColor = Color.Transparent,
             color = Color.Transparent,
-            showActiveContainer = false,
+            showActiveContainer = true,
             isActive =
                 when (item) {
-                    is SongItem -> mediaMetadata?.id == item.id
+                    is SongItem -> item.id == currentMediaId
                     is AlbumItem -> mediaMetadata?.album?.id == item.id
                     else -> false
                 },
@@ -346,7 +354,11 @@ fun OnlineSearchResult(
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                text = summary.title,
+                                text = if (summary.title.equals("Top result", ignoreCase = true)) {
+                                    stringResource(R.string.top_result)
+                                } else {
+                                    summary.title
+                                },
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,

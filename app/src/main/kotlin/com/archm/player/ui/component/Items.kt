@@ -45,6 +45,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -153,17 +154,46 @@ inline fun ListItem(
     color: Color = containerColor,
 ) {
     val resolvedColor = if (color != Color.Transparent) color else containerColor
+    val titleColor =
+        if (isActive && showActiveContainer) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+    val subtitleContentColor =
+        if (isActive && showActiveContainer) {
+            MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    val trailingContentColor =
+        if (isActive && showActiveContainer) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    val activeShape = RoundedCornerShape(12.dp)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(vertical = 2.dp)
             .padding(horizontal = horizontalPadding)
-            .clip(shape)
-            .background(
-                color = when {
-                    isActive && showActiveContainer -> MaterialTheme.colorScheme.secondaryContainer
-                    isSelected == true && drawHighlight -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                    else -> resolvedColor
+            .then(
+                if (isActive && showActiveContainer) {
+                    Modifier
+                        .clip(activeShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                } else if (isSelected == true && drawHighlight) {
+                    Modifier
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                } else if (resolvedColor != Color.Transparent) {
+                    Modifier
+                        .clip(shape)
+                        .background(resolvedColor)
+                } else {
+                    Modifier
                 }
             )
             .then(modifier)
@@ -206,17 +236,25 @@ inline fun ListItem(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = titleColor,
             )
 
             if (subtitle != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    subtitle()
+                CompositionLocalProvider(LocalContentColor provides subtitleContentColor) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        subtitle()
+                    }
                 }
             }
         }
 
-        trailingContent()
+        CompositionLocalProvider(LocalContentColor provides trailingContentColor) {
+            trailingContent()
+        }
     }
 }
 
@@ -244,7 +282,7 @@ fun ListItem(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
+                color = if (isActive && showActiveContainer) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -288,7 +326,7 @@ fun ListItem(
         if (!subtitle.isNullOrEmpty()) {
             Text(
                 text = subtitle,
-                color = MaterialTheme.colorScheme.secondary,
+                color = if (isActive && showActiveContainer) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -1063,7 +1101,7 @@ fun YouTubeListItem(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
-    showActiveContainer: Boolean = false,
+    showActiveContainer: Boolean = true,
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
@@ -1100,12 +1138,12 @@ fun YouTubeListItem(
                 is SongItem -> {
                     val durationText = item.formattedDuration()
                     val viewsText = (viewCountText ?: item.viewCountText)?.takeIf {
-                        it != durationText && it.toIntOrNull() == null
+                        it != durationText && !it.contains(":") && it.toIntOrNull() == null
                     }
+                    val metaText = listOfNotNull(durationText, viewsText).joinToString(" • ")
                     joinByBullet(
-                        item.artists.joinToString { it.name },
-                        durationText,
-                        viewsText,
+                        item.artists.joinToString { it.name }.takeIf { it.isNotEmpty() },
+                        metaText.takeIf { it.isNotEmpty() },
                     )
                 }
                 is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
