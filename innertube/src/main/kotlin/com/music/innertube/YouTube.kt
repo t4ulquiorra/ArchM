@@ -737,6 +737,29 @@ object YouTube {
 
     suspend fun browse(browseId: String, params: String?): Result<BrowseResult> = runCatching {
         val response = innerTube.browse(WEB_REMIX, browseId = browseId, params = params).body<BrowseResponse>()
+        val browseItems = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.mapNotNull { content ->
+            when {
+                content.gridRenderer != null -> {
+                    BrowseResult.Item(
+                        title = content.gridRenderer.header?.gridHeaderRenderer?.title?.runs?.firstOrNull()?.text,
+                        items = content.gridRenderer.items
+                            .mapNotNull(GridRenderer.Item::musicTwoRowItemRenderer)
+                            .mapNotNull(RelatedPage.Companion::fromMusicTwoRowItemRenderer)
+                    )
+                }
+
+                content.musicCarouselShelfRenderer != null -> {
+                    BrowseResult.Item(
+                        title = content.musicCarouselShelfRenderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text,
+                        items = content.musicCarouselShelfRenderer.contents
+                            .mapNotNull(MusicCarouselShelfRenderer.Content::musicTwoRowItemRenderer)
+                            .mapNotNull(RelatedPage.Companion::fromMusicTwoRowItemRenderer)
+                    )
+                }
+
+                else -> null
+            }
+        }.orEmpty()
         BrowseResult(
             title = response.header?.musicHeaderRenderer?.title?.runs?.firstOrNull()?.text,
             thumbnail = response.header
@@ -760,30 +783,32 @@ object YouTube {
                     ?.musicDetailHeaderRenderer
                     ?.thumbnail
                     ?.musicThumbnailRenderer
-                    ?.getThumbnailUrl(),
-            items = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.mapNotNull { content ->
-                when {
-                    content.gridRenderer != null -> {
-                        BrowseResult.Item(
-                            title = content.gridRenderer.header?.gridHeaderRenderer?.title?.runs?.firstOrNull()?.text,
-                            items = content.gridRenderer.items
-                                .mapNotNull(GridRenderer.Item::musicTwoRowItemRenderer)
-                                .mapNotNull(RelatedPage.Companion::fromMusicTwoRowItemRenderer)
-                        )
-                    }
-
-                    content.musicCarouselShelfRenderer != null -> {
-                        BrowseResult.Item(
-                            title = content.musicCarouselShelfRenderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text,
-                            items = content.musicCarouselShelfRenderer.contents
-                                .mapNotNull(MusicCarouselShelfRenderer.Content::musicTwoRowItemRenderer)
-                                .mapNotNull(RelatedPage.Companion::fromMusicTwoRowItemRenderer)
-                        )
-                    }
-
-                    else -> null
-                }
-            }.orEmpty()
+                    ?.getThumbnailUrl()
+                ?: response.header
+                    ?.musicEditablePlaylistDetailHeaderRenderer
+                    ?.header
+                    ?.musicResponsiveHeaderRenderer
+                    ?.thumbnail
+                    ?.musicThumbnailRenderer
+                    ?.getThumbnailUrl()
+                ?: response.header
+                    ?.musicHeaderRenderer
+                    ?.thumbnail
+                    ?.thumbnails
+                    ?.lastOrNull()
+                    ?.url
+                ?: response.header
+                    ?.musicHeaderRenderer
+                    ?.straplineThumbnail
+                    ?.thumbnails
+                    ?.lastOrNull()
+                    ?.url
+                ?: browseItems
+                    .asSequence()
+                    .flatMap { it.items.asSequence() }
+                    .mapNotNull { it.thumbnail }
+                    .firstOrNull(),
+            items = browseItems
         )
     }
 

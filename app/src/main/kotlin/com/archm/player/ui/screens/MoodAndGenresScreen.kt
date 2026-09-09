@@ -150,37 +150,37 @@ fun MoodAndGenresScreen(
 fun MoodAndGenresButton(
     title: String,
     stripeColor: Long,
-    modifier: Modifier = Modifier,
     endpoint: BrowseEndpoint? = null,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val artworkUrl = rememberMoodAndGenresArtworkUrl(endpoint)
-    val artworkModel = rememberMoodAndGenresArtworkModel(endpoint, artworkUrl)
     val colorScheme = MaterialTheme.colorScheme
-    val baseColor = remember(stripeColor) { Color(stripeColor) }
+    val base = remember(stripeColor) { Color(stripeColor) }
+    val artworkUrl = rememberMoodAndGenresArtworkUrl(endpoint)
+    val artworkModel = rememberMoodAndGenresArtworkModel(endpoint = endpoint, artworkUrl = artworkUrl)
     val cardStart =
-        remember(baseColor) {
-            lerp(baseColor, Color.Black, 0.42f)
+        remember(base, colorScheme.primaryContainer) {
+            lerp(base, colorScheme.primaryContainer, 0.18f)
         }
     val cardEnd =
-        remember(baseColor) {
-            lerp(baseColor, Color.Black, 0.72f)
+        remember(base, colorScheme.surfaceContainerHighest) {
+            lerp(base, colorScheme.surfaceContainerHighest, 0.34f)
+        }
+    val coverStart =
+        remember(base, colorScheme.surface) {
+            lerp(base, colorScheme.surface, 0.28f)
+        }
+    val coverEnd =
+        remember(base, colorScheme.scrim) {
+            lerp(base, colorScheme.scrim, 0.2f)
         }
     val cardBrush =
         remember(cardStart, cardEnd) {
             Brush.linearGradient(
                 colors = listOf(cardStart, cardEnd),
                 start = Offset.Zero,
-                end = Offset(420f, 420f),
+                end = Offset(900f, 650f),
             )
-        }
-    val coverStart =
-        remember(baseColor) {
-            lerp(baseColor, Color.White, 0.12f)
-        }
-    val coverEnd =
-        remember(baseColor) {
-            lerp(baseColor, Color.Black, 0.24f)
         }
     val coverBrush =
         remember(coverStart, coverEnd) {
