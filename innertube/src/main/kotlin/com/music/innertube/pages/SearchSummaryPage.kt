@@ -10,11 +10,13 @@ import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import com.music.innertube.models.clean
+import com.music.innertube.models.extractArtists
 import com.music.innertube.models.filterExplicit
 import com.music.innertube.models.filterVideoSongs
 import com.music.innertube.models.filterYoutubeShorts
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.splitBySeparator
+import com.music.innertube.models.toArtists
 import com.music.innertube.models.viewCount
 import com.music.innertube.models.viewCountText
 import com.music.innertube.utils.parseTime
@@ -80,22 +82,29 @@ data class SearchSummaryPage(
 
     companion object {
         fun fromMusicCardShelfRenderer(renderer: MusicCardShelfRenderer): YTItem? {
-            val subtitle = renderer.subtitle.runs?.splitBySeparator()
+            val subtitle = renderer.subtitle.runs?.splitBySeparator().orEmpty()
             return when {
                 renderer.onTap.watchEndpoint != null -> {
+                    val artists = subtitle.extractArtists().ifEmpty {
+                        subtitle.getOrNull(1)?.oddElements()?.map {
+                            Artist(
+                                name = it.text,
+                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                            )
+                        } ?: subtitle.firstOrNull()?.oddElements()?.map {
+                            Artist(
+                                name = it.text,
+                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                            )
+                        } ?: emptyList()
+                    }
                     SongItem(
                         id = renderer.onTap.watchEndpoint.videoId ?: return null,
                         title =
                             renderer.title.runs
                                 ?.firstOrNull()
                                 ?.text ?: return null,
-                        artists =
-                            subtitle?.getOrNull(1)?.oddElements()?.map {
-                                Artist(
-                                    name = it.text,
-                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                                )
-                            } ?: return null,
+                        artists = artists,
                         album =
                             subtitle.getOrNull(2)?.firstOrNull()?.takeIf { it.navigationEndpoint?.browseEndpoint != null }?.let {
                                 Album(
@@ -109,8 +118,8 @@ data class SearchSummaryPage(
                                 ?.firstOrNull()
                                 ?.text
                                 ?.parseTime(),
-                        viewCountText = subtitle?.viewCountText(),
-                        viewCount = subtitle?.viewCount(),
+                        viewCountText = subtitle.viewCountText(),
+                        viewCount = subtitle.viewCount(),
                         musicVideoType = renderer.onTap.musicVideoType,
                         thumbnail = renderer.thumbnail.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
@@ -144,6 +153,14 @@ data class SearchSummaryPage(
                 }
 
                 renderer.onTap.browseEndpoint?.isAlbumEndpoint == true -> {
+                    val artists = subtitle.extractArtists().ifEmpty {
+                        subtitle.getOrNull(1)?.oddElements()?.map {
+                            Artist(
+                                name = it.text,
+                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                            )
+                        } ?: emptyList()
+                    }
                     AlbumItem(
                         browseId = renderer.onTap.browseEndpoint.browseId,
                         playlistId =
@@ -157,13 +174,7 @@ data class SearchSummaryPage(
                             renderer.title.runs
                                 ?.firstOrNull()
                                 ?.text ?: return null,
-                        artists =
-                            subtitle?.getOrNull(1)?.oddElements()?.map {
-                                Artist(
-                                    name = it.text,
-                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                                )
-                            } ?: return null,
+                        artists = artists,
                         year = null,
                         thumbnail = renderer.thumbnail.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
@@ -252,12 +263,16 @@ data class SearchSummaryPage(
                                 ?.runs
                                 ?.firstOrNull()
                                 ?.text ?: return null,
-                        artists = listRun.getOrNull(0)?.oddElements()?.map {
-                            Artist(
-                                name = it.text,
-                                id = it.navigationEndpoint?.browseEndpoint?.browseId
-                            )
-                        } ?: return null,
+                        artists = listRun.extractArtists().ifEmpty {
+                            secondaryLine.extractArtists().ifEmpty {
+                                listRun.getOrNull(0)?.oddElements()?.map {
+                                    Artist(
+                                        name = it.text,
+                                        id = it.navigationEndpoint?.browseEndpoint?.browseId
+                                    )
+                                } ?: emptyList()
+                            }
+                        },
                         album = listRun.getOrNull(1)?.firstOrNull()?.takeIf { it.navigationEndpoint?.browseEndpoint != null }?.let {
                             Album(
                                 name = it.text,

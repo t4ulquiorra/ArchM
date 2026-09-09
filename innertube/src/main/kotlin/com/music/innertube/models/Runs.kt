@@ -54,14 +54,70 @@ fun List<Run>.splitBySeparator(): List<List<Run>> {
     return res
 }
 
-fun List<List<Run>>.clean(): List<List<Run>> =
-    if (getOrNull(0)?.getOrNull(0)?.navigationEndpoint != null ||
-        (getOrNull(0)?.getOrNull(0)?.text?.contains(regex = Regex("[&,]"))) != false
-    ) {
-        this
-    } else {
-        this.drop(1)
+fun List<List<Run>>.clean(): List<List<Run>> {
+    val firstText = getOrNull(0)?.firstOrNull()?.text?.trim()
+    val isFirstType = firstText?.let {
+        it.equals("Song", ignoreCase = true) ||
+        it.equals("Video", ignoreCase = true) ||
+        it.equals("Album", ignoreCase = true) ||
+        it.equals("Single", ignoreCase = true) ||
+        it.equals("EP", ignoreCase = true) ||
+        it.equals("Artist", ignoreCase = true) ||
+        it.equals("Playlist", ignoreCase = true) ||
+        it.equals("Station", ignoreCase = true) ||
+        it.equals("Podcast", ignoreCase = true)
+    } == true
+    return if (isFirstType) drop(1) else this
+}
+
+fun List<Run>.toArtists(): List<Artist> {
+    val withEndpoints = mapNotNull { run ->
+        val endpoint = run.navigationEndpoint?.browseEndpoint
+        if (endpoint != null && (endpoint.isArtistEndpoint || endpoint.browseId.startsWith("UC"))) {
+            run.text.takeIf(String::isNotBlank)?.let { name ->
+                Artist(name = name, id = endpoint.browseId)
+            }
+        } else null
     }
+    if (withEndpoints.isNotEmpty()) return withEndpoints
+
+    val fullText = filter { it.text != "," && it.text != "&" }
+        .joinToString(separator = "") { it.text }
+        .trim()
+
+    val isKnownType = fullText.equals("Song", ignoreCase = true) ||
+        fullText.equals("Video", ignoreCase = true) ||
+        fullText.equals("Album", ignoreCase = true) ||
+        fullText.equals("Single", ignoreCase = true) ||
+        fullText.equals("EP", ignoreCase = true) ||
+        fullText.equals("Artist", ignoreCase = true) ||
+        fullText.equals("Playlist", ignoreCase = true) ||
+        fullText.equals("Station", ignoreCase = true) ||
+        fullText.equals("Podcast", ignoreCase = true)
+
+    val isDuration = fullText.contains(":") || fullText.parseTime() != null
+    val isYear = fullText.toIntOrNull()?.let { it in 1900..2100 } == true
+    val isViews = parseViewCount(fullText) != null
+
+    if (fullText.isNotBlank() && !isKnownType && !isDuration && !isYear && !isViews) {
+        return oddElements().mapNotNull { run ->
+            run.text.trim().takeIf { it.isNotBlank() && it != "," && it != "&" }?.let { name ->
+                Artist(
+                    name = name,
+                    id = run.navigationEndpoint?.browseEndpoint?.browseId
+                )
+            }
+        }
+    }
+    return emptyList()
+}
+
+fun List<List<Run>>.extractArtists(): List<Artist> =
+    asSequence()
+        .map { it.toArtists() }
+        .firstOrNull { it.isNotEmpty() }
+        .orEmpty()
+
 
 fun List<Run>.oddElements() =
     filterIndexed { index, _ ->

@@ -1088,6 +1088,7 @@ fun MediaMetadataListItem(
 
 
 fun SongItem.formattedDuration(): String? = makeTimeString(duration?.times(1000L))
+val SongItem.durationText: String? get() = formattedDuration()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1137,15 +1138,10 @@ fun YouTubeListItem(
             title = item.title,
             subtitle = when (item) {
                 is SongItem -> {
-                    val durationText = item.formattedDuration()
-                    val viewsText = (viewCountText ?: item.viewCountText)?.takeIf {
-                        it != durationText && !it.contains(":") && it.toIntOrNull() == null
-                    }
-                    val metaText = listOfNotNull(durationText, viewsText).joinToString(" • ")
-                    joinByBullet(
-                        item.artists.joinToString { it.name }.takeIf { it.isNotEmpty() },
-                        metaText.takeIf { it.isNotEmpty() },
-                    )
+                    val artistsText = item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() }
+                    val durationText = item.durationText ?: item.formattedDuration()
+                    val subtitleText = listOfNotNull(artistsText, durationText).joinToString(" • ")
+                    subtitleText.takeIf { it.isNotEmpty() }
                 }
                 is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
                 is ArtistItem -> null
@@ -1231,7 +1227,11 @@ fun YouTubeGridItem(
     },
     subtitle = {
         val subtitle = when (item) {
-            is SongItem -> joinByBullet(item.artists.joinToString { it.name }, makeTimeString(item.duration?.times(1000L)))
+            is SongItem -> {
+                val artistsText = item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() }
+                val durationText = item.durationText ?: item.formattedDuration()
+                listOfNotNull(artistsText, durationText).joinToString(" • ").takeIf { it.isNotEmpty() }
+            }
             is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
             is ArtistItem -> null
             is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)

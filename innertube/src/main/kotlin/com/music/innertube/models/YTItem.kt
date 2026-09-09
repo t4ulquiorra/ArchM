@@ -42,6 +42,19 @@ data class SongItem(
     val isVideoSong: Boolean
         get() = musicVideoType != null && musicVideoType != MUSIC_VIDEO_TYPE_ATV
 
+    val durationText: String?
+        get() = duration?.let { sec ->
+            val m = sec / 60
+            val s = sec % 60
+            if (sec >= 3600) {
+                val h = sec / 3600
+                val remM = m % 60
+                "$h:${remM.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+            } else {
+                "$m:${s.toString().padStart(2, '0')}"
+            }
+        }
+
     override val shareLink: String
         get() = "https://share.echomusic.fun/watch?v=$id"
 }

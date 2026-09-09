@@ -8,6 +8,7 @@ import com.music.innertube.models.MusicResponsiveListItemRenderer
 import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
+import com.music.innertube.models.extractArtists
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.splitBySeparator
 import com.music.innertube.models.viewCount
@@ -53,12 +54,14 @@ object SearchPage {
                             ?.firstOrNull()
                             ?.text ?: return null,
                     artists =
-                        secondaryLine.firstOrNull()?.oddElements()?.map {
-                            Artist(
-                                name = it.text,
-                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                            )
-                        } ?: return null.also { println("[UPLOAD_DEBUG] SearchPage.toYTItem FAILED: artists is null for renderer: $renderer") },
+                        secondaryLine.extractArtists().ifEmpty {
+                            secondaryLine.firstOrNull()?.oddElements()?.map {
+                                Artist(
+                                    name = it.text,
+                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                                )
+                            } ?: emptyList()
+                        },
                     album =
                         secondaryLine.getOrNull(1)?.firstOrNull()?.takeIf { it.navigationEndpoint?.browseEndpoint != null }?.let {
                             Album(
