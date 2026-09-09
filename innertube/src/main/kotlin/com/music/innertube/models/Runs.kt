@@ -1,6 +1,7 @@
 package com.music.innertube.models
 
 import kotlinx.serialization.Serializable
+import com.music.innertube.utils.parseTime
 
 @Serializable
 data class Runs(
@@ -66,3 +67,38 @@ fun List<Run>.oddElements() =
     filterIndexed { index, _ ->
         index % 2 == 0
     }
+
+private val ViewCountRegex = Regex("""([\d.,]+)\s*([KMB]?)""", RegexOption.IGNORE_CASE)
+
+fun parseViewCount(text: String): Long? {
+    val match = ViewCountRegex.find(text) ?: return null
+    val numberText = match.groupValues[1]
+    val suffix = match.groupValues[2].uppercase()
+    val value =
+        if (suffix.isNotEmpty()) {
+            numberText.replace(',', '.').toDoubleOrNull()
+        } else {
+            numberText.filter(Char::isDigit).toDoubleOrNull()
+        } ?: return null
+    val multiplier =
+        when (suffix) {
+            "K" -> 1_000.0
+            "M" -> 1_000_000.0
+            "B" -> 1_000_000_000.0
+            else -> 1.0
+        }
+    return (value * multiplier).toLong()
+}
+
+fun List<List<Run>>.viewCountText(): String? =
+    firstNotNullOfOrNull { group ->
+        val text = group.joinToString(separator = "") { it.text }.trim()
+        text.takeIf {
+            group.none { run -> run.navigationEndpoint != null } &&
+                it.parseTime() == null &&
+                it.toIntOrNull()?.let { value -> value !in 1900..2100 } != false &&
+                parseViewCount(it) != null
+        }
+    }
+
+fun List<List<Run>>.viewCount(): Long? = viewCountText()?.let(::parseViewCount)

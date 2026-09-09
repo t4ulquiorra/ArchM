@@ -10,6 +10,8 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.splitBySeparator
+import com.music.innertube.models.viewCount
+import com.music.innertube.models.viewCountText
 import com.music.innertube.utils.parseTime
 
 data class SearchResult(
@@ -70,6 +72,8 @@ object SearchPage {
                             ?.firstOrNull()
                             ?.text
                             ?.parseTime(),
+                    viewCountText = secondaryLine.viewCountText(),
+                    viewCount = secondaryLine.viewCount(),
                     musicVideoType = renderer.musicVideoType,
                     thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                     explicit =

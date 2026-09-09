@@ -1029,6 +1029,8 @@ fun MediaMetadataListItem(
 }
 
 
+fun SongItem.formattedDuration(): String? = makeTimeString(duration?.times(1000L))
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YouTubeListItem(
@@ -1073,7 +1075,17 @@ fun YouTubeListItem(
         ListItem(
             title = item.title,
             subtitle = when (item) {
-                is SongItem -> joinByBullet(item.artists.joinToString { it.name }, makeTimeString(item.duration?.times(1000L)), viewCountText)
+                is SongItem -> {
+                    val durationText = item.formattedDuration()
+                    val viewsText = (viewCountText ?: item.viewCountText)?.takeIf {
+                        it != durationText && it.toIntOrNull() == null
+                    }
+                    joinByBullet(
+                        item.artists.joinToString { it.name },
+                        durationText,
+                        viewsText,
+                    )
+                }
                 is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
                 is ArtistItem -> null
                 is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)

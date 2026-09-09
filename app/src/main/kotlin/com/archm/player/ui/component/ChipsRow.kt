@@ -65,6 +65,7 @@ fun <E> ChipsRow(
     onValueUpdate: (E) -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    icons: Map<E, Int> = emptyMap(),
 ) {
     Row(
         modifier =
@@ -78,6 +79,7 @@ fun <E> ChipsRow(
 
         chips.forEach { (value, label) ->
             val isSelected = currentValue == value
+            val iconRes = icons[value]
 
             
             val cornerRadius by animateDpAsState(
@@ -99,7 +101,15 @@ fun <E> ChipsRow(
                 leadingIcon = if (isSelected) {
                     {
                         Icon(
-                            imageVector = Icons.Filled.Done,
+                            painter = painterResource(R.drawable.done),
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize),
+                        )
+                    }
+                } else if (iconRes != null) {
+                    {
+                        Icon(
+                            painter = painterResource(iconRes),
                             contentDescription = null,
                             modifier = Modifier.size(FilterChipDefaults.IconSize),
                         )

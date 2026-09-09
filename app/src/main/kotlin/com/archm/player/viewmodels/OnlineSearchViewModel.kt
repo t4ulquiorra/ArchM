@@ -11,6 +11,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.innertube.YouTube
+import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_ALBUM
+import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_ARTIST
+import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_COMMUNITY_PLAYLIST
+import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_FEATURED_PLAYLIST
+import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_SONG
+import com.music.innertube.YouTube.SearchFilter.Companion.FILTER_VIDEO
+import com.music.innertube.models.SongItem
+import com.music.innertube.models.YTItem
 import com.music.innertube.models.filterExplicit
 import com.music.innertube.models.filterVideoSongs
 import com.music.innertube.models.filterYoutubeShorts
@@ -48,53 +56,88 @@ class OnlineSearchViewModel @Inject constructor(
     var summaryPage by mutableStateOf<SearchSummaryPage?>(null)
     val viewStateMap = mutableStateMapOf<String, ItemsPage?>()
 
+    private val allModeFilters =
+        listOf(
+            FILTER_SONG,
+            FILTER_VIDEO,
+            FILTER_ALBUM,
+            FILTER_ARTIST,
+            FILTER_COMMUNITY_PLAYLIST,
+            FILTER_FEATURED_PLAYLIST,
+        )
+    private var isSummaryLoading = false
+    private val loadingFilters = mutableSetOf<String>()
+
     init {
         viewModelScope.launch {
-            filter.collect { filter ->
-                if (filter == null) {
-                    if (summaryPage == null) {
-                        YouTube
-                            .searchSummary(query)
-                            .onSuccess {
-                                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
-                                summaryPage =
-                                    it.filterExplicit(
-                                        hideExplicit,
-                                    ).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts)
-                            }.onFailure {
-                                reportException(it)
-                            }
+            filter.collect { selectedFilter ->
+                if (selectedFilter == null) {
+                    viewModelScope.launch {
+                        loadSummaryIfNeeded()
+                    }
+                    allModeFilters.forEach { allModeFilter ->
+                        viewModelScope.launch {
+                            loadFilterIfNeeded(allModeFilter)
+                        }
                     }
                 } else {
-                    if (viewStateMap[filter.value] == null) {
-                        YouTube
-                            .search(query, filter)
-                            .onSuccess { result ->
-                                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
-                                viewStateMap[filter.value] =
-                                    ItemsPage(
-                                        result.items
-                                            .distinctBy { it.id }
-                                            .filterExplicit(
-                                                hideExplicit,
-                                            )
-                                            .let { items ->
-                                                if (filter.value == YouTube.SearchFilter.FILTER_VIDEO.value) items
-                                                else items.filterVideoSongs(hideVideoSongs)
-                                            }
-                                            .filterYoutubeShorts(hideYoutubeShorts),
-                                        result.continuation,
-                                    )
-                            }.onFailure {
-                                reportException(it)
-                            }
-                    }
+                    loadFilterIfNeeded(selectedFilter)
                 }
             }
+        }
+    }
+
+    private suspend fun loadSummaryIfNeeded() {
+        if (summaryPage != null || isSummaryLoading) return
+
+        isSummaryLoading = true
+        try {
+            YouTube
+                .searchSummary(query)
+                .onSuccess {
+                    val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+                    val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+                    val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                    summaryPage =
+                        it.filterExplicit(hideExplicit)
+                            .filterVideoSongs(hideVideoSongs)
+                            .filterYoutubeShorts(hideYoutubeShorts)
+                }.onFailure {
+                    reportException(it)
+                }
+        } finally {
+            isSummaryLoading = false
+        }
+    }
+
+    private suspend fun loadFilterIfNeeded(filter: YouTube.SearchFilter) {
+        val filterKey = filter.value
+        if (viewStateMap.containsKey(filterKey) || !loadingFilters.add(filterKey)) return
+
+        try {
+            YouTube
+                .search(query, filter)
+                .onSuccess { result ->
+                    val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+                    val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+                    val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                    viewStateMap[filterKey] =
+                        ItemsPage(
+                            result.items
+                                .distinctBy { it.id }
+                                .filterExplicit(hideExplicit)
+                                .let { items ->
+                                    if (filter.value == FILTER_VIDEO.value) items
+                                    else items.filterVideoSongs(hideVideoSongs)
+                                }
+                                .filterYoutubeShorts(hideYoutubeShorts),
+                            result.continuation,
+                        )
+                }.onFailure {
+                    reportException(it)
+                }
+        } finally {
+            loadingFilters.remove(filterKey)
         }
     }
 
@@ -113,7 +156,7 @@ class OnlineSearchViewModel @Inject constructor(
                 val newItems = searchResult.items
                     .filterExplicit(hideExplicit)
                     .let { items ->
-                        if (filter == YouTube.SearchFilter.FILTER_VIDEO.value) items
+                        if (filter == FILTER_VIDEO.value) items
                         else items.filterVideoSongs(hideVideoSongs)
                     }
                     .filterYoutubeShorts(hideYoutubeShorts)
@@ -126,11 +169,19 @@ class OnlineSearchViewModel @Inject constructor(
     }
 
     fun sortedItems(
-        items: List<com.music.innertube.models.YTItem>,
+        items: List<YTItem>,
         sort: OnlineSearchSort = OnlineSearchSort.DEFAULT,
-    ): List<com.music.innertube.models.YTItem> =
+    ): List<YTItem> =
         when (sort) {
             OnlineSearchSort.DEFAULT -> items
-            OnlineSearchSort.VIEWS -> items
+            OnlineSearchSort.VIEWS -> {
+                items
+                    .withIndex()
+                    .sortedWith(
+                        compareByDescending<IndexedValue<YTItem>> {
+                            (it.value as? SongItem)?.viewCount ?: Long.MIN_VALUE
+                        }.thenBy { it.index },
+                    ).map { it.value }
+            }
         }
 }

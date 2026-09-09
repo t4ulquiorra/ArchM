@@ -49,6 +49,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -201,6 +202,9 @@ fun OnlineSearchResult(
         }
         YouTubeListItem(
             item = item,
+            viewCountText = (item as? SongItem)?.viewCountText,
+            color = Color.Transparent,
+            showActiveContainer = false,
             isActive =
                 when (item) {
                     is SongItem -> mediaMetadata?.id == item.id
@@ -289,6 +293,16 @@ fun OnlineSearchResult(
                         lazyListState.animateScrollToItem(0)
                     }
                 },
+                icons =
+                    mapOf(
+                        null to R.drawable.search,
+                        FILTER_SONG to R.drawable.music_note,
+                        FILTER_VIDEO to R.drawable.video,
+                        FILTER_ALBUM to R.drawable.album,
+                        FILTER_ARTIST to R.drawable.artist,
+                        FILTER_COMMUNITY_PLAYLIST to R.drawable.queue_music,
+                        FILTER_FEATURED_PLAYLIST to R.drawable.playlist_play,
+                    ),
             )
         }
 

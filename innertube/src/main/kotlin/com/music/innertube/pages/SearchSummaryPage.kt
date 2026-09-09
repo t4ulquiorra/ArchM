@@ -15,6 +15,8 @@ import com.music.innertube.models.filterVideoSongs
 import com.music.innertube.models.filterYoutubeShorts
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.splitBySeparator
+import com.music.innertube.models.viewCount
+import com.music.innertube.models.viewCountText
 import com.music.innertube.utils.parseTime
 
 data class SearchSummary(
@@ -107,6 +109,8 @@ data class SearchSummaryPage(
                                 ?.firstOrNull()
                                 ?.text
                                 ?.parseTime(),
+                        viewCountText = subtitle?.viewCountText(),
+                        viewCount = subtitle?.viewCount(),
                         musicVideoType = renderer.onTap.musicVideoType,
                         thumbnail = renderer.thumbnail.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
@@ -266,6 +270,8 @@ data class SearchSummaryPage(
                                 ?.firstOrNull()
                                 ?.text
                                 ?.parseTime(),
+                        viewCountText = secondaryLine.viewCountText(),
+                        viewCount = secondaryLine.viewCount(),
                         musicVideoType = renderer.musicVideoType,
                         thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
