@@ -518,7 +518,7 @@ val LyricsLineSpacingKey = floatPreferencesKey("lyricsLineSpacing")
 val PlayerVolumeKey = floatPreferencesKey("playerVolume")
 val RepeatModeKey = intPreferencesKey("repeatMode")
 
-val SearchSourceKey = stringPreferencesKey("searchSource")
+val SearchSourceKey = stringPreferencesKey("search_source")
 val SwipeThumbnailKey = booleanPreferencesKey("swipeThumbnail")
 val RotatingThumbnailKey = booleanPreferencesKey("rotatingThumbnail")
 val CanvasThumbnailAnimationKey = booleanPreferencesKey("canvasThumbnailAnimation")
@@ -826,18 +826,4 @@ enum class MiniPlayerBackgroundStyle {
     THEME,
     GRADIENT,
     GLOW,
-}
-
-val SearchSourceKey = stringPreferencesKey("searchSource")
-
-enum class SearchSource {
-    LOCAL,
-    ONLINE,
-    ;
-
-    fun toggle() =
-        when (this) {
-            LOCAL -> ONLINE
-            ONLINE -> LOCAL
-        }
 }
