@@ -149,8 +149,10 @@ inline fun ListItem(
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
 ) {
+    val resolvedColor = if (color != Color.Transparent) color else containerColor
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -161,7 +163,7 @@ inline fun ListItem(
                 color = when {
                     isActive && showActiveContainer -> MaterialTheme.colorScheme.secondaryContainer
                     isSelected == true && drawHighlight -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                    else -> color
+                    else -> resolvedColor
                 }
             )
             .then(modifier)
@@ -232,7 +234,8 @@ fun ListItem(
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
 ) = ListItem(
     title = title,
     subtitle = {
@@ -256,6 +259,7 @@ fun ListItem(
     shape = shape,
     drawHighlight = drawHighlight,
     horizontalPadding = horizontalPadding,
+    containerColor = containerColor,
     color = color,
 )
 
@@ -274,7 +278,8 @@ fun ListItem(
     shape: Shape = RectangleShape,
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
 ) = ListItem(
     title = title,
     subtitle = {
@@ -299,6 +304,7 @@ fun ListItem(
     shape = shape,
     drawHighlight = drawHighlight,
     horizontalPadding = horizontalPadding,
+    containerColor = containerColor,
     color = color,
 )
 
@@ -416,10 +422,12 @@ fun SongListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
     drawHighlight: Boolean = true,
     shape: Shape = RectangleShape,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
     horizontalPadding: Dp = 16.dp,
 ) {
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
+    val resolvedColor = if (color != Color.Transparent) color else containerColor
 
     val content: @Composable () -> Unit = {
         ListItem(
@@ -448,7 +456,8 @@ fun SongListItem(
             isSelected = isSelected,
             isActive = isActive,
             shape = shape,
-            color = color,
+            containerColor = resolvedColor,
+            color = resolvedColor,
             drawHighlight = drawHighlight,
             horizontalPadding = horizontalPadding
         )
@@ -535,7 +544,8 @@ fun SongGridItem(
 fun ArtistListItem(
     artist: Artist,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
     shape: Shape = RectangleShape,
     badges: @Composable RowScope.() -> Unit = {
         if (artist.artist.bookmarkedAt != null) {
@@ -563,6 +573,7 @@ fun ArtistListItem(
                 .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .build(),
             contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(ListThumbnailSize)
                 .clip(CircleShape),
@@ -570,6 +581,7 @@ fun ArtistListItem(
     },
     trailingContent = trailingContent,
     shape = shape,
+    containerColor = color,
     color = color,
     modifier = modifier,
 )
@@ -611,7 +623,8 @@ fun ArtistGridItem(
 fun AlbumListItem(
     album: Album,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
     shape: Shape = RectangleShape,
     showLikedIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
@@ -670,6 +683,7 @@ fun AlbumListItem(
     },
     trailingContent = trailingContent,
     shape = shape,
+    containerColor = color,
     color = color,
     modifier = modifier
 )
@@ -771,7 +785,8 @@ fun AlbumGridItem(
 fun PlaylistListItem(
     playlist: Playlist,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
     autoPlaylist: Boolean = false,
     badges: @Composable RowScope.() -> Unit = {
         val downloadUtil = LocalDownloadUtil.current
@@ -858,6 +873,7 @@ fun PlaylistListItem(
     trailingContent = trailingContent,
     modifier = modifier,
     shape = shape,
+    containerColor = color,
     color = color
 )
 
@@ -983,9 +999,11 @@ fun MediaMetadataListItem(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     shape: Shape = RectangleShape,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
+    val resolvedColor = if (color != Color.Transparent) color else containerColor
     ListItem(
         title = mediaMetadata.title,
         subtitle = if (mediaMetadata.suggestedBy != null) {
@@ -1024,7 +1042,8 @@ fun MediaMetadataListItem(
         modifier = modifier,
         isActive = isActive,
         shape = shape,
-        color = color
+        containerColor = resolvedColor,
+        color = resolvedColor
     )
 }
 
@@ -1036,14 +1055,15 @@ fun SongItem.formattedDuration(): String? = makeTimeString(duration?.times(1000L
 fun YouTubeListItem(
     item: YTItem,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = Color.Transparent,
+    color: Color = containerColor,
     albumIndex: Int? = null,
     viewCountText: String? = null,
     isSelected: Boolean = false,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
-    showActiveContainer: Boolean = true,
+    showActiveContainer: Boolean = false,
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
@@ -1070,8 +1090,10 @@ fun YouTubeListItem(
     drawHighlight: Boolean = true,
 ) {
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
+    val resolvedColor = if (color != Color.Transparent) color else containerColor
 
     val content: @Composable () -> Unit = {
+        val isArtist = item is ArtistItem
         ListItem(
             title = item.title,
             subtitle = when (item) {
@@ -1098,7 +1120,7 @@ fun YouTubeListItem(
                     isSelected = isSelected,
                     isActive = isActive,
                     isPlaying = isPlaying,
-                    shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
+                    shape = if (isArtist) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
                     modifier = Modifier.size(ListThumbnailSize)
                 )
             },
@@ -1108,7 +1130,9 @@ fun YouTubeListItem(
             isActive = isActive,
             showActiveContainer = showActiveContainer,
             shape = shape,
-            drawHighlight = drawHighlight
+            drawHighlight = drawHighlight,
+            containerColor = resolvedColor,
+            color = resolvedColor,
         )
     }
 
@@ -1194,6 +1218,7 @@ fun YouTubeGridItem(
             isActive = isActive,
             isPlaying = isPlaying,
             shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (item is SongItem && !isActive) {
@@ -1323,14 +1348,16 @@ fun ItemThumbnail(
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
     isSelected: Boolean = false,
-    thumbnailRatio: Float = 1f
+    thumbnailRatio: Float = 1f,
+    contentScale: ContentScale? = null,
 ) {
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
+    val isArtist = shape == CircleShape
+    val resolvedContentScale = contentScale ?: if (cropAlbumArt || isArtist) ContentScale.Crop else ContentScale.Fit
     
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .fillMaxSize()
             .aspectRatio(thumbnailRatio)
             .clip(shape)
     ) {
@@ -1343,9 +1370,9 @@ fun ItemThumbnail(
                     .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                     .build(),
                 contentDescription = null,
-                contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                contentScale = resolvedContentScale,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .clip(shape)
             )
         }
@@ -1405,9 +1432,12 @@ fun LocalThumbnail(
     modifier: Modifier = Modifier,
     showCenterPlay: Boolean = false,
     playButtonVisible: Boolean = false,
-    thumbnailRatio: Float = 1f
+    thumbnailRatio: Float = 1f,
+    contentScale: ContentScale? = null,
 ) {
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
+    val isArtist = shape == CircleShape
+    val resolvedContentScale = contentScale ?: if (cropAlbumArt || isArtist) ContentScale.Crop else ContentScale.Fit
     
     Box(
         contentAlignment = Alignment.Center,
@@ -1423,8 +1453,10 @@ fun LocalThumbnail(
                 .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .build(),
             contentDescription = null,
-            contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-            modifier = Modifier.fillMaxSize()
+            contentScale = resolvedContentScale,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(shape)
         )
 
         AnimatedVisibility(

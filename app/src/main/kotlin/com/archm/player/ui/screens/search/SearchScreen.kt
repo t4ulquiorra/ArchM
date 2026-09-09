@@ -557,6 +557,8 @@ private fun SuggestedSongsSection(
                         item = song,
                         albumIndex = index + 1,
                         viewCountText = song.viewCountText,
+                        containerColor = Color.Transparent,
+                        color = Color.Transparent,
                         isActive = isActive,
                         isPlaying = isPlaying,
                         isSwipeable = false,

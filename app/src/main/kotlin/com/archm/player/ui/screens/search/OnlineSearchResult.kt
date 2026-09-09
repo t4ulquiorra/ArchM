@@ -203,6 +203,7 @@ fun OnlineSearchResult(
         YouTubeListItem(
             item = item,
             viewCountText = (item as? SongItem)?.viewCountText,
+            containerColor = Color.Transparent,
             color = Color.Transparent,
             showActiveContainer = false,
             isActive =

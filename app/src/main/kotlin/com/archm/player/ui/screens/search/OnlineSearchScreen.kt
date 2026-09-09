@@ -210,6 +210,9 @@ fun OnlineSearchScreen(
             ) { item ->
                 YouTubeListItem(
                     item = item,
+                    containerColor = Color.Transparent,
+                    color = Color.Transparent,
+                    showActiveContainer = false,
                     isActive =
                         when (item) {
                             is SongItem -> mediaMetadata?.id == item.id
