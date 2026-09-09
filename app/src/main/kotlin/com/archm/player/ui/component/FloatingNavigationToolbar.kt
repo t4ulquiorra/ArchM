@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.annotation.DrawableRes
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -59,15 +58,6 @@ fun FloatingNavigationToolbar(
     pureBlack: Boolean,
     modifier: Modifier = Modifier,
     isPairedWithMiniPlayer: Boolean = false,
-    onShuffleClick: (() -> Unit)? = null,
-    shuffleEnabled: Boolean = false,
-    @DrawableRes shuffleIconRes: Int = 0,
-    shuffleContentDescription: String? = null,
-    onMusicRecognitionClick: (() -> Unit)? = null,
-    musicRecognitionContentDescription: String? = null,
-    onAiHubClick: (() -> Unit)? = null,
-    @DrawableRes aiHubIconRes: Int = 0,
-    aiHubContentDescription: String? = null,
     isSelected: (Screens) -> Boolean,
     onItemClick: (Screens, Boolean) -> Unit,
     onSearchItemDoubleClick: (() -> Unit)? = null,

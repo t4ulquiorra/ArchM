@@ -913,4 +913,7 @@
     <string name="sync_failed">Sync failed</string>
     <string name="syncing_playlist">Syncing playlist</string>
     <string name="timed_lyrics_not_found">Timed lyrics not found</string>
+    <string name="music_recognition">Music Recognition</string>
+    <string name="music_together">ArchM Music Together</string>
+    <string name="more">More</string>
 </resources>

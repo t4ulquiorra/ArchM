@@ -81,7 +81,7 @@ fun NavGraphBuilder.navigationBuilder(
         )
     }
 
-    composable(Screens.Explore.route) {
+    composable("explore") {
         ExploreScreen(navController = navController)
     }
 
@@ -480,6 +480,10 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("recognition") {
+        RecognitionScreen(navController)
+    }
+
+    composable("music_recognition") {
         RecognitionScreen(navController)
     }
 

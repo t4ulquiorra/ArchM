@@ -74,6 +74,7 @@ import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.archm.player.LocalListenTogetherManager
 import com.archm.player.R
 import com.archm.player.constants.EnableHapticFeedbackKey
 import com.archm.player.constants.MiniPlayerHeight
@@ -82,6 +83,7 @@ import com.archm.player.extensions.togglePlayPause
 import com.archm.player.models.MediaMetadata
 import com.archm.player.playback.PlayerConnection
 import com.archm.player.utils.rememberPreference
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -552,6 +554,25 @@ fun NewMiniPlayerContent(
                 colors = colors,
             )
         } ?: Spacer(Modifier.weight(1f))
+
+        val listenTogetherManager = LocalListenTogetherManager.current
+        val roomState by (listenTogetherManager?.roomState ?: remember { MutableStateFlow(null) }).collectAsStateWithLifecycle()
+        if (roomState != null) {
+            Surface(
+                shape = CircleShape,
+                color = colors.togetherContainer,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.all_inclusive),
+                    contentDescription = stringResource(R.string.together),
+                    tint = colors.togetherContent,
+                    modifier =
+                        Modifier
+                            .padding(7.dp)
+                            .size(14.dp),
+                )
+            }
+        }
 
         MiniPlayerTransportControls(
             isPlaying = isPlaying,

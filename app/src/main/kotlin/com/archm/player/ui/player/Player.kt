@@ -294,6 +294,7 @@ fun BottomSheetPlayer(
     navController: NavController,
     modifier: Modifier = Modifier,
     pureBlack: Boolean,
+    isMiniPlayerPairedWithNavigation: Boolean = false,
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
@@ -1413,9 +1414,11 @@ fun BottomSheetPlayer(
         },
         collapsedContent = {
             MiniPlayer(
-                positionState = positionState,
-                durationState = durationState,
-                onClick = { state.expandSoft() }
+                position = position,
+                duration = duration,
+                pureBlack = pureBlack,
+                isPairedWithNavigation = isMiniPlayerPairedWithNavigation,
+                onClick = { state.expandSoft() },
             )
         },
     ) {

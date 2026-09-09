@@ -1,5 +1,7 @@
 
 
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+
 package com.archm.player
 import com.archm.player.R
 import com.archm.player.BuildConfig
@@ -33,6 +35,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.view.View
 import android.view.WindowManager
+import androidx.annotation.DrawableRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
@@ -42,6 +45,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -69,10 +74,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
@@ -205,12 +214,25 @@ import com.archm.player.ui.component.shimmer.getShimmerTheme
 import com.archm.player.db.MusicDatabase
 import com.archm.player.db.entities.SearchHistory
 import com.archm.player.extensions.toEnum
+import com.archm.player.extensions.toMediaItem
 import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.DownloadUtil
 import com.archm.player.playback.MusicService
 import com.archm.player.playback.MusicService.MusicBinder
 import com.archm.player.playback.PlayerConnection
+import com.archm.player.playback.queues.ListQueue
+import com.archm.player.playback.queues.LocalAlbumRadio
+import com.archm.player.playback.queues.YouTubeAlbumRadio
 import com.archm.player.playback.queues.YouTubeQueue
+import com.archm.player.db.entities.Album
+import com.archm.player.db.entities.Artist
+import com.archm.player.db.entities.Playlist
+import com.archm.player.db.entities.Song
+import com.music.innertube.models.AlbumItem
+import com.music.innertube.models.ArtistItem
+import com.music.innertube.models.PlaylistItem
+import com.music.innertube.models.SongItem
+import kotlin.random.Random
 import com.archm.player.ui.component.*
 import com.archm.player.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import com.archm.player.ui.component.backdrop.backdrops.layerBackdrop
@@ -628,18 +650,13 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
                 val homeViewModel: HomeViewModel = hiltViewModel()
+                val allLocalItems by homeViewModel.allLocalItems.collectAsState()
+                val allYtItems by homeViewModel.allYtItems.collectAsState()
                 val accountImageUrl by homeViewModel.accountImageUrl.collectAsState()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
-                val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
-                val navigationItems = remember(listenTogetherInTopBar) { 
-                    if (listenTogetherInTopBar) {
-                        Screens.MainScreens.filter { it != Screens.ListenTogether }
-                    } else {
-                        Screens.MainScreens
-                    }
-                }
+                val navigationItems = remember { Screens.MainScreens }
                 val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
                 val defaultOpenTab = remember {
                     dataStore[DefaultOpenTabKey].toEnum(defaultValue = NavigationTab.HOME)
@@ -652,13 +669,8 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                val topLevelScreens = remember {
-                    listOf(
-                        Screens.Home.route,
-                        Screens.Library.route,
-                        Screens.ListenTogether.route,
-                        "settings",
-                    )
+                val topLevelScreens = remember(navigationItems) {
+                    navigationItems.map(Screens::route) + "settings"
                 }
 
                 val (query, onQueryChange) = rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -681,7 +693,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                
                 val currentRoute by remember {
                     derivedStateOf { navBackStackEntry?.destination?.route }
                 }
@@ -694,73 +705,43 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val shouldShowNavigationBar = remember(currentRoute, navigationItemRoutes) {
-                    currentRoute == null ||
-                        navigationItemRoutes.contains(currentRoute) ||
-                        currentRoute!!.startsWith("search/") ||
-                        currentRoute!!.startsWith("album/") ||
-                        currentRoute!!.startsWith("online_playlist/") ||
-                        currentRoute!!.startsWith("local_playlist/") ||
-                        currentRoute!!.startsWith("artist/")
+                    currentRoute == null || navigationItemRoutes.contains(currentRoute)
                 }
 
                 val isLandscape = configuration.containerDpSize.width > configuration.containerDpSize.height
 
                 val showRail = isLandscape && !inSearchScreen && currentRoute != "ambient_mode"
 
-                val navPadding = if (shouldShowNavigationBar && !showRail) {
-                    NavigationBarHeight + FloatingToolbarBottomPadding
-                } else {
-                    0.dp
-                }
+                val floatingBarsBottomPadding = NavigationBarBottomPadding
+                val navVisibleHeight = NavigationBarHeight
 
                 val navigationBarHeight by animateDpAsState(
-                    targetValue = if (shouldShowNavigationBar && !showRail) NavigationBarHeight else 0.dp,
+                    targetValue = if (shouldShowNavigationBar && !showRail) navVisibleHeight else 0.dp,
                     animationSpec = NavigationBarAnimationSpec,
                     label = "navBarHeight",
                 )
 
-                val (useFloatingNavBar) = rememberPreference(UseFloatingNavBarKey, defaultValue = false)
-                val floatingNavBarScrollConnection = rememberFloatingTabBarScrollConnection()
-
                 val playerBottomSheetState = rememberBottomSheetState(
                     dismissedBound = 0.dp,
-                    collapsedBound = if (useFloatingNavBar && !showRail && shouldShowNavigationBar) {
-                        0.dp
-                    } else {
+                    collapsedBound =
                         bottomInset +
-                            (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
-                            (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
-                            MiniPlayerHeight
-                    },
+                            (if (shouldShowNavigationBar && !showRail) floatingBarsBottomPadding + navVisibleHeight else 0.dp) +
+                            MiniPlayerBottomSpacing +
+                            MiniPlayerHeight,
                     expandedBound = maxHeight,
                 )
 
-                val onShuffleClick: (() -> Unit)? = remember(playerConnection, playerBottomSheetState) {
-                    playerConnection?.let { connection ->
-                        {
-                            if (playerBottomSheetState.isExpanded) {
-                                playerBottomSheetState.collapseSoft()
-                            }
-                            connection.player.shuffleModeEnabled = !connection.player.shuffleModeEnabled
-                        }
+                var homeOverflowMenuExpanded by rememberSaveable { mutableStateOf(false) }
+                val showHomeOverflowFab =
+                    currentRoute == Screens.Home.route &&
+                        !showRail &&
+                        (playerBottomSheetState.isDismissed || playerBottomSheetState.isCollapsed)
+
+                LaunchedEffect(showHomeOverflowFab) {
+                    if (!showHomeOverflowFab) {
+                        homeOverflowMenuExpanded = false
                     }
                 }
-                val shuffleEnabled by playerConnection?.shuffleModeEnabled?.collectAsState() ?: remember { mutableStateOf(false) }
-
-                val onMusicRecognitionClick: (() -> Unit) = remember(navController, playerBottomSheetState) {
-                    {
-                        if (playerBottomSheetState.isExpanded) {
-                            playerBottomSheetState.collapseSoft()
-                        }
-                        navController.navigate("recognition") {
-                            launchSingleTop = true
-                        }
-                    }
-                }
-
-                val playerMediaMetadata = playerConnection?.player?.currentMediaItem?.mediaMetadata
-                val hasDockedPlayerAccessory =
-                    useFloatingNavBar && playerMediaMetadata != null && !showRail && shouldShowNavigationBar
 
                 val playerAwareWindowInsets = remember(
                     bottomInset,
@@ -932,13 +913,8 @@ class MainActivity : ComponentActivity() {
                     Screens.Search.route -> stringResource(R.string.search)
                     Screens.Library.route -> stringResource(R.string.filter_library)
                     Screens.ListenTogether.route -> stringResource(R.string.together)
-                    Screens.Explore.route -> stringResource(R.string.explore)
                     else -> ""
                 }
-
-
-
-
 
                 val (liquidGlassGlobalEnabled) = rememberPreference(LiquidGlassGlobalEnabledKey, defaultValue = false)
                 val (liquidGlassVibrancy) = rememberPreference(LiquidGlassVibrancyKey, defaultValue = 1f)
@@ -954,14 +930,14 @@ class MainActivity : ComponentActivity() {
                 val (liquidGlassMiniPlayerEnabled) = rememberPreference(LiquidGlassMiniPlayerEnabledKey, defaultValue = true)
                 val (liquidGlassNavBarEnabled) = rememberPreference(LiquidGlassNavBarEnabledKey, defaultValue = true)
                 val glassEffectConfig = remember(
-                    liquidGlassGlobalEnabled, useFloatingNavBar, liquidGlassVibrancy, liquidGlassBlurRadius,
+                    liquidGlassGlobalEnabled, liquidGlassVibrancy, liquidGlassBlurRadius,
                     liquidGlassLensHeight, liquidGlassLensAmount, liquidGlassChromaticAberration,
                     liquidGlassDepthEffect, liquidGlassSurfaceTintColorInt,
                     liquidGlassSurfaceOpacity, liquidGlassTextColorInt, liquidGlassPlayerEnabled,
                     liquidGlassMiniPlayerEnabled, liquidGlassNavBarEnabled,
                 ) {
                     GlassEffectConfig(
-                        globalEnabled = liquidGlassGlobalEnabled && useFloatingNavBar,
+                        globalEnabled = liquidGlassGlobalEnabled,
                         vibrancy = liquidGlassVibrancy,
                         blurRadius = liquidGlassBlurRadius,
                         lensHeight = liquidGlassLensHeight,
@@ -1228,100 +1204,183 @@ class MainActivity : ComponentActivity() {
 
                             if (!showRail && currentRoute != "update" && currentRoute != "listen_together/chat" && currentRoute != "ambient_mode" && currentRoute != "uptime" && currentRoute?.startsWith("settings") != true) {
                                 Box {
+                                    val areBottomBarsPaired =
+                                        shouldShowNavigationBar &&
+                                            !showRail &&
+                                            playerBottomSheetState.isCollapsed
+
                                     BottomSheetPlayer(
                                         state = playerBottomSheetState,
                                         navController = navController,
-                                        pureBlack = pureBlack
+                                        pureBlack = pureBlack,
+                                        isMiniPlayerPairedWithNavigation = areBottomBarsPaired,
                                     )
 
-                                    val navSlideDistance = bottomInset + FloatingToolbarBottomPadding + NavigationBarHeight
+                                    val navSlideDistance =
+                                        bottomInset + floatingBarsBottomPadding + navVisibleHeight
 
-                                    val navOffsetY = if (navigationBarHeight == 0.dp) {
-                                        navSlideDistance
-                                    } else {
-                                        val slideOffset =
-                                            navSlideDistance * playerBottomSheetState.progress.coerceIn(0f, 1f)
-                                        val hideOffset =
-                                            navSlideDistance * (1 - navigationBarHeight.coerceAtMost(NavigationBarHeight) / NavigationBarHeight)
-                                        slideOffset + hideOffset
-                                    }
-
-                                    if (useFloatingNavBar) {
-                                        AppFloatingNavBar(
-                                            navigationItems = navigationItems,
-                                            currentRoute = currentRoute,
-                                            onItemClick = onNavItemClick,
-                                            scrollConnection = floatingNavBarScrollConnection,
-                                            pureBlack = pureBlack,
-                                            showPlayerAccessory = hasDockedPlayerAccessory,
-                                            onAccessoryClick = { playerBottomSheetState.expandSoft() },
-                                            modifier = Modifier
-                                                .align(Alignment.BottomCenter)
-                                                .padding(horizontal = 16.dp)
-                                                .padding(bottom = bottomInset + 8.dp)
-                                                .graphicsLayer {
-                                                    val hiddenOffset =
-                                                        size.height + (bottomInset + 8.dp).toPx()
-                                                    val navBarHeightPx = navigationBarHeight.toPx()
-                                                    translationY = if (navBarHeightPx == 0f) {
-                                                        hiddenOffset
-                                                    } else {
-                                                        val progress = playerBottomSheetState.progress.coerceIn(0f, 1f)
-                                                        val slideOffset = hiddenOffset * progress
-                                                        val hideOffset = hiddenOffset * (1 - navBarHeightPx / NavigationBarHeight.toPx())
-                                                        slideOffset + hideOffset
-                                                    }
-                                                }
-                                        )
-                                    } else {
-                                        Box(
-                                            modifier = Modifier
+                                    Box(
+                                        modifier =
+                                            Modifier
                                                 .align(Alignment.BottomCenter)
                                                 .height(navSlideDistance)
-                                                .offset(y = navOffsetY),
-                                        ) {
-                                            FloatingNavigationToolbar(
-                                                items = navigationItems,
-                                                pureBlack = pureBlack,
-                                                onShuffleClick = onShuffleClick,
-                                                shuffleEnabled = shuffleEnabled,
-                                                shuffleIconRes = R.drawable.shuffle,
-                                                shuffleContentDescription = stringResource(R.string.shuffle),
-                                                onMusicRecognitionClick = onMusicRecognitionClick,
-                                                musicRecognitionContentDescription = stringResource(R.string.recognition),
-                                                onAiHubClick = { 
-                                                    navController.navigate("settings/ai") {
-                                                        launchSingleTop = true
+                                                .offset {
+                                                    if (navigationBarHeight == 0.dp) {
+                                                        IntOffset(
+                                                            x = 0,
+                                                            y = navSlideDistance.roundToPx(),
+                                                        )
+                                                    } else {
+                                                        val slideOffset =
+                                                            navSlideDistance *
+                                                                playerBottomSheetState.progress.coerceIn(
+                                                                    0f,
+                                                                    1f,
+                                                                )
+                                                        val hideOffset =
+                                                            navSlideDistance *
+                                                                (
+                                                                    1 -
+                                                                        navigationBarHeight.coerceAtMost(navVisibleHeight) /
+                                                                            navVisibleHeight
+                                                                )
+                                                        IntOffset(
+                                                            x = 0,
+                                                            y = (slideOffset + hideOffset).roundToPx(),
+                                                        )
                                                     }
                                                 },
-                                                aiHubIconRes = R.drawable.sparks,
-                                                aiHubContentDescription = stringResource(R.string.ai_lyrics_translation),
-                                                isSelected = { screen ->
-                                                    currentRoute == screen.route || currentRoute?.startsWith("${screen.route}/") == true
-                                                },
-                                                onItemClick = onNavItemClick,
-                                                modifier = Modifier
+                                    ) {
+                                        FloatingNavigationToolbar(
+                                            items = navigationItems,
+                                            pureBlack = pureBlack,
+                                            isPairedWithMiniPlayer = areBottomBarsPaired,
+                                            modifier =
+                                                Modifier
                                                     .align(Alignment.BottomCenter)
                                                     .padding(
-                                                        start = FloatingToolbarHorizontalPadding,
-                                                        end = FloatingToolbarHorizontalPadding,
-                                                        bottom = bottomInset + FloatingToolbarBottomPadding,
-                                                    )
-                                                    .height(NavigationBarHeight)
-                                            )
-                                        }
+                                                        start = NavigationBarHorizontalPadding,
+                                                        end = NavigationBarHorizontalPadding,
+                                                        bottom = bottomInset + floatingBarsBottomPadding,
+                                                    ).height(navVisibleHeight),
+                                            isSelected = { screen ->
+                                                currentRoute == screen.route || currentRoute?.startsWith("${screen.route}/") == true
+                                            },
+                                            onItemClick = onNavItemClick,
+                                        )
+                                    }
 
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .align(Alignment.BottomCenter)
-                                                .height(bottomInsetDp)
-                                                
-                                                .graphicsLayer {
-                                                    val progress = playerBottomSheetState.progress
-                                                    alpha = if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
+                                    val homeOverflowFabBottomPadding =
+                                        bottomInset +
+                                            floatingBarsBottomPadding +
+                                            navVisibleHeight +
+                                            HomeOverflowFabSpacing +
+                                            if (playerBottomSheetState.isCollapsed) {
+                                                MiniPlayerHeight + MiniPlayerBottomSpacing
+                                            } else {
+                                                0.dp
+                                            }
+                                    HomeOverflowFabVisibility(
+                                        visible = showHomeOverflowFab,
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(
+                                                    end = NavigationBarHorizontalPadding,
+                                                    bottom = homeOverflowFabBottomPadding,
+                                                ),
+                                    ) {
+                                        HomeOverflowFab(
+                                            expanded = homeOverflowMenuExpanded,
+                                            pureBlack = pureBlack,
+                                            onExpandedChange = { homeOverflowMenuExpanded = it },
+                                            onShuffleClick = {
+                                                val useLocalSource =
+                                                    when {
+                                                        allLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> {
+                                                            Random.nextFloat() < 0.5f
+                                                        }
+
+                                                        allLocalItems.isNotEmpty() -> {
+                                                            true
+                                                        }
+
+                                                        else -> {
+                                                            false
+                                                        }
+                                                    }
+
+                                                coroutineScope.launch(Dispatchers.Main) {
+                                                    if (useLocalSource && allLocalItems.isNotEmpty()) {
+                                                        when (val luckyItem = allLocalItems.random()) {
+                                                            is Song -> {
+                                                                playerConnection?.playQueue(
+                                                                    if (luckyItem.song.isLocal) {
+                                                                        ListQueue(items = listOf(luckyItem.toMediaItem()))
+                                                                    } else {
+                                                                        YouTubeQueue.radio(luckyItem.toMediaMetadata())
+                                                                    },
+                                                                )
+                                                            }
+
+                                                            is Album -> {
+                                                                val albumWithSongs =
+                                                                    withContext(Dispatchers.IO) {
+                                                                        database.albumWithSongs(luckyItem.id).first()
+                                                                    }
+
+                                                                albumWithSongs?.let {
+                                                                    playerConnection?.playQueue(LocalAlbumRadio(it))
+                                                                }
+                                                            }
+
+                                                            is Artist -> {
+                                                                Unit
+                                                            }
+
+                                                            is Playlist -> {
+                                                                Unit
+                                                            }
+                                                        }
+                                                    } else if (allYtItems.isNotEmpty()) {
+                                                        when (val luckyItem = allYtItems.random()) {
+                                                            is SongItem -> {
+                                                                playerConnection?.playQueue(
+                                                                    YouTubeQueue.radio(luckyItem.toMediaMetadata()),
+                                                                )
+                                                            }
+
+                                                            is AlbumItem -> {
+                                                                playerConnection?.playQueue(
+                                                                    YouTubeAlbumRadio(luckyItem.playlistId),
+                                                                )
+                                                            }
+
+                                                            is ArtistItem -> {
+                                                                luckyItem.radioEndpoint?.let {
+                                                                    playerConnection?.playQueue(YouTubeQueue(it))
+                                                                }
+                                                            }
+
+                                                            is PlaylistItem -> {
+                                                                luckyItem.playEndpoint?.let {
+                                                                    playerConnection?.playQueue(YouTubeQueue.playlist(it))
+                                                                }
+                                                            }
+                                                        }
+                                                    }
                                                 }
-                                                .background(baseBg)
+                                            },
+                                            onMusicRecognitionClick = {
+                                                navController.navigate("recognition") {
+                                                    launchSingleTop = true
+                                                }
+                                            },
+                                            onMusicTogetherClick = {
+                                                navController.navigate("listen_together") {
+                                                    launchSingleTop = true
+                                                }
+                                            },
                                         )
                                     }
                                 }
@@ -1330,33 +1389,13 @@ class MainActivity : ComponentActivity() {
                                     BottomSheetPlayer(
                                         state = playerBottomSheetState,
                                         navController = navController,
-                                        pureBlack = pureBlack
+                                        pureBlack = pureBlack,
+                                        isMiniPlayerPairedWithNavigation = false,
                                     )
                                 }
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.BottomCenter)
-                                        .height(bottomInsetDp)
-                                        
-                                        .graphicsLayer {
-                                            val progress = playerBottomSheetState.progress
-                                            alpha = if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
-                                        }
-                                        .background(baseBg)
-                                )
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(
-                                if (useFloatingNavBar) {
-                                    Modifier.nestedScroll(floatingNavBarScrollConnection)
-                                } else {
-                                    Modifier
-                                }
-                            )
+                        modifier = Modifier.fillMaxSize(),
                     ) {
                         Row(Modifier.fillMaxSize()) {
                             val onRailItemClick: (Screens, Boolean) -> Unit = remember(navController, coroutineScope, topAppBarScrollBehavior, homeScrollBehavior, playerBottomSheetState) {
@@ -1739,4 +1778,152 @@ private fun TranslucentTopAppBarIconButton(
             ),
         content = content,
     )
+}
+
+private val HomeOverflowFabSize = 56.dp
+private val HomeOverflowFabSpacing = 12.dp
+private val HomeOverflowMenuIconSize = 40.dp
+
+@Composable
+private fun HomeOverflowFabVisibility(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val motionScheme = MaterialTheme.motionScheme
+
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter =
+            fadeIn(animationSpec = motionScheme.fastEffectsSpec()) +
+                scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = motionScheme.defaultSpatialSpec(),
+                ),
+        exit =
+            fadeOut(animationSpec = motionScheme.fastEffectsSpec()) +
+                scaleOut(
+                    targetScale = 0.8f,
+                    animationSpec = motionScheme.fastSpatialSpec(),
+                ),
+        label = "homeOverflowFabVisibility",
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun HomeOverflowFab(
+    expanded: Boolean,
+    pureBlack: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onShuffleClick: () -> Unit,
+    onMusicRecognitionClick: () -> Unit,
+    onMusicTogetherClick: () -> Unit,
+) {
+    val menuItemColors =
+        MenuDefaults.itemColors(
+            textColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
+            leadingIconColor =
+                if (pureBlack) {
+                    Color.White.copy(alpha = 0.82f)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+        )
+
+    Box {
+        FloatingActionButton(
+            onClick = { onExpandedChange(!expanded) },
+            modifier = Modifier.size(HomeOverflowFabSize),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.more_horiz),
+                contentDescription = stringResource(R.string.more),
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.music_recognition)) },
+                onClick = {
+                    onExpandedChange(false)
+                    onMusicRecognitionClick()
+                },
+                leadingIcon = {
+                    HomeOverflowMenuIcon(
+                        iconRes = R.drawable.mic,
+                        contentDescription = stringResource(R.string.music_recognition),
+                        pureBlack = pureBlack,
+                    )
+                },
+                colors = menuItemColors,
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.music_together)) },
+                onClick = {
+                    onExpandedChange(false)
+                    onMusicTogetherClick()
+                },
+                leadingIcon = {
+                    HomeOverflowMenuIcon(
+                        iconRes = R.drawable.multi_user,
+                        contentDescription = null,
+                        pureBlack = pureBlack,
+                    )
+                },
+                colors = menuItemColors,
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.shuffle)) },
+                onClick = {
+                    onExpandedChange(false)
+                    onShuffleClick()
+                },
+                leadingIcon = {
+                    HomeOverflowMenuIcon(
+                        iconRes = R.drawable.shuffle,
+                        contentDescription = stringResource(R.string.shuffle),
+                        pureBlack = pureBlack,
+                    )
+                },
+                colors = menuItemColors,
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeOverflowMenuIcon(
+    @DrawableRes iconRes: Int,
+    contentDescription: String?,
+    pureBlack: Boolean,
+) {
+    Surface(
+        modifier = Modifier.size(HomeOverflowMenuIconSize),
+        shape = CircleShape,
+        color =
+            if (pureBlack) {
+                Color.White.copy(alpha = 0.12f)
+            } else {
+                MaterialTheme.colorScheme.secondaryContainer
+            },
+        contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = contentDescription,
+            )
+        }
+    }
 }
