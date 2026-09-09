@@ -26,7 +26,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.net.URLDecoder
+import com.archm.player.ui.screens.search.OnlineSearchResultArgument
+import com.archm.player.ui.screens.search.decodeOnlineSearchQuery
 import javax.inject.Inject
 
 enum class OnlineSearchSort {
@@ -39,11 +40,10 @@ class OnlineSearchViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
-    val query = try {
-        URLDecoder.decode(savedStateHandle.get<String>("query")!!, "UTF-8")
-    } catch (e: IllegalArgumentException) {
-        savedStateHandle.get<String>("query")!!
-    }
+    val query =
+        decodeOnlineSearchQuery(
+            savedStateHandle.get<String>(OnlineSearchResultArgument).orEmpty(),
+        )
     val filter = MutableStateFlow<YouTube.SearchFilter?>(null)
     var summaryPage by mutableStateOf<SearchSummaryPage?>(null)
     val viewStateMap = mutableStateMapOf<String, ItemsPage?>()

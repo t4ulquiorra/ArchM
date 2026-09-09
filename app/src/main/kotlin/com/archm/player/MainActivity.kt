@@ -702,7 +702,9 @@ class MainActivity : ComponentActivity() {
                     active = newActive
                     if (!newActive) {
                         focusManager.clearFocus()
-                        if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
+                        if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route } &&
+                            navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) != true
+                        ) {
                             onQueryChange(TextFieldValue())
                         }
                     }
@@ -713,9 +715,20 @@ class MainActivity : ComponentActivity() {
                 val searchBarFocusRequester = remember { FocusRequester() }
                 var onlineSearchSort by rememberSaveable { mutableStateOf(OnlineSearchSort.DEFAULT) }
 
-                val onlineSearchEncodedQuery = navBackStackEntry?.arguments?.getString(OnlineSearchResultArgument)
+                val onlineSearchEncodedQuery =
+                    navBackStackEntry
+                        ?.takeIf {
+                            it.destination.route?.startsWith(OnlineSearchResultRoutePrefix) == true
+                        }?.arguments
+                        ?.getString(OnlineSearchResultArgument)
                 LaunchedEffect(onlineSearchEncodedQuery) {
                     onlineSearchSort = OnlineSearchSort.DEFAULT
+                    if (onlineSearchEncodedQuery != null) {
+                        val decoded = decodeOnlineSearchQuery(onlineSearchEncodedQuery)
+                        if (decoded.isNotEmpty() && query.text != decoded) {
+                            onQueryChange(TextFieldValue(decoded, TextRange(decoded.length)))
+                        }
+                    }
                 }
 
                 val openSearch: () -> Unit = {
@@ -725,7 +738,9 @@ class MainActivity : ComponentActivity() {
 
                 val onSearch: (String) -> Unit = {
                     if (it.isNotEmpty()) {
-                        onActiveChange(false)
+                        onQueryChange(TextFieldValue(it, TextRange(it.length)))
+                        active = false
+                        focusManager.clearFocus()
                         navController.navigate(onlineSearchResultRoute(it))
                         if (dataStore[PauseSearchHistoryKey] != true) {
                             lifecycleScope.launch(Dispatchers.IO) {
@@ -1450,16 +1465,7 @@ class MainActivity : ComponentActivity() {
                                                     query = query.text,
                                                     onQueryChange = onQueryChange,
                                                     navController = navController,
-                                                    onSearch = {
-                                                        navController.navigate(onlineSearchResultRoute(it))
-                                                        if (dataStore[PauseSearchHistoryKey] != true) {
-                                                            lifecycleScope.launch(Dispatchers.IO) {
-                                                                database.query {
-                                                                    insert(SearchHistory(query = it))
-                                                                }
-                                                            }
-                                                        }
-                                                    },
+                                                    onSearch = onSearch,
                                                     onDismiss = { onActiveChange(false) },
                                                     pureBlack = pureBlack,
                                                 )

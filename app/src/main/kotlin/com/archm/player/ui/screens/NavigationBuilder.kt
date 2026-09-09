@@ -35,6 +35,9 @@ import com.archm.player.ui.screens.playlist.LocalPlaylistScreen
 import com.archm.player.ui.screens.playlist.OnlinePlaylistScreen
 import com.archm.player.ui.screens.playlist.TopPlaylistScreen
 import com.archm.player.ui.screens.search.OnlineSearchResult
+import com.archm.player.ui.screens.search.OnlineSearchResultArgument
+import com.archm.player.ui.screens.search.OnlineSearchResultRoute
+import com.archm.player.ui.screens.search.OnlineSearchResultRoutePrefix
 import com.archm.player.ui.screens.search.SearchScreen
 import com.archm.player.ui.screens.settings.AboutScreen
 import com.archm.player.ui.screens.settings.AppearanceSettings
@@ -183,9 +186,9 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(
-        route = "search/{query}",
+        route = OnlineSearchResultRoute,
         arguments = listOf(
-            navArgument("query") {
+            navArgument(OnlineSearchResultArgument) {
                 type = NavType.StringType
             },
         ),
@@ -193,14 +196,14 @@ fun NavGraphBuilder.navigationBuilder(
             fadeIn(tween(250))
         },
         exitTransition = {
-            if (targetState.destination.route?.startsWith("search/") == true) {
+            if (targetState.destination.route?.startsWith(OnlineSearchResultRoutePrefix) == true) {
                 fadeOut(tween(200))
             } else {
                 fadeOut(tween(200)) + slideOutHorizontally { -it / 2 }
             }
         },
         popEnterTransition = {
-            if (initialState.destination.route?.startsWith("search/") == true) {
+            if (initialState.destination.route?.startsWith(OnlineSearchResultRoutePrefix) == true) {
                 fadeIn(tween(250))
             } else {
                 fadeIn(tween(250)) + slideInHorizontally { -it / 2 }
