@@ -240,16 +240,50 @@ fun ArtistScreen(
         }
     }
 
+    // SimpMusic Carousel Ordering: Popular Songs -> Singles -> Albums -> Videos -> Featured On -> Related Artists -> Remaining
     val orderedRemoteSections = remember(artistPage?.sections) {
         val sections = artistPage?.sections.orEmpty()
-        val topSongsSection = sections.firstOrNull { section ->
+        val popularSongsSection = sections.firstOrNull { section ->
             section.items.all { it is SongItem } ||
-                (section.items.firstOrNull() as? SongItem)?.album != null
+                (section.items.firstOrNull() as? SongItem)?.album != null ||
+                section.title.contains("popular", ignoreCase = true) ||
+                section.title.contains("song", ignoreCase = true)
         }
-        if (topSongsSection == null) {
-            sections
-        } else {
-            listOf(topSongsSection) + sections.filterNot { it === topSongsSection }
+        val singlesSection = sections.firstOrNull { section ->
+            section !== popularSongsSection && (
+                section.title.contains("single", ignoreCase = true) ||
+                section.title.contains("ep", ignoreCase = true)
+            )
+        }
+        val albumsSection = sections.firstOrNull { section ->
+            section !== popularSongsSection && section !== singlesSection &&
+                section.title.contains("album", ignoreCase = true)
+        }
+        val videosSection = sections.firstOrNull { section ->
+            section !== popularSongsSection && section !== singlesSection && section !== albumsSection &&
+                (section.title.contains("video", ignoreCase = true) || section.items.any { (it as? SongItem)?.musicVideoType != null })
+        }
+        val featuredSection = sections.firstOrNull { section ->
+            section !== popularSongsSection && section !== singlesSection && section !== albumsSection && section !== videosSection &&
+                (section.title.contains("feature", ignoreCase = true) || section.title.contains("appear", ignoreCase = true))
+        }
+        val relatedSection = sections.firstOrNull { section ->
+            section !== popularSongsSection && section !== singlesSection && section !== albumsSection && section !== videosSection && section !== featuredSection &&
+                (section.title.contains("relat", ignoreCase = true) || section.title.contains("similar", ignoreCase = true) || section.items.all { it is ArtistItem })
+        }
+        val remainingSections = sections.filter { section ->
+            section !== popularSongsSection && section !== singlesSection && section !== albumsSection &&
+            section !== videosSection && section !== featuredSection && section !== relatedSection
+        }
+
+        buildList {
+            popularSongsSection?.let { add(it) }
+            singlesSection?.let { add(it) }
+            albumsSection?.let { add(it) }
+            videosSection?.let { add(it) }
+            featuredSection?.let { add(it) }
+            relatedSection?.let { add(it) }
+            addAll(remainingSections)
         }
     }
 
@@ -461,7 +495,7 @@ fun ArtistScreen(
                                     }
                                 ),
                         ) {
-                            // Artwork image
+                            // Artwork image (FillWidth in portrait, Crop in landscape matching SimpMusic)
                             if (thumbnail != null) {
                                 AsyncImage(
                                     model = thumbnail.resize(
@@ -497,7 +531,7 @@ fun ArtistScreen(
                                 )
                             }
 
-                            // Bottom gradient scrim
+                            // Bottom gradient scrim (70% width in portrait, 35% height in landscape matching SimpMusic)
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -566,7 +600,7 @@ fun ArtistScreen(
                                 }
                             }
 
-                            // Glass / Translucent Back Button at top start
+                            // Glass / Translucent Back Button at top start (SimpMusic header back button)
                             IconButton(
                                 onClick = navController::navigateUp,
                                 onLongClick = navController::backToMain,
@@ -582,7 +616,7 @@ fun ArtistScreen(
                                     painter = painterResource(R.drawable.arrow_back),
                                     contentDescription = null,
                                     tint = Color.White,
-                                    modifier = Modifier.size(22.dp),
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
@@ -625,9 +659,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = stringResource(R.string.songs),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White,
                                     modifier = Modifier.weight(1f),
                                 )
                                 TextButton(
@@ -635,7 +668,7 @@ fun ArtistScreen(
                                         navController.navigate("artist/${viewModel.artistId}/songs")
                                     },
                                     colors = ButtonDefaults.textButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = Color.White,
                                     ),
                                 ) {
                                     Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
@@ -747,9 +780,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = stringResource(R.string.albums),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White,
                                     modifier = Modifier.weight(1f),
                                 )
                                 TextButton(
@@ -757,7 +789,7 @@ fun ArtistScreen(
                                         navController.navigate("artist/${viewModel.artistId}/albums")
                                     },
                                     colors = ButtonDefaults.textButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = Color.White,
                                     ),
                                 ) {
                                     Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
@@ -772,9 +804,10 @@ fun ArtistScreen(
                                 libraryAlbums
                             }
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
+                                item { Spacer(Modifier.size(10.dp)) }
                                 itemsIndexed(
                                     items = filteredLibraryAlbums,
                                     key = { index, it -> "local_album_${it.id}_$index" },
@@ -803,11 +836,12 @@ fun ArtistScreen(
                                             .animateItem(),
                                     )
                                 }
+                                item { Spacer(Modifier.size(10.dp)) }
                             }
                         }
                     }
                 } else {
-                    // Remote Sections (Popular songs, Singles, Albums, Videos, Featured On, Related Artists)
+                    // Remote Sections in SimpMusic Carousel Ordering
                     orderedRemoteSections.forEach { section ->
                         if (section.items.isNotEmpty()) {
                             val isSongSection = section.items.all { it is SongItem } ||
@@ -823,9 +857,8 @@ fun ArtistScreen(
                                     ) {
                                         Text(
                                             text = section.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White,
                                             modifier = Modifier.weight(1f),
                                         )
                                         section.moreEndpoint?.let { moreEndpoint ->
@@ -834,7 +867,7 @@ fun ArtistScreen(
                                                     navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
                                                 },
                                                 colors = ButtonDefaults.textButtonColors(
-                                                    contentColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = Color.White,
                                                 ),
                                             ) {
                                                 Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
@@ -940,9 +973,8 @@ fun ArtistScreen(
                                     ) {
                                         Text(
                                             text = section.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color.White,
                                             modifier = Modifier.weight(1f),
                                         )
                                         section.moreEndpoint?.let { moreEndpoint ->
@@ -951,7 +983,7 @@ fun ArtistScreen(
                                                     navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
                                                 },
                                                 colors = ButtonDefaults.textButtonColors(
-                                                    contentColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = Color.White,
                                                 ),
                                             ) {
                                                 Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
@@ -963,9 +995,10 @@ fun ArtistScreen(
                                 item(key = "section_carousel_${section.title}") {
                                     val distinctItems = section.items.distinctBy { it.id }
                                     LazyRow(
-                                        contentPadding = PaddingValues(horizontal = 20.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     ) {
+                                        item { Spacer(Modifier.size(10.dp)) }
                                         items(
                                             items = distinctItems,
                                             key = { "carousel_item_${it.id}" },
@@ -1025,6 +1058,7 @@ fun ArtistScreen(
                                                     .animateItem(),
                                             )
                                         }
+                                        item { Spacer(Modifier.size(10.dp)) }
                                     }
                                 }
                             }
@@ -1032,24 +1066,28 @@ fun ArtistScreen(
                     }
                 }
 
-                // Description Section
+                // Description Section (SimpMusic card at bottom with limitLine 5 and RoundedCornerShape 8.dp)
                 if (!showLocal && showArtistDescription && artistPage != null) {
                     val description = artistPage.description
                     val descriptionRuns = artistPage.descriptionRuns
                     if (!description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()) {
+                        item(key = "artist_description_spacer") {
+                            Spacer(Modifier.height(10.dp))
+                        }
                         item(key = "artist_description_title") {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
-                                    .padding(top = 16.dp, bottom = 4.dp),
+                                    .padding(horizontal = 20.dp),
                             ) {
                                 Text(
                                     text = stringResource(R.string.description),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = 12.dp),
                                 )
                             }
                         }
@@ -1058,14 +1096,13 @@ fun ArtistScreen(
                             contentType = CONTENT_TYPE_DESCRIPTION,
                         ) {
                             ElevatedCard(
-                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 colors = CardDefaults.elevatedCardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                 ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .widthIn(max = ArtistContentMaxWidth)
-                                    .padding(horizontal = 20.dp, vertical = 8.dp),
                             ) {
                                 Column(
                                     modifier = Modifier
@@ -1080,7 +1117,7 @@ fun ArtistScreen(
                                                 url = it.navigationEndpoint?.urlEndpoint?.url,
                                             )
                                         },
-                                        collapsedMaxLines = 4,
+                                        collapsedMaxLines = 5,
                                     )
                                 }
                             }
@@ -1089,7 +1126,7 @@ fun ArtistScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
@@ -1114,7 +1151,7 @@ fun ArtistScreen(
         )
 
         // Graft Component 1: Top Bar 3-Dots
-        // Floating TopAppBar appears when the user scrolls away from the header
+        // Floating TopAppBar appears when the user scrolls away from the header (SimpMusic style)
         AnimatedVisibility(
             visible = shouldHideTopBar,
             enter = fadeIn() + slideInVertically(),
@@ -1144,7 +1181,7 @@ fun ArtistScreen(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.arrow_back),
-                                contentDescription = null,
+                                contentDescription = "Back",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp),
                             )
@@ -1185,8 +1222,11 @@ private fun ArtistHeroActionRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Left: Circular Shuffle button
@@ -1209,8 +1249,6 @@ private fun ArtistHeroActionRow(
                 modifier = Modifier.size(22.dp),
             )
         }
-
-        Spacer(modifier = Modifier.width(16.dp))
 
         // Center: Prominent Play pill button
         Button(
@@ -1240,8 +1278,6 @@ private fun ArtistHeroActionRow(
                 fontWeight = FontWeight.Bold,
             )
         }
-
-        Spacer(modifier = Modifier.width(16.dp))
 
         // Right: Circular Follow / Library (+) button
         FilledTonalIconButton(
