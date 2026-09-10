@@ -925,4 +925,16 @@
     <string name="together_online">Online</string>
     <string name="block_artist">Block artist</string>
     <string name="unblock_artist">Unblock artist</string>
+
+    <!-- ArtistScreen resources -->
+    <string name="unknown_artist">Unknown Artist</string>
+    <string name="copy_link">Copy link</string>
+    <string name="link_copied">Link copied</string>
+    <string name="subscribers">subscribers</string>
+    <string name="subscribe">Follow</string>
+    <string name="subscribed">Following</string>
+    <string name="monthly_listeners">monthly listeners</string>
+    <string name="description">Description</string>
+    <string name="popular">Popular</string>
+    <string name="singles">Singles</string>
 </resources>
