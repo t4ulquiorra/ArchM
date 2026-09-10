@@ -104,7 +104,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
@@ -905,11 +905,12 @@ fun ArtistScreen(
                                     )
                                 }
 
-                                if (distinctSongs.size > 5 && section.moreEndpoint != null) {
+                                val moreEndpoint = section.moreEndpoint
+                                if (distinctSongs.size > 5 && moreEndpoint != null) {
                                     item(key = "section_${section.title}_more") {
                                         Surface(
                                             onClick = {
-                                                navController.navigate(buildArtistItemsRoute(viewModel.artistId, section.moreEndpoint))
+                                                navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
                                             },
                                             shape = RoundedCornerShape(12.dp),
                                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
