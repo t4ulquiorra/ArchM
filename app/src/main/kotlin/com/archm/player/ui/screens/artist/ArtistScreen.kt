@@ -1002,7 +1002,7 @@ fun ArtistScreen(
                                 ) { artist ->
                                     HomeItemArtist(
                                         title = artist.title,
-                                        subscribers = artist.subscribers,
+                                        subscribers = null,
                                         thumbnailUrl = artist.thumbnail,
                                         onClick = { navController.navigate("artist/${artist.id}") },
                                     )
@@ -1361,7 +1361,7 @@ private fun HomeItemVideo(
 @Composable
 private fun HomeItemArtist(
     title: String,
-    subscribers: String?,
+    subscribers: String? = null,
     thumbnailUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
