@@ -54,63 +54,34 @@ fun List<Run>.splitBySeparator(): List<List<Run>> {
     return res
 }
 
-fun List<List<Run>>.clean(): List<List<Run>> {
-    val firstText = getOrNull(0)?.firstOrNull()?.text?.trim()
-    val isFirstType = firstText?.let {
-        it.equals("Song", ignoreCase = true) ||
-        it.equals("Video", ignoreCase = true) ||
-        it.equals("Album", ignoreCase = true) ||
-        it.equals("Single", ignoreCase = true) ||
-        it.equals("EP", ignoreCase = true) ||
-        it.equals("Artist", ignoreCase = true) ||
-        it.equals("Playlist", ignoreCase = true) ||
-        it.equals("Station", ignoreCase = true) ||
-        it.equals("Podcast", ignoreCase = true)
-    } == true
-    return if (isFirstType) drop(1) else this
-}
-
-fun List<Run>.toArtists(): List<Artist> {
-    val withEndpoints = mapNotNull { run ->
-        val endpoint = run.navigationEndpoint?.browseEndpoint
-        if (endpoint != null && (endpoint.isArtistEndpoint || endpoint.browseId.startsWith("UC"))) {
-            run.text.takeIf(String::isNotBlank)?.let { name ->
-                Artist(name = name, id = endpoint.browseId)
-            }
-        } else null
+fun List<List<Run>>.clean(): List<List<Run>> =
+    if (getOrNull(0)?.getOrNull(0)?.navigationEndpoint != null ||
+        (getOrNull(0)?.getOrNull(0)?.text?.contains(regex = Regex("[&,]"))) != false
+    ) {
+        this
+    } else {
+        this.drop(1)
     }
-    if (withEndpoints.isNotEmpty()) return withEndpoints
 
-    val fullText = filter { it.text != "," && it.text != "&" }
-        .joinToString(separator = "") { it.text }
-        .trim()
+fun List<Run>.oddElements() =
+    filterIndexed { index, _ ->
+        index % 2 == 0
+    }
 
-    val isKnownType = fullText.equals("Song", ignoreCase = true) ||
-        fullText.equals("Video", ignoreCase = true) ||
-        fullText.equals("Album", ignoreCase = true) ||
-        fullText.equals("Single", ignoreCase = true) ||
-        fullText.equals("EP", ignoreCase = true) ||
-        fullText.equals("Artist", ignoreCase = true) ||
-        fullText.equals("Playlist", ignoreCase = true) ||
-        fullText.equals("Station", ignoreCase = true) ||
-        fullText.equals("Podcast", ignoreCase = true)
-
-    val isDuration = fullText.contains(":") || fullText.parseTime() != null
-    val isYear = fullText.toIntOrNull()?.let { it in 1900..2100 } == true
-    val isViews = parseViewCount(fullText) != null
-
-    if (fullText.isNotBlank() && !isKnownType && !isDuration && !isYear && !isViews) {
-        return oddElements().mapNotNull { run ->
-            run.text.trim().takeIf { it.isNotBlank() && it != "," && it != "&" }?.let { name ->
+fun List<Run>.toArtists(): List<Artist> =
+    mapNotNull { run ->
+        val endpoint = run.navigationEndpoint?.browseEndpoint ?: return@mapNotNull null
+        if (!endpoint.isArtistEndpoint && !endpoint.browseId.startsWith("UC")) return@mapNotNull null
+        run.text
+            .takeIf(String::isNotBlank)
+            ?.takeIf { !it.contains(":") && it.parseTime() == null }
+            ?.let { name ->
                 Artist(
                     name = name,
-                    id = run.navigationEndpoint?.browseEndpoint?.browseId
+                    id = endpoint.browseId,
                 )
             }
-        }
     }
-    return emptyList()
-}
 
 fun List<List<Run>>.extractArtists(): List<Artist> =
     asSequence()
@@ -118,22 +89,14 @@ fun List<List<Run>>.extractArtists(): List<Artist> =
         .firstOrNull { it.isNotEmpty() }
         .orEmpty()
 
-
-fun List<Run>.oddElements() =
-    filterIndexed { index, _ ->
-        index % 2 == 0
-    }
-
-private val ViewCountRegex = Regex("""([\d.,]+)\s*([KMB])\s*(plays?|views?)?""", RegexOption.IGNORE_CASE)
-private val ViewsWordRegex = Regex("""([\d.,]+)\s*(plays?|views?)""", RegexOption.IGNORE_CASE)
+private val ViewCountRegex = Regex("""([\d.,]+)\s*([KMB]?)""", RegexOption.IGNORE_CASE)
 
 fun parseViewCount(text: String): Long? {
-    if (text.contains(":")) return null
-    val match = ViewCountRegex.find(text) ?: ViewsWordRegex.find(text) ?: return null
+    val match = ViewCountRegex.find(text) ?: return null
     val numberText = match.groupValues[1]
-    val suffix = if (match.groupValues.size > 2) match.groupValues[2].uppercase() else ""
+    val suffix = match.groupValues[2].uppercase()
     val value =
-        if (suffix.isNotEmpty() && suffix in listOf("K", "M", "B")) {
+        if (suffix.isNotEmpty()) {
             numberText.replace(',', '.').toDoubleOrNull()
         } else {
             numberText.filter(Char::isDigit).toDoubleOrNull()
@@ -150,10 +113,9 @@ fun parseViewCount(text: String): Long? {
 
 fun List<List<Run>>.viewCountText(): String? =
     firstNotNullOfOrNull { group ->
-        val text = group.joinToString(separator = "") { it.text }.trim().removePrefix("•").trim()
+        val text = group.joinToString(separator = "") { it.text }.trim()
         text.takeIf {
             group.none { run -> run.navigationEndpoint != null } &&
-                !it.contains(":") &&
                 it.parseTime() == null &&
                 it.toIntOrNull()?.let { value -> value !in 1900..2100 } != false &&
                 parseViewCount(it) != null

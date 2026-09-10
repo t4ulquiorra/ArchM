@@ -93,6 +93,7 @@ import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
+import com.music.innertube.utils.parseTime
 import com.archm.player.LocalDatabase
 import com.archm.player.LocalDownloadUtil
 import com.archm.player.LocalPlayerConnection
@@ -1138,9 +1139,14 @@ fun YouTubeListItem(
             title = item.title,
             subtitle = when (item) {
                 is SongItem -> {
-                    val artistsText = item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() }
+                    val validArtists = item.artists.filter { !it.name.contains(":") && it.name.parseTime() == null }.map { it.name }
+                    val artistsText = validArtists.joinToString(", ").takeIf { it.isNotBlank() }
                     val durationText = item.durationText ?: item.formattedDuration()
-                    val subtitleText = listOfNotNull(artistsText, durationText).joinToString(" • ")
+                    val subtitleText = if (artistsText.isNullOrBlank() || artistsText == durationText) {
+                        listOfNotNull(durationText, viewCountText).joinToString(" • ")
+                    } else {
+                        listOfNotNull(artistsText, durationText, viewCountText).joinToString(" • ")
+                    }
                     subtitleText.takeIf { it.isNotEmpty() }
                 }
                 is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
@@ -1228,9 +1234,15 @@ fun YouTubeGridItem(
     subtitle = {
         val subtitle = when (item) {
             is SongItem -> {
-                val artistsText = item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() }
+                val validArtists = item.artists.filter { !it.name.contains(":") && it.name.parseTime() == null }.map { it.name }
+                val artistsText = validArtists.joinToString(", ").takeIf { it.isNotBlank() }
                 val durationText = item.durationText ?: item.formattedDuration()
-                listOfNotNull(artistsText, durationText).joinToString(" • ").takeIf { it.isNotEmpty() }
+                val subtitleText = if (artistsText.isNullOrBlank() || artistsText == durationText) {
+                    durationText
+                } else {
+                    listOfNotNull(artistsText, durationText).joinToString(" • ")
+                }
+                subtitleText?.takeIf { it.isNotEmpty() }
             }
             is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
             is ArtistItem -> null

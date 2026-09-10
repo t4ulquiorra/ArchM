@@ -86,17 +86,21 @@ data class SearchSummaryPage(
             return when {
                 renderer.onTap.watchEndpoint != null -> {
                     val artists = subtitle.extractArtists().ifEmpty {
-                        subtitle.getOrNull(1)?.oddElements()?.map {
-                            Artist(
-                                name = it.text,
-                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                            )
-                        } ?: subtitle.firstOrNull()?.oddElements()?.map {
-                            Artist(
-                                name = it.text,
-                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                            )
-                        } ?: emptyList()
+                        subtitle.getOrNull(1)?.oddElements()
+                            ?.filter { !it.text.contains(":") && it.text.parseTime() == null }
+                            ?.map {
+                                Artist(
+                                    name = it.text,
+                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                                )
+                            } ?: subtitle.firstOrNull()?.oddElements()
+                            ?.filter { !it.text.contains(":") && it.text.parseTime() == null }
+                            ?.map {
+                                Artist(
+                                    name = it.text,
+                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                                )
+                            } ?: emptyList()
                     }
                     SongItem(
                         id = renderer.onTap.watchEndpoint.videoId ?: return null,
@@ -154,12 +158,14 @@ data class SearchSummaryPage(
 
                 renderer.onTap.browseEndpoint?.isAlbumEndpoint == true -> {
                     val artists = subtitle.extractArtists().ifEmpty {
-                        subtitle.getOrNull(1)?.oddElements()?.map {
-                            Artist(
-                                name = it.text,
-                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                            )
-                        } ?: emptyList()
+                        subtitle.getOrNull(1)?.oddElements()
+                            ?.filter { !it.text.contains(":") && it.text.parseTime() == null }
+                            ?.map {
+                                Artist(
+                                    name = it.text,
+                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                                )
+                            } ?: emptyList()
                     }
                     AlbumItem(
                         browseId = renderer.onTap.browseEndpoint.browseId,
@@ -222,7 +228,10 @@ data class SearchSummaryPage(
             }
         }
 
-        fun fromMusicResponsiveListItemRenderer(renderer: MusicResponsiveListItemRenderer): YTItem? {
+        fun fromMusicResponsiveListItemRenderer(
+            renderer: MusicResponsiveListItemRenderer,
+            defaultArtist: Artist? = null,
+        ): YTItem? {
             val secondaryLine =
                 renderer.flexColumns
                     .getOrNull(1)
@@ -265,13 +274,17 @@ data class SearchSummaryPage(
                                 ?.text ?: return null,
                         artists = listRun.extractArtists().ifEmpty {
                             secondaryLine.extractArtists().ifEmpty {
-                                listRun.getOrNull(0)?.oddElements()?.map {
-                                    Artist(
-                                        name = it.text,
-                                        id = it.navigationEndpoint?.browseEndpoint?.browseId
-                                    )
-                                } ?: emptyList()
+                                listRun.getOrNull(0)?.oddElements()
+                                    ?.filter { !it.text.contains(":") && it.text.parseTime() == null }
+                                    ?.map {
+                                        Artist(
+                                            name = it.text,
+                                            id = it.navigationEndpoint?.browseEndpoint?.browseId
+                                        )
+                                    } ?: emptyList()
                             }
+                        }.ifEmpty {
+                            defaultArtist?.let(::listOf) ?: emptyList()
                         },
                         album = listRun.getOrNull(1)?.firstOrNull()?.takeIf { it.navigationEndpoint?.browseEndpoint != null }?.let {
                             Album(
@@ -426,6 +439,22 @@ data class SearchSummaryPage(
 
                 else -> null
             }
+        }
+
+        fun fromMusicCardShelf(renderer: MusicCardShelfRenderer): List<YTItem> {
+            val cardItem = fromMusicCardShelfRenderer(renderer)
+            val parentArtist = when (cardItem) {
+                is ArtistItem -> Artist(name = cardItem.title, id = cardItem.id)
+                is SongItem -> cardItem.artists.firstOrNull()
+                else -> renderer.title.runs?.firstOrNull()?.text
+                    ?.takeIf { !it.contains(":") && it.parseTime() == null }
+                    ?.let { Artist(name = it, id = renderer.onTap.browseEndpoint?.browseId) }
+            }
+            val contentItems = renderer.contents
+                ?.mapNotNull { it.musicResponsiveListItemRenderer }
+                ?.mapNotNull { fromMusicResponsiveListItemRenderer(it, defaultArtist = parentArtist) }
+                .orEmpty()
+            return listOfNotNull(cardItem).plus(contentItems).distinctBy { it.id }
         }
     }
 }

@@ -163,14 +163,7 @@ object YouTube {
                 }
                 SearchSummary(
                     title = shelfTitle,
-                    items = listOfNotNull(SearchSummaryPage.fromMusicCardShelfRenderer(it.musicCardShelfRenderer))
-                        .plus(
-                            it.musicCardShelfRenderer.contents
-                                ?.mapNotNull { it.musicResponsiveListItemRenderer }
-                                ?.mapNotNull(SearchSummaryPage.Companion::fromMusicResponsiveListItemRenderer)
-                                .orEmpty()
-                        )
-                        .distinctBy { it.id }
+                    items = SearchSummaryPage.fromMusicCardShelf(it.musicCardShelfRenderer)
                         .ifEmpty { null } ?: return@mapNotNull null
                 )
             } else if (it.musicShelfRenderer != null) {
