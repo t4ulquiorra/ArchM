@@ -15,9 +15,14 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -28,6 +33,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,9 +79,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -83,13 +91,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -97,6 +110,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -120,13 +134,16 @@ import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.IconButton
 import com.archm.player.ui.component.LinkSegment
+import com.archm.player.ui.component.LocalGlassEffectConfig
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.liquidGlass
 import com.archm.player.ui.component.shimmer.ButtonPlaceholder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
 import com.archm.player.ui.component.shimmer.TextPlaceholder
 import com.archm.player.ui.menu.YouTubeAlbumMenu
 import com.archm.player.ui.menu.YouTubePlaylistMenu
+import com.archm.player.ui.menu.YouTubeSelectionSongMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
@@ -142,6 +159,70 @@ import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
+
+const val MAX_SONG_SELECTION = 25
+
+@Stable
+class SongSelectionState(
+    private val limitMessage: String,
+    private val showToast: (String) -> Unit,
+) {
+    var isActive by mutableStateOf(false)
+        private set
+
+    private val _selected = mutableStateListOf<String>()
+    val selected: List<String> get() = _selected
+    val count: Int get() = _selected.size
+    val isFull: Boolean get() = _selected.size >= MAX_SONG_SELECTION
+
+    fun isSelected(videoId: String): Boolean = _selected.contains(videoId)
+
+    fun start(videoId: String) {
+        if (isActive) return
+        isActive = true
+        add(videoId)
+    }
+
+    fun toggle(videoId: String) {
+        if (!isActive) return
+        if (_selected.remove(videoId)) {
+            if (_selected.isEmpty()) exit()
+            return
+        }
+        add(videoId)
+    }
+
+    fun toggleSelectAll(videoIds: List<String>) {
+        if (!isActive) return
+        val candidates = videoIds.filter { it.isNotBlank() }.distinct()
+        val everythingReachableIsPicked =
+            candidates.isNotEmpty() &&
+                candidates.take(MAX_SONG_SELECTION).all { _selected.contains(it) }
+        if (everythingReachableIsPicked) {
+            _selected.clear()
+            return
+        }
+        for (videoId in candidates) {
+            if (!add(videoId)) return
+        }
+    }
+
+    fun exit() {
+        isActive = false
+        _selected.clear()
+    }
+
+    private fun add(videoId: String): Boolean {
+        if (videoId.isBlank() || _selected.contains(videoId)) return true
+        if (isFull) {
+            showToast(limitMessage)
+            return false
+        }
+        _selected.add(videoId)
+        return true
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -156,6 +237,7 @@ fun ArtistScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
+    val glassConfig = LocalGlassEffectConfig.current
 
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
@@ -184,6 +266,18 @@ fun ArtistScreen(
     var shouldHideTopBar by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(firstItemVisible) {
         shouldHideTopBar = !firstItemVisible
+    }
+
+    val maxSelectionReachedString = stringResource(R.string.max_selection_reached, MAX_SONG_SELECTION)
+    val selectionState = remember {
+        SongSelectionState(
+            limitMessage = maxSelectionReachedString,
+            showToast = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() },
+        )
+    }
+
+    BackHandler(enabled = selectionState.isActive) {
+        selectionState.exit()
     }
 
     var backgroundVideoUrl by remember { mutableStateOf<String?>(null) }
@@ -354,7 +448,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                                    .padding(horizontal = 20.dp, vertical = 24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.55f))
@@ -390,7 +484,7 @@ fun ArtistScreen(
                                     }
                                 ),
                         ) {
-                            // Artwork image (FillWidth in portrait, Crop in landscape)
+                            // Artwork image (FillWidth in portrait, Crop in landscape, alignment = TopCenter so heads/helmets aren't cropped)
                             if (thumbnail != null) {
                                 AsyncImage(
                                     model = thumbnail.resize(
@@ -399,6 +493,7 @@ fun ArtistScreen(
                                     ),
                                     contentDescription = null,
                                     contentScale = if (isPortrait) ContentScale.FillWidth else ContentScale.Crop,
+                                    alignment = Alignment.TopCenter,
                                     modifier = Modifier.fillMaxSize(),
                                 )
                             } else {
@@ -426,7 +521,29 @@ fun ArtistScreen(
                                 )
                             }
 
-                            // Bottom gradient scrim (70% width in portrait, 35% height in landscape)
+                            // Dual-layer blurred bottom transition matching SimpMusic:
+                            // Layer 1: Blurred bottom slice of artwork
+                            if (thumbnail != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .align(Alignment.BottomCenter)
+                                        .clipToBounds(),
+                                ) {
+                                    AsyncImage(
+                                        model = thumbnail.resize(600, 600),
+                                        contentDescription = null,
+                                        contentScale = if (isPortrait) ContentScale.FillWidth else ContentScale.Crop,
+                                        alignment = Alignment.TopCenter,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .blur(32.dp),
+                                    )
+                                }
+                            }
+
+                            // Layer 2: Bottom color gradient scrim (70% width in portrait, 35% height in landscape)
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -441,14 +558,14 @@ fun ArtistScreen(
                                     .background(
                                         Brush.verticalGradient(
                                             0f to Color.Transparent,
-                                            0.35f to Color.Black.copy(alpha = 0.35f),
+                                            0.35f to surfaceColor.copy(alpha = 0.35f),
                                             0.70f to surfaceColor.copy(alpha = 0.85f),
                                             1f to surfaceColor,
                                         )
                                     ),
                             )
 
-                            // Artist title & subtitle (subscribers • views)
+                            // Artist title & subtitle (subscribers • monthly listeners)
                             Column(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
@@ -514,6 +631,29 @@ fun ArtistScreen(
                                     )
                                 }
                             }
+
+                            // Floating circular translucent 3-dot overflow button at top-right
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(12.dp)
+                                    .windowInsetsPadding(WindowInsets.statusBars)
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.40f)),
+                            ) {
+                                IconButton(
+                                    onClick = showArtistOverflowMenu,
+                                    onLongClick = {},
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.more_horiz),
+                                        contentDescription = stringResource(R.string.more_options),
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
                         }
 
                         // SimpMusic 3-Button Row (Radio circle, Center Shuffle circle, Subscribe circle)
@@ -541,7 +681,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = stringResource(R.string.popular),
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier.weight(1f),
                                 )
@@ -563,95 +704,44 @@ fun ArtistScreen(
                             items = distinctSongs.take(5),
                             key = { "popular_song_${it.id}" },
                         ) { song ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (song.id == mediaMetadata?.id) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(
-                                                    YouTubeQueue(
-                                                        WatchEndpoint(videoId = song.id),
-                                                        song.toMediaMetadata(),
-                                                    ),
-                                                )
-                                            }
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                YouTubeSongMenu(
-                                                    song = song,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        },
-                                    )
-                                    .padding(vertical = 6.dp, horizontal = 15.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Box(
-                                    modifier = Modifier.size(48.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    AsyncImage(
-                                        model = song.thumbnail.resize(192, 192),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(4.dp)),
-                                    )
-                                }
-                                Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(start = 12.dp, end = 10.dp),
-                                    verticalArrangement = Arrangement.SpaceEvenly,
-                                ) {
-                                    Text(
-                                        text = song.title,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        maxLines = 1,
-                                        color = if (song.id == mediaMetadata?.id) MaterialTheme.colorScheme.primary else Color.White,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .wrapContentHeight(align = Alignment.CenterVertically)
-                                            .basicMarquee(),
-                                    )
-                                    Text(
-                                        text = song.artists.joinToString(", ") { it.name },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 1,
-                                        color = Color(0xC4FFFFFF),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .wrapContentHeight(align = Alignment.CenterVertically),
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        menuState.show {
-                                            YouTubeSongMenu(
-                                                song = song,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {},
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                    )
-                                }
-                            }
+                            ArtistSongRow(
+                                song = song,
+                                isPlaying = song.id == mediaMetadata?.id && isPlaying,
+                                selectionMode = selectionState.isActive,
+                                isSelected = selectionState.isSelected(song.id),
+                                onClick = {
+                                    if (song.id == mediaMetadata?.id) {
+                                        playerConnection.togglePlayPause()
+                                    } else {
+                                        playerConnection.playQueue(
+                                            YouTubeQueue(
+                                                WatchEndpoint(videoId = song.id),
+                                                song.toMediaMetadata(),
+                                            ),
+                                        )
+                                    }
+                                },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    selectionState.start(song.id)
+                                },
+                                onSelectToggle = {
+                                    selectionState.toggle(song.id)
+                                },
+                                onAddToQueue = {
+                                    playerConnection.addToQueue(listOf(song.toMediaItem()))
+                                    Toast.makeText(context, context.getString(R.string.add_to_queue), Toast.LENGTH_SHORT).show()
+                                },
+                                onMoreClick = {
+                                    menuState.show {
+                                        YouTubeSongMenu(
+                                            song = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                },
+                            )
                         }
                     }
                 }
@@ -670,7 +760,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = section.title,
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier.weight(1f),
                                 )
@@ -690,11 +781,10 @@ fun ArtistScreen(
 
                         item(key = "section_singles_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                item { Spacer(Modifier.size(10.dp)) }
                                 items(
                                     items = distinctSingles,
                                     key = { "single_${it.id}" },
@@ -717,7 +807,6 @@ fun ArtistScreen(
                                         },
                                     )
                                 }
-                                item { Spacer(Modifier.size(10.dp)) }
                             }
                         }
                     }
@@ -737,7 +826,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = section.title,
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier.weight(1f),
                                 )
@@ -757,11 +847,10 @@ fun ArtistScreen(
 
                         item(key = "section_albums_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                item { Spacer(Modifier.size(10.dp)) }
                                 items(
                                     items = distinctAlbums,
                                     key = { "album_${it.id}" },
@@ -784,7 +873,6 @@ fun ArtistScreen(
                                         },
                                     )
                                 }
-                                item { Spacer(Modifier.size(10.dp)) }
                             }
                         }
                     }
@@ -804,7 +892,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = section.title,
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier.weight(1f),
                                 )
@@ -824,11 +913,10 @@ fun ArtistScreen(
 
                         item(key = "section_videos_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                item { Spacer(Modifier.size(10.dp)) }
                                 items(
                                     items = distinctVideos,
                                     key = { "video_${it.id}" },
@@ -860,7 +948,6 @@ fun ArtistScreen(
                                         },
                                     )
                                 }
-                                item { Spacer(Modifier.size(10.dp)) }
                             }
                         }
                     }
@@ -880,7 +967,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = section.title,
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier
                                         .weight(1f)
@@ -891,11 +979,10 @@ fun ArtistScreen(
 
                         item(key = "section_featured_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                item { Spacer(Modifier.size(10.dp)) }
                                 items(
                                     items = distinctFeatured,
                                     key = { "featured_${it.id}" },
@@ -960,7 +1047,6 @@ fun ArtistScreen(
                                         },
                                     )
                                 }
-                                item { Spacer(Modifier.size(10.dp)) }
                             }
                         }
                     }
@@ -980,7 +1066,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = section.title,
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier
                                         .weight(1f)
@@ -991,11 +1078,10 @@ fun ArtistScreen(
 
                         item(key = "section_related_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                item { Spacer(Modifier.size(10.dp)) }
                                 items(
                                     items = distinctArtists,
                                     key = { "related_${it.id}" },
@@ -1007,7 +1093,6 @@ fun ArtistScreen(
                                         onClick = { navController.navigate("artist/${artist.id}") },
                                     )
                                 }
-                                item { Spacer(Modifier.size(10.dp)) }
                             }
                         }
                     }
@@ -1030,7 +1115,8 @@ fun ArtistScreen(
                             ) {
                                 Text(
                                     text = stringResource(R.string.description),
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     modifier = Modifier
                                         .weight(1f)
@@ -1085,13 +1171,97 @@ fun ArtistScreen(
                 .align(Alignment.BottomCenter),
         )
 
-        // Floating TopAppBar appears when the user scrolls away from the header
+        // Selection TopAppBar (shown when multi-selection mode is active)
         AnimatedVisibility(
-            visible = shouldHideTopBar,
+            visible = selectionState.isActive,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
         ) {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlass(
+                        config = glassConfig.copy(globalEnabled = true),
+                        applyEdgeEffects = false,
+                        blurRadiusDp = 24f,
+                    ),
+                navigationIcon = {
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        IconButton(
+                            onClick = { selectionState.exit() },
+                            onLongClick = {},
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.close),
+                                contentDescription = stringResource(R.string.close),
+                                tint = Color.White,
+                            )
+                        }
+                    }
+                },
+                title = {
+                    Text(
+                        text = "${selectionState.count} selected",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            val popularSongs = popularSongsSection?.items?.filterIsInstance<SongItem>().orEmpty()
+                            val allIds = popularSongs.take(MAX_SONG_SELECTION).map { it.id }
+                            selectionState.toggleSelectAll(allIds)
+                        },
+                        onLongClick = {},
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.select_all),
+                            contentDescription = stringResource(R.string.select_all),
+                            tint = Color.White,
+                        )
+                    }
+                    if (selectionState.count > 0) {
+                        IconButton(
+                            onClick = {
+                                val popularSongs = popularSongsSection?.items?.filterIsInstance<SongItem>().orEmpty()
+                                val selectedSongs = popularSongs.filter { selectionState.isSelected(it.id) }
+                                menuState.show {
+                                    YouTubeSelectionSongMenu(
+                                        songSelection = selectedSongs,
+                                        onDismiss = menuState::dismiss,
+                                        clearAction = { selectionState.exit() },
+                                    )
+                                }
+                            },
+                            onLongClick = {},
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.more_vert),
+                                contentDescription = null,
+                                tint = Color.White,
+                            )
+                        }
+                    }
+                },
+            )
+        }
+
+        // Sticky TopAppBar with frosted glass blur effect (shown on scroll when not selecting)
+        AnimatedVisibility(
+            visible = shouldHideTopBar && !selectionState.isActive,
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut() + slideOutVertically(),
+        ) {
+            TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = {
                     Text(
                         text = artistName ?: unknownArtist,
@@ -1135,11 +1305,18 @@ fun ArtistScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
                     navigationIconContentColor = Color.White,
                     titleContentColor = Color.White,
                     actionIconContentColor = Color.White,
                 ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .liquidGlass(
+                        config = glassConfig.copy(globalEnabled = true),
+                        applyEdgeEffects = false,
+                        blurRadiusDp = 24f,
+                    ),
             )
         }
     }
@@ -1205,6 +1382,7 @@ private fun SimpMusicActionRow(
         }
 
         // Follow — outlined circle when unfollowed, filled when followed (48dp)
+        // User silhouette styling matching SimpMusic (subscribe / subscribed vectors)
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -1217,7 +1395,7 @@ private fun SimpMusicActionRow(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(if (isFollowed) R.drawable.done else R.drawable.add),
+                painter = painterResource(if (isFollowed) R.drawable.subscribed else R.drawable.subscribe),
                 contentDescription = stringResource(if (isFollowed) R.string.subscribed else R.string.subscribe),
                 tint = if (isFollowed) Color.Black else accentColor,
                 modifier = Modifier.size(22.dp),
@@ -1227,7 +1405,210 @@ private fun SimpMusicActionRow(
 }
 
 /**
+ * Port of SimpMusic's SongFullWidthItems:
+ * - 20.dp leading alignment
+ * - Swipe right gesture to reveal queue icon and add to queue
+ * - Multi-selection support (animated checkbox + primary background tint)
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ArtistSongRow(
+    song: SongItem,
+    isPlaying: Boolean,
+    selectionMode: Boolean,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onSelectToggle: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onMoreClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val maxOffset = 360f
+    val offsetX = remember { Animatable(initialValue = 0f) }
+    var heightDp by remember { mutableStateOf(0.dp) }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        // Behind row: revealed Add to Queue icon
+        Crossfade(
+            targetState = offsetX.value >= maxOffset / 2,
+            label = "addToQueueCrossfade",
+        ) { shouldShow ->
+            if (shouldShow) {
+                Box(
+                    modifier = Modifier
+                        .height(heightDp)
+                        .aspectRatio(1f)
+                        .padding(start = 20.dp)
+                        .align(Alignment.CenterStart),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.queue_music),
+                        contentDescription = stringResource(R.string.add_to_queue),
+                        tint = Color.White,
+                    )
+                }
+            }
+        }
+
+        // Foreground row
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                .background(
+                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent,
+                )
+                .combinedClickable(
+                    onClick = {
+                        if (selectionMode) {
+                            onSelectToggle()
+                        } else {
+                            onClick()
+                        }
+                    },
+                    onLongClick = {
+                        if (!selectionMode) {
+                            onLongClick()
+                        }
+                    },
+                )
+                .pointerInput(selectionMode) {
+                    if (!selectionMode) {
+                        detectHorizontalDragGestures(
+                            onHorizontalDrag = { change, dragAmount ->
+                                if (offsetX.value + dragAmount > 0) {
+                                    change.consume()
+                                    coroutineScope.launch {
+                                        offsetX.snapTo((offsetX.value + dragAmount).coerceAtMost(maxOffset))
+                                    }
+                                }
+                            },
+                            onDragEnd = {
+                                if (offsetX.value >= maxOffset * 0.75f) {
+                                    onAddToQueue()
+                                }
+                                coroutineScope.launch {
+                                    offsetX.animateTo(0f)
+                                }
+                            },
+                            onDragCancel = {
+                                coroutineScope.launch {
+                                    offsetX.animateTo(0f)
+                                }
+                            },
+                        )
+                    }
+                }
+                .onGloballyPositioned { coordinates ->
+                    with(density) {
+                        heightDp = coordinates.size.height.toDp()
+                    }
+                },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Checkbox when selectionMode is true
+                AnimatedVisibility(
+                    visible = selectionMode,
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally(),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                .border(
+                                    width = 1.5.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.6f),
+                                    shape = CircleShape,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    painter = painterResource(R.drawable.done),
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(14.dp),
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                }
+
+                // Artwork (48dp) starting directly at 20.dp when selectionMode is false
+                Box(
+                    modifier = Modifier.size(48.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    AsyncImage(
+                        model = song.thumbnail.resize(192, 192),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(4.dp)),
+                    )
+                }
+
+                // Title & artist info
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp, end = 8.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.White,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(align = Alignment.CenterVertically)
+                            .basicMarquee(),
+                    )
+                    Text(
+                        text = song.artists.joinToString(", ") { it.name },
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        color = Color(0xC4FFFFFF),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(align = Alignment.CenterVertically),
+                    )
+                }
+
+                // More button
+                IconButton(
+                    onClick = onMoreClick,
+                    onLongClick = {},
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.more_vert),
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * Port of SimpMusic's HomeItemContentPlaylist for 1:1 Singles, Albums, and Featured carousels
+ * Starts at card's left edge so first card aligns with 20.dp guideline
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1238,7 +1619,7 @@ private fun HomeItemContentPlaylist(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    thumbSize: androidx.compose.ui.unit.Dp = 180.dp,
+    thumbSize: Dp = 180.dp,
 ) {
     Box(
         modifier = modifier
@@ -1251,7 +1632,7 @@ private fun HomeItemContentPlaylist(
     ) {
         Column(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(vertical = 8.dp)
                 .heightIn(min = thumbSize + 76.dp),
         ) {
             AsyncImage(
@@ -1292,6 +1673,7 @@ private fun HomeItemContentPlaylist(
 
 /**
  * Port of SimpMusic's HomeItemVideo for 1:1 16:9 widescreen Video carousel
+ * Starts at card's left edge so first card aligns with 20.dp guideline
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1305,7 +1687,6 @@ private fun HomeItemVideo(
 ) {
     Box(
         modifier = modifier
-            .fillMaxSize()
             .clip(RoundedCornerShape(8.dp))
             .combinedClickable(
                 onClick = onClick,
@@ -1314,7 +1695,7 @@ private fun HomeItemVideo(
     ) {
         Column(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(vertical = 8.dp)
                 .heightIn(min = 236.dp),
         ) {
             AsyncImage(
@@ -1322,7 +1703,6 @@ private fun HomeItemVideo(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
                     .height(160.dp)
                     .aspectRatio(16f / 9f)
                     .clip(RoundedCornerShape(10.dp)),
@@ -1357,6 +1737,7 @@ private fun HomeItemVideo(
 
 /**
  * Port of SimpMusic's HomeItemArtist for 1:1 circular avatar Related Artists carousel
+ * Starts at card's left edge so first card aligns with 20.dp guideline
  */
 @Composable
 private fun HomeItemArtist(
@@ -1368,13 +1749,12 @@ private fun HomeItemArtist(
 ) {
     Box(
         modifier = modifier
-            .fillMaxSize()
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick),
     ) {
         Column(
             modifier = Modifier
-                .padding(10.dp)
+                .padding(vertical = 8.dp)
                 .heightIn(min = 236.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
