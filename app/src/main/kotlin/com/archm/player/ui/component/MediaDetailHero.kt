@@ -53,10 +53,10 @@ public fun MediaDetailPrimaryActions(
 ) {
     val secondaryButtonColors =
         IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = contentColor.copy(alpha = 0.16f),
-            contentColor = contentColor,
-            disabledContainerColor = contentColor.copy(alpha = 0.08f),
-            disabledContentColor = contentColor.copy(alpha = 0.38f),
+            containerColor = Color.White.copy(alpha = 0.12f),
+            contentColor = Color.White,
+            disabledContainerColor = Color.White.copy(alpha = 0.08f),
+            disabledContentColor = Color.White.copy(alpha = 0.38f),
         )
     val actionScrollState = rememberScrollState()
     val actionScrollMaxValue = actionScrollState.maxValue
@@ -83,7 +83,13 @@ public fun MediaDetailPrimaryActions(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .fadingEdge(horizontal = MediaDetailActionEdgeFade)
+                    .then(
+                        if (actionScrollMaxValue > 0) {
+                            Modifier.fadingEdge(horizontal = MediaDetailActionEdgeFade)
+                        } else {
+                            Modifier
+                        }
+                    )
                     .horizontalScroll(actionScrollState),
         ) {
             MediaDetailBalancedActionLayout(
@@ -103,6 +109,7 @@ public fun MediaDetailPrimaryActions(
                         Icon(
                             painter = painterResource(R.drawable.shuffle),
                             contentDescription = stringResource(R.string.shuffle),
+                            tint = Color.White,
                             modifier = Modifier.size(22.dp),
                         )
                     }
@@ -115,8 +122,8 @@ public fun MediaDetailPrimaryActions(
                         shape = RoundedCornerShape(percent = 50),
                         colors =
                             ButtonDefaults.buttonColors(
-                                containerColor = contentColor,
-                                contentColor = contrastingColor,
+                                containerColor = Color.White,
+                                contentColor = Color.Black,
                             ),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
                         modifier =
@@ -127,11 +134,13 @@ public fun MediaDetailPrimaryActions(
                         Icon(
                             painter = painterResource(R.drawable.play),
                             contentDescription = null,
+                            tint = Color.Black,
                             modifier = Modifier.size(24.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.play),
+                            color = Color.Black,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                         )
@@ -154,12 +163,13 @@ public fun MediaDetailPrimaryActions(
                                 stringResource(
                                     if (isAdded) removeContentDescription else addContentDescription,
                                 ),
+                            tint = Color.White,
                             modifier = Modifier.size(22.dp),
                         )
                     }
                 }
 
-                additionalActions?.invoke(this, contentColor)
+                additionalActions?.invoke(this, Color.White)
             }
         }
     }
@@ -297,10 +307,10 @@ public fun MediaDetailAction(
             )
         } else {
             IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = contentColor.copy(alpha = 0.16f),
-                contentColor = contentColor,
-                disabledContainerColor = contentColor.copy(alpha = 0.08f),
-                disabledContentColor = contentColor.copy(alpha = 0.38f),
+                containerColor = Color.White.copy(alpha = 0.12f),
+                contentColor = Color.White,
+                disabledContainerColor = Color.White.copy(alpha = 0.08f),
+                disabledContentColor = Color.White.copy(alpha = 0.38f),
             )
         }
 
@@ -339,6 +349,7 @@ public fun MediaDetailIconAction(
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
+            tint = Color.White,
             modifier = Modifier.size(22.dp),
         )
     }

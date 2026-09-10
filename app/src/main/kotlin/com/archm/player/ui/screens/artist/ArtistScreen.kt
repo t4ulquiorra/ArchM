@@ -87,6 +87,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -411,6 +412,7 @@ fun ArtistScreen(
                             modifier =
                                 Modifier
                                     .matchParentSize()
+                                    .zIndex(1f)
                                     .background(
                                         Brush.verticalGradient(
                                             0f to Color.Black.copy(alpha = 0.42f),
@@ -428,6 +430,7 @@ fun ArtistScreen(
                                 Modifier
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
+                                    .zIndex(2f)
                                     .padding(
                                         start = ArtistHorizontalPadding,
                                         top = systemBarsTopPadding + AppBarHeight + 96.dp,
@@ -487,8 +490,8 @@ fun ArtistScreen(
 
                             ArtistPrimaryActions(
                                 isSubscribed = isSubscribed,
-                                contentColor = heroContentColor,
-                                contrastingColor = surfaceColor,
+                                contentColor = Color.White,
+                                contrastingColor = Color.Black,
                                 canShuffle =
                                     if (showLocal) {
                                         librarySongs.isNotEmpty()
@@ -1154,8 +1157,8 @@ private data class ArtistReleaseUiModel(
 @Composable
 private fun ArtistPrimaryActions(
     isSubscribed: Boolean,
-    contentColor: Color,
-    contrastingColor: Color,
+    contentColor: Color = Color.White,
+    contrastingColor: Color = Color.Black,
     canShuffle: Boolean,
     canPlay: Boolean,
     onShuffle: () -> Unit,
