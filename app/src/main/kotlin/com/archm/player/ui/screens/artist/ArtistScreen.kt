@@ -479,7 +479,7 @@ fun ArtistScreen(
                                     }
                                 ),
                         ) {
-                            // Artwork image (Crop, alignment = TopCenter so heads/helmets aren't cropped)
+                            // Artwork image (Crop, alignment = Center so artist is framed dead-center like in SimpMusic)
                             if (thumbnail != null) {
                                 AsyncImage(
                                     model = thumbnail.resize(
@@ -488,7 +488,7 @@ fun ArtistScreen(
                                     ),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
-                                    alignment = Alignment.TopCenter,
+                                    alignment = Alignment.Center,
                                     modifier = Modifier.fillMaxSize(),
                                 )
                             } else {
@@ -726,7 +726,7 @@ fun ArtistScreen(
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
-                                    text = section.title,
+                                    text = "Singles",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
@@ -748,8 +748,7 @@ fun ArtistScreen(
 
                         item(key = "section_singles_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -814,8 +813,7 @@ fun ArtistScreen(
 
                         item(key = "section_albums_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -880,8 +878,7 @@ fun ArtistScreen(
 
                         item(key = "section_videos_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -946,8 +943,7 @@ fun ArtistScreen(
 
                         item(key = "section_featured_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -1032,7 +1028,7 @@ fun ArtistScreen(
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
-                                    text = section.title,
+                                    text = "Related Artists",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
@@ -1045,8 +1041,7 @@ fun ArtistScreen(
 
                         item(key = "section_related_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -1125,7 +1120,7 @@ fun ArtistScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(100.dp))
                 }
             }
         }
@@ -1341,7 +1336,7 @@ private fun SimpMusicActionRow(
         }
 
         // Follow — outlined circle when unfollowed, filled when followed (48dp)
-        // User silhouette styling matching SimpMusic (subscribe / subscribed vectors)
+        // User silhouette styling matching SimpMusic (person_add / check vectors)
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -1354,7 +1349,7 @@ private fun SimpMusicActionRow(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(if (isFollowed) R.drawable.subscribed else R.drawable.subscribe),
+                painter = painterResource(if (isFollowed) R.drawable.check else R.drawable.person_add),
                 contentDescription = stringResource(if (isFollowed) R.string.subscribed else R.string.subscribe),
                 tint = if (isFollowed) Color.Black else accentColor,
                 modifier = Modifier.size(22.dp),
@@ -1591,7 +1586,7 @@ private fun HomeItemContentPlaylist(
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 8.dp)
+                .padding(10.dp)
                 .heightIn(min = thumbSize + 76.dp),
         ) {
             AsyncImage(
@@ -1632,7 +1627,7 @@ private fun HomeItemContentPlaylist(
 
 /**
  * Port of SimpMusic's HomeItemVideo for 1:1 16:9 widescreen Video carousel
- * Starts at card's left edge so first card aligns with 20.dp guideline
+ * Balanced 10.dp padding on all 4 sides frames the artwork evenly during press/ripple
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1654,7 +1649,7 @@ private fun HomeItemVideo(
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 8.dp)
+                .padding(10.dp)
                 .heightIn(min = 236.dp),
         ) {
             AsyncImage(
@@ -1696,7 +1691,7 @@ private fun HomeItemVideo(
 
 /**
  * Port of SimpMusic's HomeItemArtist for 1:1 circular avatar Related Artists carousel
- * Starts at card's left edge so first card aligns with 20.dp guideline
+ * Balanced 10.dp padding on all 4 sides frames the avatar evenly during press/ripple
  */
 @Composable
 private fun HomeItemArtist(
@@ -1713,7 +1708,7 @@ private fun HomeItemArtist(
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 8.dp)
+                .padding(10.dp)
                 .heightIn(min = 236.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
