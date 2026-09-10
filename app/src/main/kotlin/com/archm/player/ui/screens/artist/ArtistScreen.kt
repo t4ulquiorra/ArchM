@@ -91,9 +91,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -134,9 +132,7 @@ import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.IconButton
 import com.archm.player.ui.component.LinkSegment
-import com.archm.player.ui.component.LocalGlassEffectConfig
 import com.archm.player.ui.component.LocalMenuState
-import com.archm.player.ui.component.liquidGlass
 import com.archm.player.ui.component.shimmer.ButtonPlaceholder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
@@ -237,7 +233,6 @@ fun ArtistScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
-    val glassConfig = LocalGlassEffectConfig.current
 
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
@@ -484,7 +479,7 @@ fun ArtistScreen(
                                     }
                                 ),
                         ) {
-                            // Artwork image (FillWidth in portrait, Crop in landscape, alignment = TopCenter so heads/helmets aren't cropped)
+                            // Artwork image (Crop, alignment = TopCenter so heads/helmets aren't cropped)
                             if (thumbnail != null) {
                                 AsyncImage(
                                     model = thumbnail.resize(
@@ -492,7 +487,7 @@ fun ArtistScreen(
                                         height = 1200,
                                     ),
                                     contentDescription = null,
-                                    contentScale = if (isPortrait) ContentScale.FillWidth else ContentScale.Crop,
+                                    contentScale = ContentScale.Crop,
                                     alignment = Alignment.TopCenter,
                                     modifier = Modifier.fillMaxSize(),
                                 )
@@ -521,47 +516,19 @@ fun ArtistScreen(
                                 )
                             }
 
-                            // Dual-layer blurred bottom transition matching SimpMusic:
-                            // Layer 1: Blurred bottom slice of artwork
-                            if (thumbnail != null) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .align(Alignment.BottomCenter)
-                                        .clipToBounds(),
-                                ) {
-                                    AsyncImage(
-                                        model = thumbnail.resize(600, 600),
-                                        contentDescription = null,
-                                        contentScale = if (isPortrait) ContentScale.FillWidth else ContentScale.Crop,
-                                        alignment = Alignment.TopCenter,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .blur(32.dp),
-                                    )
-                                }
-                            }
-
-                            // Layer 2: Bottom color gradient scrim (70% width in portrait, 35% height in landscape)
+                            // Single continuous vertical gradient fade directly over the image
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(
-                                        if (isPortrait) {
-                                            (configuration.screenWidthDp * 0.7f).dp
-                                        } else {
-                                            (configuration.screenHeightDp * 0.35f).dp
-                                        }
-                                    )
-                                    .align(Alignment.BottomCenter)
+                                    .matchParentSize()
                                     .background(
                                         Brush.verticalGradient(
-                                            0f to Color.Transparent,
-                                            0.35f to surfaceColor.copy(alpha = 0.35f),
-                                            0.70f to surfaceColor.copy(alpha = 0.85f),
-                                            1f to surfaceColor,
-                                        )
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Transparent,
+                                                MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                                                MaterialTheme.colorScheme.background,
+                                            ),
+                                        ),
                                     ),
                             )
 
@@ -1180,18 +1147,14 @@ fun ArtistScreen(
             TopAppBar(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
                     navigationIconContentColor = Color.White,
                     titleContentColor = Color.White,
                     actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .liquidGlass(
-                        config = glassConfig.copy(globalEnabled = true),
-                        applyEdgeEffects = false,
-                        blurRadiusDp = 24f,
-                    ),
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)),
                 navigationIcon = {
                     Box(Modifier.padding(horizontal = 5.dp)) {
                         IconButton(
@@ -1254,7 +1217,7 @@ fun ArtistScreen(
             )
         }
 
-        // Sticky TopAppBar with frosted glass blur effect (shown on scroll when not selecting)
+        // Sticky TopAppBar (shown on scroll when not selecting)
         AnimatedVisibility(
             visible = shouldHideTopBar && !selectionState.isActive,
             enter = fadeIn() + slideInVertically(),
@@ -1305,18 +1268,14 @@ fun ArtistScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
                     navigationIconContentColor = Color.White,
                     titleContentColor = Color.White,
                     actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .liquidGlass(
-                        config = glassConfig.copy(globalEnabled = true),
-                        applyEdgeEffects = false,
-                        blurRadiusDp = 24f,
-                    ),
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)),
             )
         }
     }
