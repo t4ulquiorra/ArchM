@@ -85,6 +85,11 @@ object AppleMusicArtistBackgroundProvider {
         return result
     }
 
+    suspend fun getArtistBackgroundUrl(
+        artistName: String,
+        storefront: String = "us",
+    ): String? = getByArtistName(artistName, storefront)
+
     private suspend fun searchAndFetchArtistMotion(
         artistName: String,
         storefront: String,
