@@ -56,7 +56,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -122,6 +121,7 @@ import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.AlbumGridItem
 import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.HideOnScrollFAB
+import com.archm.player.ui.component.IconButton
 import com.archm.player.ui.component.LinkSegment
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
@@ -729,6 +729,7 @@ fun ArtistScreen(
                                                 )
                                             }
                                         },
+                                        onLongClick = {},
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.more_vert),
@@ -897,6 +898,7 @@ fun ArtistScreen(
                                                         )
                                                     }
                                                 },
+                                                onLongClick = {},
                                             ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.more_vert),
@@ -1161,6 +1163,7 @@ fun ArtistScreen(
         actions = {
             IconButton(
                 onClick = showArtistOverflowMenu,
+                onLongClick = {},
             ) {
                 Icon(
                     painter = painterResource(R.drawable.more_horiz),
