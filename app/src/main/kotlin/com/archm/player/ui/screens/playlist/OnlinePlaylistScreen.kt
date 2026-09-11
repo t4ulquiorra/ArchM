@@ -241,9 +241,10 @@ fun OnlinePlaylistScreen(
     val toggleBookmark: () -> Unit = {
         coroutineScope.launch(Dispatchers.IO) {
             playlist?.let { pl ->
-                if (dbPlaylist != null) {
+                val currentDbPlaylist = dbPlaylist
+                if (currentDbPlaylist != null) {
                     database.withTransaction {
-                        val currentPlaylist = dbPlaylist.playlist
+                        val currentPlaylist = currentDbPlaylist.playlist
                         update(currentPlaylist, pl)
                         update(currentPlaylist.toggleLike())
                     }
