@@ -43,8 +43,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -111,7 +109,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -1227,10 +1224,10 @@ fun ArtistItemsScreen(
                 state = lazyGridState,
                 columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
                 contentPadding = PaddingValues(
-                    top = insetsPadding.calculateTopPadding() + 64.dp,
-                    bottom = insetsPadding.calculateBottomPadding(),
-                    start = insetsPadding.calculateStartPadding(LocalLayoutDirection.current) + 8.dp,
-                    end = insetsPadding.calculateEndPadding(LocalLayoutDirection.current) + 8.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = insetsPadding.calculateTopPadding() + 8.dp,
+                    bottom = 120.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
