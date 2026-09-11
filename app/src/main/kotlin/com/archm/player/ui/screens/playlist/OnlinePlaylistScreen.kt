@@ -418,7 +418,7 @@ fun OnlinePlaylistScreen(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
-                                        .padding(start = 12.dp, top = 4.dp)
+                                        .padding(start = 16.dp, top = 4.dp)
                                         .windowInsetsPadding(WindowInsets.statusBars)
                                         .size(48.dp)
                                         .clip(CircleShape)
@@ -441,7 +441,7 @@ fun OnlinePlaylistScreen(
                                 Row(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(end = 12.dp, top = 4.dp)
+                                        .padding(end = 16.dp, top = 4.dp)
                                         .windowInsetsPadding(WindowInsets.statusBars)
                                         .height(48.dp)
                                         .clip(RoundedCornerShape(24.dp))
@@ -641,7 +641,7 @@ fun OnlinePlaylistScreen(
                             item(key = "description") {
                                 ExpandableText(
                                     text = pl.description ?: "",
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                                     collapsedMaxLines = 3,
                                 )
                             }
@@ -670,7 +670,7 @@ fun OnlinePlaylistScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             )
                         }
                     } else {
@@ -776,7 +776,7 @@ fun OnlinePlaylistScreen(
 
                         item(key = "related_items") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 12.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()

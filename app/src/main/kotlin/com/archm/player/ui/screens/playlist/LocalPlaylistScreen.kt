@@ -777,7 +777,7 @@ fun LocalPlaylistScreen(
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = 12.dp, top = 4.dp)
+                                    .padding(start = 16.dp, top = 4.dp)
                                     .windowInsetsPadding(WindowInsets.statusBars)
                                     .size(48.dp)
                                     .clip(CircleShape)
@@ -800,7 +800,7 @@ fun LocalPlaylistScreen(
                             Row(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .padding(end = 12.dp, top = 4.dp)
+                                    .padding(end = 16.dp, top = 4.dp)
                                     .windowInsetsPadding(WindowInsets.statusBars)
                                     .height(48.dp)
                                     .clip(RoundedCornerShape(24.dp))
@@ -1127,7 +1127,7 @@ fun LocalPlaylistScreen(
 
                             ExpandableText(
                                 text = staticDescription,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                                 collapsedMaxLines = 3,
                             )
 
@@ -1194,7 +1194,7 @@ fun LocalPlaylistScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                             )
                         }
                     }

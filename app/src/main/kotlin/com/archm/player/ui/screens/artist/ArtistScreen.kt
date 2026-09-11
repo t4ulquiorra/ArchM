@@ -517,7 +517,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(12.dp)
+                                    .padding(start = 16.dp, top = 4.dp)
                                     .windowInsetsPadding(WindowInsets.statusBars)
                                     .size(48.dp)
                                     .clip(CircleShape)
@@ -540,7 +540,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .padding(12.dp)
+                                    .padding(end = 16.dp, top = 4.dp)
                                     .windowInsetsPadding(WindowInsets.statusBars)
                                     .size(48.dp)
                                     .clip(CircleShape)
@@ -580,7 +580,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(top = 16.dp, bottom = 8.dp),
                             ) {
                                 Text(
@@ -659,7 +659,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
@@ -685,7 +685,7 @@ fun ArtistScreen(
 
                         item(key = "section_singles_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -724,7 +724,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
@@ -750,7 +750,7 @@ fun ArtistScreen(
 
                         item(key = "section_albums_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -789,7 +789,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
@@ -815,7 +815,7 @@ fun ArtistScreen(
 
                         item(key = "section_videos_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -863,7 +863,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
@@ -874,13 +874,13 @@ fun ArtistScreen(
                                     modifier = Modifier
                                         .weight(1f)
                                         .padding(vertical = 10.dp),
-                                )
+                                 )
                             }
                         }
 
                         item(key = "section_featured_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -961,7 +961,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = 16.dp)
                                     .padding(top = 16.dp, bottom = 4.dp),
                             ) {
                                 Text(
@@ -978,7 +978,7 @@ fun ArtistScreen(
 
                         item(key = "section_related_carousel") {
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 10.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -1010,7 +1010,7 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp),
+                                    .padding(horizontal = 16.dp),
                             ) {
                                 Text(
                                     text = stringResource(R.string.description),
@@ -1029,7 +1029,7 @@ fun ArtistScreen(
                             ElevatedCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp),
+                                    .padding(horizontal = 16.dp),
                                 shape = RoundedCornerShape(8.dp),
                                 colors = CardDefaults.elevatedCardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -1297,7 +1297,7 @@ private fun SimpMusicActionRow(
 
 /**
  * Port of SimpMusic's SongFullWidthItems:
- * - 20.dp leading alignment
+ * - 16.dp leading alignment
  * - Swipe right gesture to reveal queue icon and add to queue
  * - Multi-selection support (animated checkbox + primary background tint)
  */
@@ -1332,7 +1332,7 @@ private fun ArtistSongRow(
                     modifier = Modifier
                         .height(heightDp)
                         .aspectRatio(1f)
-                        .padding(start = 20.dp)
+                        .padding(start = 16.dp)
                         .align(Alignment.CenterStart),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -1403,7 +1403,7 @@ private fun ArtistSongRow(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                    .padding(start = 16.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Checkbox when selectionMode is true
@@ -1438,7 +1438,7 @@ private fun ArtistSongRow(
                     }
                 }
 
-                // Artwork (48dp) starting directly at 20.dp when selectionMode is false
+                // Artwork (48dp) starting directly at 16.dp when selectionMode is false
                 Box(
                     modifier = Modifier.size(48.dp),
                     contentAlignment = Alignment.Center,
@@ -1499,7 +1499,7 @@ private fun ArtistSongRow(
 
 /**
  * Port of SimpMusic's HomeItemContentPlaylist for 1:1 Singles, Albums, and Featured carousels
- * Starts at card's left edge so first card aligns with 20.dp guideline
+ * Starts at card's left edge so first card aligns with 16.dp guideline
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
