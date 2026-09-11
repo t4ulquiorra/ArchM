@@ -575,6 +575,10 @@ object YouTube {
             }
         }
 
+        val playlistYear = header?.subtitle?.runs?.find { it.text.trim().toIntOrNull() != null }?.text
+            ?: header?.subtitle?.runs?.lastOrNull()?.text?.takeIf { it.contains("20") || it.contains("19") }
+        val playlistDescription = header?.description?.runs?.joinToString("") { it.text }?.takeIf { it.isNotBlank() }
+
         PlaylistPage(
             playlist = PlaylistItem(
                 id = playlistId,
@@ -592,7 +596,9 @@ object YouTube {
                 radioEndpoint = header?.buttons?.getOrNull(2)?.menuRenderer?.items?.find {
                     it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
                 }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint,
-                isEditable = editable
+                isEditable = editable,
+                year = playlistYear,
+                description = playlistDescription,
             ),
             songs = response.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer
                 ?.contents?.firstOrNull()?.let { content ->

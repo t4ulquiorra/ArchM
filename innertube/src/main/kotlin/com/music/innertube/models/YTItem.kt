@@ -84,6 +84,8 @@ data class PlaylistItem(
     val shuffleEndpoint: WatchEndpoint?,
     val radioEndpoint: WatchEndpoint?,
     val isEditable: Boolean = false,
+    val year: String? = null,
+    val description: String? = null,
 ) : YTItem() {
     override val explicit: Boolean
         get() = false
