@@ -921,7 +921,6 @@ fun LocalPlaylistScreen(
                                 OverlayEditButton(
                                     visible = true,
                                     alignment = Alignment.BottomEnd,
-                                    modifier = Modifier.padding(16.dp),
                                     onClick = {
                                         if (isCustomThumbnail) {
                                             menuState.show {
