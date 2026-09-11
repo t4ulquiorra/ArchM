@@ -65,6 +65,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -87,6 +88,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -108,16 +110,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadRequest
+import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.archm.player.LocalDownloadUtil
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
+import com.archm.player.playback.ExoDownloadService
 import com.archm.player.R
 import com.archm.player.constants.GridItemSize
 import com.archm.player.constants.GridItemsSizeKey
@@ -415,7 +424,11 @@ fun ArtistItemsScreen(
     val itemsPage by viewModel.itemsPage.collectAsState()
     val artistPage by viewModel.artistPage.collectAsState()
     val libraryArtist by viewModel.libraryArtist.collectAsState()
-    val isFollowed = libraryArtist?.artist?.bookmarkedAt != null
+    val dbPlaylist by viewModel.dbPlaylist.collectAsState()
+    val isBookmarked = dbPlaylist?.playlist?.bookmarkedAt != null
+
+    val downloadUtil = LocalDownloadUtil.current
+    var downloadState by remember { mutableIntStateOf(Download.STATE_STOPPED) }
 
     var showSearchBar by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -481,13 +494,31 @@ fun ArtistItemsScreen(
             }
         }
 
+        LaunchedEffect(distinctSongs) {
+            if (distinctSongs.isEmpty()) return@LaunchedEffect
+            downloadUtil.downloads.collect { downloads ->
+                downloadState =
+                    if (distinctSongs.all { downloads[it.id]?.state == Download.STATE_COMPLETED }) {
+                        Download.STATE_COMPLETED
+                    } else if (distinctSongs.all {
+                            downloads[it.id]?.state == Download.STATE_QUEUED ||
+                                downloads[it.id]?.state == Download.STATE_DOWNLOADING ||
+                                downloads[it.id]?.state == Download.STATE_COMPLETED
+                        }) {
+                        Download.STATE_DOWNLOADING
+                    } else {
+                        Download.STATE_STOPPED
+                    }
+            }
+        }
+
         val unknownArtist = stringResource(R.string.unknown_artist)
         val fallbackArtistName = distinctSongs.firstOrNull()?.artists?.firstOrNull()?.name
         val artistName = artistPage?.artist?.title ?: libraryArtist?.artist?.name ?: fallbackArtistName
         val displayTitle = title.ifBlank { stringResource(R.string.top_songs) }
-        val artistThumbnail = artistPage?.artist?.thumbnail
-            ?: libraryArtist?.artist?.thumbnailUrl
+        val backdropThumbnail = dbPlaylist?.playlist?.thumbnailUrl
             ?: distinctSongs.firstOrNull()?.thumbnail
+            ?: itemsPage?.items?.firstOrNull()?.thumbnail
 
         val isPlaylistPlaying = distinctSongs.any { it.id == mediaMetadata?.id }
 
@@ -553,7 +584,7 @@ fun ArtistItemsScreen(
                             ) {
                                 // Full-bleed hero image
                                 AsyncImage(
-                                    model = artistThumbnail?.resize(1080, 1080),
+                                    model = backdropThumbnail?.resize(1080, 1080),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     alignment = Alignment.Center,
@@ -603,7 +634,11 @@ fun ArtistItemsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "${stringResource(R.string.playlist)} • YouTube Music",
+                                        text = if (distinctSongs.isNotEmpty()) {
+                                            "${stringResource(R.string.playlist)} • ${pluralStringResource(R.plurals.n_song, distinctSongs.size, distinctSongs.size)}"
+                                        } else {
+                                            stringResource(R.string.playlist)
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color(0xC4FFFFFF),
                                         textAlign = TextAlign.Center,
@@ -645,13 +680,13 @@ fun ArtistItemsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     IconButton(
-                                        onClick = { viewModel.toggleFollow() },
+                                        onClick = { viewModel.togglePlaylistBookmark() },
                                         onLongClick = {},
                                     ) {
                                         Icon(
-                                            painter = painterResource(if (isFollowed) R.drawable.favorite else R.drawable.favorite_border),
-                                            contentDescription = stringResource(if (isFollowed) R.string.subscribed else R.string.subscribe),
-                                            tint = if (isFollowed) MaterialTheme.colorScheme.primary else Color.White,
+                                            painter = painterResource(if (isBookmarked) R.drawable.favorite else R.drawable.favorite_border),
+                                            contentDescription = stringResource(if (isBookmarked) R.string.saved else R.string.save),
+                                            tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.White,
                                             modifier = Modifier.size(22.dp),
                                         )
                                     }
@@ -762,32 +797,68 @@ fun ArtistItemsScreen(
                                     }
                                 }
 
-                                // Download / Queue circle button (48dp)
+                                // Download circle button (48dp)
                                 Box(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape)
                                         .background(Color.White.copy(alpha = 0.12f))
                                         .clickable {
-                                            val radioEndpoint = artistPage?.artist?.radioEndpoint
-                                            if (radioEndpoint != null) {
-                                                playerConnection.playQueue(YouTubeQueue(radioEndpoint))
-                                            } else {
-                                                val songsToPlay = distinctSongs.map { it.toMediaItem() }
-                                                if (songsToPlay.isNotEmpty()) {
-                                                    playerConnection.addToQueue(songsToPlay)
-                                                    Toast.makeText(context, context.getString(R.string.add_to_queue), Toast.LENGTH_SHORT).show()
+                                            when (downloadState) {
+                                                Download.STATE_COMPLETED, Download.STATE_DOWNLOADING -> {
+                                                    distinctSongs.forEach { song ->
+                                                        DownloadService.sendRemoveDownload(
+                                                            context,
+                                                            ExoDownloadService::class.java,
+                                                            song.id,
+                                                            false,
+                                                        )
+                                                    }
+                                                }
+                                                else -> {
+                                                    distinctSongs.forEach { song ->
+                                                        val downloadRequest = DownloadRequest
+                                                            .Builder(song.id, song.id.toUri())
+                                                            .setCustomCacheKey(song.id)
+                                                            .setData(song.title.toByteArray())
+                                                            .build()
+                                                        DownloadService.sendAddDownload(
+                                                            context,
+                                                            ExoDownloadService::class.java,
+                                                            downloadRequest,
+                                                            false,
+                                                        )
+                                                    }
                                                 }
                                             }
                                         },
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Icon(
-                                        painter = painterResource(if (artistPage?.artist?.radioEndpoint != null) R.drawable.radio else R.drawable.download),
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(22.dp),
-                                    )
+                                    when (downloadState) {
+                                        Download.STATE_COMPLETED -> {
+                                            Icon(
+                                                painter = painterResource(R.drawable.offline),
+                                                contentDescription = stringResource(R.string.saved),
+                                                tint = Color.White,
+                                                modifier = Modifier.size(22.dp),
+                                            )
+                                        }
+                                        Download.STATE_DOWNLOADING -> {
+                                            CircularProgressIndicator(
+                                                strokeWidth = 2.dp,
+                                                modifier = Modifier.size(20.dp),
+                                                color = Color.White,
+                                            )
+                                        }
+                                        else -> {
+                                            Icon(
+                                                painter = painterResource(R.drawable.download),
+                                                contentDescription = stringResource(R.string.action_download),
+                                                tint = Color.White,
+                                                modifier = Modifier.size(22.dp),
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
