@@ -151,69 +151,6 @@ import com.music.innertube.models.WatchEndpoint
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private const val MAX_SONG_SELECTION = 25
-
-@Stable
-private class SongSelectionState(
-    private val limitMessage: String,
-    private val showToast: (String) -> Unit,
-) {
-    var isActive by mutableStateOf(false)
-        private set
-
-    private val _selected = mutableStateListOf<String>()
-    val selected: List<String> get() = _selected
-    val count: Int get() = _selected.size
-    val isFull: Boolean get() = _selected.size >= MAX_SONG_SELECTION
-
-    fun isSelected(videoId: String): Boolean = _selected.contains(videoId)
-
-    fun start(videoId: String) {
-        if (isActive) return
-        isActive = true
-        add(videoId)
-    }
-
-    fun toggle(videoId: String) {
-        if (!isActive) return
-        if (_selected.remove(videoId)) {
-            if (_selected.isEmpty()) exit()
-            return
-        }
-        add(videoId)
-    }
-
-    fun toggleSelectAll(videoIds: List<String>) {
-        if (!isActive) return
-        val candidates = videoIds.filter { it.isNotBlank() }.distinct()
-        val everythingReachableIsPicked =
-            candidates.isNotEmpty() &&
-                candidates.take(MAX_SONG_SELECTION).all { _selected.contains(it) }
-        if (everythingReachableIsPicked) {
-            _selected.clear()
-            return
-        }
-        for (videoId in candidates) {
-            if (!add(videoId)) return
-        }
-    }
-
-    fun exit() {
-        isActive = false
-        _selected.clear()
-    }
-
-    private fun add(videoId: String): Boolean {
-        if (videoId.isBlank() || _selected.contains(videoId)) return true
-        if (isFull) {
-            showToast(limitMessage)
-            return false
-        }
-        _selected.add(videoId)
-        return true
-    }
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ArtistSongRow(
