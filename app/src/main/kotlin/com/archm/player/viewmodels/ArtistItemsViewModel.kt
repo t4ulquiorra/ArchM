@@ -7,13 +7,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.innertube.YouTube
-import com.music.innertube.models.ArtistPage
 import com.music.innertube.models.BrowseEndpoint
 import com.music.innertube.models.filterExplicit
 import com.music.innertube.models.filterVideoSongs
+import com.music.innertube.pages.ArtistPage
 import com.archm.player.constants.HideExplicitKey
 import com.archm.player.constants.HideVideoSongsKey
 import com.archm.player.db.MusicDatabase
+import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.ArtistEntity
 import com.archm.player.models.ItemsPage
 import com.archm.player.utils.dataStore
@@ -24,6 +25,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -45,9 +47,11 @@ constructor(
     val itemsPage = MutableStateFlow<ItemsPage?>(null)
     val artistPage = MutableStateFlow<ArtistPage?>(null)
 
-    val libraryArtist = artistId?.let {
-        database.artist(it)
+    val libraryArtist: StateFlow<Artist?> = if (artistId != null) {
+        database.artist(artistId)
             .stateIn(viewModelScope, SharingStarted.Lazily, null)
+    } else {
+        MutableStateFlow(null)
     }
 
     init {
@@ -94,7 +98,7 @@ constructor(
         val id = artistId ?: return
         viewModelScope.launch(Dispatchers.IO) {
             database.transaction {
-                val current = libraryArtist?.value?.artist
+                val current = libraryArtist.value?.artist
                 if (current != null) {
                     update(current.toggleLike())
                 } else {

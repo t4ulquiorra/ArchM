@@ -137,6 +137,8 @@ import com.archm.player.ui.menu.YouTubeArtistMenu
 import com.archm.player.ui.menu.YouTubePlaylistMenu
 import com.archm.player.ui.menu.YouTubeSelectionSongMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
+import com.archm.player.db.entities.Artist
+import com.archm.player.db.entities.ArtistEntity
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.rememberEnumPreference
@@ -146,12 +148,13 @@ import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-const val MAX_SONG_SELECTION = 25
+private const val MAX_SONG_SELECTION = 25
 
 @Stable
-class SongSelectionState(
+private class SongSelectionState(
     private val limitMessage: String,
     private val showToast: (String) -> Unit,
 ) {
@@ -474,7 +477,7 @@ fun ArtistItemsScreen(
     val title by viewModel.title.collectAsState()
     val itemsPage by viewModel.itemsPage.collectAsState()
     val artistPage by viewModel.artistPage.collectAsState()
-    val libraryArtist by (viewModel.libraryArtist?.collectAsState() ?: remember { mutableStateOf(null) })
+    val libraryArtist by viewModel.libraryArtist.collectAsState()
     val isFollowed = libraryArtist?.artist?.bookmarkedAt != null
 
     var showSearchBar by rememberSaveable { mutableStateOf(false) }

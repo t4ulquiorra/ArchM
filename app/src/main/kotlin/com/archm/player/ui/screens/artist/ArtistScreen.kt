@@ -157,10 +157,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
-const val MAX_SONG_SELECTION = 25
+private const val MAX_SONG_SELECTION = 25
 
 @Stable
-class SongSelectionState(
+private class SongSelectionState(
     private val limitMessage: String,
     private val showToast: (String) -> Unit,
 ) {
