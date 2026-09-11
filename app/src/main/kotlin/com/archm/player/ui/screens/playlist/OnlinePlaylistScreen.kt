@@ -505,7 +505,7 @@ fun OnlinePlaylistScreen(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .background(Color.White.copy(alpha = 0.12f))
                                         .clickable {
                                             if (songs.isNotEmpty()) {
                                                 playerConnection.playQueue(
@@ -523,7 +523,7 @@ fun OnlinePlaylistScreen(
                                     Icon(
                                         painter = painterResource(R.drawable.shuffle),
                                         contentDescription = stringResource(R.string.shuffle),
-                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        tint = Color.White,
                                         modifier = Modifier.size(22.dp),
                                     )
                                 }
@@ -535,7 +535,7 @@ fun OnlinePlaylistScreen(
                                         .height(48.dp)
                                         .widthIn(min = 110.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
+                                        .background(Color.White)
                                         .clickable {
                                             if (isThisPlaying) {
                                                 playerConnection.togglePlayPause()
@@ -557,13 +557,13 @@ fun OnlinePlaylistScreen(
                                         Icon(
                                             painter = painterResource(if (isThisPlaying) R.drawable.pause else R.drawable.play),
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            tint = Color.Black,
                                             modifier = Modifier.size(22.dp),
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = if (isThisPlaying) stringResource(R.string.pause) else stringResource(R.string.play),
-                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            color = Color.Black,
                                             style = MaterialTheme.typography.labelLarge,
                                             fontWeight = FontWeight.Bold,
                                         )
@@ -575,7 +575,7 @@ fun OnlinePlaylistScreen(
                                     modifier = Modifier
                                         .size(48.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .background(Color.White.copy(alpha = 0.12f))
                                         .clickable {
                                             when (downloadState) {
                                                 Download.STATE_COMPLETED, Download.STATE_DOWNLOADING -> {
@@ -612,7 +612,7 @@ fun OnlinePlaylistScreen(
                                             Icon(
                                                 painter = painterResource(R.drawable.offline),
                                                 contentDescription = stringResource(R.string.saved),
-                                                tint = MaterialTheme.colorScheme.primary,
+                                                tint = Color.White,
                                                 modifier = Modifier.size(22.dp),
                                             )
                                         }
@@ -620,14 +620,14 @@ fun OnlinePlaylistScreen(
                                             CircularProgressIndicator(
                                                 strokeWidth = 2.dp,
                                                 modifier = Modifier.size(20.dp),
-                                                color = MaterialTheme.colorScheme.primary,
+                                                color = Color.White,
                                             )
                                         }
                                         else -> {
                                             Icon(
                                                 painter = painterResource(R.drawable.download),
                                                 contentDescription = stringResource(R.string.action_download),
-                                                tint = MaterialTheme.colorScheme.onSurface,
+                                                tint = Color.White,
                                                 modifier = Modifier.size(22.dp),
                                             )
                                         }
