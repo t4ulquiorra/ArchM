@@ -106,7 +106,7 @@ data class ArtistItemsPage(
                         )
                     } ?: return null,
                     album = null,
-                    duration = null,
+                    duration = renderer.subtitle?.runs?.splitBySeparator()?.getOrNull(1)?.firstOrNull()?.text?.parseTime(),
                     musicVideoType = renderer.musicVideoType,
                     thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                     endpoint = renderer.navigationEndpoint.watchEndpoint

@@ -264,7 +264,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(
-        route = "artist/{artistId}/items?browseId={browseId}?params={params}",
+        route = "artist/{artistId}/items?browseId={browseId}&params={params}&title={title}&artistName={artistName}",
         arguments = listOf(
             navArgument("artistId") {
                 type = NavType.StringType
@@ -274,6 +274,14 @@ fun NavGraphBuilder.navigationBuilder(
                 nullable = true
             },
             navArgument("params") {
+                type = NavType.StringType
+                nullable = true
+            },
+            navArgument("title") {
+                type = NavType.StringType
+                nullable = true
+            },
+            navArgument("artistName") {
                 type = NavType.StringType
                 nullable = true
             },

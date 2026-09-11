@@ -51,10 +51,12 @@ constructor(
     val artistId = savedStateHandle.get<String>("artistId")
     val browseId = savedStateHandle.get<String>("browseId")
     private val params = savedStateHandle.get<String>("params")
+    val initialTitle = savedStateHandle.get<String>("title")
+    val artistNameArg = savedStateHandle.get<String>("artistName")
 
     val playlistId = browseId?.removePrefix("VL") ?: browseId
 
-    val title = MutableStateFlow("")
+    val title = MutableStateFlow(initialTitle ?: "")
     val itemsPage = MutableStateFlow<ItemsPage?>(null)
     val artistPage = MutableStateFlow<ArtistPage?>(null)
 
@@ -89,13 +91,22 @@ constructor(
                     ).onSuccess { artistItemsPage ->
                         val hideExplicit = context.dataStore.get(HideExplicitKey, false)
                         val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                        title.value = artistItemsPage.title
+                        val isVideosScreen = (initialTitle?.contains("video", ignoreCase = true) == true) ||
+                            (artistItemsPage.title.contains("video", ignoreCase = true))
+                        val shouldHideVideos = hideVideoSongs && !isVideosScreen
+
+                        if (artistItemsPage.title.isNotBlank()) {
+                            title.value = artistItemsPage.title
+                        } else if (title.value.isBlank() && !initialTitle.isNullOrBlank()) {
+                            title.value = initialTitle
+                        }
+
                         itemsPage.value =
                             ItemsPage(
                                 items = artistItemsPage.items
                                     .distinctBy { it.id }
                                     .filterExplicit(hideExplicit)
-                                    .filterVideoSongs(hideVideoSongs),
+                                    .filterVideoSongs(shouldHideVideos),
                                 continuation = artistItemsPage.continuation,
                             )
                     }.onFailure {
@@ -187,13 +198,16 @@ constructor(
                 .onSuccess { artistItemsContinuationPage ->
                     val hideExplicit = context.dataStore.get(HideExplicitKey, false)
                     val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+                    val isVideosScreen = (initialTitle?.contains("video", ignoreCase = true) == true) ||
+                        (title.value.contains("video", ignoreCase = true))
+                    val shouldHideVideos = hideVideoSongs && !isVideosScreen
                     itemsPage.update {
                         ItemsPage(
                             items =
                             (oldItemsPage.items + artistItemsContinuationPage.items)
                                 .distinctBy { it.id }
                                 .filterExplicit(hideExplicit)
-                                .filterVideoSongs(hideVideoSongs),
+                                .filterVideoSongs(shouldHideVideos),
                             continuation = artistItemsContinuationPage.continuation,
                         )
                     }

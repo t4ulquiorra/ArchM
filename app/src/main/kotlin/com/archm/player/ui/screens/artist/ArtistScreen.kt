@@ -594,7 +594,7 @@ fun ArtistScreen(
                                 if (moreEndpoint != null) {
                                     TextButton(
                                         onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
+                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = context.getString(R.string.popular), artistName = artistName))
                                         },
                                         colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
                                     ) {
@@ -673,7 +673,7 @@ fun ArtistScreen(
                                 if (moreEndpoint != null) {
                                     TextButton(
                                         onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
+                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = "Singles", artistName = artistName))
                                         },
                                         colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
                                     ) {
@@ -738,7 +738,7 @@ fun ArtistScreen(
                                 if (moreEndpoint != null) {
                                     TextButton(
                                         onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
+                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = section.title, artistName = artistName))
                                         },
                                         colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
                                     ) {
@@ -803,7 +803,7 @@ fun ArtistScreen(
                                 if (moreEndpoint != null) {
                                     TextButton(
                                         onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint))
+                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = section.title, artistName = artistName))
                                         },
                                         colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
                                     ) {
@@ -1762,12 +1762,16 @@ private fun formatDuration(seconds: Int?): String? {
 private fun buildArtistItemsRoute(
     artistId: String,
     endpoint: BrowseEndpoint,
+    title: String? = null,
+    artistName: String? = null,
 ): String {
     val encodedArtistId = Uri.encode(artistId)
     val encodedBrowseId = Uri.encode(endpoint.browseId)
     val encodedParams = endpoint.params
         ?.takeIf { it.isNotBlank() }
         ?.let { Uri.encode(it) }
+    val encodedTitle = title?.takeIf { it.isNotBlank() }?.let { Uri.encode(it) }
+    val encodedArtistName = artistName?.takeIf { it.isNotBlank() }?.let { Uri.encode(it) }
 
     return buildString {
         append("artist/")
@@ -1775,8 +1779,16 @@ private fun buildArtistItemsRoute(
         append("/items?browseId=")
         append(encodedBrowseId)
         if (encodedParams != null) {
-            append("?params=")
+            append("&params=")
             append(encodedParams)
+        }
+        if (encodedTitle != null) {
+            append("&title=")
+            append(encodedTitle)
+        }
+        if (encodedArtistName != null) {
+            append("&artistName=")
+            append(encodedArtistName)
         }
     }
 }
