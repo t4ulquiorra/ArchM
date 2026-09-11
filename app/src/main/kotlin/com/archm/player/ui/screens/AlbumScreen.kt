@@ -676,6 +676,7 @@ fun AlbumScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem()
+                            .clip(listItemShape(index, filteredSongs.size))
                             .combinedClickable(
                                 onClick = {
                                     if (inSelectMode) {
@@ -711,7 +712,7 @@ fun AlbumScreen(
                     item(key = "other_versions_list") {
                         LazyRow(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem()
@@ -725,7 +726,11 @@ fun AlbumScreen(
                                     isActive = mediaMetadata?.album?.id == item.id,
                                     isPlaying = isPlaying,
                                     coroutineScope = scope,
+                                    thumbnailSize = 150.dp,
+                                    contentPadding = PaddingValues(0.dp),
+                                    thumbnailCornerRadius = 12.dp,
                                     modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
                                         .combinedClickable(
                                             onClick = { navController.navigate("album/${item.id}") },
                                             onLongClick = {
@@ -757,7 +762,7 @@ fun AlbumScreen(
                     item(key = "releases_for_you_list") {
                         LazyRow(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem()
@@ -771,7 +776,11 @@ fun AlbumScreen(
                                     isActive = mediaMetadata?.album?.id == item.id,
                                     isPlaying = isPlaying,
                                     coroutineScope = scope,
+                                    thumbnailSize = 150.dp,
+                                    contentPadding = PaddingValues(0.dp),
+                                    thumbnailCornerRadius = 12.dp,
                                     modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
                                         .combinedClickable(
                                             onClick = { navController.navigate("album/${item.id}") },
                                             onLongClick = {

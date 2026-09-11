@@ -704,6 +704,7 @@ fun OnlinePlaylistScreen(
                             isSelected = inSelectMode && songItem.id in selection,
                             shape = listItemShape(index, filteredSongs.size),
                             modifier = Modifier
+                                .clip(listItemShape(index, filteredSongs.size))
                                 .combinedClickable(
                                     enabled = !hideExplicit || !songItem.explicit,
                                     onClick = {
@@ -777,7 +778,7 @@ fun OnlinePlaylistScreen(
                         item(key = "related_items") {
                             LazyRow(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .animateItem()
@@ -785,8 +786,11 @@ fun OnlinePlaylistScreen(
                                 items(relatedItems) { item ->
                                     YouTubeGridItem(
                                         item = item,
+                                        thumbnailSize = 150.dp,
+                                        contentPadding = PaddingValues(0.dp),
+                                        thumbnailCornerRadius = 12.dp,
                                         modifier = Modifier
-                                            .width(160.dp)
+                                            .clip(RoundedCornerShape(12.dp))
                                             .combinedClickable(
                                                 onClick = {
                                                     when (item) {

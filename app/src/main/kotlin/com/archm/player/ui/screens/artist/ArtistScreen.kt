@@ -686,6 +686,7 @@ fun ArtistScreen(
                         item(key = "section_singles_carousel") {
                             LazyRow(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -696,7 +697,7 @@ fun ArtistScreen(
                                         title = single.title,
                                         subtitle = single.year?.toString(),
                                         thumbnailUrl = single.thumbnail,
-                                        thumbSize = 180.dp,
+                                        thumbSize = 150.dp,
                                         onClick = { navController.navigate("album/${single.id}") },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -751,6 +752,7 @@ fun ArtistScreen(
                         item(key = "section_albums_carousel") {
                             LazyRow(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -761,7 +763,7 @@ fun ArtistScreen(
                                         title = album.title,
                                         subtitle = album.year?.toString(),
                                         thumbnailUrl = album.thumbnail,
-                                        thumbSize = 180.dp,
+                                        thumbSize = 150.dp,
                                         onClick = { navController.navigate("album/${album.id}") },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -816,6 +818,7 @@ fun ArtistScreen(
                         item(key = "section_videos_carousel") {
                             LazyRow(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -881,6 +884,7 @@ fun ArtistScreen(
                         item(key = "section_featured_carousel") {
                             LazyRow(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -908,7 +912,7 @@ fun ArtistScreen(
                                             is ArtistItem -> feature.thumbnail
                                             else -> null
                                         },
-                                        thumbSize = 180.dp,
+                                        thumbSize = 150.dp,
                                         onClick = {
                                             when (feature) {
                                                 is SongItem -> playerConnection.playQueue(
@@ -979,6 +983,7 @@ fun ArtistScreen(
                         item(key = "section_related_carousel") {
                             LazyRow(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 items(
@@ -1510,12 +1515,12 @@ private fun HomeItemContentPlaylist(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    thumbSize: Dp = 180.dp,
+    thumbSize: Dp = 150.dp,
 ) {
     Box(
         modifier = modifier
-            .wrapContentSize()
-            .clip(RoundedCornerShape(8.dp))
+            .width(thumbSize)
+            .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -1523,7 +1528,7 @@ private fun HomeItemContentPlaylist(
     ) {
         Column(
             modifier = Modifier
-                .padding(10.dp)
+                .width(thumbSize)
                 .heightIn(min = thumbSize + 76.dp),
         ) {
             AsyncImage(
@@ -1533,7 +1538,7 @@ private fun HomeItemContentPlaylist(
                 modifier = Modifier
                     .size(thumbSize)
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(10.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
             )
             Text(
                 text = title,
@@ -1564,7 +1569,6 @@ private fun HomeItemContentPlaylist(
 
 /**
  * Port of SimpMusic's HomeItemVideo for 1:1 16:9 widescreen Video carousel
- * Balanced 10.dp padding on all 4 sides frames the artwork evenly during press/ripple
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1576,9 +1580,12 @@ private fun HomeItemVideo(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val videoHeight = 150.dp
+    val videoWidth = (150f * 16f / 9f).dp
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .width(videoWidth)
+            .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -1586,17 +1593,17 @@ private fun HomeItemVideo(
     ) {
         Column(
             modifier = Modifier
-                .padding(10.dp)
-                .heightIn(min = 236.dp),
+                .width(videoWidth)
+                .heightIn(min = videoHeight + 76.dp),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(854, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .height(160.dp)
+                    .size(width = videoWidth, height = videoHeight)
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(10.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
             )
             Text(
                 text = title,
@@ -1605,7 +1612,7 @@ private fun HomeItemVideo(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .width(284.5.dp)
+                    .width(videoWidth)
                     .wrapContentHeight(align = Alignment.CenterVertically)
                     .padding(top = 8.dp),
             )
@@ -1617,7 +1624,7 @@ private fun HomeItemVideo(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .width(284.5.dp)
+                        .width(videoWidth)
                         .wrapContentHeight(align = Alignment.CenterVertically)
                         .basicMarquee(),
                 )
@@ -1628,7 +1635,6 @@ private fun HomeItemVideo(
 
 /**
  * Port of SimpMusic's HomeItemArtist for 1:1 circular avatar Related Artists carousel
- * Balanced 10.dp padding on all 4 sides frames the avatar evenly during press/ripple
  */
 @Composable
 private fun HomeItemArtist(
@@ -1638,15 +1644,17 @@ private fun HomeItemArtist(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val avatarSize = 150.dp
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .width(avatarSize)
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick),
     ) {
         Column(
             modifier = Modifier
-                .padding(10.dp)
-                .heightIn(min = 236.dp),
+                .width(avatarSize)
+                .heightIn(min = avatarSize + 76.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             AsyncImage(
@@ -1655,7 +1663,7 @@ private fun HomeItemArtist(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .size(160.dp)
+                    .size(avatarSize)
                     .clip(CircleShape),
             )
             Text(
@@ -1666,7 +1674,7 @@ private fun HomeItemArtist(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .width(160.dp)
+                    .width(avatarSize)
                     .wrapContentHeight(align = Alignment.CenterVertically)
                     .padding(top = 8.dp),
             )
@@ -1679,7 +1687,7 @@ private fun HomeItemArtist(
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .width(160.dp)
+                        .width(avatarSize)
                         .wrapContentHeight(align = Alignment.CenterVertically),
                 )
             }

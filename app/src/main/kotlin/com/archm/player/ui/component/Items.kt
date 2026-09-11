@@ -198,11 +198,12 @@ inline fun ListItem(
                     Modifier
                 }
             )
+            .clip(if (isActive && showActiveContainer) activeShape else shape)
             .then(modifier)
             .height(ListItemHeight)
     ) {
         Box(
-            modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
+            modifier = Modifier.padding(start = 0.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
             contentAlignment = Alignment.Center
         ) {
             thumbnailContent()
@@ -357,16 +358,18 @@ fun GridItem(
     thumbnailContent: @Composable BoxWithConstraintsScope.() -> Unit,
     thumbnailRatio: Float = 1f,
     fillMaxWidth: Boolean = false,
+    thumbnailSize: Dp? = null,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
 ) {
-    val gridHeight = currentGridThumbnailHeight()
+    val gridHeight = thumbnailSize ?: currentGridThumbnailHeight()
     Column(
         modifier = if (fillMaxWidth) {
             modifier
-                .padding(12.dp)
+                .padding(contentPadding)
                 .fillMaxWidth()
         } else {
             modifier
-                .padding(12.dp)
+                .padding(contentPadding)
                 .width(gridHeight * thumbnailRatio)
         }
     ) {
@@ -403,6 +406,8 @@ fun GridItem(
     thumbnailContent: @Composable BoxWithConstraintsScope.() -> Unit,
     thumbnailRatio: Float = 1f,
     fillMaxWidth: Boolean = false,
+    thumbnailSize: Dp? = null,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
 ) = GridItem(
     modifier = modifier,
     title = {
@@ -425,9 +430,12 @@ fun GridItem(
             overflow = TextOverflow.Ellipsis,
         )
     },
+    badges = badges,
     thumbnailContent = thumbnailContent,
     thumbnailRatio = thumbnailRatio,
-    fillMaxWidth = fillMaxWidth
+    fillMaxWidth = fillMaxWidth,
+    thumbnailSize = thumbnailSize,
+    contentPadding = contentPadding
 )
 
 @Composable
@@ -1219,6 +1227,9 @@ fun YouTubeGridItem(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     fillMaxWidth: Boolean = false,
+    thumbnailSize: Dp? = null,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
+    thumbnailCornerRadius: Dp = ThumbnailCornerRadius,
 ) = GridItem(
     title = {
         Text(
@@ -1268,7 +1279,7 @@ fun YouTubeGridItem(
             thumbnailUrl = item.thumbnail,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
+            shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(thumbnailCornerRadius),
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -1300,6 +1311,8 @@ fun YouTubeGridItem(
     },
     thumbnailRatio = thumbnailRatio,
     fillMaxWidth = fillMaxWidth,
+    thumbnailSize = thumbnailSize,
+    contentPadding = contentPadding,
     modifier = modifier
 )
 
