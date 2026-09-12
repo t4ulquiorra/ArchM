@@ -72,7 +72,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -85,7 +84,6 @@ import androidx.compose.material3.ripple
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -614,32 +612,21 @@ fun ArtistScreen(
                     val distinctSongs = section.items.filterIsInstance<SongItem>().distinctBy { it.id }
                     if (distinctSongs.isNotEmpty()) {
                         item(key = "section_popular_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 14.dp),
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.popular),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                val moreEndpoint = section.moreEndpoint
-                                if (moreEndpoint != null) {
-                                    TextButton(
-                                        onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = context.getString(R.string.popular), artistName = artistName))
-                                        },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                                    ) {
-                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                            ArtistSectionHeader(
+                                title = stringResource(R.string.popular),
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = context.getString(R.string.popular),
+                                                artistName = artistName,
+                                            ),
+                                        )
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
 
                         items(
@@ -693,32 +680,21 @@ fun ArtistScreen(
                     val distinctSingles = section.items.filterIsInstance<AlbumItem>().distinctBy { it.id }
                     if (distinctSingles.isNotEmpty()) {
                         item(key = "section_singles_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 12.dp),
-                            ) {
-                                Text(
-                                    text = "Singles",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                val moreEndpoint = section.moreEndpoint
-                                if (moreEndpoint != null) {
-                                    TextButton(
-                                        onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = "Singles", artistName = artistName))
-                                        },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                                    ) {
-                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                            ArtistSectionHeader(
+                                title = "Singles",
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = "Singles",
+                                                artistName = artistName,
+                                            ),
+                                        )
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
 
                         item(key = "section_singles_carousel") {
@@ -775,32 +751,21 @@ fun ArtistScreen(
                     val distinctAlbums = section.items.filterIsInstance<AlbumItem>().distinctBy { it.id }
                     if (distinctAlbums.isNotEmpty()) {
                         item(key = "section_albums_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 12.dp),
-                            ) {
-                                Text(
-                                    text = section.title,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                val moreEndpoint = section.moreEndpoint
-                                if (moreEndpoint != null) {
-                                    TextButton(
-                                        onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = section.title, artistName = artistName))
-                                        },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                                    ) {
-                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                            ArtistSectionHeader(
+                                title = section.title,
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = section.title,
+                                                artistName = artistName,
+                                            ),
+                                        )
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
 
                         item(key = "section_albums_carousel") {
@@ -857,32 +822,21 @@ fun ArtistScreen(
                     val distinctVideos = section.items.filterIsInstance<SongItem>().distinctBy { it.id }
                     if (distinctVideos.isNotEmpty()) {
                         item(key = "section_videos_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 12.dp),
-                            ) {
-                                Text(
-                                    text = section.title,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                val moreEndpoint = section.moreEndpoint
-                                if (moreEndpoint != null) {
-                                    TextButton(
-                                        onClick = {
-                                            navController.navigate(buildArtistItemsRoute(viewModel.artistId, moreEndpoint, title = section.title, artistName = artistName))
-                                        },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                                    ) {
-                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                            ArtistSectionHeader(
+                                title = section.title,
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = section.title,
+                                                artistName = artistName,
+                                            ),
+                                        )
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
 
                         item(key = "section_videos_carousel") {
@@ -940,23 +894,21 @@ fun ArtistScreen(
                     val distinctFeatured = section.items.distinctBy { it.id }
                     if (distinctFeatured.isNotEmpty()) {
                         item(key = "section_featured_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 4.dp),
-                            ) {
-                                Text(
-                                    text = section.title,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 18.dp),
-                                )
-                            }
+                            ArtistSectionHeader(
+                                title = section.title,
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = section.title,
+                                                artistName = artistName,
+                                            ),
+                                        )
+                                    }
+                                },
+                            )
                         }
 
                         item(key = "section_featured_carousel") {
@@ -1072,39 +1024,21 @@ fun ArtistScreen(
                             section.title.ifBlank { "Playlists" }
                         }
                         item(key = "section_playlists_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 12.dp),
-                            ) {
-                                Text(
-                                    text = playlistTitle,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                val moreEndpoint = section.moreEndpoint
-                                if (moreEndpoint != null) {
-                                    TextButton(
-                                        onClick = {
-                                            navController.navigate(
-                                                buildArtistItemsRoute(
-                                                    viewModel.artistId,
-                                                    moreEndpoint,
-                                                    title = playlistTitle,
-                                                    artistName = artistName,
-                                                ),
-                                            )
-                                        },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                                    ) {
-                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                            ArtistSectionHeader(
+                                title = playlistTitle,
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = playlistTitle,
+                                                artistName = artistName,
+                                            ),
+                                        )
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
 
                         item(key = "section_playlists_carousel") {
@@ -1220,39 +1154,21 @@ fun ArtistScreen(
                     if (distinctLive.isNotEmpty()) {
                         val liveTitle = section.title.ifBlank { "Live performances" }
                         item(key = "section_live_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 12.dp),
-                            ) {
-                                Text(
-                                    text = liveTitle,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                val moreEndpoint = section.moreEndpoint
-                                if (moreEndpoint != null) {
-                                    TextButton(
-                                        onClick = {
-                                            navController.navigate(
-                                                buildArtistItemsRoute(
-                                                    viewModel.artistId,
-                                                    moreEndpoint,
-                                                    title = liveTitle,
-                                                    artistName = artistName,
-                                                ),
-                                            )
-                                        },
-                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                                    ) {
-                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                            ArtistSectionHeader(
+                                title = liveTitle,
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = liveTitle,
+                                                artistName = artistName,
+                                            ),
+                                        )
                                     }
-                                }
-                            }
+                                },
+                            )
                         }
 
                         item(key = "section_live_carousel") {
@@ -1342,23 +1258,21 @@ fun ArtistScreen(
                     val distinctArtists = section.items.filterIsInstance<ArtistItem>().distinctBy { it.id }
                     if (distinctArtists.isNotEmpty()) {
                         item(key = "section_related_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 4.dp),
-                            ) {
-                                Text(
-                                    text = "Related Artists",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 18.dp),
-                                )
-                            }
+                            ArtistSectionHeader(
+                                title = "Related Artists",
+                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                    {
+                                        navController.navigate(
+                                            buildArtistItemsRoute(
+                                                viewModel.artistId,
+                                                moreEndpoint,
+                                                title = "Related Artists",
+                                                artistName = artistName,
+                                            ),
+                                        )
+                                    }
+                                },
+                            )
                         }
 
                         item(key = "section_related_carousel") {
@@ -1392,21 +1306,9 @@ fun ArtistScreen(
 
                     if (hasDescription || hasAudienceStat) {
                         item(key = "section_about_header") {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 28.dp, bottom = 12.dp),
-                            ) {
-                                Text(
-                                    text = "About",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
+                            ArtistSectionHeader(
+                                title = "About",
+                            )
                         }
 
                         item(key = "section_about_card") {
@@ -2481,4 +2383,55 @@ fun OutlinedFollowPillButton(
         )
     }
 }
+
+@Composable
+private fun ArtistSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    onMoreClick: (() -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 28.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.weight(1f),
+            )
+            if (onMoreClick != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(color = Color.White, bounded = true),
+                            onClick = onMoreClick,
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.more),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+    }
+}
+
 
