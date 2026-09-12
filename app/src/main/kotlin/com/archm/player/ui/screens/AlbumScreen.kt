@@ -728,23 +728,19 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    thumbnailCornerRadius = 12.dp,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .combinedClickable(
-                                            onClick = { navController.navigate("album/${item.id}") },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                menuState.show {
-                                                    YouTubeAlbumMenu(
-                                                        albumItem = item,
-                                                        navController = navController,
-                                                        onDismiss = menuState::dismiss,
-                                                    )
-                                                }
-                                            },
-                                        )
-                                        .animateItem(),
+                                    thumbnailCornerRadius = 10.dp,
+                                    onClick = { navController.navigate("album/${item.id}") },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        menuState.show {
+                                            YouTubeAlbumMenu(
+                                                albumItem = item,
+                                                navController = navController,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -778,23 +774,19 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    thumbnailCornerRadius = 12.dp,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .combinedClickable(
-                                            onClick = { navController.navigate("album/${item.id}") },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                menuState.show {
-                                                    YouTubeAlbumMenu(
-                                                        albumItem = item,
-                                                        navController = navController,
-                                                        onDismiss = menuState::dismiss,
-                                                    )
-                                                }
-                                            },
-                                        )
-                                        .animateItem(),
+                                    thumbnailCornerRadius = 10.dp,
+                                    onClick = { navController.navigate("album/${item.id}") },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        menuState.show {
+                                            YouTubeAlbumMenu(
+                                                albumItem = item,
+                                                navController = navController,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }

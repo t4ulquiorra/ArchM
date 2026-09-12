@@ -5,14 +5,22 @@ package com.archm.player.ui.component
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -350,6 +358,7 @@ fun ListItem(
     color = color,
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GridItem(
     modifier: Modifier = Modifier,
@@ -360,40 +369,100 @@ fun GridItem(
     thumbnailRatio: Float = 1f,
     fillMaxWidth: Boolean = false,
     thumbnailSize: Dp? = null,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    thumbnailUrl: String? = null,
+    containerColor: Color? = null,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val gridHeight = thumbnailSize ?: currentGridThumbnailHeight()
-    Column(
-        modifier = if (fillMaxWidth) {
-            modifier
-                .padding(contentPadding)
+    val cardBgColor =
+        containerColor ?: rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        label = "GridItemScale",
+    )
+
+    val basePodModifier =
+        if (fillMaxWidth) {
+            Modifier
                 .fillMaxWidth()
+                .aspectRatio(if (thumbnailRatio != 1f) thumbnailRatio else 1f)
         } else {
-            modifier
-                .padding(contentPadding)
-                .width(gridHeight * thumbnailRatio)
-        }
-    ) {
-        BoxWithConstraints(
-            contentAlignment = Alignment.Center,
-            modifier = if (fillMaxWidth) {
-                Modifier.fillMaxWidth()
+            if (thumbnailRatio != 1f) {
+                Modifier
+                    .width(gridHeight * thumbnailRatio)
+                    .height(gridHeight)
             } else {
-                Modifier.height(gridHeight)
+                Modifier.size(gridHeight)
             }
-                .aspectRatio(thumbnailRatio)
-        ) {
-            thumbnailContent()
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+    val clickableModifier =
+        if (onClick != null) {
+            Modifier.combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+        } else {
+            Modifier
+        }
 
-        title()
+    Column(
+        modifier =
+            modifier
+                .then(basePodModifier)
+                .padding(contentPadding)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }.clip(RoundedCornerShape(16.dp))
+                .background(cardBgColor)
+                .then(clickableModifier)
+                .padding(8.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            BoxWithConstraints(
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(thumbnailRatio)
+                        .clip(RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                thumbnailContent()
+            }
+        }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            badges()
+        Spacer(modifier = Modifier.height(4.dp))
 
-            subtitle()
+        Column(modifier = Modifier.fillMaxWidth()) {
+            title()
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                badges()
+                subtitle()
+            }
         }
     }
 }
@@ -408,25 +477,30 @@ fun GridItem(
     thumbnailRatio: Float = 1f,
     fillMaxWidth: Boolean = false,
     thumbnailSize: Dp? = null,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    thumbnailUrl: String? = null,
+    containerColor: Color? = null,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) = GridItem(
     modifier = modifier,
     title = {
         Text(
             text = title,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     },
     subtitle = {
         Text(
             text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -436,7 +510,11 @@ fun GridItem(
     thumbnailRatio = thumbnailRatio,
     fillMaxWidth = fillMaxWidth,
     thumbnailSize = thumbnailSize,
-    contentPadding = contentPadding
+    contentPadding = contentPadding,
+    thumbnailUrl = thumbnailUrl,
+    containerColor = containerColor,
+    onClick = onClick,
+    onLongClick = onLongClick,
 )
 
 @Composable
@@ -779,23 +857,26 @@ fun AlbumGridItem(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     fillMaxWidth: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) = GridItem(
     title = {
         Text(
             text = album.album.title,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.basicMarquee().fillMaxWidth()
         )
     },
     subtitle = {
         Text(
             text = album.artists.joinToString { it.name },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
-            maxLines = 2,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     },
@@ -809,7 +890,7 @@ fun AlbumGridItem(
             thumbnailUrl = album.album.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
+            shape = RoundedCornerShape(10.dp),
         )
 
         AlbumPlayButton(
@@ -826,7 +907,10 @@ fun AlbumGridItem(
             }
         )
     },
+    thumbnailUrl = album.album.thumbnailUrl,
     fillMaxWidth = fillMaxWidth,
+    onClick = onClick,
+    onLongClick = onLongClick,
     modifier = modifier
 )
 
@@ -1229,16 +1313,20 @@ fun YouTubeGridItem(
     isPlaying: Boolean = false,
     fillMaxWidth: Boolean = false,
     thumbnailSize: Dp? = null,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
-    thumbnailCornerRadius: Dp = ThumbnailCornerRadius,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    thumbnailCornerRadius: Dp = 10.dp,
+    containerColor: Color? = null,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) = GridItem(
     title = {
         Text(
             text = item.title,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = if (item is ArtistItem) TextAlign.Center else TextAlign.Start,
             modifier = Modifier.basicMarquee().fillMaxWidth()
         )
@@ -1263,9 +1351,9 @@ fun YouTubeGridItem(
         if (subtitle != null) {
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
-                maxLines = 2,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -1314,6 +1402,10 @@ fun YouTubeGridItem(
     fillMaxWidth = fillMaxWidth,
     thumbnailSize = thumbnailSize,
     contentPadding = contentPadding,
+    thumbnailUrl = item.thumbnail,
+    containerColor = containerColor,
+    onClick = onClick,
+    onLongClick = onLongClick,
     modifier = modifier
 )
 

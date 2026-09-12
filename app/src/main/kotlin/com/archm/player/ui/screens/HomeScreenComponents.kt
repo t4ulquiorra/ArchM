@@ -1194,72 +1194,68 @@ private fun YouTubeGridItemWrapper(
         isActive = item.id in listOf(mediaMetadata?.album?.id, mediaMetadata?.id),
         isPlaying = isPlaying,
         coroutineScope = scope,
-        modifier =
-            modifier
-                .focusable()
-                .combinedClickable(
-                    onClick = {
-                        when (item) {
-                            is SongItem -> {
-                                playerConnection.playQueue(
-                                    YouTubeQueue(
-                                        item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                        item.toMediaMetadata(),
-                                    ),
-                                )
-                            }
+        onClick = {
+            when (item) {
+                is SongItem -> {
+                    playerConnection.playQueue(
+                        YouTubeQueue(
+                            item.endpoint ?: WatchEndpoint(videoId = item.id),
+                            item.toMediaMetadata(),
+                        ),
+                    )
+                }
 
-                            is AlbumItem -> {
-                                navController.navigate("album/${item.id}")
-                            }
+                is AlbumItem -> {
+                    navController.navigate("album/${item.id}")
+                }
 
-                            is ArtistItem -> {
-                                navController.navigate("artist/${item.id}")
-                            }
+                is ArtistItem -> {
+                    navController.navigate("artist/${item.id}")
+                }
 
-                            is PlaylistItem -> {
-                                navController.navigate("online_playlist/${item.id}")
-                            }
-                        }
-                    },
-                    onLongClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        menuState.show {
-                            when (item) {
-                                is SongItem -> {
-                                    YouTubeSongMenu(
-                                        song = item,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
+                is PlaylistItem -> {
+                    navController.navigate("online_playlist/${item.id}")
+                }
+            }
+        },
+        onLongClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            menuState.show {
+                when (item) {
+                    is SongItem -> {
+                        YouTubeSongMenu(
+                            song = item,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
 
-                                is AlbumItem -> {
-                                    YouTubeAlbumMenu(
-                                        albumItem = item,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
+                    is AlbumItem -> {
+                        YouTubeAlbumMenu(
+                            albumItem = item,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
 
-                                is ArtistItem -> {
-                                    YouTubeArtistMenu(
-                                        artist = item,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
+                    is ArtistItem -> {
+                        YouTubeArtistMenu(
+                            artist = item,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
 
-                                is PlaylistItem -> {
-                                    YouTubePlaylistMenu(
-                                        playlist = item,
-                                        coroutineScope = scope,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            }
-                        }
-                    },
-                ),
+                    is PlaylistItem -> {
+                        YouTubePlaylistMenu(
+                            playlist = item,
+                            coroutineScope = scope,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                }
+            }
+        },
+        modifier = modifier.focusable(),
     )
 }
 
@@ -1317,23 +1313,21 @@ private fun LocalGridItem(
                 isActive = item.id == mediaMetadata?.album?.id,
                 isPlaying = isPlaying,
                 coroutineScope = scope,
+                onClick = { navController.navigate("album/${item.id}") },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    menuState.show {
+                        AlbumMenu(
+                            originalAlbum = item,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                },
                 modifier =
                     modifier
                         .fillMaxWidth()
-                        .focusable()
-                        .combinedClickable(
-                            onClick = { navController.navigate("album/${item.id}") },
-                            onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                menuState.show {
-                                    AlbumMenu(
-                                        originalAlbum = item,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            },
-                        ),
+                        .focusable(),
             )
         }
 

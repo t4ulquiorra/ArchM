@@ -607,23 +607,20 @@ private fun TrendingAlbumsSection(
                 isActive = mediaMetadata?.album?.id == album.id,
                 isPlaying = isPlaying,
                 coroutineScope = coroutineScope,
-                modifier =
-                    Modifier
-                        .combinedClickable(
-                            onClick = {
-                                navController.navigate("album/${album.id}")
-                            },
-                            onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                menuState.show {
-                                    YouTubeAlbumMenu(
-                                        albumItem = album,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            },
-                        ).animateItem(),
+                onClick = {
+                    navController.navigate("album/${album.id}")
+                },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    menuState.show {
+                        YouTubeAlbumMenu(
+                            albumItem = album,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                },
+                modifier = Modifier.animateItem(),
             )
         }
     }

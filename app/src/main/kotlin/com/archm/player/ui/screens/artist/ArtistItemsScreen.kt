@@ -1092,54 +1092,52 @@ fun ArtistItemsScreen(
                             isPlaying = isPlaying,
                             fillMaxWidth = true,
                             coroutineScope = coroutineScope,
+                            thumbnailCornerRadius = 10.dp,
+                            onClick = {
+                                when (item) {
+                                    is SongItem -> playerConnection.playQueue(
+                                        YouTubeQueue(
+                                            item.endpoint ?: WatchEndpoint(videoId = item.id),
+                                            item.toMediaMetadata(),
+                                        ),
+                                    )
+
+                                    is AlbumItem -> navController.navigate("album/${item.id}")
+                                    is ArtistItem -> navController.navigate("artist/${item.id}")
+                                    is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                }
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    when (item) {
+                                        is SongItem -> YouTubeSongMenu(
+                                            song = item,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+
+                                        is AlbumItem -> YouTubeAlbumMenu(
+                                            albumItem = item,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+
+                                        is ArtistItem -> YouTubeArtistMenu(
+                                            artist = item,
+                                            onDismiss = menuState::dismiss,
+                                        )
+
+                                        is PlaylistItem -> YouTubePlaylistMenu(
+                                            playlist = item,
+                                            coroutineScope = coroutineScope,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                }
+                            },
                             modifier = Modifier
                                 .padding(4.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    onClick = {
-                                        when (item) {
-                                            is SongItem -> playerConnection.playQueue(
-                                                YouTubeQueue(
-                                                    item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                                    item.toMediaMetadata(),
-                                                ),
-                                            )
-
-                                            is AlbumItem -> navController.navigate("album/${item.id}")
-                                            is ArtistItem -> navController.navigate("artist/${item.id}")
-                                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
-                                        }
-                                    },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                            when (item) {
-                                                is SongItem -> YouTubeSongMenu(
-                                                    song = item,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-
-                                                is AlbumItem -> YouTubeAlbumMenu(
-                                                    albumItem = item,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-
-                                                is ArtistItem -> YouTubeArtistMenu(
-                                                    artist = item,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-
-                                                is PlaylistItem -> YouTubePlaylistMenu(
-                                                    playlist = item,
-                                                    coroutineScope = coroutineScope,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        }
-                                    },
-                                )
                                 .animateItem(),
                         )
                     }

@@ -788,47 +788,44 @@ fun OnlinePlaylistScreen(
                                         item = item,
                                         thumbnailSize = 150.dp,
                                         contentPadding = PaddingValues(0.dp),
-                                        thumbnailCornerRadius = 12.dp,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .combinedClickable(
-                                                onClick = {
-                                                    when (item) {
-                                                        is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
-                                                        is AlbumItem -> navController.navigate("album/${item.browseId}")
-                                                        is ArtistItem -> navController.navigate("artist/${item.id}")
-                                                        is SongItem -> playerConnection.playQueue(
-                                                            YouTubeQueue(WatchEndpoint(videoId = item.id))
-                                                        )
-                                                    }
-                                                },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        when (item) {
-                                                            is PlaylistItem -> YouTubePlaylistMenu(
-                                                                playlist = item,
-                                                                coroutineScope = coroutineScope,
-                                                                onDismiss = menuState::dismiss
-                                                            )
-                                                            is SongItem -> YouTubeSongMenu(
-                                                                song = item,
-                                                                navController = navController,
-                                                                onDismiss = menuState::dismiss
-                                                            )
-                                                            is AlbumItem -> YouTubeAlbumMenu(
-                                                                albumItem = item,
-                                                                navController = navController,
-                                                                onDismiss = menuState::dismiss
-                                                            )
-                                                            is ArtistItem -> YouTubeArtistMenu(
-                                                                artist = item,
-                                                                onDismiss = menuState::dismiss
-                                                            )
-                                                        }
-                                                    }
+                                        thumbnailCornerRadius = 10.dp,
+                                        onClick = {
+                                            when (item) {
+                                                is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                                is AlbumItem -> navController.navigate("album/${item.browseId}")
+                                                is ArtistItem -> navController.navigate("artist/${item.id}")
+                                                is SongItem -> playerConnection.playQueue(
+                                                    YouTubeQueue(WatchEndpoint(videoId = item.id))
+                                                )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                when (item) {
+                                                    is PlaylistItem -> YouTubePlaylistMenu(
+                                                        playlist = item,
+                                                        coroutineScope = coroutineScope,
+                                                        onDismiss = menuState::dismiss
+                                                    )
+                                                    is SongItem -> YouTubeSongMenu(
+                                                        song = item,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss
+                                                    )
+                                                    is AlbumItem -> YouTubeAlbumMenu(
+                                                        albumItem = item,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss
+                                                    )
+                                                    is ArtistItem -> YouTubeArtistMenu(
+                                                        artist = item,
+                                                        onDismiss = menuState::dismiss
+                                                    )
                                                 }
-                                            )
+                                            }
+                                        },
+                                        modifier = Modifier.animateItem(),
                                     )
                                 }
                             }

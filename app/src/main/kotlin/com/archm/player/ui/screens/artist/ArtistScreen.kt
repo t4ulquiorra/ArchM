@@ -19,6 +19,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,6 +36,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -1503,8 +1510,8 @@ private fun ArtistSongRow(
 }
 
 /**
- * Port of SimpMusic's HomeItemContentPlaylist for 1:1 Singles, Albums, and Featured carousels
- * Starts at card's left edge so first card aligns with 16.dp guideline
+ * Exact container pod implementation matching LibraryScreen's horizontal 'Your Playlists' LazyRow,
+ * adapted to 1:1 square ratio and 16.dp outer corner radius.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1517,50 +1524,79 @@ private fun HomeItemContentPlaylist(
     modifier: Modifier = Modifier,
     thumbSize: Dp = 150.dp,
 ) {
-    Box(
-        modifier = modifier
-            .width(thumbSize)
-            .clip(RoundedCornerShape(12.dp))
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
             ),
+        label = "HomeItemCardScale",
+    )
+
+    Column(
+        modifier =
+            modifier
+                .size(thumbSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }.clip(RoundedCornerShape(16.dp))
+                .background(cardBgColor)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ).padding(8.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
-            modifier = Modifier
-                .width(thumbSize)
-                .heightIn(min = thumbSize + 76.dp),
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(thumbSize)
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp)),
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(10.dp)),
             )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = Color.White,
-                maxLines = 2,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .width(thumbSize)
-                    .wrapContentHeight(align = Alignment.CenterVertically)
-                    .padding(top = 8.dp),
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xC4FFFFFF),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .width(thumbSize)
-                        .wrapContentHeight(align = Alignment.CenterVertically),
                 )
             }
         }
