@@ -22,6 +22,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.PureBlackKey
+import com.archm.player.ui.screens.artist.ArtistAboutScreen
 import com.archm.player.ui.screens.artist.ArtistAlbumsScreen
 import com.archm.player.ui.screens.artist.ArtistItemsScreen
 import com.archm.player.ui.screens.artist.ArtistScreen
@@ -288,6 +289,26 @@ fun NavGraphBuilder.navigationBuilder(
         ),
     ) {
         ArtistItemsScreen(navController, scrollBehavior)
+    }
+
+    composable(
+        route = "artist/{artistId}/about?artistName={artistName}",
+        arguments = listOf(
+            navArgument("artistId") {
+                type = NavType.StringType
+            },
+            navArgument("artistName") {
+                type = NavType.StringType
+                nullable = true
+            },
+        ),
+    ) { backStackEntry ->
+        val artistName = backStackEntry.arguments?.getString("artistName")
+        ArtistAboutScreen(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+            artistName = artistName,
+        )
     }
 
     composable(

@@ -30,6 +30,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
@@ -80,6 +81,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.ripple
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -120,6 +122,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -140,9 +143,7 @@ import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.playback.queues.YouTubeQueue
-import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.IconButton
-import com.archm.player.ui.component.LinkSegment
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.shimmer.ButtonPlaceholder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
@@ -352,6 +353,16 @@ fun ArtistScreen(
                 }
             }
         }
+    }
+
+    val onNavigateToAbout: () -> Unit = {
+        val encodedArtistName = if (!artistName.isNullOrBlank()) Uri.encode(artistName) else null
+        val route = if (encodedArtistName != null) {
+            "artist/${viewModel.artistId}/about?artistName=$encodedArtistName"
+        } else {
+            "artist/${viewModel.artistId}/about"
+        }
+        navController.navigate(route)
     }
 
     val showArtistOverflowMenu: () -> Unit = {
@@ -1372,59 +1383,184 @@ fun ArtistScreen(
                     }
                 }
 
-                // 9. Description Section (ElevatedCard at the very bottom)
-                if (showArtistDescription) {
+                // 9. Spotify-Style "About" Section
+                if (showArtistDescription && artistPage != null) {
                     val description = artistPage.description
                     val descriptionRuns = artistPage.descriptionRuns
-                    if (!description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()) {
-                        item(key = "artist_description_spacer") {
-                            Spacer(Modifier.height(18.dp))
-                        }
-                        item(key = "artist_description_title") {
+                    val hasDescription = !description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()
+                    val hasAudienceStat = !artistPage.monthlyListenerCount.isNullOrBlank() || !artistPage.subscriberCountText.isNullOrBlank()
+
+                    if (hasDescription || hasAudienceStat) {
+                        item(key = "section_about_header") {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
+                                    .padding(horizontal = 16.dp)
+                                    .padding(top = 28.dp, bottom = 12.dp),
                             ) {
                                 Text(
-                                    text = stringResource(R.string.description),
+                                    text = "About",
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 20.dp),
+                                    modifier = Modifier.weight(1f),
                                 )
                             }
                         }
-                        item(
-                            key = "artist_description_card",
-                        ) {
-                            ElevatedCard(
+
+                        item(key = "section_about_card") {
+                            val podSurfaceColor = MaterialTheme.colorScheme.surfaceContainer
+                            val portraitUrl = libraryArtist?.artist?.bannerUrl
+                                ?: thumbnail
+                                ?: artistPage.artist.thumbnail
+                            val audienceStat = when {
+                                !artistPage.monthlyListenerCount.isNullOrBlank() -> {
+                                    val count = artistPage.monthlyListenerCount
+                                    if (count.contains("listener", ignoreCase = true)) count else "$count monthly listeners"
+                                }
+                                !artistPage.subscriberCountText.isNullOrBlank() -> {
+                                    val count = artistPage.subscriberCountText
+                                    if (count.contains("subscriber", ignoreCase = true)) count else "$count subscribers"
+                                }
+                                else -> null
+                            }
+
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = CardDefaults.elevatedCardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                ),
+                                    .padding(horizontal = 16.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(podSurfaceColor)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(color = Color.White),
+                                        onClick = onNavigateToAbout,
+                                    ),
                             ) {
-                                Column(
+                                // Top Half: Artist portrait/banner with bottom gradient fade into pod surface
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
+                                        .height(200.dp),
                                 ) {
-                                    ExpandableText(
-                                        text = description.orEmpty(),
-                                        runs = descriptionRuns?.map {
-                                            LinkSegment(
-                                                text = it.text,
-                                                url = it.navigationEndpoint?.urlEndpoint?.url,
-                                            )
-                                        },
-                                        collapsedMaxLines = 5,
+                                    if (!portraitUrl.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = portraitUrl.resize(1280, 720),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        podSurfaceColor.copy(alpha = 0.3f),
+                                                        podSurfaceColor,
+                                                    ),
+                                                ),
+                                            ),
                                     )
+                                }
+
+                                // Identity & Actions Row
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
+                                        .padding(top = 4.dp, bottom = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        ) {
+                                            Text(
+                                                text = artistName.orEmpty(),
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(16.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF3D91F4)),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.check),
+                                                    contentDescription = "Verified",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(10.dp),
+                                                )
+                                            }
+                                        }
+                                        if (!audienceStat.isNullOrBlank()) {
+                                            Spacer(Modifier.height(4.dp))
+                                            Text(
+                                                text = audienceStat,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.White.copy(alpha = 0.7f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(Modifier.width(12.dp))
+
+                                    OutlinedFollowPillButton(
+                                        isFollowed = isFollowed,
+                                        onClick = onToggleFollow,
+                                    )
+                                }
+
+                                // Bio Section
+                                val bioText = description ?: descriptionRuns?.joinToString(separator = "") { it.text }
+                                if (!bioText.isNullOrBlank()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 16.dp),
+                                    ) {
+                                        Text(
+                                            text = bioText,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                lineHeight = 20.sp,
+                                            ),
+                                            color = Color.White.copy(alpha = 0.85f),
+                                            maxLines = 3,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Spacer(Modifier.height(8.dp))
+                                        Text(
+                                            text = "see more",
+                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                            ),
+                                            color = Color.White,
+                                            modifier = Modifier
+                                                .clickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication = null,
+                                                    onClick = onNavigateToAbout,
+                                                )
+                                                .padding(vertical = 4.dp),
+                                        )
+                                    }
+                                } else {
+                                    Spacer(Modifier.height(16.dp))
                                 }
                             }
                         }
@@ -2299,3 +2435,42 @@ private fun buildArtistItemsRoute(
         }
     }
 }
+
+@Composable
+fun OutlinedFollowPillButton(
+    isFollowed: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val backgroundColor = if (isPressed) Color.White.copy(alpha = 0.08f) else Color.Transparent
+
+    Box(
+        modifier = modifier
+            .height(32.dp)
+            .clip(CircleShape)
+            .border(
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                shape = CircleShape,
+            )
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(color = Color.White, bounded = true),
+                onClick = onClick,
+            )
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = if (isFollowed) "Following" else "Follow",
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            ),
+            color = Color.White,
+        )
+    }
+}
+
