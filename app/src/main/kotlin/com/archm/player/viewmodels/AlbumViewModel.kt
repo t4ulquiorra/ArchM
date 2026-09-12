@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import com.archm.player.utils.Wikipedia
@@ -25,7 +26,7 @@ import javax.inject.Inject
 class AlbumViewModel
 @Inject
 constructor(
-    database: MusicDatabase,
+    private val database: MusicDatabase,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     val albumId = savedStateHandle.get<String>("albumId")!!
@@ -55,8 +56,8 @@ constructor(
                 }
                 val artistAlbums = albumsSection?.items?.filterIsInstance<AlbumItem>()
                     ?: artistPage.sections.flatMap { it.items }.filterIsInstance<AlbumItem>()
-                moreByArtist.value = artistAlbums
-                moreByArtistEndpoint.value = albumsSection?.moreEndpoint
+                moreByArtist.update { artistAlbums }
+                moreByArtistEndpoint.update { albumsSection?.moreEndpoint }
 
                 val artistEntity = database.getArtistById(artistId)
                 if (artistEntity?.thumbnailUrl == null) {

@@ -155,6 +155,9 @@ fun AlbumScreen(
     val moreByArtistAlbums = remember(moreByArtist, currentAlbumId) {
         moreByArtist.filter { it.id != currentAlbumId }.distinctBy { it.id }.take(5)
     }
+    val distinctRecommendations = remember(releasesForYou) {
+        releasesForYou.distinctBy { it.id }
+    }
     val primaryArtist = albumWithSongs?.artists?.firstOrNull()
     val artistName = primaryArtist?.name ?: "Artist"
     val onMoreByArtistClick: (() -> Unit)? = primaryArtist?.id?.let { artistId ->
@@ -826,7 +829,6 @@ fun AlbumScreen(
                 }
 
                 // 6. You Might Also Like 2-Column Grid
-                val distinctRecommendations = remember(releasesForYou) { releasesForYou.distinctBy { it.id } }
                 if (distinctRecommendations.isNotEmpty()) {
                     item(key = "releases_for_you_title") {
                         NavigationTitle(
