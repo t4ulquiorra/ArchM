@@ -13,6 +13,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -774,22 +775,20 @@ fun OnlinePlaylistScreen(
                             )
                         }
 
-                        items(
-                            items = relatedItems.chunked(2),
-                            key = { pair -> "related_row_${pair.joinToString("_") { it.id }}" },
-                        ) { pair ->
-                            Row(
+                        item(key = "related_grid") {
+                            FlowRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
                                     .padding(bottom = 12.dp)
                                     .animateItem(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                for (item in pair) {
+                                relatedItems.forEach { item ->
                                     YouTubeGridItem(
                                         item = item,
-                                        fillMaxWidth = true,
+                                        thumbnailSize = 150.dp,
                                         contentPadding = PaddingValues(0.dp),
                                         thumbnailCornerRadius = 12.dp,
                                         onClick = {
@@ -828,11 +827,7 @@ fun OnlinePlaylistScreen(
                                                 }
                                             }
                                         },
-                                        modifier = Modifier.weight(1f),
                                     )
-                                }
-                                if (pair.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }

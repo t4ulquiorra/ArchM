@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -836,25 +837,23 @@ fun AlbumScreen(
                             modifier = Modifier.animateItem()
                         )
                     }
-                    items(
-                        items = distinctRecommendations.chunked(2),
-                        key = { pair -> "rec_row_${pair.joinToString("_") { it.id }}" },
-                    ) { pair ->
-                        Row(
+                    item(key = "releases_for_you_grid") {
+                        FlowRow(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
                                 .padding(bottom = 12.dp)
                                 .animateItem(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            for (item in pair) {
+                            distinctRecommendations.forEach { item ->
                                 YouTubeGridItem(
                                     item = item,
                                     isActive = mediaMetadata?.album?.id == item.id,
                                     isPlaying = isPlaying,
                                     coroutineScope = scope,
-                                    fillMaxWidth = true,
+                                    thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
                                     thumbnailCornerRadius = 12.dp,
                                     onClick = { navController.navigate("album/${item.id}") },
@@ -868,11 +867,7 @@ fun AlbumScreen(
                                             )
                                         }
                                     },
-                                    modifier = Modifier.weight(1f),
                                 )
-                            }
-                            if (pair.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
