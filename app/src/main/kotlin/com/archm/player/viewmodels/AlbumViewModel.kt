@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
+import com.music.innertube.models.BrowseEndpoint
 import com.archm.player.db.MusicDatabase
 import com.archm.player.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,12 +36,48 @@ constructor(
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     var otherVersions = MutableStateFlow<List<AlbumItem>>(emptyList())
     var releasesForYou = MutableStateFlow<List<AlbumItem>>(emptyList())
+    var moreByArtist = MutableStateFlow<List<AlbumItem>>(emptyList())
+    var moreByArtistEndpoint = MutableStateFlow<BrowseEndpoint?>(null)
     var description = MutableStateFlow<String?>(null)
     var descriptionRuns = MutableStateFlow<List<com.music.innertube.models.Run>?>(null)
+
+    private var fetchedArtistId: String? = null
+
+    private fun fetchArtistReleases(artistId: String) {
+        if (fetchedArtistId == artistId) return
+        fetchedArtistId = artistId
+        viewModelScope.launch(Dispatchers.IO) {
+            YouTube.artist(artistId).onSuccess { artistPage ->
+                val albumsSection = artistPage.sections.firstOrNull { section ->
+                    section.title.contains("album", ignoreCase = true)
+                } ?: artistPage.sections.firstOrNull { section ->
+                    section.items.any { item -> item is AlbumItem }
+                }
+                val artistAlbums = albumsSection?.items?.filterIsInstance<AlbumItem>()
+                    ?: artistPage.sections.flatMap { it.items }.filterIsInstance<AlbumItem>()
+                moreByArtist.value = artistAlbums
+                moreByArtistEndpoint.value = albumsSection?.moreEndpoint
+
+                val artistEntity = database.getArtistById(artistId)
+                if (artistEntity?.thumbnailUrl == null) {
+                    database.query {
+                        getArtistById(artistId)?.let { currentArtist ->
+                            update(currentArtist, artistPage)
+                        }
+                    }
+                }
+            }.onFailure { reportException(it) }
+        }
+    }
 
     init {
         viewModelScope.launch {
             val album = database.album(albumId).first()
+            val initialArtistId = album?.artists?.firstOrNull()?.id
+                ?: database.albumWithSongs(albumId).first()?.artists?.firstOrNull()?.id
+            if (initialArtistId != null) {
+                fetchArtistReleases(initialArtistId)
+            }
             if (album?.description != null) {
                 description.value = album.description
             }
@@ -62,22 +99,9 @@ constructor(
                         }
                     }
 
-                    val albumArtists = it.album.artists
-                    if (albumArtists?.size == 1) {
-                        albumArtists.firstOrNull()?.id?.let { artistId ->
-                            viewModelScope.launch(Dispatchers.IO) {
-                                val artistEntity = database.getArtistById(artistId)
-                                if (artistEntity?.thumbnailUrl == null) {
-                                    YouTube.artist(artistId).onSuccess { artistPage ->
-                                        database.query {
-                                            getArtistById(artistId)?.let { currentArtist ->
-                                                update(currentArtist, artistPage)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    val primaryArtistId = it.album.artists?.firstOrNull()?.id ?: initialArtistId
+                    if (primaryArtistId != null) {
+                        fetchArtistReleases(primaryArtistId)
                     }
                     
                     if (description.value == null && descriptionRuns.value == null) {

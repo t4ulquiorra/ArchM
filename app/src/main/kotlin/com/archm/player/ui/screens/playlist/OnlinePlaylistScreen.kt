@@ -774,18 +774,22 @@ fun OnlinePlaylistScreen(
                             )
                         }
 
-                        item(key = "related_items") {
-                            LazyRow(
-                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        items(
+                            items = relatedItems.chunked(2),
+                            key = { pair -> "related_row_${pair.joinToString("_") { it.id }}" },
+                        ) { pair ->
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .animateItem()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = 12.dp)
+                                    .animateItem(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                items(relatedItems) { item ->
+                                for (item in pair) {
                                     YouTubeGridItem(
                                         item = item,
-                                        thumbnailSize = 150.dp,
+                                        fillMaxWidth = true,
                                         contentPadding = PaddingValues(0.dp),
                                         thumbnailCornerRadius = 12.dp,
                                         onClick = {
@@ -824,8 +828,11 @@ fun OnlinePlaylistScreen(
                                                 }
                                             }
                                         },
-                                        modifier = Modifier.animateItem(),
+                                        modifier = Modifier.weight(1f),
                                     )
+                                }
+                                if (pair.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }

@@ -67,7 +67,7 @@
     <string name="playlist_is_empty">The playlist is empty</string>
     <string name="remove_download_playlist_confirm">Do you really want to remove all songs from the \"%s\" playlist from Downloaded Songs storage?</string>
     <string name="delete_playlist_confirm">Do you really want to delete the playlist \"%s\"?</string>
-    <string name="you_might_also_like">Related Playlist</string>
+    <string name="you_might_also_like">You might also like</string>
     <!-- Button -->
     <string name="retry">Retry</string>
     <string name="radio">Radio</string>

@@ -7,9 +7,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,7 +82,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ripple
+import com.music.innertube.models.BrowseEndpoint
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.core.net.toUri
@@ -141,8 +146,34 @@ fun AlbumScreen(
     val albumWithSongs by viewModel.albumWithSongs.collectAsState()
     val otherVersions by viewModel.otherVersions.collectAsState()
     val releasesForYou by viewModel.releasesForYou.collectAsState()
+    val moreByArtist by viewModel.moreByArtist.collectAsState()
+    val moreByArtistEndpoint by viewModel.moreByArtistEndpoint.collectAsState()
     val description by viewModel.description.collectAsState()
     val descriptionRuns by viewModel.descriptionRuns.collectAsState()
+
+    val currentAlbumId = viewModel.albumId
+    val moreByArtistAlbums = remember(moreByArtist, currentAlbumId) {
+        moreByArtist.filter { it.id != currentAlbumId }.distinctBy { it.id }.take(5)
+    }
+    val primaryArtist = albumWithSongs?.artists?.firstOrNull()
+    val artistName = primaryArtist?.name ?: "Artist"
+    val onMoreByArtistClick: (() -> Unit)? = primaryArtist?.id?.let { artistId ->
+        {
+            val endpoint = moreByArtistEndpoint
+            if (endpoint != null) {
+                navController.navigate(
+                    buildArtistItemsRoute(
+                        artistId = artistId,
+                        endpoint = endpoint,
+                        title = "Albums",
+                        artistName = artistName,
+                    )
+                )
+            } else {
+                navController.navigate("artist/$artistId/albums")
+            }
+        }
+    }
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
     val dataSaverEnabled by rememberPreference(key = DataSaverEnabledKey, defaultValue = false)
     val hideVideoSongsPref by rememberPreference(key = HideVideoSongsKey, defaultValue = false)
@@ -746,25 +777,27 @@ fun AlbumScreen(
                     }
                 }
 
-                // 6. Releases For You Carousel
-                if (releasesForYou.isNotEmpty()) {
-                    item(key = "releases_for_you_title") {
-                        NavigationTitle(
-                            title = stringResource(R.string.releases_for_you),
-                            modifier = Modifier.animateItem()
+                // 5.5 More By Artist Carousel
+                if (moreByArtistAlbums.isNotEmpty()) {
+                    item(key = "more_by_artist_header") {
+                        AlbumSectionHeader(
+                            title = "More by $artistName",
+                            bottomSpacing = 9.dp,
+                            onMoreClick = onMoreByArtistClick,
                         )
                     }
-                    item(key = "releases_for_you_list") {
+
+                    item(key = "more_by_artist_list") {
                         LazyRow(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .animateItem()
+                                .animateItem(),
                         ) {
                             items(
-                                items = releasesForYou.distinctBy { it.id },
-                                key = { it.id },
+                                items = moreByArtistAlbums,
+                                key = { "more_by_artist_${it.id}" },
                             ) { item ->
                                 YouTubeGridItem(
                                     item = item,
@@ -787,6 +820,57 @@ fun AlbumScreen(
                                     },
                                     modifier = Modifier.animateItem(),
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // 6. You Might Also Like 2-Column Grid
+                val distinctRecommendations = remember(releasesForYou) { releasesForYou.distinctBy { it.id } }
+                if (distinctRecommendations.isNotEmpty()) {
+                    item(key = "releases_for_you_title") {
+                        NavigationTitle(
+                            title = stringResource(R.string.you_might_also_like),
+                            modifier = Modifier.animateItem()
+                        )
+                    }
+                    items(
+                        items = distinctRecommendations.chunked(2),
+                        key = { pair -> "rec_row_${pair.joinToString("_") { it.id }}" },
+                    ) { pair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(bottom = 12.dp)
+                                .animateItem(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            for (item in pair) {
+                                YouTubeGridItem(
+                                    item = item,
+                                    isActive = mediaMetadata?.album?.id == item.id,
+                                    isPlaying = isPlaying,
+                                    coroutineScope = scope,
+                                    fillMaxWidth = true,
+                                    contentPadding = PaddingValues(0.dp),
+                                    thumbnailCornerRadius = 12.dp,
+                                    onClick = { navController.navigate("album/${item.id}") },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        menuState.show {
+                                            YouTubeAlbumMenu(
+                                                albumItem = item,
+                                                navController = navController,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
@@ -994,6 +1078,91 @@ fun AlbumScreen(
                     }
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun AlbumSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    bottomSpacing: Dp = 9.dp,
+    onMoreClick: (() -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 28.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f),
+            )
+            if (onMoreClick != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(color = MaterialTheme.colorScheme.onBackground, bounded = true),
+                            onClick = onMoreClick,
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.more),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(bottomSpacing))
+    }
+}
+
+private fun buildArtistItemsRoute(
+    artistId: String,
+    endpoint: BrowseEndpoint,
+    title: String? = null,
+    artistName: String? = null,
+): String {
+    val encodedArtistId = Uri.encode(artistId)
+    val encodedBrowseId = Uri.encode(endpoint.browseId)
+    val encodedParams = endpoint.params
+        ?.takeIf { it.isNotBlank() }
+        ?.let { Uri.encode(it) }
+    val encodedTitle = title?.takeIf { it.isNotBlank() }?.let { Uri.encode(it) }
+    val encodedArtistName = artistName?.takeIf { it.isNotBlank() }?.let { Uri.encode(it) }
+
+    return buildString {
+        append("artist/")
+        append(encodedArtistId)
+        append("/items?browseId=")
+        append(encodedBrowseId)
+        if (encodedParams != null) {
+            append("&params=")
+            append(encodedParams)
+        }
+        if (encodedTitle != null) {
+            append("&title=")
+            append(encodedTitle)
+        }
+        if (encodedArtistName != null) {
+            append("&artistName=")
+            append(encodedArtistName)
         }
     }
 }
