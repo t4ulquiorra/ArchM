@@ -595,7 +595,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp, bottom = 8.dp),
+                                    .padding(top = 28.dp, bottom = 14.dp),
                             ) {
                                 Text(
                                     text = stringResource(R.string.popular),
@@ -674,7 +674,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp, bottom = 4.dp),
+                                    .padding(top = 28.dp, bottom = 12.dp),
                             ) {
                                 Text(
                                     text = "Singles",
@@ -756,7 +756,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp, bottom = 4.dp),
+                                    .padding(top = 28.dp, bottom = 12.dp),
                             ) {
                                 Text(
                                     text = section.title,
@@ -838,7 +838,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp, bottom = 4.dp),
+                                    .padding(top = 28.dp, bottom = 12.dp),
                             ) {
                                 Text(
                                     text = section.title,
@@ -921,7 +921,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp, bottom = 4.dp),
+                                    .padding(top = 28.dp, bottom = 4.dp),
                             ) {
                                 Text(
                                     text = section.title,
@@ -930,8 +930,8 @@ fun ArtistScreen(
                                     color = Color.White,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(vertical = 10.dp),
-                                 )
+                                        .padding(vertical = 18.dp),
+                                )
                             }
                         }
 
@@ -1047,7 +1047,7 @@ fun ArtistScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp, bottom = 4.dp),
+                                    .padding(top = 28.dp, bottom = 4.dp),
                             ) {
                                 Text(
                                     text = "Related Artists",
@@ -1056,7 +1056,7 @@ fun ArtistScreen(
                                     color = Color.White,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(vertical = 10.dp),
+                                        .padding(vertical = 18.dp),
                                 )
                             }
                         }
@@ -1089,7 +1089,7 @@ fun ArtistScreen(
                     val descriptionRuns = artistPage.descriptionRuns
                     if (!description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()) {
                         item(key = "artist_description_spacer") {
-                            Spacer(Modifier.height(10.dp))
+                            Spacer(Modifier.height(18.dp))
                         }
                         item(key = "artist_description_title") {
                             Row(
@@ -1105,7 +1105,7 @@ fun ArtistScreen(
                                     color = Color.White,
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(vertical = 12.dp),
+                                        .padding(vertical = 20.dp),
                                 )
                             }
                         }
