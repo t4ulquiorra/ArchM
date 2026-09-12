@@ -785,7 +785,7 @@ fun OnlinePlaylistScreen(
                                 items(relatedItems) { item ->
                                     YouTubeGridItem(
                                         item = item,
-                                        thumbnailSize = 130.dp,
+                                        thumbnailSize = 150.dp,
                                         contentPadding = PaddingValues(0.dp),
                                         thumbnailCornerRadius = 12.dp,
                                         onClick = {

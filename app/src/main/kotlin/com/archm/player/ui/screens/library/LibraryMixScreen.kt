@@ -388,7 +388,7 @@ fun LibraryMixScreen(
                                     Column(
                                         modifier =
                                             Modifier
-                                                .width(130.dp)
+                                                .width(150.dp)
                                                 .graphicsLayer {
                                                     scaleX = scale
                                                     scaleY = scale
@@ -411,7 +411,7 @@ fun LibraryMixScreen(
                                         Box(
                                             modifier =
                                                 Modifier
-                                                    .size(106.dp)
+                                                    .size(126.dp)
                                                     .clip(RoundedCornerShape(24.dp)),
                                         ) {
                                             AsyncImage(
@@ -475,8 +475,8 @@ fun LibraryMixScreen(
                                     Column(
                                         modifier =
                                             Modifier
-                                                .width(130.dp)
-                                                .height(168.dp)
+                                                .width(150.dp)
+                                                .height(194.dp)
                                                 .clip(RoundedCornerShape(32.dp))
                                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                                                 .clickable {

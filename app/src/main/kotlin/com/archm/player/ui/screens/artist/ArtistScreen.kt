@@ -711,7 +711,7 @@ fun ArtistScreen(
                                         title = single.title,
                                         subtitle = single.year?.toString(),
                                         thumbnailUrl = single.thumbnail,
-                                        thumbSize = 130.dp,
+                                        thumbSize = 150.dp,
                                         onClick = { navController.navigate("album/${single.id}") },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -793,7 +793,7 @@ fun ArtistScreen(
                                         title = album.title,
                                         subtitle = album.year?.toString(),
                                         thumbnailUrl = album.thumbnail,
-                                        thumbSize = 130.dp,
+                                        thumbSize = 150.dp,
                                         onClick = { navController.navigate("album/${album.id}") },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -966,7 +966,7 @@ fun ArtistScreen(
                                             is ArtistItem -> feature.thumbnail
                                             else -> null
                                         },
-                                        thumbSize = 130.dp,
+                                        thumbSize = 150.dp,
                                         onClick = {
                                             when (feature) {
                                                 is SongItem -> playerConnection.playQueue(
@@ -1602,7 +1602,7 @@ private fun HomeItemContentPlaylist(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    thumbSize: Dp = 130.dp,
+    thumbSize: Dp = 150.dp,
     onPlayClick: (() -> Unit)? = null,
 ) {
     val cardBgColor =
@@ -1627,6 +1627,7 @@ private fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
+                .heightIn(min = (thumbSize * 168f / 130f))
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale

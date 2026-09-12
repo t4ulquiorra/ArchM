@@ -375,7 +375,7 @@ fun GridItem(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val cardWidth = thumbnailSize ?: 130.dp
+    val cardWidth = thumbnailSize ?: 150.dp
     val cardBgColor =
         containerColor ?: rememberArtworkCardColor(
             thumbnailUrl = thumbnailUrl,
@@ -398,7 +398,9 @@ fun GridItem(
         if (fillMaxWidth) {
             Modifier.fillMaxWidth()
         } else {
-            Modifier.width(cardWidth)
+            Modifier
+                .width(cardWidth)
+                .heightIn(min = (cardWidth * 168f / 130f))
         }
 
     val clickableModifier =
