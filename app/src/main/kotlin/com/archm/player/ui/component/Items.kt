@@ -422,7 +422,7 @@ fun GridItem(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                }.clip(RoundedCornerShape(32.dp))
+                }.clip(RoundedCornerShape(18.dp))
                 .background(cardBgColor)
                 .then(clickableModifier)
                 .padding(12.dp),
@@ -442,7 +442,7 @@ fun GridItem(
         Box(
             modifier =
                 artworkModifier
-                    .clip(RoundedCornerShape(24.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {
             BoxWithConstraints(
@@ -889,7 +889,7 @@ fun AlbumGridItem(
             thumbnailUrl = album.album.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(12.dp),
         )
 
         AlbumPlayButton(
@@ -1313,7 +1313,7 @@ fun YouTubeGridItem(
     fillMaxWidth: Boolean = false,
     thumbnailSize: Dp? = null,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    thumbnailCornerRadius: Dp = 24.dp,
+    thumbnailCornerRadius: Dp = 12.dp,
     containerColor: Color? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,

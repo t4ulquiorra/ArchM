@@ -1613,7 +1613,7 @@ private fun HomeItemContentPlaylist(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                }.clip(RoundedCornerShape(32.dp))
+                }.clip(RoundedCornerShape(18.dp))
                 .background(cardBgColor)
                 .combinedClickable(
                     interactionSource = interactionSource,
@@ -1627,7 +1627,7 @@ private fun HomeItemContentPlaylist(
             modifier =
                 Modifier
                     .size(artworkSize)
-                    .clip(RoundedCornerShape(24.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540),

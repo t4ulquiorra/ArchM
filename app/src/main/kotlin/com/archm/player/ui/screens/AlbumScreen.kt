@@ -728,7 +728,7 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 130.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    thumbnailCornerRadius = 24.dp,
+                                    thumbnailCornerRadius = 12.dp,
                                     onClick = { navController.navigate("album/${item.id}") },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -774,7 +774,7 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 130.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    thumbnailCornerRadius = 24.dp,
+                                    thumbnailCornerRadius = 12.dp,
                                     onClick = { navController.navigate("album/${item.id}") },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
