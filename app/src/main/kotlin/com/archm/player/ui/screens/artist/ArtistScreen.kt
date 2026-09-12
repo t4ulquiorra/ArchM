@@ -237,7 +237,7 @@ fun ArtistScreen(
         }
     }
 
-    // SimpMusic Carousel Ordering: Popular Songs -> Singles -> Albums -> Videos -> Featured On -> Related Artists
+    // SimpMusic Carousel Ordering: Popular Songs -> Singles -> Albums -> Videos -> Featured On -> Playlists by [Artist] -> Live performances -> Related Artists
     val sections = artistPage?.sections.orEmpty()
     val popularSongsSection = remember(sections) {
         sections.firstOrNull { section ->
@@ -264,6 +264,7 @@ fun ArtistScreen(
     val videosSection = remember(sections, popularSongsSection, singlesSection, albumsSection) {
         sections.firstOrNull { section ->
             section !== popularSongsSection && section !== singlesSection && section !== albumsSection &&
+                !section.title.contains("live", ignoreCase = true) && !section.title.contains("performance", ignoreCase = true) &&
                 (section.title.contains("video", ignoreCase = true) || section.items.any { (it as? SongItem)?.musicVideoType != null })
         }
     }
@@ -273,9 +274,21 @@ fun ArtistScreen(
                 (section.title.contains("feature", ignoreCase = true) || section.title.contains("appear", ignoreCase = true))
         }
     }
-    val relatedSection = remember(sections, popularSongsSection, singlesSection, albumsSection, videosSection, featuredSection) {
-        sections.firstOrNull { section ->
+    val playlistsSection = remember(sections, popularSongsSection, singlesSection, albumsSection, videosSection, featuredSection) {
+        artistPage?.playlists ?: sections.firstOrNull { section ->
             section !== popularSongsSection && section !== singlesSection && section !== albumsSection && section !== videosSection && section !== featuredSection &&
+                (section.title.contains("playlist", ignoreCase = true) || section.items.all { it is PlaylistItem })
+        }
+    }
+    val livePerformancesSection = remember(sections, popularSongsSection, singlesSection, albumsSection, videosSection, featuredSection, playlistsSection) {
+        artistPage?.livePerformances ?: sections.firstOrNull { section ->
+            section !== popularSongsSection && section !== singlesSection && section !== albumsSection && section !== videosSection && section !== featuredSection && section !== playlistsSection &&
+                (section.title.contains("live", ignoreCase = true) || section.title.contains("performance", ignoreCase = true))
+        }
+    }
+    val relatedSection = remember(sections, popularSongsSection, singlesSection, albumsSection, videosSection, featuredSection, playlistsSection, livePerformancesSection) {
+        sections.firstOrNull { section ->
+            section !== popularSongsSection && section !== singlesSection && section !== albumsSection && section !== videosSection && section !== featuredSection && section !== playlistsSection && section !== livePerformancesSection &&
                 (section.title.contains("relat", ignoreCase = true) || section.title.contains("similar", ignoreCase = true) || section.items.all { it is ArtistItem })
         }
     }
@@ -1037,7 +1050,283 @@ fun ArtistScreen(
                     }
                 }
 
-                // 6. Horizontal "Related Artists" Carousel (LazyRow with circular images)
+                // 6. Horizontal "Playlists by [Artist]" Carousel (LazyRow)
+                playlistsSection?.let { section ->
+                    val distinctPlaylists = section.items.distinctBy { it.id }
+                    if (distinctPlaylists.isNotEmpty()) {
+                        val playlistArtistName = artistName ?: artistPage?.artist?.title
+                        val playlistTitle = if (!playlistArtistName.isNullOrBlank()) {
+                            "Playlists by $playlistArtistName"
+                        } else {
+                            section.title.ifBlank { "Playlists" }
+                        }
+                        item(key = "section_playlists_header") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(top = 28.dp, bottom = 12.dp),
+                            ) {
+                                Text(
+                                    text = playlistTitle,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                val moreEndpoint = section.moreEndpoint
+                                if (moreEndpoint != null) {
+                                    TextButton(
+                                        onClick = {
+                                            navController.navigate(
+                                                buildArtistItemsRoute(
+                                                    viewModel.artistId,
+                                                    moreEndpoint,
+                                                    title = playlistTitle,
+                                                    artistName = artistName,
+                                                ),
+                                            )
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
+                                    ) {
+                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+
+                        item(key = "section_playlists_carousel") {
+                            LazyRow(
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                items(
+                                    items = distinctPlaylists,
+                                    key = { "playlist_${it.id}" },
+                                ) { playlistItem ->
+                                    HomeItemContentPlaylist(
+                                        title = when (playlistItem) {
+                                            is PlaylistItem -> playlistItem.title
+                                            is AlbumItem -> playlistItem.title
+                                            is SongItem -> playlistItem.title
+                                            is ArtistItem -> playlistItem.title
+                                            else -> ""
+                                        },
+                                        subtitle = when (playlistItem) {
+                                            is PlaylistItem -> playlistItem.author?.name
+                                            is AlbumItem -> playlistItem.year?.toString()
+                                            is SongItem -> playlistItem.artists.joinToString(", ") { it.name }
+                                            else -> null
+                                        },
+                                        thumbnailUrl = when (playlistItem) {
+                                            is PlaylistItem -> playlistItem.thumbnail
+                                            is AlbumItem -> playlistItem.thumbnail
+                                            is SongItem -> playlistItem.thumbnail
+                                            is ArtistItem -> playlistItem.thumbnail
+                                            else -> null
+                                        },
+                                        thumbSize = 150.dp,
+                                        onClick = {
+                                            when (playlistItem) {
+                                                is PlaylistItem -> navController.navigate("online_playlist/${playlistItem.id}")
+                                                is AlbumItem -> navController.navigate("album/${playlistItem.id}")
+                                                is SongItem -> playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = playlistItem.id),
+                                                        playlistItem.toMediaMetadata(),
+                                                    ),
+                                                )
+                                                is ArtistItem -> navController.navigate("artist/${playlistItem.id}")
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                when (playlistItem) {
+                                                    is PlaylistItem -> YouTubePlaylistMenu(
+                                                        playlist = playlistItem,
+                                                        coroutineScope = coroutineScope,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                    is AlbumItem -> YouTubeAlbumMenu(
+                                                        albumItem = playlistItem,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                    is SongItem -> YouTubeSongMenu(
+                                                        song = playlistItem,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                    is ArtistItem -> Unit
+                                                }
+                                            }
+                                        },
+                                        onPlayClick = {
+                                            when (playlistItem) {
+                                                is PlaylistItem -> {
+                                                    val watchEndpoint = playlistItem.playEndpoint
+                                                        ?: WatchEndpoint(playlistId = playlistItem.id)
+                                                    playerConnection.playQueue(YouTubeQueue(watchEndpoint))
+                                                }
+                                                is AlbumItem -> {
+                                                    coroutineScope.launch(Dispatchers.IO) {
+                                                        var albumWithSongs = database.albumWithSongs(playlistItem.id).first()
+                                                        if (albumWithSongs?.songs.isNullOrEmpty()) {
+                                                            YouTube.album(playlistItem.id).onSuccess { albumPage ->
+                                                                database.transaction { insert(albumPage) }
+                                                                albumWithSongs = database.albumWithSongs(playlistItem.id).first()
+                                                            }.onFailure { reportException(it) }
+                                                        }
+                                                        albumWithSongs?.let {
+                                                            withContext(Dispatchers.Main) {
+                                                                playerConnection.playQueue(LocalAlbumRadio(it))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                is SongItem -> playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = playlistItem.id),
+                                                        playlistItem.toMediaMetadata(),
+                                                    ),
+                                                )
+                                                else -> {}
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 7. Horizontal "Live performances" Carousel (LazyRow with widescreen thumbnails)
+                livePerformancesSection?.let { section ->
+                    val distinctLive = section.items.distinctBy { it.id }
+                    if (distinctLive.isNotEmpty()) {
+                        val liveTitle = section.title.ifBlank { "Live performances" }
+                        item(key = "section_live_header") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(top = 28.dp, bottom = 12.dp),
+                            ) {
+                                Text(
+                                    text = liveTitle,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                val moreEndpoint = section.moreEndpoint
+                                if (moreEndpoint != null) {
+                                    TextButton(
+                                        onClick = {
+                                            navController.navigate(
+                                                buildArtistItemsRoute(
+                                                    viewModel.artistId,
+                                                    moreEndpoint,
+                                                    title = liveTitle,
+                                                    artistName = artistName,
+                                                ),
+                                            )
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
+                                    ) {
+                                        Text(stringResource(R.string.more), style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+
+                        item(key = "section_live_carousel") {
+                            LazyRow(
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                items(
+                                    items = distinctLive,
+                                    key = { "live_${it.id}" },
+                                ) { item ->
+                                    val songItem = item as? SongItem
+                                    HomeItemVideo(
+                                        title = item.title,
+                                        subtitle = if (songItem != null) {
+                                            listOfNotNull(
+                                                songItem.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
+                                                formatDuration(songItem.duration),
+                                            ).joinToString(" • ")
+                                        } else {
+                                            null
+                                        },
+                                        thumbnailUrl = item.thumbnail,
+                                        onClick = {
+                                            if (songItem != null) {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = songItem.id),
+                                                        songItem.toMediaMetadata(),
+                                                    ),
+                                                )
+                                            } else {
+                                                when (item) {
+                                                    is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                                    is AlbumItem -> navController.navigate("album/${item.id}")
+                                                    is ArtistItem -> navController.navigate("artist/${item.id}")
+                                                    else -> {}
+                                                }
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                if (songItem != null) {
+                                                    YouTubeSongMenu(
+                                                        song = songItem,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                } else {
+                                                    when (item) {
+                                                        is PlaylistItem -> YouTubePlaylistMenu(
+                                                            playlist = item,
+                                                            coroutineScope = coroutineScope,
+                                                            onDismiss = menuState::dismiss,
+                                                        )
+                                                        is AlbumItem -> YouTubeAlbumMenu(
+                                                            albumItem = item,
+                                                            navController = navController,
+                                                            onDismiss = menuState::dismiss,
+                                                        )
+                                                        else -> Unit
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onPlayClick = {
+                                            if (songItem != null) {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = songItem.id),
+                                                        songItem.toMediaMetadata(),
+                                                    ),
+                                                )
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 8. Horizontal "Related Artists" Carousel (LazyRow with circular images)
                 relatedSection?.let { section ->
                     val distinctArtists = section.items.filterIsInstance<ArtistItem>().distinctBy { it.id }
                     if (distinctArtists.isNotEmpty()) {
@@ -1083,7 +1372,7 @@ fun ArtistScreen(
                     }
                 }
 
-                // 7. Description Section (ElevatedCard at the very bottom)
+                // 9. Description Section (ElevatedCard at the very bottom)
                 if (showArtistDescription) {
                     val description = artistPage.description
                     val descriptionRuns = artistPage.descriptionRuns

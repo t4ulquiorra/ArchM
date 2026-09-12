@@ -32,6 +32,18 @@ data class ArtistPage(
     val monthlyListenerCount: String? = null,
     val descriptionRuns: List<Run>? = null,
 ) {
+    val playlists: ArtistSection?
+        get() = sections.firstOrNull { section ->
+            (section.title.contains("playlist", ignoreCase = true) || section.items.all { it is PlaylistItem }) &&
+                !section.title.contains("feature", ignoreCase = true) &&
+                !section.title.contains("appear", ignoreCase = true)
+        }
+
+    val livePerformances: ArtistSection?
+        get() = sections.firstOrNull { section ->
+            section.title.contains("live", ignoreCase = true) || section.title.contains("performance", ignoreCase = true)
+        }
+
     companion object {
         fun fromSectionListRendererContent(content: SectionListRenderer.Content): ArtistSection? {
             return when {
