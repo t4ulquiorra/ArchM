@@ -1817,7 +1817,7 @@ private fun HomeItemVideo(
 }
 
 /**
- * Port of SimpMusic's HomeItemArtist for 1:1 circular avatar Related Artists carousel
+ * Circular avatar Related Artists carousel item matching pod touch interaction with CircleShape bounds.
  */
 @Composable
 private fun HomeItemArtist(
@@ -1826,29 +1826,56 @@ private fun HomeItemArtist(
     thumbnailUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    avatarSize: Dp = 150.dp,
 ) {
-    val avatarSize = 150.dp
-    Box(
-        modifier = modifier
-            .width(avatarSize)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        label = "HomeItemArtistScale",
+    )
+
+    Column(
+        modifier = modifier.width(avatarSize),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .width(avatarSize)
-                .heightIn(min = avatarSize + 76.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .size(avatarSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(480, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(avatarSize)
-                    .clip(CircleShape),
+                modifier = Modifier.fillMaxSize(),
             )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
@@ -1857,7 +1884,7 @@ private fun HomeItemArtist(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .width(avatarSize)
+                    .fillMaxWidth()
                     .wrapContentHeight(align = Alignment.CenterVertically)
                     .padding(top = 8.dp),
             )
@@ -1870,7 +1897,7 @@ private fun HomeItemArtist(
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .width(avatarSize)
+                        .fillMaxWidth()
                         .wrapContentHeight(align = Alignment.CenterVertically),
                 )
             }

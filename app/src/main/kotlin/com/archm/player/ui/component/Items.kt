@@ -1547,6 +1547,96 @@ fun VideoGridItem(
     onPlayClick = onPlayClick,
 )
 
+/**
+ * Circular artist profile item matching container pod touch interaction with CircleShape bounds.
+ */
+@Composable
+fun ArtistCircleItem(
+    title: String,
+    subscribers: String? = null,
+    thumbnailUrl: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    avatarSize: Dp = 150.dp,
+    textColor: Color = Color.Unspecified,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        label = "ArtistCircleItemScale",
+    )
+
+    Column(
+        modifier = modifier.width(avatarSize),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(avatarSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = thumbnailUrl?.resize(480, 480),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = if (textColor != Color.Unspecified) textColor else MaterialTheme.colorScheme.onBackground,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(align = Alignment.CenterVertically)
+                    .padding(top = 8.dp),
+            )
+            if (!subscribers.isNullOrBlank()) {
+                Text(
+                    text = subscribers,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (textColor != Color.Unspecified) textColor.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(align = Alignment.CenterVertically),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun LocalSongsGrid(
     title: String,
