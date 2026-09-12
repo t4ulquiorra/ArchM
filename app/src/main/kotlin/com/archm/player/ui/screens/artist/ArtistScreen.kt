@@ -614,6 +614,7 @@ fun ArtistScreen(
                         item(key = "section_popular_header") {
                             ArtistSectionHeader(
                                 title = stringResource(R.string.popular),
+                                bottomSpacing = 7.dp,
                                 onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
                                     {
                                         navController.navigate(
@@ -2388,6 +2389,7 @@ fun OutlinedFollowPillButton(
 private fun ArtistSectionHeader(
     title: String,
     modifier: Modifier = Modifier,
+    bottomSpacing: Dp = 9.dp,
     onMoreClick: (() -> Unit)? = null,
 ) {
     Column(
@@ -2430,7 +2432,7 @@ private fun ArtistSectionHeader(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(bottomSpacing))
     }
 }
 
