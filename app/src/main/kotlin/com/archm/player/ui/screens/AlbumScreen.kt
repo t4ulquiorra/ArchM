@@ -154,7 +154,7 @@ fun AlbumScreen(
 
     val currentAlbumId = viewModel.albumId
     val moreByArtistAlbums = remember(moreByArtist, currentAlbumId) {
-        moreByArtist.filter { it.id != currentAlbumId }.distinctBy { it.id }.take(5)
+        moreByArtist.filter { it.id != currentAlbumId }.distinctBy { it.id }.take(7)
     }
     val distinctRecommendations = remember(releasesForYou) {
         releasesForYou.distinctBy { it.id }
