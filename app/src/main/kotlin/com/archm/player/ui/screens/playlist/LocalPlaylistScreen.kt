@@ -157,7 +157,6 @@ import com.archm.player.ui.menu.SongMenu
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.makeTimeString
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
@@ -1274,11 +1273,9 @@ fun LocalPlaylistScreen(
                                 song = song.song,
                                 isActive = song.song.id == mediaMetadata?.id,
                                 isPlaying = isPlaying,
+                                isSelected = inSelectMode && selection.contains(song.map.id),
                                 showInLibraryIcon = true,
-                                shape = listItemShape(
-                                    index = index,
-                                    count = if (isSearching) filteredSongs.size else mutableSongs.size
-                                ),
+                                shape = RoundedCornerShape(12.dp),
                                 trailingContent = {
                                     if (inSelectMode) {
                                         Checkbox(
@@ -1320,6 +1317,7 @@ fun LocalPlaylistScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
                                     .combinedClickable(
                                         onClick = {
                                             if (inSelectMode) {

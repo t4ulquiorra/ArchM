@@ -114,7 +114,6 @@ import com.archm.player.ui.menu.SongMenu
 import com.archm.player.ui.menu.TopPlaylistMenu
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.makeTimeString
 import com.archm.player.viewmodels.TopPlaylistViewModel
 
@@ -710,8 +709,9 @@ fun TopPlaylistScreen(
                             song = song,
                             isActive = song.song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
+                            isSelected = inSelectMode && song.id in selection,
                             showInLibraryIcon = true,
-                            shape = listItemShape(index, filteredSongs.size),
+                            shape = RoundedCornerShape(12.dp),
                             trailingContent = {
                                 if (inSelectMode) {
                                     Checkbox(
@@ -739,6 +739,7 @@ fun TopPlaylistScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
                                     onClick = {
                                         if (inSelectMode) {

@@ -4,6 +4,7 @@ package com.archm.player.ui.component
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -159,9 +160,9 @@ inline fun ListItem(
     isActive: Boolean = false,
     isAvailable: Boolean = true,
     showActiveContainer: Boolean = true,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
-    horizontalPadding: Dp = 16.dp,
+    horizontalPadding: Dp = 12.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
 ) {
@@ -184,36 +185,32 @@ inline fun ListItem(
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         }
-    val activeShape = RoundedCornerShape(12.dp)
+    val itemShape = if (shape != RectangleShape) shape else RoundedCornerShape(12.dp)
+
+    val targetBackgroundColor = when {
+        isSelected == true && drawHighlight -> MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+        isActive && showActiveContainer -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = ActiveBoxAlpha)
+        resolvedColor != Color.Transparent -> resolvedColor
+        else -> Color.Transparent
+    }
+    val animatedBackgroundColor by animateColorAsState(
+        targetValue = targetBackgroundColor,
+        animationSpec = tween(durationMillis = 200),
+        label = "ListItemBackground"
+    )
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(vertical = 2.dp)
             .padding(horizontal = horizontalPadding)
-            .then(
-                if (isActive && showActiveContainer) {
-                    Modifier
-                        .clip(activeShape)
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                } else if (isSelected == true && drawHighlight) {
-                    Modifier
-                        .clip(shape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-                } else if (resolvedColor != Color.Transparent) {
-                    Modifier
-                        .clip(shape)
-                        .background(resolvedColor)
-                } else {
-                    Modifier
-                }
-            )
-            .clip(if (isActive && showActiveContainer) activeShape else shape)
+            .clip(itemShape)
+            .background(animatedBackgroundColor)
             .then(modifier)
             .height(ListItemHeight)
     ) {
         Box(
-            modifier = Modifier.padding(start = 0.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
+            modifier = Modifier.padding(start = 4.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
             contentAlignment = Alignment.Center
         ) {
             thumbnailContent()
@@ -268,6 +265,7 @@ inline fun ListItem(
         CompositionLocalProvider(LocalContentColor provides trailingContentColor) {
             trailingContent()
         }
+        Spacer(modifier = Modifier.width(4.dp))
     }
 }
 
@@ -282,9 +280,9 @@ fun ListItem(
     isSelected: Boolean? = false,
     isActive: Boolean = false,
     showActiveContainer: Boolean = true,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
-    horizontalPadding: Dp = 16.dp,
+    horizontalPadding: Dp = 12.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
 ) = ListItem(
@@ -326,9 +324,9 @@ fun ListItem(
     isSelected: Boolean? = false,
     isActive: Boolean = false,
     showActiveContainer: Boolean = true,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
-    horizontalPadding: Dp = 16.dp,
+    horizontalPadding: Dp = 12.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
 ) = ListItem(
@@ -547,10 +545,10 @@ fun SongListItem(
     onSelectionChange: (Boolean) -> Unit = {},
     trailingContent: @Composable RowScope.() -> Unit = {},
     drawHighlight: Boolean = true,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
-    horizontalPadding: Dp = 16.dp,
+    horizontalPadding: Dp = 12.dp,
 ) {
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
     val resolvedColor = if (color != Color.Transparent) color else containerColor
@@ -672,7 +670,7 @@ fun ArtistListItem(
     modifier: Modifier = Modifier,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     badges: @Composable RowScope.() -> Unit = {
         if (artist.artist.bookmarkedAt != null) {
             Icon(
@@ -751,7 +749,7 @@ fun AlbumListItem(
     modifier: Modifier = Modifier,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     showLikedIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
         val downloadUtil = LocalDownloadUtil.current
@@ -1130,7 +1128,7 @@ fun MediaMetadataListItem(
     isSelected: Boolean = false,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
     trailingContent: @Composable RowScope.() -> Unit = {},
@@ -1219,7 +1217,7 @@ fun YouTubeListItem(
             Icon.Download(download?.state)
         }
     },
-    shape: Shape = RectangleShape,
+    shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
 ) {
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)

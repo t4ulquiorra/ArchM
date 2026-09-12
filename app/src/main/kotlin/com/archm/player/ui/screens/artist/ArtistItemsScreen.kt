@@ -143,7 +143,6 @@ import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.ArtistEntity
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.ArtistItemsViewModel
@@ -762,8 +761,11 @@ fun ArtistItemsScreen(
                             isActive = mediaMetadata?.id == songItem.id,
                             isPlaying = isPlaying,
                             isSelected = inSelectMode && songItem.id in selection,
-                            shape = listItemShape(index, filteredSongs.size),
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem()
+                                .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
                                     enabled = !hideExplicit || !songItem.explicit,
                                     onClick = {
@@ -788,8 +790,7 @@ fun ArtistItemsScreen(
                                             onCheckedChange(true)
                                         }
                                     }
-                                )
-                                .animateItem(),
+                                ),
                             trailingContent = {
                                 if (inSelectMode) {
                                     Checkbox(

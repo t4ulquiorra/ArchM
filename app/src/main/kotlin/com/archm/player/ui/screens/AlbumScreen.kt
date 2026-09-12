@@ -116,7 +116,6 @@ import com.archm.player.ui.menu.YouTubeAlbumMenu
 import com.archm.player.ui.player.CanvasArtworkPlayer
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.AlbumViewModel
 
@@ -647,7 +646,7 @@ fun AlbumScreen(
                         isPlaying = isPlaying,
                         isSelected = inSelectMode && song.id in selection,
                         showInLibraryIcon = true,
-                        shape = listItemShape(index, filteredSongs.size),
+                        shape = RoundedCornerShape(12.dp),
                         trailingContent = {
                             if (inSelectMode) {
                                 Checkbox(
@@ -676,7 +675,7 @@ fun AlbumScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem()
-                            .clip(listItemShape(index, filteredSongs.size))
+                            .clip(RoundedCornerShape(12.dp))
                             .combinedClickable(
                                 onClick = {
                                     if (inSelectMode) {

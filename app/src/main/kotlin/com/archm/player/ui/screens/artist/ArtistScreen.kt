@@ -18,10 +18,12 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -1421,14 +1423,21 @@ private fun ArtistSongRow(
             }
         }
 
+        val targetBg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent
+        val animatedBg by animateColorAsState(
+            targetValue = targetBg,
+            animationSpec = tween(durationMillis = 200),
+            label = "ArtistSongRowBg",
+        )
+
         // Foreground row
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-                .background(
-                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent,
-                )
+                .padding(horizontal = 12.dp, vertical = 2.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(animatedBg)
                 .combinedClickable(
                     onClick = {
                         if (selectionMode) {
@@ -1479,7 +1488,7 @@ private fun ArtistSongRow(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                    .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Checkbox when selectionMode is true

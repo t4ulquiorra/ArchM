@@ -134,7 +134,6 @@ import com.archm.player.ui.menu.QueueMenu
 import com.archm.player.ui.menu.SelectionMediaMetadataMenu
 import com.archm.player.ui.screens.CommentSheet
 import com.archm.player.ui.utils.ShowMediaInfo
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.makeTimeString
 import com.archm.player.utils.rememberPreference
 import androidx.compose.material.icons.Icons
@@ -1197,10 +1196,10 @@ fun Queue(
                                 ) {
                                     MediaMetadataListItem(
                                         mediaMetadata = window.mediaItem.metadata!!,
-                                        isSelected = false,
+                                        isSelected = inSelectMode && window.mediaItem.mediaId in selection,
                                         isActive = isActive,
                                         isPlaying = isPlaying && isActive,
-                                        shape = listItemShape(index, mutableQueueWindows.size),
+                                        shape = RoundedCornerShape(12.dp),
                                         trailingContent = {
                                             if (inSelectMode) {
                                                 Checkbox(
@@ -1250,6 +1249,7 @@ fun Queue(
                                         modifier =
                                             Modifier
                                                 .fillMaxWidth()
+                                                .clip(RoundedCornerShape(12.dp))
                                                 .background(background)
                                                 .combinedClickable(
                                                     onClick = {
@@ -1334,7 +1334,7 @@ fun Queue(
                             ) {
                                 MediaMetadataListItem(
                                     mediaMetadata = item.metadata!!,
-                                    shape = listItemShape(index, automix.size),
+                                    shape = RoundedCornerShape(12.dp),
                                     trailingContent = {
                                         if (!isListenTogetherGuest) {
                                             IconButton(
@@ -1368,6 +1368,7 @@ fun Queue(
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
                                             .combinedClickable(
                                                 onClick = {},
                                                 onLongClick = {

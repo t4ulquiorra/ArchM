@@ -470,6 +470,7 @@ fun QuickPicksSection(
                             modifier =
                                 Modifier
                                     .width(itemWidth)
+                                    .clip(RoundedCornerShape(12.dp))
                                     .combinedClickable(
                                         onClick = {
                                             if (song.id == mediaMetadata?.id) {
@@ -1012,6 +1013,7 @@ fun ForgottenFavoritesSection(
                 modifier =
                     Modifier
                         .width(horizontalLazyGridItemWidth)
+                        .clip(RoundedCornerShape(12.dp))
                         .focusable()
                         .combinedClickable(
                             onClick = {

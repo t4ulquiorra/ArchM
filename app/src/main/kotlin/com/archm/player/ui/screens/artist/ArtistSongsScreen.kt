@@ -4,6 +4,8 @@ package com.archm.player.ui.screens.artist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -51,7 +53,6 @@ import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.SortHeader
 import com.archm.player.ui.menu.SongMenu
 import com.archm.player.ui.utils.backToMain
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.ArtistSongsViewModel
@@ -131,7 +132,7 @@ fun ArtistSongsScreen(
                     showInLibraryIcon = true,
                     isActive = song.id == mediaMetadata?.id,
                     isPlaying = isPlaying,
-                    shape = listItemShape(index, songs.size),
+                    shape = RoundedCornerShape(12.dp),
                     trailingContent = {
                         IconButton(
                             onClick = {
@@ -153,6 +154,7 @@ fun ArtistSongsScreen(
                     modifier =
                     Modifier
                         .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
                             onClick = {
                                 if (song.id == mediaMetadata?.id) {

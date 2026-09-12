@@ -6,6 +6,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -79,7 +81,6 @@ import com.archm.player.ui.menu.SelectionMediaMetadataMenu
 import com.archm.player.ui.menu.SongMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.utils.backToMain
-import com.archm.player.utils.listItemShape
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.DateAgo
 import com.archm.player.viewmodels.HistoryViewModel
@@ -246,7 +247,7 @@ fun HistoryScreen(
                             item = song,
                             isActive = song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
-                            shape = listItemShape(index, section.songs.size),
+                            shape = RoundedCornerShape(12.dp),
                             trailingContent = {
                                 IconButton(
                                     onClick = {
@@ -270,6 +271,7 @@ fun HistoryScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
                                     onClick = {
                                         if (song.id == mediaMetadata?.id) {
@@ -324,8 +326,9 @@ fun HistoryScreen(
                             song = event.song,
                             isActive = event.song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
+                            isSelected = inSelectMode && event.event.id in selection,
                             showInLibraryIcon = true,
-                            shape = listItemShape(index, dateEvents.size),
+                            shape = RoundedCornerShape(12.dp),
                             trailingContent = {
                                 if (inSelectMode) {
                                     Checkbox(
@@ -354,6 +357,7 @@ fun HistoryScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
                                     onClick = {
                                         if (inSelectMode) {
