@@ -726,9 +726,9 @@ fun AlbumScreen(
                                     isActive = mediaMetadata?.album?.id == item.id,
                                     isPlaying = isPlaying,
                                     coroutineScope = scope,
-                                    thumbnailSize = 150.dp,
+                                    thumbnailSize = 130.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    thumbnailCornerRadius = 10.dp,
+                                    thumbnailCornerRadius = 24.dp,
                                     onClick = { navController.navigate("album/${item.id}") },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -772,9 +772,9 @@ fun AlbumScreen(
                                     isActive = mediaMetadata?.album?.id == item.id,
                                     isPlaying = isPlaying,
                                     coroutineScope = scope,
-                                    thumbnailSize = 150.dp,
+                                    thumbnailSize = 130.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    thumbnailCornerRadius = 10.dp,
+                                    thumbnailCornerRadius = 24.dp,
                                     onClick = { navController.navigate("album/${item.id}") },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)

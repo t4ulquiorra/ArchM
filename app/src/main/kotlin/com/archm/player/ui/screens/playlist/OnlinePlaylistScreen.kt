@@ -786,9 +786,9 @@ fun OnlinePlaylistScreen(
                                 items(relatedItems) { item ->
                                     YouTubeGridItem(
                                         item = item,
-                                        thumbnailSize = 150.dp,
+                                        thumbnailSize = 130.dp,
                                         contentPadding = PaddingValues(0.dp),
-                                        thumbnailCornerRadius = 10.dp,
+                                        thumbnailCornerRadius = 24.dp,
                                         onClick = {
                                             when (item) {
                                                 is PlaylistItem -> navController.navigate("online_playlist/${item.id}")

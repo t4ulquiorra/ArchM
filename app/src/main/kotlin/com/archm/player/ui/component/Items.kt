@@ -376,7 +376,7 @@ fun GridItem(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val gridHeight = thumbnailSize ?: currentGridThumbnailHeight()
+    val cardWidth = thumbnailSize ?: 130.dp
     val cardBgColor =
         containerColor ?: rememberArtworkCardColor(
             thumbnailUrl = thumbnailUrl,
@@ -397,17 +397,9 @@ fun GridItem(
 
     val basePodModifier =
         if (fillMaxWidth) {
-            Modifier
-                .fillMaxWidth()
-                .aspectRatio(if (thumbnailRatio != 1f) thumbnailRatio else 1f)
+            Modifier.fillMaxWidth()
         } else {
-            if (thumbnailRatio != 1f) {
-                Modifier
-                    .width(gridHeight * thumbnailRatio)
-                    .height(gridHeight)
-            } else {
-                Modifier.size(gridHeight)
-            }
+            Modifier.width(cardWidth)
         }
 
     val clickableModifier =
@@ -430,32 +422,38 @@ fun GridItem(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                }.clip(RoundedCornerShape(16.dp))
+                }.clip(RoundedCornerShape(32.dp))
                 .background(cardBgColor)
                 .then(clickableModifier)
-                .padding(8.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+                .padding(12.dp),
     ) {
-        Box(
-            modifier =
+        val artworkModifier =
+            if (fillMaxWidth) {
                 Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .aspectRatio(thumbnailRatio)
+            } else {
+                val artworkWidth = cardWidth - 24.dp
+                Modifier
+                    .width(artworkWidth)
+                    .aspectRatio(thumbnailRatio)
+            }
+
+        Box(
+            modifier =
+                artworkModifier
+                    .clip(RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.Center,
         ) {
             BoxWithConstraints(
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(thumbnailRatio)
-                        .clip(RoundedCornerShape(10.dp)),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 thumbnailContent()
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Column(modifier = Modifier.fillMaxWidth()) {
             title()
@@ -891,7 +889,7 @@ fun AlbumGridItem(
             thumbnailUrl = album.album.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(24.dp),
         )
 
         AlbumPlayButton(
@@ -1315,7 +1313,7 @@ fun YouTubeGridItem(
     fillMaxWidth: Boolean = false,
     thumbnailSize: Dp? = null,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    thumbnailCornerRadius: Dp = 10.dp,
+    thumbnailCornerRadius: Dp = 24.dp,
     containerColor: Color? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
@@ -1835,20 +1833,21 @@ fun BoxScope.AlbumPlayButton(
         exit = fadeOut(),
         modifier = Modifier
             .align(Alignment.BottomEnd)
-            .padding(8.dp)
+            .padding(6.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(36.dp)
+                .size(28.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable(onClick = onClick)
         ) {
             Icon(
                 painter = painterResource(R.drawable.play),
                 contentDescription = null,
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(14.dp)
             )
         }
     }

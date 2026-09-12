@@ -136,6 +136,7 @@ import com.archm.player.db.entities.ArtistEntity
 import com.archm.player.extensions.toMediaItem
 import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.ListQueue
+import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.IconButton
@@ -152,7 +153,9 @@ import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.rememberPreference
+import com.archm.player.utils.reportException
 import com.archm.player.viewmodels.ArtistViewModel
+import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.BrowseEndpoint
@@ -161,6 +164,7 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -705,7 +709,7 @@ fun ArtistScreen(
                                         title = single.title,
                                         subtitle = single.year?.toString(),
                                         thumbnailUrl = single.thumbnail,
-                                        thumbSize = 150.dp,
+                                        thumbSize = 130.dp,
                                         onClick = { navController.navigate("album/${single.id}") },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -715,6 +719,22 @@ fun ArtistScreen(
                                                     navController = navController,
                                                     onDismiss = menuState::dismiss,
                                                 )
+                                            }
+                                        },
+                                        onPlayClick = {
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                var albumWithSongs = database.albumWithSongs(single.id).first()
+                                                if (albumWithSongs?.songs.isNullOrEmpty()) {
+                                                    YouTube.album(single.id).onSuccess { albumPage ->
+                                                        database.transaction { insert(albumPage) }
+                                                        albumWithSongs = database.albumWithSongs(single.id).first()
+                                                    }.onFailure { reportException(it) }
+                                                }
+                                                albumWithSongs?.let {
+                                                    withContext(Dispatchers.Main) {
+                                                        playerConnection.playQueue(LocalAlbumRadio(it))
+                                                    }
+                                                }
                                             }
                                         },
                                     )
@@ -771,7 +791,7 @@ fun ArtistScreen(
                                         title = album.title,
                                         subtitle = album.year?.toString(),
                                         thumbnailUrl = album.thumbnail,
-                                        thumbSize = 150.dp,
+                                        thumbSize = 130.dp,
                                         onClick = { navController.navigate("album/${album.id}") },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -781,6 +801,22 @@ fun ArtistScreen(
                                                     navController = navController,
                                                     onDismiss = menuState::dismiss,
                                                 )
+                                            }
+                                        },
+                                        onPlayClick = {
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                var albumWithSongs = database.albumWithSongs(album.id).first()
+                                                if (albumWithSongs?.songs.isNullOrEmpty()) {
+                                                    YouTube.album(album.id).onSuccess { albumPage ->
+                                                        database.transaction { insert(albumPage) }
+                                                        albumWithSongs = database.albumWithSongs(album.id).first()
+                                                    }.onFailure { reportException(it) }
+                                                }
+                                                albumWithSongs?.let {
+                                                    withContext(Dispatchers.Main) {
+                                                        playerConnection.playQueue(LocalAlbumRadio(it))
+                                                    }
+                                                }
                                             }
                                         },
                                     )
@@ -920,7 +956,7 @@ fun ArtistScreen(
                                             is ArtistItem -> feature.thumbnail
                                             else -> null
                                         },
-                                        thumbSize = 150.dp,
+                                        thumbSize = 130.dp,
                                         onClick = {
                                             when (feature) {
                                                 is SongItem -> playerConnection.playQueue(
@@ -955,6 +991,33 @@ fun ArtistScreen(
                                                     )
                                                     is ArtistItem -> Unit
                                                 }
+                                            }
+                                        },
+                                        onPlayClick = {
+                                            when (feature) {
+                                                is SongItem -> playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = feature.id),
+                                                        feature.toMediaMetadata(),
+                                                    ),
+                                                )
+                                                is AlbumItem -> {
+                                                    coroutineScope.launch(Dispatchers.IO) {
+                                                        var albumWithSongs = database.albumWithSongs(feature.id).first()
+                                                        if (albumWithSongs?.songs.isNullOrEmpty()) {
+                                                            YouTube.album(feature.id).onSuccess { albumPage ->
+                                                                database.transaction { insert(albumPage) }
+                                                                albumWithSongs = database.albumWithSongs(feature.id).first()
+                                                            }.onFailure { reportException(it) }
+                                                        }
+                                                        albumWithSongs?.let {
+                                                            withContext(Dispatchers.Main) {
+                                                                playerConnection.playQueue(LocalAlbumRadio(it))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                else -> {}
                                             }
                                         },
                                     )
@@ -1511,8 +1574,7 @@ private fun ArtistSongRow(
 }
 
 /**
- * Exact container pod implementation matching LibraryScreen's horizontal 'Your Playlists' LazyRow,
- * adapted to 1:1 square ratio and 16.dp outer corner radius.
+ * Exact container pod implementation matching LibraryScreen's horizontal 'Your Playlists' LazyRow.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1523,7 +1585,8 @@ private fun HomeItemContentPlaylist(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    thumbSize: Dp = 150.dp,
+    thumbSize: Dp = 130.dp,
+    onPlayClick: (() -> Unit)? = null,
 ) {
     val cardBgColor =
         rememberArtworkCardColor(
@@ -1546,40 +1609,55 @@ private fun HomeItemContentPlaylist(
     Column(
         modifier =
             modifier
-                .size(thumbSize)
+                .width(thumbSize)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                }.clip(RoundedCornerShape(16.dp))
+                }.clip(RoundedCornerShape(32.dp))
                 .background(cardBgColor)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(8.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+                ).padding(12.dp),
     ) {
+        val artworkSize = thumbSize - 24.dp
         Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            contentAlignment = Alignment.Center,
+                    .size(artworkSize)
+                    .clip(RoundedCornerShape(24.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(10.dp)),
+                modifier = Modifier.fillMaxSize(),
             )
+            if (onPlayClick != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(6.dp)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable(onClick = onPlayClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.play),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
