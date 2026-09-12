@@ -153,6 +153,8 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import kotlinx.coroutines.launch
 
+fun formatPossessive(name: String): String =
+    if (name.trim().endsWith("s", ignoreCase = true)) "$name'" else "$name's"
 
 @Composable
 private fun ArtistItemsOverflowMenu(
@@ -1049,10 +1051,25 @@ fun ArtistItemsScreen(
         }
     } else {
         // Non-Song items: Preserve Grid View (Albums, Singles, Artists, Playlists)
-        val displayArtistName = viewModel.artistNameArg
+        val artistName = viewModel.artistNameArg
             ?: artistPage?.artist?.title
             ?: libraryArtist?.artist?.name
-            ?: title.ifBlank { "" }
+            ?: ""
+
+        val rawCategory = title.ifBlank { viewModel.initialTitle.orEmpty() }.trim().let { raw ->
+            if (raw.contains("by ", ignoreCase = true)) raw.substringBefore("by ").trim() else raw
+        }
+        val possessiveName = formatPossessive(artistName)
+        val sectionType = if (rawCategory.isNotBlank()) " $rawCategory" else ""
+        val screenTitle = if (artistName.isNotBlank()) {
+            when {
+                rawCategory.startsWith(possessiveName, ignoreCase = true) -> rawCategory
+                rawCategory.startsWith(artistName, ignoreCase = true) -> rawCategory.replaceFirst(artistName, possessiveName, ignoreCase = true)
+                else -> "$possessiveName$sectionType"
+            }
+        } else {
+            rawCategory.ifBlank { title }
+        }
 
         Box(Modifier.fillMaxSize()) {
             val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
@@ -1160,7 +1177,7 @@ fun ArtistItemsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = displayArtistName.ifBlank { title },
+                        text = screenTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,

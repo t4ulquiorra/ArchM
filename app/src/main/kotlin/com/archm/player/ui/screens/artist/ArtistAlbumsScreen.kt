@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -137,8 +138,13 @@ fun ArtistAlbumsScreen(
             }
         }
 
+        val artistName = artist?.artist?.name.orEmpty()
+        val possessiveName = formatPossessive(artistName)
+        val sectionType = " " + stringResource(R.string.albums)
+        val screenTitle = if (artistName.isNotBlank()) "$possessiveName$sectionType" else stringResource(R.string.albums)
+
         TopAppBar(
-            title = { Text(artist?.artist?.name.orEmpty()) },
+            title = { Text(text = screenTitle) },
             navigationIcon = {
                 IconButton(
                     onClick = navController::navigateUp,
