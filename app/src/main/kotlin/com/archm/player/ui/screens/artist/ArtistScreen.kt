@@ -47,6 +47,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -101,6 +102,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -393,9 +396,6 @@ fun ArtistScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-        val configuration = LocalConfiguration.current
-        val isPortrait = configuration.screenWidthDp < configuration.screenHeightDp
-
         LazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
@@ -408,26 +408,35 @@ fun ArtistScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 400.dp)
-                                .shimmer()
-                                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                                .windowInsetsPadding(WindowInsets.statusBars)
+                                .padding(top = 64.dp)
+                                .padding(horizontal = 20.dp)
+                                .padding(bottom = 28.dp),
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
                             ) {
-                                TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.55f))
-                                Spacer(modifier = Modifier.height(12.dp))
-                                TextPlaceholder(height = 16.dp, modifier = Modifier.fillMaxWidth(0.40f))
-                                Spacer(modifier = Modifier.height(20.dp))
-                                ButtonPlaceholder(
+                                Box(
                                     modifier = Modifier
-                                        .width(160.dp)
-                                        .height(52.dp),
+                                        .size(130.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                 )
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                    TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
+                                    TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        ButtonPlaceholder(modifier = Modifier.width(90.dp).height(32.dp))
+                                        ButtonPlaceholder(modifier = Modifier.width(80.dp).height(32.dp))
+                                    }
+                                }
                             }
                         }
                         repeat(6) {
@@ -436,174 +445,268 @@ fun ArtistScreen(
                     }
                 }
             } else {
-                // Header Item (SimpMusic 1:1 layout)
+                // Spotify Tablet Landscape Hero Header with Ambient Blurred Backdrop
                 item(key = "header") {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy((-36).dp),
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
+                        // Ambient blurred backdrop with vertical gradient fade to AMOLED black
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .then(
-                                    if (isPortrait) {
-                                        Modifier.aspectRatio(1f)
-                                    } else {
-                                        Modifier.height((configuration.screenHeightDp / 2).dp)
-                                    }
-                                ),
+                            modifier = Modifier.matchParentSize(),
                         ) {
-                            // Artwork image (Crop, alignment = Center so artist is framed dead-center like in SimpMusic)
                             if (thumbnail != null) {
                                 AsyncImage(
                                     model = thumbnail.resize(
-                                        width = 1200,
-                                        height = 1200,
+                                        width = 800,
+                                        height = 800,
                                     ),
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     alignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            } else {
-                                Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.artist_screen),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(96.dp),
-                                    )
-                                }
+                                        .blur(radius = 56.dp)
+                                        .alpha(0.55f),
+                                )
                             }
-
-                            // Canvas Video
                             if (backgroundVideoUrl != null && showArtistBackgroundVideo) {
                                 ArtistVideo(
                                     videoUrl = backgroundVideoUrl!!,
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .blur(radius = 56.dp)
+                                        .alpha(0.55f),
                                     onClick = {},
                                 )
                             }
-
-                            // Single continuous vertical gradient fade directly over the image
                             Box(
                                 modifier = Modifier
-                                    .matchParentSize()
+                                    .fillMaxSize()
                                     .background(
                                         Brush.verticalGradient(
                                             colors = listOf(
+                                                Color.Black.copy(alpha = 0.45f),
                                                 Color.Transparent,
-                                                Color.Transparent,
-                                                MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
-                                                MaterialTheme.colorScheme.background,
+                                                Color.Black.copy(alpha = 0.6f),
+                                                Color(0xFF000000),
                                             ),
                                         ),
                                     ),
                             )
-
-                            // Artist title & subtitle (subscribers • monthly listeners)
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = (-36).dp)
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
-                                    .padding(bottom = 16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Text(
-                                    text = artistName ?: unknownArtist,
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    maxLines = 2,
-                                    textAlign = TextAlign.Center,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-
-                                val meta = buildList {
-                                    if (showArtistSubscriberCount) {
-                                        artistPage.subscriberCountText?.takeIf { it.isNotBlank() }?.let {
-                                            add("$it ${stringResource(R.string.subscribers)}")
-                                        }
-                                    }
-                                    if (showMonthlyListeners) {
-                                        artistPage.monthlyListenerCount?.takeIf { it.isNotBlank() }?.let {
-                                            add("$it ${stringResource(R.string.monthly_listeners)}")
-                                        }
-                                    }
-                                }.joinToString(" • ")
-
-                                if (meta.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = meta,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color(0xC4FFFFFF),
-                                        textAlign = TextAlign.Center,
-                                    )
-                                }
-                            }
-
-                            // Floating circular translucent back button at top-left
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)
-                                    .padding(start = 16.dp, top = 4.dp)
-                                    .windowInsetsPadding(WindowInsets.statusBars)
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Black.copy(alpha = 0.40f)),
-                            ) {
-                                IconButton(
-                                    onClick = navController::navigateUp,
-                                    onLongClick = navController::backToMain,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.arrow_back),
-                                        contentDescription = "Back",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp),
-                                    )
-                                }
-                            }
-
-                            // Floating circular translucent 3-dot overflow button at top-right
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(end = 16.dp, top = 4.dp)
-                                    .windowInsetsPadding(WindowInsets.statusBars)
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Black.copy(alpha = 0.40f)),
-                            ) {
-                                IconButton(
-                                    onClick = showArtistOverflowMenu,
-                                    onLongClick = {},
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_horiz),
-                                        contentDescription = stringResource(R.string.more_options),
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp),
-                                    )
-                                }
-                            }
                         }
 
-                        // SimpMusic 3-Button Row (Radio circle, Center Shuffle circle, Subscribe circle)
-                        SimpMusicActionRow(
-                            onRadio = onRadio,
-                            onShuffle = onShuffle,
-                            isFollowed = isFollowed,
-                            onFollow = onToggleFollow,
-                            accentColor = Color.White,
-                        )
+                        // Hero Header Container (Avatar + Identity/Actions Column)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .windowInsetsPadding(WindowInsets.statusBars)
+                                .padding(top = 64.dp)
+                                .padding(horizontal = 20.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                            ) {
+                                // Left (Avatar): Circular artist thumbnail with subtle border
+                                Box(
+                                    modifier = Modifier
+                                        .size(130.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
+                                            shape = CircleShape,
+                                        ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    if (thumbnail != null) {
+                                        AsyncImage(
+                                            model = thumbnail.resize(
+                                                width = 500,
+                                                height = 500,
+                                            ),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            alignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.artist_screen),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(56.dp),
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Right (Identity & Actions Column)
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalAlignment = Alignment.Start,
+                                ) {
+                                    // Badge: "VERIFIED ARTIST" tag with checkmark icon
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(14.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF3D91F4)),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.check),
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(9.dp),
+                                            )
+                                        }
+                                        Text(
+                                            text = "VERIFIED ARTIST",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                letterSpacing = 1.2.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 11.sp,
+                                            ),
+                                            color = Color.White.copy(alpha = 0.85f),
+                                        )
+                                    }
+
+                                    // Artist Name: Bold display typography
+                                    Text(
+                                        text = artistName ?: unknownArtist,
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+
+                                    // Audience Stats: Subtitle line for subscribers and monthly listeners
+                                    val audienceStats = buildList {
+                                        if (showArtistSubscriberCount) {
+                                            artistPage.subscriberCountText?.takeIf { it.isNotBlank() }?.let {
+                                                add("$it ${stringResource(R.string.subscribers)}")
+                                            }
+                                        }
+                                        if (showMonthlyListeners) {
+                                            artistPage.monthlyListenerCount?.takeIf { it.isNotBlank() }?.let {
+                                                add("$it ${stringResource(R.string.monthly_listeners)}")
+                                            }
+                                        }
+                                    }.joinToString(" • ")
+
+                                    if (audienceStats.isNotBlank()) {
+                                        Text(
+                                            text = audienceStats,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+
+                                    // Action Row: Primary Play/Shuffle pill, Outlined Follow pill, Radio button, Overflow button
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.padding(top = 4.dp),
+                                    ) {
+                                        // Primary Play/Shuffle pill button
+                                        Box(
+                                            modifier = Modifier
+                                                .height(32.dp)
+                                                .clip(CircleShape)
+                                                .background(Color.White)
+                                                .clickable(onClick = onShuffle)
+                                                .padding(horizontal = 16.dp),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.shuffle),
+                                                    contentDescription = stringResource(R.string.shuffle),
+                                                    tint = Color.Black,
+                                                    modifier = Modifier.size(16.dp),
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.shuffle),
+                                                    style = MaterialTheme.typography.labelMedium.copy(
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                    ),
+                                                    color = Color.Black,
+                                                )
+                                            }
+                                        }
+
+                                        // Outlined Follow pill button
+                                        OutlinedFollowPillButton(
+                                            isFollowed = isFollowed,
+                                            onClick = onToggleFollow,
+                                        )
+
+                                        // Radio icon button (if onRadio != null)
+                                        if (onRadio != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .clip(CircleShape)
+                                                    .border(
+                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                                                        shape = CircleShape,
+                                                    )
+                                                    .clickable(onClick = onRadio),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.radio),
+                                                    contentDescription = stringResource(R.string.start_radio),
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(16.dp),
+                                                )
+                                            }
+                                        }
+
+                                        // Overflow options button
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .border(
+                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                                                    shape = CircleShape,
+                                                )
+                                                .clickable(onClick = showArtistOverflowMenu),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.more_horiz),
+                                                contentDescription = stringResource(R.string.more_options),
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
                     }
                 }
 
@@ -614,6 +717,7 @@ fun ArtistScreen(
                         item(key = "section_popular_header") {
                             ArtistSectionHeader(
                                 title = stringResource(R.string.popular),
+                                topSpacing = 0.dp,
                                 bottomSpacing = 7.dp,
                                 onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
                                     {
@@ -1571,28 +1675,34 @@ fun ArtistScreen(
             )
         }
 
-        // Sticky TopAppBar (shown on scroll when not selecting)
-        AnimatedVisibility(
-            visible = shouldHideTopBar && !selectionState.isActive,
-            enter = fadeIn() + slideInVertically(),
-            exit = fadeOut() + slideOutVertically(),
-        ) {
+        // TopAppBar (transparent at top, surface container on scroll; back and options icons always legible)
+        if (!selectionState.isActive) {
+            val topBarBackgroundColor by animateColorAsState(
+                targetValue = if (shouldHideTopBar) MaterialTheme.colorScheme.surface.copy(alpha = 0.85f) else Color.Transparent,
+                animationSpec = tween(durationMillis = 200),
+            )
             TopAppBar(
                 windowInsets = WindowInsets.statusBars,
                 title = {
-                    Text(
-                        text = artistName ?: unknownArtist,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(align = Alignment.CenterVertically)
-                            .basicMarquee(
-                                iterations = Int.MAX_VALUE,
-                                animationMode = MarqueeAnimationMode.Immediately,
-                            )
-                            .focusable(),
-                    )
+                    AnimatedVisibility(
+                        visible = shouldHideTopBar,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Text(
+                            text = artistName ?: unknownArtist,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(align = Alignment.CenterVertically)
+                                .basicMarquee(
+                                    iterations = Int.MAX_VALUE,
+                                    animationMode = MarqueeAnimationMode.Immediately,
+                                )
+                                .focusable(),
+                        )
+                    }
                 },
                 navigationIcon = {
                     Box(Modifier.padding(horizontal = 5.dp)) {
@@ -1622,96 +1732,14 @@ fun ArtistScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                    containerColor = topBarBackgroundColor,
                     navigationIconContentColor = Color.White,
                     titleContentColor = Color.White,
                     actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)),
-            )
-        }
-    }
-}
-
-/**
- * Exact SimpMusic 3-button row:
- * [Radio circle (48dp)] [Center Shuffle circle (64dp)] [Follow circle (48dp)]
- */
-@Composable
-private fun SimpMusicActionRow(
-    onRadio: (() -> Unit)?,
-    onShuffle: () -> Unit,
-    isFollowed: Boolean,
-    onFollow: () -> Unit,
-    accentColor: Color = Color.White,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Radio — outlined circle (48dp)
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .border(1.5.dp, accentColor, CircleShape)
-                .clickable(enabled = onRadio != null) {
-                    onRadio?.invoke()
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.radio),
-                contentDescription = stringResource(R.string.start_radio),
-                tint = accentColor,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-
-        // Shuffle — filled accent circle (64dp)
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(accentColor)
-                .clickable {
-                    onShuffle()
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.shuffle),
-                contentDescription = stringResource(R.string.shuffle),
-                tint = Color.Black,
-                modifier = Modifier.size(28.dp),
-            )
-        }
-
-        // Follow — outlined circle when unfollowed, filled when followed (48dp)
-        // User silhouette styling matching SimpMusic (person_add / check vectors)
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(if (isFollowed) accentColor else Color.Transparent)
-                .border(1.5.dp, accentColor, CircleShape)
-                .clickable {
-                    onFollow()
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(if (isFollowed) R.drawable.check else R.drawable.person_add),
-                contentDescription = stringResource(if (isFollowed) R.string.subscribed else R.string.subscribe),
-                tint = if (isFollowed) Color.Black else accentColor,
-                modifier = Modifier.size(22.dp),
+                    .background(topBarBackgroundColor),
             )
         }
     }
@@ -2389,13 +2417,14 @@ fun OutlinedFollowPillButton(
 private fun ArtistSectionHeader(
     title: String,
     modifier: Modifier = Modifier,
+    topSpacing: Dp = 28.dp,
     bottomSpacing: Dp = 9.dp,
     onMoreClick: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 28.dp),
+            .padding(top = topSpacing),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
