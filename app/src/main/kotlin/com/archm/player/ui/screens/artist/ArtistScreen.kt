@@ -896,6 +896,14 @@ fun ArtistScreen(
                                                 )
                                             }
                                         },
+                                        onPlayClick = {
+                                            playerConnection.playQueue(
+                                                YouTubeQueue(
+                                                    WatchEndpoint(videoId = video.id),
+                                                    video.toMediaMetadata(),
+                                                ),
+                                            )
+                                        },
                                     )
                                 }
                             }
@@ -1692,7 +1700,7 @@ private fun HomeItemContentPlaylist(
 }
 
 /**
- * Port of SimpMusic's HomeItemVideo for 1:1 16:9 widescreen Video carousel
+ * Elevated container pod matching Singles/Albums cards for 16:9 widescreen Video carousel items.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1703,54 +1711,104 @@ private fun HomeItemVideo(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
+    cardWidth: Dp = (150f * 16f / 9f).dp,
+    onPlayClick: (() -> Unit)? = null,
 ) {
-    val videoHeight = 150.dp
-    val videoWidth = (150f * 16f / 9f).dp
-    Box(
-        modifier = modifier
-            .width(videoWidth)
-            .clip(RoundedCornerShape(12.dp))
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainer,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
             ),
+        label = "HomeItemVideoScale",
+    )
+
+    Column(
+        modifier =
+            modifier
+                .width(cardWidth)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(RoundedCornerShape(18.dp))
+                .background(cardBgColor)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+                .padding(12.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .width(videoWidth)
-                .heightIn(min = videoHeight + 76.dp),
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(854, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(width = videoWidth, height = videoHeight)
-                    .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(12.dp)),
+                modifier = Modifier.fillMaxSize(),
             )
+            if (onPlayClick != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(6.dp)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable(onClick = onPlayClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.play),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+        ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = Color.White,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .width(videoWidth)
-                    .wrapContentHeight(align = Alignment.CenterVertically)
-                    .padding(top = 8.dp),
             )
             if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xC4FFFFFF),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .width(videoWidth)
-                        .wrapContentHeight(align = Alignment.CenterVertically)
-                        .basicMarquee(),
+                    modifier = Modifier.basicMarquee(),
                 )
             }
         }

@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
@@ -1404,6 +1405,144 @@ fun YouTubeGridItem(
     onClick = onClick,
     onLongClick = onLongClick,
     modifier = modifier
+)
+
+/**
+ * Elevated container pod matching Singles/Albums/Playlists cards for 16:9 widescreen Video carousel/grid items.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun VideoGridItem(
+    title: String,
+    subtitle: String?,
+    thumbnailUrl: String?,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    cardWidth: Dp = (150f * 16f / 9f).dp,
+    onPlayClick: (() -> Unit)? = null,
+) {
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainer,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        label = "VideoGridItemScale",
+    )
+
+    Column(
+        modifier =
+            modifier
+                .width(cardWidth)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(RoundedCornerShape(18.dp))
+                .background(cardBgColor)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+                .padding(12.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = thumbnailUrl?.resize(854, 480),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (onPlayClick != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(6.dp)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable(onClick = onPlayClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.play),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoGridItem(
+    video: SongItem,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    cardWidth: Dp = (150f * 16f / 9f).dp,
+    onPlayClick: (() -> Unit)? = null,
+) = VideoGridItem(
+    title = video.title,
+    subtitle = listOfNotNull(
+        video.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
+        video.durationText ?: video.formattedDuration(),
+    ).joinToString(" • "),
+    thumbnailUrl = video.thumbnail,
+    onClick = onClick,
+    onLongClick = onLongClick,
+    modifier = modifier,
+    cardWidth = cardWidth,
+    onPlayClick = onPlayClick,
 )
 
 @Composable
