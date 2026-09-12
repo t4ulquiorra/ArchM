@@ -1411,17 +1411,25 @@ fun ArtistScreen(
 
                         item(key = "section_about_card") {
                             val podSurfaceColor = MaterialTheme.colorScheme.surfaceContainer
-                            val portraitUrl = libraryArtist?.artist?.bannerUrl
-                                ?: thumbnail
+                            val portraitUrl = thumbnail
                                 ?: artistPage.artist.thumbnail
+                                ?: libraryArtist?.artist?.thumbnailUrl
+                            val monthlyListeners = artistPage.monthlyListenerCount
+                            val subscribers = artistPage.subscriberCountText
                             val audienceStat = when {
-                                !artistPage.monthlyListenerCount.isNullOrBlank() -> {
-                                    val count = artistPage.monthlyListenerCount
-                                    if (count.contains("listener", ignoreCase = true)) count else "$count monthly listeners"
+                                !monthlyListeners.isNullOrBlank() -> {
+                                    if (monthlyListeners?.contains("listener", ignoreCase = true) == true) {
+                                        monthlyListeners
+                                    } else {
+                                        "$monthlyListeners monthly listeners"
+                                    }
                                 }
-                                !artistPage.subscriberCountText.isNullOrBlank() -> {
-                                    val count = artistPage.subscriberCountText
-                                    if (count.contains("subscriber", ignoreCase = true)) count else "$count subscribers"
+                                !subscribers.isNullOrBlank() -> {
+                                    if (subscribers?.contains("subscriber", ignoreCase = true) == true) {
+                                        subscribers
+                                    } else {
+                                        "$subscribers subscribers"
+                                    }
                                 }
                                 else -> null
                             }
@@ -1446,7 +1454,7 @@ fun ArtistScreen(
                                 ) {
                                     if (!portraitUrl.isNullOrBlank()) {
                                         AsyncImage(
-                                            model = portraitUrl.resize(1280, 720),
+                                            model = portraitUrl?.resize(1280, 720) ?: portraitUrl,
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize(),
