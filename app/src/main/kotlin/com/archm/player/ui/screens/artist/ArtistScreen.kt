@@ -333,6 +333,20 @@ fun ArtistScreen(
         }
     }
 
+    val onPlay: () -> Unit = {
+        val topSong = popularSongsSection?.items?.filterIsInstance<SongItem>()?.firstOrNull()
+        if (topSong != null) {
+            playerConnection.playQueue(
+                YouTubeQueue(
+                    WatchEndpoint(videoId = topSong.id),
+                    topSong.toMediaMetadata(),
+                ),
+            )
+        } else {
+            onShuffle()
+        }
+    }
+
     val onToggleFollow: () -> Unit = {
         coroutineScope.launch(Dispatchers.IO) {
             database.transaction {
@@ -396,6 +410,16 @@ fun ArtistScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
+        val configuration = LocalConfiguration.current
+        val headerHeight = (configuration.screenHeightDp * 0.45f).dp
+        val avatarSize = when {
+            headerHeight >= 280.dp -> 130.dp
+            headerHeight >= 200.dp -> 100.dp
+            else -> 80.dp
+        }
+        val topContentPadding = if (headerHeight < 240.dp) 44.dp else 56.dp
+        val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
+
         LazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
@@ -408,33 +432,40 @@ fun ArtistScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .windowInsetsPadding(WindowInsets.statusBars)
-                                .padding(top = 64.dp)
-                                .padding(horizontal = 20.dp)
-                                .padding(bottom = 28.dp),
+                                .height(headerHeight),
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .windowInsetsPadding(WindowInsets.statusBars)
+                                    .padding(top = topContentPadding)
+                                    .padding(horizontal = 20.dp)
+                                    .padding(bottom = 16.dp),
+                                verticalArrangement = Arrangement.Center,
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(130.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                                )
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(20.dp),
                                 ) {
-                                    TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
-                                    TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
-                                    TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        ButtonPlaceholder(modifier = Modifier.width(90.dp).height(32.dp))
-                                        ButtonPlaceholder(modifier = Modifier.width(80.dp).height(32.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(avatarSize)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                    )
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                        TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
+                                        TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            ButtonPlaceholder(modifier = Modifier.width(90.dp).height(32.dp))
+                                            ButtonPlaceholder(modifier = Modifier.width(80.dp).height(32.dp))
+                                        }
                                     }
                                 }
                             }
@@ -448,7 +479,9 @@ fun ArtistScreen(
                 // Spotify Tablet Landscape Hero Header with Ambient Blurred Backdrop
                 item(key = "header") {
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(headerHeight),
                     ) {
                         // Ambient blurred backdrop with vertical gradient fade to AMOLED black
                         Box(
@@ -498,10 +531,12 @@ fun ArtistScreen(
                         // Hero Header Container (Avatar + Identity/Actions Column)
                         Column(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxSize()
                                 .windowInsetsPadding(WindowInsets.statusBars)
-                                .padding(top = 64.dp)
-                                .padding(horizontal = 20.dp),
+                                .padding(top = topContentPadding)
+                                .padding(horizontal = 20.dp)
+                                .padding(bottom = 16.dp),
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -511,7 +546,7 @@ fun ArtistScreen(
                                 // Left (Avatar): Circular artist thumbnail with subtle border
                                 Box(
                                     modifier = Modifier
-                                        .size(130.dp)
+                                        .size(avatarSize)
                                         .clip(CircleShape)
                                         .border(
                                             border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
@@ -586,7 +621,7 @@ fun ArtistScreen(
                                     // Artist Name: Bold display typography
                                     Text(
                                         text = artistName ?: unknownArtist,
-                                        style = MaterialTheme.typography.headlineLarge,
+                                        style = titleStyle,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White,
                                         maxLines = 2,
@@ -617,19 +652,19 @@ fun ArtistScreen(
                                         )
                                     }
 
-                                    // Action Row: Primary Play/Shuffle pill, Outlined Follow pill, Radio button, Overflow button
+                                    // Action Row: Primary Play pill, Outlined Follow pill, Radio button, Overflow button
                                     FlowRow(
                                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp),
                                         modifier = Modifier.padding(top = 4.dp),
                                     ) {
-                                        // Primary Play/Shuffle pill button
+                                        // Primary Play pill button
                                         Box(
                                             modifier = Modifier
                                                 .height(32.dp)
                                                 .clip(CircleShape)
                                                 .background(Color.White)
-                                                .clickable(onClick = onShuffle)
+                                                .clickable(onClick = onPlay)
                                                 .padding(horizontal = 16.dp),
                                             contentAlignment = Alignment.Center,
                                         ) {
@@ -638,13 +673,13 @@ fun ArtistScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             ) {
                                                 Icon(
-                                                    painter = painterResource(R.drawable.shuffle),
-                                                    contentDescription = stringResource(R.string.shuffle),
+                                                    painter = painterResource(R.drawable.play),
+                                                    contentDescription = stringResource(R.string.play),
                                                     tint = Color.Black,
                                                     modifier = Modifier.size(16.dp),
                                                 )
                                                 Text(
-                                                    text = stringResource(R.string.shuffle),
+                                                    text = stringResource(R.string.play),
                                                     style = MaterialTheme.typography.labelMedium.copy(
                                                         fontSize = 13.sp,
                                                         fontWeight = FontWeight.Bold,
@@ -704,8 +739,6 @@ fun ArtistScreen(
                                     }
                                 }
                             }
-
-                            Spacer(modifier = Modifier.height(28.dp))
                         }
                     }
                 }
