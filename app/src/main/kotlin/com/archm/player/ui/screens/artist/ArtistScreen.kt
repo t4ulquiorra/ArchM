@@ -57,7 +57,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -452,25 +451,25 @@ fun ArtistScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(IntrinsicSize.Min)
                                             .padding(horizontal = 36.dp, vertical = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
+                                        verticalAlignment = Alignment.Bottom,
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .fillMaxHeight()
-                                                .aspectRatio(1f)
+                                                .size(160.dp)
                                                 .clip(CircleShape)
                                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                         )
                                         Spacer(modifier = Modifier.width(32.dp))
                                         Column(
-                                            modifier = Modifier.fillMaxHeight(),
-                                            verticalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.wrapContentHeight(),
                                         ) {
                                             TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                            Spacer(modifier = Modifier.height(4.dp))
                                             TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
+                                            Spacer(modifier = Modifier.height(8.dp))
                                             TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
+                                            Spacer(modifier = Modifier.height(14.dp))
                                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                                 ButtonPlaceholder(modifier = Modifier.width(88.dp).height(42.dp))
                                                 ButtonPlaceholder(modifier = Modifier.width(96.dp).height(42.dp))
@@ -572,15 +571,13 @@ fun ArtistScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(IntrinsicSize.Min)
                                         .padding(horizontal = 36.dp, vertical = 16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Bottom,
                                 ) {
-                                    // Circular avatar flush with the top and bottom bounds of the right column
+                                    // Circular avatar prominent size
                                     Box(
                                         modifier = Modifier
-                                            .fillMaxHeight()
-                                            .aspectRatio(1f)
+                                            .size(160.dp)
                                             .clip(CircleShape)
                                             .border(
                                                 border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
@@ -623,8 +620,7 @@ fun ArtistScreen(
 
                                     // Right info column
                                     Column(
-                                        modifier = Modifier.fillMaxHeight(),
-                                        verticalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.wrapContentHeight(),
                                         horizontalAlignment = Alignment.Start,
                                     ) {
                                         // 1. "Verified Artist" row with the scalloped verified badge vector
@@ -646,6 +642,8 @@ fun ArtistScreen(
                                             )
                                         }
 
+                                        Spacer(modifier = Modifier.height(4.dp))
+
                                         // 2. Artist Name: Bold display typography
                                         Text(
                                             text = artistName ?: unknownArtist,
@@ -665,6 +663,7 @@ fun ArtistScreen(
                                         } else null
 
                                         if (subscriberText != null || monthlyListenerText != null) {
+                                            Spacer(modifier = Modifier.height(8.dp))
                                             FlowRow(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -722,6 +721,8 @@ fun ArtistScreen(
                                                 }
                                             }
                                         }
+
+                                        Spacer(modifier = Modifier.height(14.dp))
 
                                         // 4. Action buttons row: [ Play/Pause ] [ Follow/Following ] [ ((•)) ]
                                         FlowRow(
