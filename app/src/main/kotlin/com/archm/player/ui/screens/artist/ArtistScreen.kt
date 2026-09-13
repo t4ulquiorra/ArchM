@@ -131,10 +131,6 @@ import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
-import com.archm.player.artistvideo.ArtistVideo
-import com.archm.player.canvas.AppleMusicArtistBackgroundProvider
-import com.archm.player.constants.DataSaverEnabledKey
-import com.archm.player.constants.ShowArtistBackgroundVideoKey
 import com.archm.player.constants.ShowArtistDescriptionKey
 import com.archm.player.constants.ShowArtistSubscriberCountKey
 import com.archm.player.constants.ShowMonthlyListenersKey
@@ -196,9 +192,6 @@ fun ArtistScreen(
     val showArtistDescription by rememberPreference(key = ShowArtistDescriptionKey, defaultValue = true)
     val showArtistSubscriberCount by rememberPreference(key = ShowArtistSubscriberCountKey, defaultValue = true)
     val showMonthlyListeners by rememberPreference(key = ShowMonthlyListenersKey, defaultValue = true)
-    val dataSaverEnabled by rememberPreference(key = DataSaverEnabledKey, defaultValue = false)
-    val showArtistBackgroundVideoPref by rememberPreference(key = ShowArtistBackgroundVideoKey, defaultValue = true)
-    val showArtistBackgroundVideo = if (dataSaverEnabled) false else showArtistBackgroundVideoPref
 
     val lazyListState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -226,17 +219,6 @@ fun ArtistScreen(
 
     BackHandler(enabled = selectionState.isActive) {
         selectionState.exit()
-    }
-
-    var backgroundVideoUrl by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(artistName, showArtistBackgroundVideo) {
-        if (artistName != null && showArtistBackgroundVideo) {
-            withContext(Dispatchers.IO) {
-                backgroundVideoUrl = AppleMusicArtistBackgroundProvider.getByArtistName(artistName)
-            }
-        } else {
-            backgroundVideoUrl = null
-        }
     }
 
     // SimpMusic Carousel Ordering: Popular Songs -> Singles -> Albums -> Videos -> Featured On -> Playlists by [Artist] -> Live performances -> Related Artists
@@ -500,16 +482,6 @@ fun ArtistScreen(
                                         .fillMaxSize()
                                         .blur(radius = 56.dp)
                                         .alpha(0.55f),
-                                )
-                            }
-                            if (backgroundVideoUrl != null && showArtistBackgroundVideo) {
-                                ArtistVideo(
-                                    videoUrl = backgroundVideoUrl!!,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .blur(radius = 56.dp)
-                                        .alpha(0.55f),
-                                    onClick = {},
                                 )
                             }
                             Box(
