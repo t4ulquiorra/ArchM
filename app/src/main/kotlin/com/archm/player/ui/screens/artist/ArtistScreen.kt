@@ -467,16 +467,14 @@ fun ArtistScreen(
                                             .clip(CircleShape)
                                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                     )
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.3f))
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
                                     TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.55f))
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(6.dp))
                                     TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.4f))
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        ButtonPlaceholder(modifier = Modifier.width(90.dp).height(36.dp))
-                                        ButtonPlaceholder(modifier = Modifier.width(80.dp).height(36.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        ButtonPlaceholder(modifier = Modifier.width(90.dp).height(42.dp))
+                                        ButtonPlaceholder(modifier = Modifier.width(80.dp).height(42.dp))
                                     }
                                 }
                             }
@@ -834,47 +832,31 @@ fun ArtistScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                                // Centered Verified Artist Badge
+                                // Centered Artist Name with Inline Verified Badge
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    horizontalArrangement = Arrangement.Center,
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(16.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFF3897F0)),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.check),
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(10.dp),
-                                        )
-                                    }
                                     Text(
-                                        text = "Verified Artist",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White.copy(alpha = 0.9f),
+                                        text = artistName ?: unknownArtist,
+                                        style = titleStyle,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        textAlign = TextAlign.Center,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Icon(
+                                        painter = painterResource(R.drawable.verified),
+                                        contentDescription = "Verified",
+                                        tint = Color(0xFF3897F0),
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                // Centered Artist Name
-                                Text(
-                                    text = artistName ?: unknownArtist,
-                                    style = titleStyle,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    maxLines = 2,
-                                    textAlign = TextAlign.Center,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
 
                                 // Centered Listener / Subscriber stats text
                                 val audienceStats = buildList {
@@ -891,7 +873,7 @@ fun ArtistScreen(
                                 }.joinToString(" • ")
 
                                 if (audienceStats.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(6.dp))
                                     Text(
                                         text = audienceStats,
                                         style = MaterialTheme.typography.bodyMedium,
@@ -902,9 +884,9 @@ fun ArtistScreen(
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                                // Centered Action Button Row: Primary Play, Follow, Radio, Overflow
+                                // Centered Action Button Row: Primary Play, Follow, Radio
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -912,11 +894,11 @@ fun ArtistScreen(
                                     // Primary Play capsule button
                                     Box(
                                         modifier = Modifier
-                                            .height(40.dp)
+                                            .height(42.dp)
                                             .clip(RoundedCornerShape(50))
                                             .background(Color.White)
                                             .clickable(onClick = onPlay)
-                                            .padding(horizontal = 18.dp),
+                                            .padding(horizontal = 20.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Row(
@@ -927,12 +909,12 @@ fun ArtistScreen(
                                                 painter = painterResource(R.drawable.play),
                                                 contentDescription = stringResource(R.string.play),
                                                 tint = Color.Black,
-                                                modifier = Modifier.size(18.dp),
+                                                modifier = Modifier.size(20.dp),
                                             )
                                             Text(
                                                 text = stringResource(R.string.play),
                                                 style = MaterialTheme.typography.labelLarge.copy(
-                                                    fontWeight = FontWeight.Bold,
+                                                    fontWeight = FontWeight.SemiBold,
                                                 ),
                                                 color = Color.Black,
                                             )
@@ -943,7 +925,8 @@ fun ArtistScreen(
                                     OutlinedFollowPillButton(
                                         isFollowed = isFollowed,
                                         onClick = onToggleFollow,
-                                        height = 40.dp,
+                                        height = 42.dp,
+                                        horizontalPadding = 20.dp,
                                         borderAlpha = 0.25f,
                                     )
 
@@ -951,7 +934,7 @@ fun ArtistScreen(
                                     if (onRadio != null) {
                                         Box(
                                             modifier = Modifier
-                                                .size(40.dp)
+                                                .size(42.dp)
                                                 .clip(CircleShape)
                                                 .border(
                                                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
@@ -964,29 +947,9 @@ fun ArtistScreen(
                                                 painter = painterResource(R.drawable.radio),
                                                 contentDescription = stringResource(R.string.start_radio),
                                                 tint = Color.White,
-                                                modifier = Modifier.size(18.dp),
+                                                modifier = Modifier.size(20.dp),
                                             )
                                         }
-                                    }
-
-                                    // Overflow options button
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .clip(CircleShape)
-                                            .border(
-                                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
-                                                shape = CircleShape,
-                                            )
-                                            .clickable(onClick = showArtistOverflowMenu),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.more_horiz),
-                                            contentDescription = stringResource(R.string.more_options),
-                                            tint = Color.White,
-                                            modifier = Modifier.size(18.dp),
-                                        )
                                     }
                                 }
                             }
@@ -2666,6 +2629,7 @@ fun OutlinedFollowPillButton(
     modifier: Modifier = Modifier,
     height: Dp = 32.dp,
     borderAlpha: Float = 0.5f,
+    horizontalPadding: Dp = 16.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -2685,7 +2649,7 @@ fun OutlinedFollowPillButton(
                 indication = ripple(color = Color.White, bounded = true),
                 onClick = onClick,
             )
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = horizontalPadding),
         contentAlignment = Alignment.Center,
     ) {
         Text(
