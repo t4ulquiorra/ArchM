@@ -13,6 +13,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -394,14 +395,19 @@ fun ArtistScreen(
 
     Box(Modifier.fillMaxSize()) {
         val configuration = LocalConfiguration.current
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val headerHeight = (configuration.screenHeightDp * 0.45f).dp
-        val avatarSize = when {
-            headerHeight >= 280.dp -> 130.dp
-            headerHeight >= 200.dp -> 115.dp
-            else -> 90.dp
+        val avatarSize = if (isLandscape) {
+            if (headerHeight >= 220.dp) 125.dp else 110.dp
+        } else {
+            when {
+                headerHeight >= 320.dp -> 130.dp
+                headerHeight >= 260.dp -> 120.dp
+                else -> 100.dp
+            }
         }
-        val avatarShape = RoundedCornerShape(32.dp)
-        val topContentPadding = if (headerHeight < 240.dp) 44.dp else 56.dp
+        val squircleShape = RoundedCornerShape(32.dp)
+        val topContentPadding = if (headerHeight < 240.dp) 36.dp else 56.dp
         val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
 
         LazyColumn(
@@ -426,30 +432,51 @@ fun ArtistScreen(
                                     .padding(horizontal = 20.dp)
                                     .padding(bottom = 16.dp),
                                 verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = if (isLandscape) Alignment.Start else Alignment.CenterHorizontally,
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                                ) {
+                                if (isLandscape) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(avatarSize)
+                                                .clip(squircleShape)
+                                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                        )
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                            TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
+                                            TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                ButtonPlaceholder(modifier = Modifier.width(90.dp).height(32.dp))
+                                                ButtonPlaceholder(modifier = Modifier.width(80.dp).height(32.dp))
+                                            }
+                                        }
+                                    }
+                                } else {
                                     Box(
                                         modifier = Modifier
                                             .size(avatarSize)
-                                            .clip(avatarShape)
+                                            .clip(CircleShape)
                                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                     )
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
-                                        TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
-                                        TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            ButtonPlaceholder(modifier = Modifier.width(90.dp).height(32.dp))
-                                            ButtonPlaceholder(modifier = Modifier.width(80.dp).height(32.dp))
-                                        }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.3f))
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.55f))
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.4f))
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        ButtonPlaceholder(modifier = Modifier.width(90.dp).height(36.dp))
+                                        ButtonPlaceholder(modifier = Modifier.width(80.dp).height(36.dp))
                                     }
                                 }
                             }
@@ -502,29 +529,280 @@ fun ArtistScreen(
                             )
                         }
 
-                        // Hero Header Container (Avatar + Identity/Actions Column)
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .windowInsetsPadding(WindowInsets.statusBars)
-                                .padding(top = topContentPadding)
-                                .padding(horizontal = 20.dp)
-                                .padding(bottom = 16.dp),
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        if (isLandscape) {
+                            // Landscape: Concept 1 Editorial Squircle Layout (Horizontal Row)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .windowInsetsPadding(WindowInsets.statusBars)
+                                    .padding(top = topContentPadding)
+                                    .padding(horizontal = 20.dp)
+                                    .padding(bottom = 16.dp),
+                                verticalArrangement = Arrangement.Center,
                             ) {
-                                // Left (Avatar): Squircle artist thumbnail with subtle border
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                ) {
+                                    // Left (Avatar): Squircle artist thumbnail with subtle border
+                                    Box(
+                                        modifier = Modifier
+                                            .size(avatarSize)
+                                            .clip(squircleShape)
+                                            .border(
+                                                border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
+                                                shape = squircleShape,
+                                            ),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (thumbnail != null) {
+                                            AsyncImage(
+                                                model = thumbnail.resize(
+                                                    width = 500,
+                                                    height = 500,
+                                                ),
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                alignment = Alignment.Center,
+                                                modifier = Modifier.fillMaxSize(),
+                                            )
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.artist_screen),
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(56.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Right (Identity & Actions Column)
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        horizontalAlignment = Alignment.Start,
+                                    ) {
+                                        // Badge: Verified Artist tag with checkmark icon
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(16.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF3897F0)),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.check),
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(10.dp),
+                                                )
+                                            }
+                                            Text(
+                                                text = "Verified Artist",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.White.copy(alpha = 0.9f),
+                                            )
+                                        }
+
+                                        // Artist Name: Bold display typography
+                                        Text(
+                                            text = artistName ?: unknownArtist,
+                                            style = titleStyle,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+
+                                        // Metadata Stats as Micro-Pills
+                                        val subscriberText = if (showArtistSubscriberCount) {
+                                            artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }
+                                        } else null
+                                        val monthlyListenerText = if (showMonthlyListeners) {
+                                            artistPage?.monthlyListenerCount?.takeIf { it.isNotBlank() }
+                                        } else null
+
+                                        if (subscriberText != null || monthlyListenerText != null) {
+                                            FlowRow(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                            ) {
+                                                if (subscriberText != null) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(50),
+                                                        color = Color.White.copy(alpha = 0.08f),
+                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(R.drawable.person),
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(14.dp),
+                                                                tint = Color.White.copy(alpha = 0.7f),
+                                                            )
+                                                            Text(
+                                                                text = "$subscriberText ${stringResource(R.string.subscribers)}",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = Color.White,
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                if (monthlyListenerText != null) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(50),
+                                                        color = Color.White.copy(alpha = 0.08f),
+                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(R.drawable.listening),
+                                                                contentDescription = null,
+                                                                modifier = Modifier.size(14.dp),
+                                                                tint = Color.White.copy(alpha = 0.7f),
+                                                            )
+                                                            Text(
+                                                                text = "$monthlyListenerText ${stringResource(R.string.monthly_listeners)}",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = Color.White,
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Action Row: Primary Play pill, Outlined Follow pill, Radio button, Overflow button
+                                        FlowRow(
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.padding(top = 4.dp),
+                                        ) {
+                                            // Primary Play capsule button
+                                            Box(
+                                                modifier = Modifier
+                                                    .height(40.dp)
+                                                    .clip(RoundedCornerShape(50))
+                                                    .background(Color.White)
+                                                    .clickable(onClick = onPlay)
+                                                    .padding(horizontal = 18.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.play),
+                                                        contentDescription = stringResource(R.string.play),
+                                                        tint = Color.Black,
+                                                        modifier = Modifier.size(18.dp),
+                                                    )
+                                                    Text(
+                                                        text = stringResource(R.string.play),
+                                                        style = MaterialTheme.typography.labelLarge.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                        ),
+                                                        color = Color.Black,
+                                                    )
+                                                }
+                                            }
+
+                                            // Secondary Outlined Follow capsule button
+                                            OutlinedFollowPillButton(
+                                                isFollowed = isFollowed,
+                                                onClick = onToggleFollow,
+                                                height = 40.dp,
+                                                borderAlpha = 0.25f,
+                                            )
+
+                                            // Radio icon button (if onRadio != null)
+                                            if (onRadio != null) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .clip(CircleShape)
+                                                        .border(
+                                                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                                            shape = CircleShape,
+                                                        )
+                                                        .clickable(onClick = onRadio),
+                                                    contentAlignment = Alignment.Center,
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.radio),
+                                                        contentDescription = stringResource(R.string.start_radio),
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(18.dp),
+                                                    )
+                                                }
+                                            }
+
+                                            // Overflow options button
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(CircleShape)
+                                                    .border(
+                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                                        shape = CircleShape,
+                                                    )
+                                                    .clickable(onClick = showArtistOverflowMenu),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.more_horiz),
+                                                    contentDescription = stringResource(R.string.more_options),
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Portrait: Centered Circular Layout
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .windowInsetsPadding(WindowInsets.statusBars)
+                                    .padding(top = topContentPadding)
+                                    .padding(horizontal = 20.dp)
+                                    .padding(bottom = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                // Centered Circular Avatar
                                 Box(
                                     modifier = Modifier
                                         .size(avatarSize)
-                                        .clip(avatarShape)
+                                        .clip(CircleShape)
                                         .border(
                                             border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
-                                            shape = avatarShape,
+                                            shape = CircleShape,
                                         ),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -556,183 +834,121 @@ fun ArtistScreen(
                                     }
                                 }
 
-                                // Right (Identity & Actions Column)
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    horizontalAlignment = Alignment.Start,
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                // Centered Verified Artist Badge
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
-                                    // Badge: Verified Artist tag with checkmark icon
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF3897F0)),
+                                        contentAlignment = Alignment.Center,
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .clip(CircleShape)
-                                                .background(Color(0xFF3897F0)),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.check),
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(10.dp),
-                                            )
-                                        }
-                                        Text(
-                                            text = "Verified Artist",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Medium,
-                                            color = Color.White.copy(alpha = 0.9f),
+                                        Icon(
+                                            painter = painterResource(R.drawable.check),
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(10.dp),
                                         )
                                     }
-
-                                    // Artist Name: Bold display typography
                                     Text(
-                                        text = artistName ?: unknownArtist,
-                                        style = titleStyle,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 2,
+                                        text = "Verified Artist",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White.copy(alpha = 0.9f),
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // Centered Artist Name
+                                Text(
+                                    text = artistName ?: unknownArtist,
+                                    style = titleStyle,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 2,
+                                    textAlign = TextAlign.Center,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+
+                                // Centered Listener / Subscriber stats text
+                                val audienceStats = buildList {
+                                    if (showArtistSubscriberCount) {
+                                        artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }?.let {
+                                            add("$it ${stringResource(R.string.subscribers)}")
+                                        }
+                                    }
+                                    if (showMonthlyListeners) {
+                                        artistPage?.monthlyListenerCount?.takeIf { it.isNotBlank() }?.let {
+                                            add("$it ${stringResource(R.string.monthly_listeners)}")
+                                        }
+                                    }
+                                }.joinToString(" • ")
+
+                                if (audienceStats.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = audienceStats,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
+                                }
 
-                                    // Metadata Stats as Micro-Pills
-                                    val subscriberText = if (showArtistSubscriberCount) {
-                                        artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }
-                                    } else null
-                                    val monthlyListenerText = if (showMonthlyListeners) {
-                                        artistPage?.monthlyListenerCount?.takeIf { it.isNotBlank() }
-                                    } else null
+                                Spacer(modifier = Modifier.height(10.dp))
 
-                                    if (subscriberText != null || monthlyListenerText != null) {
-                                        FlowRow(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                                // Centered Action Button Row: Primary Play, Follow, Radio, Overflow
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    // Primary Play capsule button
+                                    Box(
+                                        modifier = Modifier
+                                            .height(40.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(Color.White)
+                                            .clickable(onClick = onPlay)
+                                            .padding(horizontal = 18.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         ) {
-                                            if (subscriberText != null) {
-                                                Surface(
-                                                    shape = RoundedCornerShape(50),
-                                                    color = Color.White.copy(alpha = 0.08f),
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.person),
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(14.dp),
-                                                            tint = Color.White.copy(alpha = 0.7f),
-                                                        )
-                                                        Text(
-                                                            text = "$subscriberText ${stringResource(R.string.subscribers)}",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = Color.White,
-                                                        )
-                                                    }
-                                                }
-                                            }
-
-                                            if (monthlyListenerText != null) {
-                                                Surface(
-                                                    shape = RoundedCornerShape(50),
-                                                    color = Color.White.copy(alpha = 0.08f),
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.listening),
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(14.dp),
-                                                            tint = Color.White.copy(alpha = 0.7f),
-                                                        )
-                                                        Text(
-                                                            text = "$monthlyListenerText ${stringResource(R.string.monthly_listeners)}",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = Color.White,
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                            Icon(
+                                                painter = painterResource(R.drawable.play),
+                                                contentDescription = stringResource(R.string.play),
+                                                tint = Color.Black,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.play),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                ),
+                                                color = Color.Black,
+                                            )
                                         }
                                     }
 
-                                    // Action Row: Primary Play pill, Outlined Follow pill, Radio button, Overflow button
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.padding(top = 4.dp),
-                                    ) {
-                                        // Primary Play capsule button
-                                        Box(
-                                            modifier = Modifier
-                                                .height(40.dp)
-                                                .clip(RoundedCornerShape(50))
-                                                .background(Color.White)
-                                                .clickable(onClick = onPlay)
-                                                .padding(horizontal = 18.dp),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.play),
-                                                    contentDescription = stringResource(R.string.play),
-                                                    tint = Color.Black,
-                                                    modifier = Modifier.size(18.dp),
-                                                )
-                                                Text(
-                                                    text = stringResource(R.string.play),
-                                                    style = MaterialTheme.typography.labelLarge.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                    ),
-                                                    color = Color.Black,
-                                                )
-                                            }
-                                        }
+                                    // Secondary Outlined Follow capsule button
+                                    OutlinedFollowPillButton(
+                                        isFollowed = isFollowed,
+                                        onClick = onToggleFollow,
+                                        height = 40.dp,
+                                        borderAlpha = 0.25f,
+                                    )
 
-                                        // Secondary Outlined Follow capsule button
-                                        OutlinedFollowPillButton(
-                                            isFollowed = isFollowed,
-                                            onClick = onToggleFollow,
-                                            height = 40.dp,
-                                            borderAlpha = 0.25f,
-                                        )
-
-                                        // Radio icon button (if onRadio != null)
-                                        if (onRadio != null) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(40.dp)
-                                                    .clip(CircleShape)
-                                                    .border(
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
-                                                        shape = CircleShape,
-                                                    )
-                                                    .clickable(onClick = onRadio),
-                                                contentAlignment = Alignment.Center,
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.radio),
-                                                    contentDescription = stringResource(R.string.start_radio),
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(18.dp),
-                                                )
-                                            }
-                                        }
-
-                                        // Overflow options button
+                                    // Radio icon button
+                                    if (onRadio != null) {
                                         Box(
                                             modifier = Modifier
                                                 .size(40.dp)
@@ -741,16 +957,36 @@ fun ArtistScreen(
                                                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
                                                     shape = CircleShape,
                                                 )
-                                                .clickable(onClick = showArtistOverflowMenu),
+                                                .clickable(onClick = onRadio),
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             Icon(
-                                                painter = painterResource(R.drawable.more_horiz),
-                                                contentDescription = stringResource(R.string.more_options),
+                                                painter = painterResource(R.drawable.radio),
+                                                contentDescription = stringResource(R.string.start_radio),
                                                 tint = Color.White,
                                                 modifier = Modifier.size(18.dp),
                                             )
                                         }
+                                    }
+
+                                    // Overflow options button
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .border(
+                                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                                shape = CircleShape,
+                                            )
+                                            .clickable(onClick = showArtistOverflowMenu),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.more_horiz),
+                                            contentDescription = stringResource(R.string.more_options),
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp),
+                                        )
                                     }
                                 }
                             }
