@@ -49,7 +49,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -432,18 +431,33 @@ fun ArtistScreen(
                 item(key = "shimmer") {
                     ShimmerHost {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(headerHeight),
+                            modifier = if (isLandscape) {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(headerHeight)
+                            } else {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                            },
                         ) {
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .windowInsetsPadding(WindowInsets.statusBars)
-                                    .padding(top = topContentPadding)
-                                    .padding(horizontal = 20.dp)
-                                    .padding(bottom = 16.dp),
-                                verticalArrangement = Arrangement.Center,
+                                modifier = if (isLandscape) {
+                                    Modifier
+                                        .fillMaxSize()
+                                        .windowInsetsPadding(WindowInsets.statusBars)
+                                        .padding(top = topContentPadding)
+                                        .padding(horizontal = 20.dp)
+                                        .padding(bottom = 16.dp)
+                                } else {
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentHeight()
+                                        .windowInsetsPadding(WindowInsets.statusBars)
+                                        .padding(top = topContentPadding, bottom = 24.dp)
+                                        .padding(horizontal = 20.dp)
+                                },
+                                verticalArrangement = if (isLandscape) Arrangement.Center else Arrangement.Top,
                                 horizontalAlignment = if (isLandscape) Alignment.Start else Alignment.CenterHorizontally,
                             ) {
                                 if (isLandscape) {
@@ -467,8 +481,8 @@ fun ArtistScreen(
                                             TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                                ButtonPlaceholder(modifier = Modifier.width(108.dp).height(42.dp))
-                                                ButtonPlaceholder(modifier = Modifier.width(108.dp).height(42.dp))
+                                                ButtonPlaceholder(modifier = Modifier.width(88.dp).height(42.dp))
+                                                ButtonPlaceholder(modifier = Modifier.width(96.dp).height(42.dp))
                                             }
                                         }
                                     }
@@ -485,8 +499,8 @@ fun ArtistScreen(
                                     TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.4f))
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                        ButtonPlaceholder(modifier = Modifier.width(108.dp).height(42.dp))
-                                        ButtonPlaceholder(modifier = Modifier.width(108.dp).height(42.dp))
+                                        ButtonPlaceholder(modifier = Modifier.width(88.dp).height(42.dp))
+                                        ButtonPlaceholder(modifier = Modifier.width(96.dp).height(42.dp))
                                     }
                                 }
                             }
@@ -500,9 +514,15 @@ fun ArtistScreen(
                 // Spotify Tablet Landscape Hero Header with Ambient Blurred Backdrop
                 item(key = "header") {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(headerHeight),
+                        modifier = if (isLandscape) {
+                            Modifier
+                                .fillMaxWidth()
+                                .height(headerHeight)
+                        } else {
+                            Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                        },
                     ) {
                         // Ambient blurred backdrop with vertical gradient fade to AMOLED black
                         Box(
@@ -706,23 +726,22 @@ fun ArtistScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .height(42.dp)
-                                                    .defaultMinSize(minWidth = 108.dp)
                                                     .clip(RoundedCornerShape(50))
                                                     .background(Color.White)
                                                     .clickable(onClick = onPlay)
-                                                    .padding(horizontal = 16.dp),
+                                                    .padding(start = 14.dp, end = 18.dp),
                                                 contentAlignment = Alignment.Center,
                                             ) {
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                                 ) {
                                                     Icon(
                                                         painter = painterResource(if (isCurrentArtistPlaying) R.drawable.pause else R.drawable.play),
                                                         contentDescription = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
                                                         tint = Color.Black,
-                                                        modifier = Modifier.size(20.dp),
+                                                        modifier = Modifier.size(18.dp),
                                                     )
+                                                    Spacer(modifier = Modifier.width(6.dp))
                                                     Text(
                                                         text = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
                                                         style = MaterialTheme.typography.labelLarge.copy(
@@ -737,9 +756,8 @@ fun ArtistScreen(
                                             OutlinedFollowPillButton(
                                                 isFollowed = isFollowed,
                                                 onClick = onToggleFollow,
-                                                modifier = Modifier.defaultMinSize(minWidth = 108.dp),
                                                 height = 42.dp,
-                                                horizontalPadding = 16.dp,
+                                                horizontalPadding = 20.dp,
                                                 borderAlpha = 0.25f,
                                             )
 
@@ -792,13 +810,12 @@ fun ArtistScreen(
                             // Portrait: Centered Circular Layout
                             Column(
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
                                     .windowInsetsPadding(WindowInsets.statusBars)
-                                    .padding(top = topContentPadding)
-                                    .padding(horizontal = 20.dp)
-                                    .padding(bottom = 16.dp),
+                                    .padding(top = topContentPadding, bottom = 24.dp)
+                                    .padding(horizontal = 20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
                             ) {
                                 // Centered Circular Avatar
                                 Box(
@@ -902,23 +919,22 @@ fun ArtistScreen(
                                     Box(
                                         modifier = Modifier
                                             .height(42.dp)
-                                            .defaultMinSize(minWidth = 108.dp)
                                             .clip(RoundedCornerShape(50))
                                             .background(Color.White)
                                             .clickable(onClick = onPlay)
-                                            .padding(horizontal = 16.dp),
+                                            .padding(start = 14.dp, end = 18.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         ) {
                                             Icon(
                                                 painter = painterResource(if (isCurrentArtistPlaying) R.drawable.pause else R.drawable.play),
                                                 contentDescription = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
                                                 tint = Color.Black,
-                                                modifier = Modifier.size(20.dp),
+                                                modifier = Modifier.size(18.dp),
                                             )
+                                            Spacer(modifier = Modifier.width(6.dp))
                                             Text(
                                                 text = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
                                                 style = MaterialTheme.typography.labelLarge.copy(
@@ -933,9 +949,8 @@ fun ArtistScreen(
                                     OutlinedFollowPillButton(
                                         isFollowed = isFollowed,
                                         onClick = onToggleFollow,
-                                        modifier = Modifier.defaultMinSize(minWidth = 108.dp),
                                         height = 42.dp,
-                                        horizontalPadding = 16.dp,
+                                        horizontalPadding = 20.dp,
                                         borderAlpha = 0.25f,
                                     )
 
@@ -2638,8 +2653,7 @@ fun OutlinedFollowPillButton(
     modifier: Modifier = Modifier,
     height: Dp = 32.dp,
     borderAlpha: Float = 0.5f,
-    horizontalPadding: Dp = 16.dp,
-    minWidth: Dp = Dp.Unspecified,
+    horizontalPadding: Dp = 20.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -2648,7 +2662,6 @@ fun OutlinedFollowPillButton(
     Box(
         modifier = modifier
             .height(height)
-            .then(if (minWidth != Dp.Unspecified) Modifier.defaultMinSize(minWidth = minWidth) else Modifier)
             .clip(RoundedCornerShape(50))
             .border(
                 border = BorderStroke(1.dp, Color.White.copy(alpha = borderAlpha)),
