@@ -57,6 +57,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -417,7 +418,6 @@ fun ArtistScreen(
                 else -> 100.dp
             }
         }
-        val squircleShape = RoundedCornerShape(32.dp)
         val topContentPadding = if (headerHeight < 240.dp) 36.dp else 56.dp
         val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
 
@@ -441,52 +441,53 @@ fun ArtistScreen(
                                     .wrapContentHeight()
                             },
                         ) {
-                            Column(
-                                modifier = if (isLandscape) {
-                                    Modifier
+                            if (isLandscape) {
+                                Box(
+                                    modifier = Modifier
                                         .fillMaxSize()
                                         .windowInsetsPadding(WindowInsets.statusBars)
-                                        .padding(top = topContentPadding)
-                                        .padding(horizontal = 20.dp)
-                                        .padding(bottom = 16.dp)
-                                } else {
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentHeight()
-                                        .windowInsetsPadding(WindowInsets.statusBars)
-                                        .padding(top = topContentPadding, bottom = 24.dp)
-                                        .padding(horizontal = 20.dp)
-                                },
-                                verticalArrangement = if (isLandscape) Arrangement.Center else Arrangement.Top,
-                                horizontalAlignment = if (isLandscape) Alignment.Start else Alignment.CenterHorizontally,
-                            ) {
-                                if (isLandscape) {
+                                        .padding(top = topContentPadding),
+                                    contentAlignment = Alignment.Center,
+                                ) {
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(IntrinsicSize.Min)
+                                            .padding(horizontal = 36.dp, vertical = 16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(20.dp),
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(avatarSize)
-                                                .clip(squircleShape)
+                                                .fillMaxHeight()
+                                                .aspectRatio(1f)
+                                                .clip(CircleShape)
                                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                         )
+                                        Spacer(modifier = Modifier.width(32.dp))
                                         Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.fillMaxHeight(),
+                                            verticalArrangement = Arrangement.SpaceBetween,
                                         ) {
                                             TextPlaceholder(height = 12.dp, modifier = Modifier.fillMaxWidth(0.35f))
                                             TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.75f))
                                             TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.5f))
-                                            Spacer(modifier = Modifier.height(4.dp))
                                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                                 ButtonPlaceholder(modifier = Modifier.width(88.dp).height(42.dp))
                                                 ButtonPlaceholder(modifier = Modifier.width(96.dp).height(42.dp))
                                             }
                                         }
                                     }
-                                } else {
+                                }
+                            } else {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentHeight()
+                                        .windowInsetsPadding(WindowInsets.statusBars)
+                                        .padding(top = topContentPadding, bottom = 24.dp)
+                                        .padding(horizontal = 20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .size(avatarSize)
@@ -539,7 +540,7 @@ fun ArtistScreen(
                                     alignment = Alignment.Center,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .blur(radius = 56.dp)
+                                        .blur(radius = 42.dp)
                                         .alpha(0.55f),
                                 )
                             }
@@ -549,9 +550,9 @@ fun ArtistScreen(
                                     .background(
                                         Brush.verticalGradient(
                                             colors = listOf(
-                                                Color.Black.copy(alpha = 0.45f),
-                                                Color.Transparent,
-                                                Color.Black.copy(alpha = 0.6f),
+                                                Color.Black.copy(alpha = 0.40f),
+                                                Color.Black.copy(alpha = 0.20f),
+                                                Color.Black.copy(alpha = 0.65f),
                                                 Color(0xFF000000),
                                             ),
                                         ),
@@ -560,29 +561,30 @@ fun ArtistScreen(
                         }
 
                         if (isLandscape) {
-                            // Landscape: Concept 1 Editorial Squircle Layout (Horizontal Row)
-                            Column(
+                            // Landscape: Circular Avatar Flush Layout (Horizontal Row)
+                            Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .windowInsetsPadding(WindowInsets.statusBars)
-                                    .padding(top = topContentPadding)
-                                    .padding(horizontal = 20.dp)
-                                    .padding(bottom = 16.dp),
-                                verticalArrangement = Arrangement.Center,
+                                    .padding(top = topContentPadding),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(IntrinsicSize.Min)
+                                        .padding(horizontal = 36.dp, vertical = 16.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(20.dp),
                                 ) {
-                                    // Left (Avatar): Squircle artist thumbnail with subtle border
+                                    // Circular avatar flush with the top and bottom bounds of the right column
                                     Box(
                                         modifier = Modifier
-                                            .size(avatarSize)
-                                            .clip(squircleShape)
+                                            .fillMaxHeight()
+                                            .aspectRatio(1f)
+                                            .clip(CircleShape)
                                             .border(
                                                 border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
-                                                shape = squircleShape,
+                                                shape = CircleShape,
                                             ),
                                         contentAlignment = Alignment.Center,
                                     ) {
@@ -592,10 +594,12 @@ fun ArtistScreen(
                                                     width = 500,
                                                     height = 500,
                                                 ),
-                                                contentDescription = null,
+                                                contentDescription = artistName,
                                                 contentScale = ContentScale.Crop,
                                                 alignment = Alignment.Center,
-                                                modifier = Modifier.fillMaxSize(),
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(CircleShape),
                                             )
                                         } else {
                                             Box(
@@ -614,13 +618,16 @@ fun ArtistScreen(
                                         }
                                     }
 
-                                    // Right (Identity & Actions Column)
+                                    // Increased breathing room shifting text elements right
+                                    Spacer(modifier = Modifier.width(32.dp))
+
+                                    // Right info column
                                     Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxHeight(),
+                                        verticalArrangement = Arrangement.SpaceBetween,
                                         horizontalAlignment = Alignment.Start,
                                     ) {
-                                        // Badge: Verified Artist tag with premium scalloped badge
+                                        // 1. "Verified Artist" row with the scalloped verified badge vector
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -639,7 +646,7 @@ fun ArtistScreen(
                                             )
                                         }
 
-                                        // Artist Name: Bold display typography
+                                        // 2. Artist Name: Bold display typography
                                         Text(
                                             text = artistName ?: unknownArtist,
                                             style = titleStyle,
@@ -649,7 +656,7 @@ fun ArtistScreen(
                                             overflow = TextOverflow.Ellipsis,
                                         )
 
-                                        // Metadata Stats as Micro-Pills
+                                        // 3. Stats pills row (Subscribers / Monthly)
                                         val subscriberText = if (showArtistSubscriberCount) {
                                             artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }
                                         } else null
@@ -716,11 +723,10 @@ fun ArtistScreen(
                                             }
                                         }
 
-                                        // Action Row: Primary Play pill, Outlined Follow pill, Radio button, Overflow button
+                                        // 4. Action buttons row: [ Play/Pause ] [ Follow/Following ] [ ((•)) ]
                                         FlowRow(
                                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                                            modifier = Modifier.padding(top = 4.dp),
                                         ) {
                                             // Primary Play / Pause capsule button
                                             Box(
@@ -781,26 +787,6 @@ fun ArtistScreen(
                                                         modifier = Modifier.size(20.dp),
                                                     )
                                                 }
-                                            }
-
-                                            // Overflow options button
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(42.dp)
-                                                    .clip(CircleShape)
-                                                    .border(
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
-                                                        shape = CircleShape,
-                                                    )
-                                                    .clickable(onClick = showArtistOverflowMenu),
-                                                contentAlignment = Alignment.Center,
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.more_horiz),
-                                                    contentDescription = stringResource(R.string.more_options),
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp),
-                                                )
                                             }
                                         }
                                     }
