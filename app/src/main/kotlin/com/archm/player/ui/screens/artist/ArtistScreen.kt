@@ -2857,9 +2857,10 @@ val ArtistPage.lastRelease: AlbumItem?
         val explicitAlbum = explicitSection?.items?.filterIsInstance<AlbumItem>()?.firstOrNull()
         if (explicitAlbum != null) return explicitAlbum
         val explicitSong = explicitSection?.items?.filterIsInstance<SongItem>()?.firstOrNull()
-        if (explicitSong?.album != null) {
+        val currentAlbum = explicitSong?.album
+        if (explicitSong != null && currentAlbum != null) {
             return AlbumItem(
-                browseId = explicitSong.album.id,
+                browseId = currentAlbum.id,
                 playlistId = explicitSong.id,
                 title = explicitSong.title,
                 artists = explicitSong.artists,
