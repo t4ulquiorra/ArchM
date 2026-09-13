@@ -84,6 +84,7 @@ import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.ripple
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -396,9 +397,10 @@ fun ArtistScreen(
         val headerHeight = (configuration.screenHeightDp * 0.45f).dp
         val avatarSize = when {
             headerHeight >= 280.dp -> 130.dp
-            headerHeight >= 200.dp -> 100.dp
-            else -> 80.dp
+            headerHeight >= 200.dp -> 115.dp
+            else -> 90.dp
         }
+        val avatarShape = RoundedCornerShape(32.dp)
         val topContentPadding = if (headerHeight < 240.dp) 44.dp else 56.dp
         val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
 
@@ -433,7 +435,7 @@ fun ArtistScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(avatarSize)
-                                            .clip(CircleShape)
+                                            .clip(avatarShape)
                                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                     )
                                     Column(
@@ -515,14 +517,14 @@ fun ArtistScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                             ) {
-                                // Left (Avatar): Circular artist thumbnail with subtle border
+                                // Left (Avatar): Squircle artist thumbnail with subtle border
                                 Box(
                                     modifier = Modifier
                                         .size(avatarSize)
-                                        .clip(CircleShape)
+                                        .clip(avatarShape)
                                         .border(
                                             border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
-                                            shape = CircleShape,
+                                            shape = avatarShape,
                                         ),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -560,33 +562,30 @@ fun ArtistScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp),
                                     horizontalAlignment = Alignment.Start,
                                 ) {
-                                    // Badge: "VERIFIED ARTIST" tag with checkmark icon
+                                    // Badge: Verified Artist tag with checkmark icon
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(14.dp)
+                                                .size(16.dp)
                                                 .clip(CircleShape)
-                                                .background(Color(0xFF3D91F4)),
+                                                .background(Color(0xFF3897F0)),
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.check),
                                                 contentDescription = null,
                                                 tint = Color.White,
-                                                modifier = Modifier.size(9.dp),
+                                                modifier = Modifier.size(10.dp),
                                             )
                                         }
                                         Text(
-                                            text = "VERIFIED ARTIST",
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                letterSpacing = 1.2.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 11.sp,
-                                            ),
-                                            color = Color.White.copy(alpha = 0.85f),
+                                            text = "Verified Artist",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White.copy(alpha = 0.9f),
                                         )
                                     }
 
@@ -600,28 +599,71 @@ fun ArtistScreen(
                                         overflow = TextOverflow.Ellipsis,
                                     )
 
-                                    // Audience Stats: Subtitle line for subscribers and monthly listeners
-                                    val audienceStats = buildList {
-                                        if (showArtistSubscriberCount) {
-                                            artistPage.subscriberCountText?.takeIf { it.isNotBlank() }?.let {
-                                                add("$it ${stringResource(R.string.subscribers)}")
-                                            }
-                                        }
-                                        if (showMonthlyListeners) {
-                                            artistPage.monthlyListenerCount?.takeIf { it.isNotBlank() }?.let {
-                                                add("$it ${stringResource(R.string.monthly_listeners)}")
-                                            }
-                                        }
-                                    }.joinToString(" • ")
+                                    // Metadata Stats as Micro-Pills
+                                    val subscriberText = if (showArtistSubscriberCount) {
+                                        artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }
+                                    } else null
+                                    val monthlyListenerText = if (showMonthlyListeners) {
+                                        artistPage?.monthlyListenerCount?.takeIf { it.isNotBlank() }
+                                    } else null
 
-                                    if (audienceStats.isNotBlank()) {
-                                        Text(
-                                            text = audienceStats,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.White.copy(alpha = 0.7f),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
+                                    if (subscriberText != null || monthlyListenerText != null) {
+                                        FlowRow(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                                        ) {
+                                            if (subscriberText != null) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(50),
+                                                    color = Color.White.copy(alpha = 0.08f),
+                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.person),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(14.dp),
+                                                            tint = Color.White.copy(alpha = 0.7f),
+                                                        )
+                                                        Text(
+                                                            text = "$subscriberText ${stringResource(R.string.subscribers)}",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = Color.White,
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            if (monthlyListenerText != null) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(50),
+                                                    color = Color.White.copy(alpha = 0.08f),
+                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.listening),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(14.dp),
+                                                            tint = Color.White.copy(alpha = 0.7f),
+                                                        )
+                                                        Text(
+                                                            text = "$monthlyListenerText ${stringResource(R.string.monthly_listeners)}",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = Color.White,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
 
                                     // Action Row: Primary Play pill, Outlined Follow pill, Radio button, Overflow button
@@ -630,14 +672,14 @@ fun ArtistScreen(
                                         verticalArrangement = Arrangement.spacedBy(8.dp),
                                         modifier = Modifier.padding(top = 4.dp),
                                     ) {
-                                        // Primary Play pill button
+                                        // Primary Play capsule button
                                         Box(
                                             modifier = Modifier
-                                                .height(32.dp)
-                                                .clip(CircleShape)
+                                                .height(40.dp)
+                                                .clip(RoundedCornerShape(50))
                                                 .background(Color.White)
                                                 .clickable(onClick = onPlay)
-                                                .padding(horizontal = 16.dp),
+                                                .padding(horizontal = 18.dp),
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             Row(
@@ -648,12 +690,11 @@ fun ArtistScreen(
                                                     painter = painterResource(R.drawable.play),
                                                     contentDescription = stringResource(R.string.play),
                                                     tint = Color.Black,
-                                                    modifier = Modifier.size(16.dp),
+                                                    modifier = Modifier.size(18.dp),
                                                 )
                                                 Text(
                                                     text = stringResource(R.string.play),
-                                                    style = MaterialTheme.typography.labelMedium.copy(
-                                                        fontSize = 13.sp,
+                                                    style = MaterialTheme.typography.labelLarge.copy(
                                                         fontWeight = FontWeight.Bold,
                                                     ),
                                                     color = Color.Black,
@@ -661,20 +702,22 @@ fun ArtistScreen(
                                             }
                                         }
 
-                                        // Outlined Follow pill button
+                                        // Secondary Outlined Follow capsule button
                                         OutlinedFollowPillButton(
                                             isFollowed = isFollowed,
                                             onClick = onToggleFollow,
+                                            height = 40.dp,
+                                            borderAlpha = 0.25f,
                                         )
 
                                         // Radio icon button (if onRadio != null)
                                         if (onRadio != null) {
                                             Box(
                                                 modifier = Modifier
-                                                    .size(32.dp)
+                                                    .size(40.dp)
                                                     .clip(CircleShape)
                                                     .border(
-                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
                                                         shape = CircleShape,
                                                     )
                                                     .clickable(onClick = onRadio),
@@ -684,7 +727,7 @@ fun ArtistScreen(
                                                     painter = painterResource(R.drawable.radio),
                                                     contentDescription = stringResource(R.string.start_radio),
                                                     tint = Color.White,
-                                                    modifier = Modifier.size(16.dp),
+                                                    modifier = Modifier.size(18.dp),
                                                 )
                                             }
                                         }
@@ -692,10 +735,10 @@ fun ArtistScreen(
                                         // Overflow options button
                                         Box(
                                             modifier = Modifier
-                                                .size(32.dp)
+                                                .size(40.dp)
                                                 .clip(CircleShape)
                                                 .border(
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
                                                     shape = CircleShape,
                                                 )
                                                 .clickable(onClick = showArtistOverflowMenu),
@@ -705,7 +748,7 @@ fun ArtistScreen(
                                                 painter = painterResource(R.drawable.more_horiz),
                                                 contentDescription = stringResource(R.string.more_options),
                                                 tint = Color.White,
-                                                modifier = Modifier.size(16.dp),
+                                                modifier = Modifier.size(18.dp),
                                             )
                                         }
                                     }
@@ -2385,6 +2428,8 @@ fun OutlinedFollowPillButton(
     isFollowed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    height: Dp = 32.dp,
+    borderAlpha: Float = 0.5f,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -2392,11 +2437,11 @@ fun OutlinedFollowPillButton(
 
     Box(
         modifier = modifier
-            .height(32.dp)
-            .clip(CircleShape)
+            .height(height)
+            .clip(RoundedCornerShape(50))
             .border(
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
-                shape = CircleShape,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = borderAlpha)),
+                shape = RoundedCornerShape(50),
             )
             .background(backgroundColor)
             .clickable(
