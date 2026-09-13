@@ -159,11 +159,13 @@ import com.archm.player.utils.reportException
 import com.archm.player.viewmodels.ArtistViewModel
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
+import com.music.innertube.models.Artist
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.BrowseEndpoint
 import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
+import com.music.innertube.pages.ArtistPage
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -190,6 +192,20 @@ fun ArtistScreen(
 
     val artistPage = viewModel.artistPage
     val libraryArtist by viewModel.libraryArtist.collectAsState()
+    val libraryAlbums by viewModel.libraryAlbums.collectAsState()
+
+    val latestRelease = remember(artistPage, libraryAlbums) {
+        artistPage?.lastRelease ?: libraryAlbums.maxByOrNull { it.album.year ?: Int.MIN_VALUE }?.let { album ->
+            AlbumItem(
+                browseId = album.id,
+                playlistId = album.id,
+                title = album.album.title,
+                artists = null,
+                thumbnail = album.album.thumbnailUrl.orEmpty(),
+                year = album.album.year,
+            )
+        }
+    }
 
     val showArtistDescription by rememberPreference(key = ShowArtistDescriptionKey, defaultValue = true)
     val showArtistSubscriberCount by rememberPreference(key = ShowArtistSubscriberCountKey, defaultValue = true)
@@ -968,6 +984,26 @@ fun ArtistScreen(
                     }
                 }
 
+                // Latest Release Section (placed directly above Popular)
+                latestRelease?.let { release ->
+                    item(key = "section_latest_release_header") {
+                        ArtistSectionHeader(
+                            title = stringResource(R.string.latest_release),
+                            topSpacing = 16.dp,
+                            bottomSpacing = 8.dp,
+                            horizontalPadding = if (isLandscape) 36.dp else 16.dp,
+                        )
+                    }
+
+                    item(key = "section_latest_release_card") {
+                        ArtistLatestReleaseCard(
+                            release = release,
+                            onClick = { navController.navigate("album/${release.id}") },
+                            isLandscape = isLandscape,
+                        )
+                    }
+                }
+
                 // 1. Popular Songs Section
                 popularSongsSection?.let { section ->
                     val distinctSongs = section.items.filterIsInstance<SongItem>().distinctBy { it.id }
@@ -975,7 +1011,7 @@ fun ArtistScreen(
                         item(key = "section_popular_header") {
                             ArtistSectionHeader(
                                 title = stringResource(R.string.popular),
-                                topSpacing = 0.dp,
+                                topSpacing = if (latestRelease != null) 24.dp else 0.dp,
                                 bottomSpacing = 7.dp,
                                 onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
                                     {
@@ -2680,6 +2716,7 @@ private fun ArtistSectionHeader(
     modifier: Modifier = Modifier,
     topSpacing: Dp = 28.dp,
     bottomSpacing: Dp = 9.dp,
+    horizontalPadding: Dp = 16.dp,
     onMoreClick: (() -> Unit)? = null,
 ) {
     Column(
@@ -2692,7 +2729,7 @@ private fun ArtistSectionHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = horizontalPadding),
         ) {
             Text(
                 text = title,
@@ -2725,5 +2762,138 @@ private fun ArtistSectionHeader(
         Spacer(modifier = Modifier.height(bottomSpacing))
     }
 }
+
+@Composable
+private fun ArtistLatestReleaseCard(
+    release: AlbumItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isLandscape: Boolean = false,
+) {
+    val releaseType = when {
+        release.title.contains("EP", ignoreCase = true) -> stringResource(R.string.ep)
+        release.title.contains("Single", ignoreCase = true) -> stringResource(R.string.release_type_single)
+        else -> stringResource(R.string.release_type_album)
+    }
+    val subtitle = listOfNotNull(
+        releaseType,
+        release.year?.toString(),
+    ).joinToString(" • ")
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = if (isLandscape) 36.dp else 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        if (release.thumbnail.isNotBlank()) {
+            AsyncImage(
+                model = release.thumbnail.resize(width = 256, height = 256),
+                contentDescription = release.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.album),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(32.dp),
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = release.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        Icon(
+            painter = painterResource(R.drawable.navigate_next),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            modifier = Modifier.size(24.dp),
+        )
+    }
+}
+
+val ArtistPage.lastRelease: AlbumItem?
+    get() {
+        val explicitSection = sections.firstOrNull { section ->
+            section.title.contains("latest", ignoreCase = true) ||
+                section.title.contains("new release", ignoreCase = true) ||
+                section.title.contains("last release", ignoreCase = true)
+        }
+        val explicitAlbum = explicitSection?.items?.filterIsInstance<AlbumItem>()?.firstOrNull()
+        if (explicitAlbum != null) return explicitAlbum
+        val explicitSong = explicitSection?.items?.filterIsInstance<SongItem>()?.firstOrNull()
+        if (explicitSong?.album != null) {
+            return AlbumItem(
+                browseId = explicitSong.album.id,
+                playlistId = explicitSong.id,
+                title = explicitSong.title,
+                artists = explicitSong.artists,
+                thumbnail = explicitSong.thumbnail,
+                year = null,
+                explicit = explicitSong.explicit,
+            )
+        }
+        val releaseItems = sections
+            .filter { section ->
+                !section.title.contains("popular", ignoreCase = true) &&
+                    !section.title.contains("song", ignoreCase = true) &&
+                    (
+                        section.title.contains("single", ignoreCase = true) ||
+                        section.title.contains("album", ignoreCase = true) ||
+                        section.title.contains("ep", ignoreCase = true) ||
+                        section.title.contains("release", ignoreCase = true)
+                    )
+            }
+            .flatMap { it.items }
+            .filterIsInstance<AlbumItem>()
+            .distinctBy { it.id }
+
+        if (releaseItems.isNotEmpty()) {
+            return releaseItems.maxByOrNull { it.year ?: Int.MIN_VALUE }
+        }
+
+        return sections
+            .filter { !it.title.contains("popular", ignoreCase = true) && !it.title.contains("song", ignoreCase = true) }
+            .flatMap { it.items }
+            .filterIsInstance<AlbumItem>()
+            .distinctBy { it.id }
+            .maxByOrNull { it.year ?: Int.MIN_VALUE }
+    }
+
 
 
