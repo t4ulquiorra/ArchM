@@ -221,6 +221,7 @@ fun ArtistScreen(
     val unknownArtist = stringResource(R.string.unknown_artist)
     val artistName = artistPage?.artist?.title ?: libraryArtist?.artist?.name
     val thumbnail = artistPage?.artist?.thumbnail ?: libraryArtist?.artist?.thumbnailUrl
+    val isArtistVerified = artistPage?.isVerified == true || artistPage?.artist?.isVerified == true
 
     val firstItemVisible by remember {
         derivedStateOf { lazyListState.firstVisibleItemIndex == 0 }
@@ -684,25 +685,27 @@ fun ArtistScreen(
                                         horizontalAlignment = Alignment.Start,
                                     ) {
                                         // 1. "Verified Artist" row with the scalloped verified badge vector
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.verified),
-                                                contentDescription = "Verified",
-                                                tint = Color(0xFF3897F0),
-                                                modifier = Modifier.size(20.dp),
-                                            )
-                                            Text(
-                                                text = "Verified Artist",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color.White.copy(alpha = 0.9f),
-                                            )
-                                        }
+                                        if (isArtistVerified) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.verified),
+                                                    contentDescription = "Verified",
+                                                    tint = Color(0xFF3897F0),
+                                                    modifier = Modifier.size(20.dp),
+                                                )
+                                                Text(
+                                                    text = "Verified Artist",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = Color.White.copy(alpha = 0.9f),
+                                                )
+                                            }
 
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                        }
 
                                         // 2. Artist Name: Bold display typography
                                         Text(
@@ -792,10 +795,10 @@ fun ArtistScreen(
                                             // Primary Play / Pause capsule button
                                             Box(
                                                 modifier = Modifier
+                                                    .bouncyClickable(onClick = onPlay)
                                                     .height(42.dp)
                                                     .clip(RoundedCornerShape(50))
                                                     .background(Color.White)
-                                                    .clickable(onClick = onPlay)
                                                     .padding(start = 14.dp, end = 18.dp),
                                                 contentAlignment = Alignment.Center,
                                             ) {
@@ -832,13 +835,13 @@ fun ArtistScreen(
                                             if (onRadio != null) {
                                                 Box(
                                                     modifier = Modifier
+                                                        .bouncyClickable(onClick = onRadio)
                                                         .size(42.dp)
                                                         .clip(CircleShape)
                                                         .border(
                                                             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
                                                             shape = CircleShape,
-                                                        )
-                                                        .clickable(onClick = onRadio),
+                                                        ),
                                                     contentAlignment = Alignment.Center,
                                                 ) {
                                                     Icon(
@@ -922,13 +925,15 @@ fun ArtistScreen(
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f, fill = false),
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        painter = painterResource(R.drawable.verified),
-                                        contentDescription = "Verified",
-                                        tint = Color(0xFF3897F0),
-                                        modifier = Modifier.size(20.dp),
-                                    )
+                                    if (isArtistVerified) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Icon(
+                                            painter = painterResource(R.drawable.verified),
+                                            contentDescription = "Verified",
+                                            tint = Color(0xFF3897F0),
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
                                 }
 
                                 // Centered Listener / Subscriber stats text
@@ -967,10 +972,10 @@ fun ArtistScreen(
                                     // Primary Play / Pause capsule button
                                     Box(
                                         modifier = Modifier
+                                            .bouncyClickable(onClick = onPlay)
                                             .height(42.dp)
                                             .clip(RoundedCornerShape(50))
                                             .background(Color.White)
-                                            .clickable(onClick = onPlay)
                                             .padding(start = 14.dp, end = 18.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
@@ -1007,13 +1012,13 @@ fun ArtistScreen(
                                     if (onRadio != null) {
                                         Box(
                                             modifier = Modifier
+                                                .bouncyClickable(onClick = onRadio)
                                                 .size(42.dp)
                                                 .clip(CircleShape)
                                                 .border(
                                                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
                                                     shape = CircleShape,
-                                                )
-                                                .clickable(onClick = onRadio),
+                                                ),
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             Icon(
@@ -1715,6 +1720,7 @@ fun ArtistScreen(
                                     bioText = bioText,
                                     isFollowed = isFollowed,
                                     isLandscape = true,
+                                    isVerified = isArtistVerified,
                                     onToggleFollow = onToggleFollow,
                                     onNavigateToAbout = onNavigateToAbout,
                                     modifier = Modifier
@@ -1823,6 +1829,7 @@ fun ArtistScreen(
                                 bioText = bioText,
                                 isFollowed = isFollowed,
                                 isLandscape = isLandscape,
+                                isVerified = isArtistVerified,
                                 onToggleFollow = onToggleFollow,
                                 onNavigateToAbout = onNavigateToAbout,
                                 modifier = if (isLandscape) {
@@ -1835,6 +1842,8 @@ fun ArtistScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp)
+                                        .aspectRatio(1.1f)
+                                        .heightIn(max = 320.dp)
                                 },
                             )
                         }
@@ -2325,9 +2334,9 @@ private fun HomeItemContentPlaylist(
                             .align(Alignment.BottomEnd)
                             .padding(6.dp)
                             .size(28.dp)
+                            .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .clickable(onClick = onPlayClick),
+                            .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -2442,9 +2451,9 @@ private fun HomeItemVideo(
                             .align(Alignment.BottomEnd)
                             .padding(6.dp)
                             .size(28.dp)
+                            .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .clickable(onClick = onPlayClick),
+                            .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -2683,6 +2692,35 @@ private fun buildArtistItemsRoute(
 }
 
 @Composable
+fun Modifier.bouncyClickable(
+    enabled: Boolean = true,
+    shrinkScale: Float = 0.94f,
+    onClick: () -> Unit,
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && enabled) shrinkScale else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow,
+        ),
+        label = "BouncyClickableScale",
+    )
+    return this
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            enabled = enabled,
+            onClick = onClick,
+        )
+}
+
+@Composable
 fun OutlinedFollowPillButton(
     isFollowed: Boolean,
     onClick: () -> Unit,
@@ -2693,10 +2731,22 @@ fun OutlinedFollowPillButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.94f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow,
+        ),
+        label = "FollowButtonScale",
+    )
     val backgroundColor = if (isPressed) Color.White.copy(alpha = 0.08f) else Color.Transparent
 
     Box(
         modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .height(height)
             .clip(RoundedCornerShape(50))
             .border(
@@ -2706,7 +2756,7 @@ fun OutlinedFollowPillButton(
             .background(backgroundColor)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(color = Color.White, bounded = true),
+                indication = null,
                 onClick = onClick,
             )
             .padding(horizontal = horizontalPadding),
@@ -2784,145 +2834,144 @@ private fun ArtistAboutCard(
     bioText: String?,
     isFollowed: Boolean,
     isLandscape: Boolean,
+    isVerified: Boolean = false,
     onToggleFollow: () -> Unit,
     onNavigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val podSurfaceColor = MaterialTheme.colorScheme.surfaceContainer
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
 
-    Column(
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(podSurfaceColor)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(color = Color.White),
-                onClick = onNavigateToAbout,
-            ),
+            .clip(RoundedCornerShape(20.dp))
+            .background(containerColor),
     ) {
-        // Top Half: Artist portrait/banner with bottom gradient fade into pod surface
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(if (isLandscape) 140.dp else 200.dp),
+        Column(
+            modifier = Modifier.fillMaxSize(),
         ) {
-            val nonNullPortrait = portraitUrl
-            if (!nonNullPortrait.isNullOrBlank()) {
-                AsyncImage(
-                    model = nonNullPortrait.resize(1280, 720),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+            // Top Image Pane ("Oil"): Occupies weight(1f)
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                podSurfaceColor.copy(alpha = 0.3f),
-                                podSurfaceColor,
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                val nonNullPortrait = portraitUrl
+                if (!nonNullPortrait.isNullOrBlank()) {
+                    AsyncImage(
+                        model = nonNullPortrait.resize(1280, 720),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                // Soft bottom gradient seam (height ~28.dp) dissolving into surfaceContainerHigh
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(28.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    containerColor,
+                                ),
                             ),
                         ),
-                    ),
-            )
-        }
+                )
+            }
 
-        // Identity & Actions Row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(top = 4.dp, bottom = if (isLandscape) 4.dp else 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+            // Bottom Text Pane ("Water"): Fixed at the bottom of the card
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(containerColor)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 4.dp, bottom = 12.dp),
             ) {
+                // Row 1: Artist Name (titleMedium, bold), Verified Badge (only if verified), Follow/Following pill button
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text(
-                        text = artistName.orEmpty(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF3D91F4)),
-                        contentAlignment = Alignment.Center,
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.check),
-                            contentDescription = "Verified",
-                            tint = Color.White,
-                            modifier = Modifier.size(10.dp),
+                        Text(
+                            text = artistName.orEmpty(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
                         )
+                        if (isVerified) {
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF3D91F4)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.check),
+                                    contentDescription = "Verified",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(10.dp),
+                                )
+                            }
+                        }
                     }
+
+                    Spacer(Modifier.width(12.dp))
+
+                    OutlinedFollowPillButton(
+                        isFollowed = isFollowed,
+                        onClick = onToggleFollow,
+                    )
                 }
+
+                // Row 2: Monthly Listeners (bodySmall, secondary text)
                 if (!audienceStat.isNullOrBlank()) {
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = audienceStat,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.7f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+
+                // Row 3: Description/Bio ONLY if !bioText.isNullOrBlank()
+                if (!bioText.isNullOrBlank()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = bioText,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            lineHeight = 18.sp,
+                        ),
+                        color = Color.White.copy(alpha = 0.85f),
+                        maxLines = if (isLandscape) 2 else 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "see more",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = Color.White,
+                        modifier = Modifier
+                            .bouncyClickable(onClick = onNavigateToAbout)
+                            .padding(vertical = 2.dp),
+                    )
+                }
             }
-
-            Spacer(Modifier.width(12.dp))
-
-            OutlinedFollowPillButton(
-                isFollowed = isFollowed,
-                onClick = onToggleFollow,
-            )
-        }
-
-        // Bio Section
-        if (!bioText.isNullOrBlank()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = if (isLandscape) 12.dp else 16.dp),
-            ) {
-                Text(
-                    text = bioText,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        lineHeight = 20.sp,
-                    ),
-                    color = Color.White.copy(alpha = 0.85f),
-                    maxLines = if (isLandscape) 2 else 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(if (isLandscape) 4.dp else 8.dp))
-                Text(
-                    text = "see more",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    color = Color.White,
-                    modifier = Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onNavigateToAbout,
-                        )
-                        .padding(vertical = 4.dp),
-                )
-            }
-        } else {
-            Spacer(Modifier.height(16.dp))
         }
     }
 }

@@ -31,6 +31,7 @@ data class ArtistPage(
     val subscriberCountText: String?,
     val monthlyListenerCount: String? = null,
     val descriptionRuns: List<Run>? = null,
+    val isVerified: Boolean = false,
 ) {
     val playlists: ArtistSection?
         get() = sections.firstOrNull { section ->
@@ -208,6 +209,10 @@ data class ArtistPage(
                 }
 
                 renderer.isArtist -> {
+                    val isArtistItemVerified = renderer.badges?.any {
+                        val iconType = it.musicInlineBadgeRenderer?.icon?.iconType.orEmpty()
+                        iconType.contains("OFFICIAL", ignoreCase = true) || iconType.contains("VERIFIED", ignoreCase = true)
+                    } ?: false
                     ArtistItem(
                         id = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
                         title = renderer.title.runs?.lastOrNull()?.text ?: return null,
@@ -221,6 +226,7 @@ data class ArtistPage(
                         radioEndpoint = renderer.menu.menuRenderer.items.find {
                             it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
                         }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
+                        isVerified = isArtistItemVerified,
                     )
                 }
 

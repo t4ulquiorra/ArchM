@@ -410,6 +410,17 @@ object YouTube {
             ?.let(::mapRuns)
             ?: response.header?.musicImmersiveHeaderRenderer?.description?.runs?.let(::mapRuns)
 
+        val isVerified = response.header?.musicImmersiveHeaderRenderer?.badges?.any {
+            val iconType = it.musicInlineBadgeRenderer?.icon?.iconType.orEmpty()
+            iconType.contains("OFFICIAL", ignoreCase = true) || iconType.contains("VERIFIED", ignoreCase = true)
+        } ?: response.header?.musicVisualHeaderRenderer?.badges?.any {
+            val iconType = it.musicInlineBadgeRenderer?.icon?.iconType.orEmpty()
+            iconType.contains("OFFICIAL", ignoreCase = true) || iconType.contains("VERIFIED", ignoreCase = true)
+        } ?: response.header?.musicHeaderRenderer?.badges?.any {
+            val iconType = it.musicInlineBadgeRenderer?.icon?.iconType.orEmpty()
+            iconType.contains("OFFICIAL", ignoreCase = true) || iconType.contains("VERIFIED", ignoreCase = true)
+        } ?: false
+
         ArtistPage(
             artist = ArtistItem(
                 id = browseId,
@@ -427,7 +438,8 @@ object YouTube {
                 shuffleEndpoint = response.header?.musicImmersiveHeaderRenderer?.playButton?.buttonRenderer?.navigationEndpoint?.watchEndpoint
                     ?: response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer
                         ?.contents?.firstOrNull()?.musicShelfRenderer?.contents?.firstOrNull()?.musicResponsiveListItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint,
-                radioEndpoint = response.header?.musicImmersiveHeaderRenderer?.startRadioButton?.buttonRenderer?.navigationEndpoint?.watchEndpoint
+                radioEndpoint = response.header?.musicImmersiveHeaderRenderer?.startRadioButton?.buttonRenderer?.navigationEndpoint?.watchEndpoint,
+                isVerified = isVerified,
             ),
             sections = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
                 ?.tabRenderer?.content?.sectionListRenderer?.contents
@@ -440,7 +452,8 @@ object YouTube {
                 ?: response.header?.musicImmersiveHeaderRenderer?.subscriptionButton?.subscribeButtonRenderer
                     ?.shortSubscriberCountText.extractCountText(),
             monthlyListenerCount = response.header?.musicImmersiveHeaderRenderer?.monthlyListenerCount.extractCountText(),
-            descriptionRuns = descriptionRuns
+            descriptionRuns = descriptionRuns,
+            isVerified = isVerified,
         )
     }
 

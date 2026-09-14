@@ -1,5 +1,6 @@
 package com.music.innertube.models.response
 
+import com.music.innertube.models.Badges
 import com.music.innertube.models.Button
 import com.music.innertube.models.Continuation
 import com.music.innertube.models.GridRenderer
@@ -97,6 +98,7 @@ data class BrowseResponse(
             val menu: Menu,
             val subscriptionButton2: SubscriptionButton2?,
             val monthlyListenerCount: Runs? = null,
+            val badges: List<Badges>? = null,
         ) {
             @Serializable
             data class SubscriptionButton2(
@@ -114,6 +116,7 @@ data class BrowseResponse(
             val title: Runs,
             val foregroundThumbnail: ThumbnailRenderer,
             val thumbnail: ThumbnailRenderer?,
+            val badges: List<Badges>? = null,
         )
 
         @Serializable
@@ -130,6 +133,7 @@ data class BrowseResponse(
             val secondSubtitle: Runs?,
             val straplineTextOne: Runs?,
             val straplineThumbnail: MusicThumbnailRenderer?,
+            val badges: List<Badges>? = null,
         )
         @Serializable
         data class MusicThumbnail(
