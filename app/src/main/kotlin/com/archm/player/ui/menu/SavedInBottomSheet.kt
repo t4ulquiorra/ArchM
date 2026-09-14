@@ -140,6 +140,7 @@ fun SavedInBottomSheet(
 ) {
     SavedInBottomSheet(
         song = song.song,
+        mediaMetadata = song.toMediaMetadata(),
         onDismiss = onDismiss,
     )
 }
@@ -223,12 +224,14 @@ fun SavedInBottomSheet(
                         // Ensure song exists in database
                         val existingSong = database.song(targetSongId).firstOrNull()
                         if (existingSong == null) {
-                            val meta = mediaMetadata
-                                ?: songItem?.toMediaMetadata()
-                                ?: song?.toMediaMetadata()
+                            val meta = mediaMetadata ?: songItem?.toMediaMetadata()
                             if (meta != null) {
                                 database.transaction {
                                     insert(meta)
+                                }
+                            } else if (song != null) {
+                                database.query {
+                                    insert(song)
                                 }
                             }
                         }
@@ -410,7 +413,7 @@ fun SavedInBottomSheet(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = stringResource(R.string.auto_playlist),
+                            text = stringResource(R.string.auto_playlists),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -503,12 +506,14 @@ fun SavedInBottomSheet(
                     // 1. Ensure song is in DB
                     val existingSong = database.song(targetSongId).firstOrNull()
                     if (existingSong == null) {
-                        val meta = mediaMetadata
-                            ?: songItem?.toMediaMetadata()
-                            ?: song?.toMediaMetadata()
+                        val meta = mediaMetadata ?: songItem?.toMediaMetadata()
                         if (meta != null) {
                             database.transaction {
                                 insert(meta)
+                            }
+                        } else if (song != null) {
+                            database.query {
+                                insert(song)
                             }
                         }
                     }

@@ -576,7 +576,7 @@ fun SongListItem(
                         onClick = {
                             menuState.show {
                                 SavedInBottomSheet(
-                                    song = song.song,
+                                    song = song,
                                     onDismiss = menuState::dismiss,
                                 )
                             }
