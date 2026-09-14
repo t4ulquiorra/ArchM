@@ -202,6 +202,9 @@ import com.archm.player.ui.component.rememberBottomSheetState
 import com.archm.player.ui.menu.OldPlayerMenu
 import com.archm.player.ui.menu.PlayerMenu
 import com.archm.player.ui.component.VolumeSlider
+import com.archm.player.ui.component.CustomSnackbarHost
+import com.archm.player.ui.component.CustomSnackbarManager
+import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.theme.PlayerColorExtractor
 import com.archm.player.ui.theme.PlayerSliderColors
@@ -412,6 +415,22 @@ fun BottomSheetPlayer(
     val canSkipNext by playerConnection.canSkipNext.collectAsState()
     val isMuted by playerConnection.isMuted.collectAsState()
     val playerVolume by playerConnection.service.playerVolume.collectAsState()
+
+    val onPlayerLikeClick: () -> Unit = {
+        val isLiked = currentSong?.song?.liked == true
+        if (isLiked) {
+            menuState.show {
+                SavedInBottomSheet(
+                    song = currentSong?.song,
+                    mediaMetadata = mediaMetadata,
+                    onDismiss = menuState::dismiss,
+                )
+            }
+        } else {
+            playerConnection.toggleLike()
+            CustomSnackbarManager.show("Added to Liked Songs")
+        }
+    }
 
     val (audioQuality) = rememberEnumPreference(
         AudioQualityKey,
@@ -1801,7 +1820,7 @@ fun BottomSheetPlayer(
                                 }
                             } else {
                                 FilledIconButton(
-                                    onClick = playerConnection::toggleLike,
+                                    onClick = onPlayerLikeClick,
                                     shape = favShape,
                                     colors = IconButtonDefaults.filledIconButtonColors(
                                         containerColor = textButtonColor,
@@ -1916,7 +1935,7 @@ fun BottomSheetPlayer(
                                     .size(40.dp)
                                     .clip(RoundedCornerShape(24.dp))
                                     .background(textButtonColor.copy(alpha = 0.2f))
-                                    .clickable(onClick = playerConnection::toggleLike),
+                                    .clickable(onClick = onPlayerLikeClick),
                             ) {
                                 Icon(
                                     painter = painterResource(
@@ -2890,6 +2909,12 @@ fun BottomSheetPlayer(
                 onToggleLyrics = {
                     showInlineLyrics = !showInlineLyrics
                 },
+            )
+
+            CustomSnackbarHost(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp),
             )
         }
     }

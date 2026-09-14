@@ -79,10 +79,12 @@ import com.archm.player.playback.ExoDownloadService
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ListDialog
 import com.archm.player.ui.component.LocalBottomSheetPageState
+import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.Material3MenuGroup
 import com.archm.player.ui.component.Material3MenuItemData
 import com.archm.player.ui.component.NewAction
 import com.archm.player.ui.component.NewActionGrid
+import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.ui.utils.ShowMediaInfo
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.joinByBullet
@@ -109,6 +111,7 @@ fun YouTubeSongMenu(
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
     val listenTogetherManager = LocalListenTogetherManager.current
+    val menuState = LocalMenuState.current
     val ringtoneViewModel = com.archm.player.LocalRingtoneViewModel.current
     val isPinned by database.speedDialDao.isPinned(song.id).collectAsState(initial = false)
     val artists = remember {
@@ -301,7 +304,12 @@ fun YouTubeSongMenu(
                         },
                         text = stringResource(R.string.add_to_an_playlist),
                         onClick = {
-                            showChoosePlaylistDialog = true
+                            menuState.show {
+                                SavedInBottomSheet(
+                                    songItem = song,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
                         }
                     ),
                     NewAction(

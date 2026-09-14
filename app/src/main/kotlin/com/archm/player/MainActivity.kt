@@ -211,6 +211,7 @@ import com.archm.player.constants.StopMusicOnTaskClearKey
 import com.archm.player.constants.UseNewMiniPlayerDesignKey
 import com.archm.player.constants.*
 import com.archm.player.ui.component.shimmer.getShimmerTheme
+import com.archm.player.ui.component.CustomSnackbarHost
 import com.archm.player.db.MusicDatabase
 import com.archm.player.db.entities.SearchHistory
 import com.archm.player.extensions.toEnum
@@ -1097,7 +1098,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     Scaffold(
-                        snackbarHost = { SnackbarHost(snackbarHostState) },
+                        snackbarHost = { CustomSnackbarHost(hostState = snackbarHostState) },
                         topBar = {
                             if (shouldShowTopBar) {
                                 val shouldUseFloatingTopBar =

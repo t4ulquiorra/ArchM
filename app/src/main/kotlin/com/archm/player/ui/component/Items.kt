@@ -52,7 +52,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AutoAwesome
+import com.archm.player.ui.menu.SavedInBottomSheet
 import androidx.compose.foundation.border
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.LocalContentColor
@@ -532,13 +534,11 @@ fun SongListItem(
     song: Song,
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
-    showLikedIcon: Boolean = true,
+    showLikedIcon: Boolean = false,
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     showSize: Boolean = false,
-    badges: @Composable RowScope.() -> Unit = {        if (showLikedIcon && song.song.liked) {
-            Icon.Favorite()
-        }
+    badges: @Composable RowScope.() -> Unit = {
         if (song.song.explicit) {
             Icon.Explicit()
         }
@@ -563,8 +563,38 @@ fun SongListItem(
     color: Color = containerColor,
     horizontalPadding: Dp = 12.dp,
 ) {
+    val menuState = LocalMenuState.current
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
     val resolvedColor = if (color != Color.Transparent) color else containerColor
+
+    val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
+        if (!isSelected && song.song.liked) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .bouncyClickable(
+                        onClick = {
+                            menuState.show {
+                                SavedInBottomSheet(
+                                    song = song.song,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = stringResource(R.string.liked),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        trailingContent()
+    }
 
     val content: @Composable () -> Unit = {
         ListItem(
@@ -588,7 +618,7 @@ fun SongListItem(
                     modifier = Modifier.size(ListThumbnailSize)
                 )
             },
-            trailingContent = trailingContent,
+            trailingContent = resolvedTrailingContent,
             modifier = modifier,
             isSelected = isSelected,
             isActive = isActive,
@@ -616,12 +646,12 @@ fun SongListItem(
 fun SongGridItem(
     song: Song,
     modifier: Modifier = Modifier,
-    showLikedIcon: Boolean = true,
+    showLikedIcon: Boolean = false,
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
-        if (showLikedIcon && song.song.liked) {
-            Icon.Favorite()
+        if (song.song.explicit) {
+            Icon.Explicit()
         }
         if (showInLibraryIcon && song.song.inLibrary != null) {
             Icon.Library()
@@ -1147,6 +1177,43 @@ fun MediaMetadataListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     val resolvedColor = if (color != Color.Transparent) color else containerColor
+    val database = LocalDatabase.current
+    val menuState = LocalMenuState.current
+    val dbSong by produceState<Song?>(initialValue = null, mediaMetadata.id) {
+        database.song(mediaMetadata.id).collect { value = it }
+    }
+    val isLiked = dbSong?.song?.liked == true
+
+    val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
+        if (!isSelected && isLiked) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .bouncyClickable(
+                        onClick = {
+                            menuState.show {
+                                SavedInBottomSheet(
+                                    song = dbSong?.song,
+                                    mediaMetadata = mediaMetadata,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = stringResource(R.string.liked),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        trailingContent()
+    }
+
     ListItem(
         title = mediaMetadata.title,
         subtitle = if (mediaMetadata.suggestedBy != null) {
@@ -1181,7 +1248,7 @@ fun MediaMetadataListItem(
                 modifier = Modifier.size(ListThumbnailSize)
             )
         },
-        trailingContent = trailingContent,
+        trailingContent = resolvedTrailingContent,
         modifier = modifier,
         isActive = isActive,
         shape = shape,
@@ -1211,16 +1278,11 @@ fun YouTubeListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
-        val song by produceState<Song?>(initialValue = null, item.id) {
-            if (item is SongItem) value = database.song(item.id).firstOrNull()
-        }
         val album by produceState<Album?>(initialValue = null, item.id) {
             if (item is AlbumItem) value = database.album(item.id).firstOrNull()
         }
 
-        if ((item is SongItem && song?.song?.liked == true) ||
-            (item is AlbumItem && album?.album?.bookmarkedAt != null)
-        ) {
+        if (item is AlbumItem && album?.album?.bookmarkedAt != null) {
             Icon.Favorite()
         }
         if (item.explicit) Icon.Explicit()
@@ -1233,6 +1295,45 @@ fun YouTubeListItem(
     shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
 ) {
+    val database = LocalDatabase.current
+    val menuState = LocalMenuState.current
+    val dbSong by produceState<Song?>(initialValue = null, item.id) {
+        if (item is SongItem) {
+            database.song(item.id).collect { value = it }
+        }
+    }
+    val isLiked = item is SongItem && dbSong?.song?.liked == true
+
+    val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
+        if (!isSelected && isLiked && item is SongItem) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .bouncyClickable(
+                        onClick = {
+                            menuState.show {
+                                SavedInBottomSheet(
+                                    song = dbSong?.song,
+                                    songItem = item,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = stringResource(R.string.liked),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        trailingContent()
+    }
+
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
     val resolvedColor = if (color != Color.Transparent) color else containerColor
 
@@ -1268,7 +1369,7 @@ fun YouTubeListItem(
                     modifier = Modifier.size(ListThumbnailSize)
                 )
             },
-            trailingContent = trailingContent,
+            trailingContent = resolvedTrailingContent,
             modifier = modifier,
             isSelected = isSelected,
             isActive = isActive,
@@ -1299,16 +1400,11 @@ fun YouTubeGridItem(
     coroutineScope: CoroutineScope? = null,
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
-        val song by produceState<Song?>(initialValue = null, item.id) {
-            if (item is SongItem) value = database.song(item.id).firstOrNull()
-        }
         val album by produceState<Album?>(initialValue = null, item.id) {
             if (item is AlbumItem) value = database.album(item.id).firstOrNull()
         }
 
-        if (item is SongItem && song?.song?.liked == true ||
-            item is AlbumItem && album?.album?.bookmarkedAt != null
-        ) {
+        if (item is AlbumItem && album?.album?.bookmarkedAt != null) {
             Icon.Favorite()
         }
         if (item.explicit) Icon.Explicit()

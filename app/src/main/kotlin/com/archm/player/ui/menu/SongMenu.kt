@@ -87,12 +87,14 @@ import com.archm.player.playback.ExoDownloadService
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ListDialog
 import com.archm.player.ui.component.LocalBottomSheetPageState
+import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.Material3MenuGroup
 import com.archm.player.ui.component.Material3MenuItemData
 import com.archm.player.ui.component.NewAction
 import com.archm.player.ui.component.NewActionGrid
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.TextFieldDialog
+import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.utils.listItemShape
 import com.archm.player.ui.utils.ShowMediaInfo
 import com.archm.player.utils.rememberPreference
@@ -121,6 +123,7 @@ fun SongMenu(
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
     val listenTogetherManager = LocalListenTogetherManager.current
+    val menuState = LocalMenuState.current
     val scope = rememberCoroutineScope()
     
     val (enableExportAsMp3) = rememberPreference(key = EnableExportAsMp3Key, defaultValue = false)
@@ -382,7 +385,14 @@ fun SongMenu(
                             )
                         },
                         text = stringResource(R.string.add_to_an_playlist),
-                        onClick = { showChoosePlaylistDialog = true }
+                        onClick = {
+                            menuState.show {
+                                SavedInBottomSheet(
+                                    song = song,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
                     ),
                     NewAction(
                         icon = {

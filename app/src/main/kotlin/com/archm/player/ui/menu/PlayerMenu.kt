@@ -88,11 +88,13 @@ import com.archm.player.models.MediaMetadata
 import com.archm.player.playback.ExoDownloadService
 import com.archm.player.ui.component.BottomSheetState
 import com.archm.player.ui.component.ListDialog
+import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.Material3MenuGroup
 import com.archm.player.ui.component.Material3MenuItemData
 import com.archm.player.ui.component.NewAction
 import com.archm.player.ui.component.NewActionGrid
 import com.archm.player.ui.component.VolumeSlider
+import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -113,6 +115,7 @@ fun PlayerMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val menuState = LocalMenuState.current
     
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager }
     var systemVolume by remember { androidx.compose.runtime.mutableFloatStateOf(audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC).toFloat()) }
@@ -327,7 +330,14 @@ fun PlayerMenu(
                             )
                         },
                         text = stringResource(R.string.add_to_an_playlist),
-                        onClick = { showChoosePlaylistDialog = true }
+                        onClick = {
+                            menuState.show {
+                                SavedInBottomSheet(
+                                    mediaMetadata = mediaMetadata,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
                     ),
                     NewAction(
                         icon = {

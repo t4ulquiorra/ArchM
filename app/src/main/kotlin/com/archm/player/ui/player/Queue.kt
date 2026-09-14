@@ -129,8 +129,10 @@ import com.archm.player.ui.component.BottomSheetState
 import com.archm.player.ui.component.LocalBottomSheetPageState
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.MediaMetadataListItem
+import com.archm.player.ui.component.CustomSnackbarManager
 import com.archm.player.ui.menu.PlayerMenu
 import com.archm.player.ui.menu.QueueMenu
+import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.ui.menu.SelectionMediaMetadataMenu
 import com.archm.player.ui.screens.CommentSheet
 import com.archm.player.ui.utils.ShowMediaInfo
@@ -822,7 +824,21 @@ fun Queue(
                         state = rememberTooltipState(),
                     ) {
                         FilledTonalIconButton(
-                            onClick = playerConnection::toggleLike,
+                            onClick = {
+                                val isLiked = currentSong?.song?.liked == true
+                                if (isLiked) {
+                                    menuState.show {
+                                        SavedInBottomSheet(
+                                            song = currentSong?.song,
+                                            mediaMetadata = mediaMetadata,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                } else {
+                                    playerConnection.toggleLike()
+                                    CustomSnackbarManager.show("Added to Liked Songs")
+                                }
+                            },
                             modifier = Modifier.padding(end = 8.dp)
                         ) {
                             Icon(
