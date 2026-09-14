@@ -60,6 +60,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -1702,6 +1703,7 @@ fun ArtistScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .height(IntrinsicSize.Min)
                                 .padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(20.dp),
                         ) {
@@ -1732,7 +1734,9 @@ fun ArtistScreen(
 
                             // Right Pane: Related Artists with 2 Independent Scrollable Rows (~52% width)
                             Column(
-                                modifier = Modifier.weight(1.1f),
+                                modifier = Modifier
+                                    .weight(1.1f)
+                                    .fillMaxHeight(),
                             ) {
                                 ArtistSectionHeader(
                                     title = "Related Artists",
@@ -1754,6 +1758,7 @@ fun ArtistScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .weight(1f)
                                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                                         .drawWithContent {
                                             drawContent()
@@ -1767,7 +1772,7 @@ fun ArtistScreen(
                                                 blendMode = BlendMode.DstIn,
                                             )
                                         },
-                                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween,
                                 ) {
                                     LazyRow(
                                         contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
@@ -1783,7 +1788,9 @@ fun ArtistScreen(
                                                 subscribers = null,
                                                 thumbnailUrl = artist.thumbnail,
                                                 onClick = { navController.navigate("artist/${artist.id}") },
-                                                avatarSize = 110.dp,
+                                                avatarSize = 124.dp,
+                                                isSingleLine = true,
+                                                labelSpacing = 6.dp,
                                             )
                                         }
                                     }
@@ -1803,7 +1810,9 @@ fun ArtistScreen(
                                                     subscribers = null,
                                                     thumbnailUrl = artist.thumbnail,
                                                     onClick = { navController.navigate("artist/${artist.id}") },
-                                                    avatarSize = 110.dp,
+                                                    avatarSize = 124.dp,
+                                                    isSingleLine = true,
+                                                    labelSpacing = 6.dp,
                                                 )
                                             }
                                         }
@@ -2507,6 +2516,8 @@ private fun HomeItemArtist(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     avatarSize: Dp = 150.dp,
+    isSingleLine: Boolean = false,
+    labelSpacing: Dp = 8.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -2546,6 +2557,7 @@ private fun HomeItemArtist(
                 modifier = Modifier.fillMaxSize(),
             )
         }
+        Spacer(modifier = Modifier.height(labelSpacing))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2558,15 +2570,14 @@ private fun HomeItemArtist(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
+                style = if (isSingleLine) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleSmall,
                 color = Color.White,
-                maxLines = 2,
+                maxLines = if (isSingleLine) 1 else 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight(align = Alignment.CenterVertically)
-                    .padding(top = 8.dp),
+                    .wrapContentHeight(align = Alignment.CenterVertically),
             )
             if (!subscribers.isNullOrBlank()) {
                 Text(
