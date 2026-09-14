@@ -298,6 +298,46 @@ fun ArtistScreen(
         }
     }
 
+    val distinctArtists = remember(relatedSection) {
+        relatedSection?.items?.filterIsInstance<ArtistItem>()?.distinctBy { it.id }.orEmpty()
+    }
+    val topRowArtists = remember(distinctArtists) {
+        distinctArtists.filterIndexed { index, _ -> index % 2 == 0 }
+    }
+    val bottomRowArtists = remember(distinctArtists) {
+        distinctArtists.filterIndexed { index, _ -> index % 2 != 0 }
+    }
+
+    val description = artistPage?.description
+    val descriptionRuns = artistPage?.descriptionRuns
+    val hasDescription = !description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()
+    val hasAudienceStat = !artistPage?.monthlyListenerCount.isNullOrBlank() || !artistPage?.subscriberCountText.isNullOrBlank()
+    val hasAbout = showArtistDescription && artistPage != null && (hasDescription || hasAudienceStat)
+
+    val portraitUrl = thumbnail
+        ?: artistPage?.artist?.thumbnail
+        ?: libraryArtist?.artist?.thumbnailUrl
+    val monthlyListeners = artistPage?.monthlyListenerCount
+    val subscribers = artistPage?.subscriberCountText
+    val audienceStat = when {
+        !monthlyListeners.isNullOrBlank() -> {
+            if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                monthlyListeners
+            } else {
+                "$monthlyListeners monthly listeners"
+            }
+        }
+        !subscribers.isNullOrBlank() -> {
+            if (subscribers.contains("subscriber", ignoreCase = true)) {
+                subscribers
+            } else {
+                "$subscribers subscribers"
+            }
+        }
+        else -> null
+    }
+    val bioText = description ?: descriptionRuns?.joinToString(separator = "") { it.text }
+
     val isFollowed = libraryArtist?.artist?.bookmarkedAt != null
 
     val onRadio: (() -> Unit)? = artistPage?.artist?.radioEndpoint?.let { endpoint ->
@@ -1651,46 +1691,6 @@ fun ArtistScreen(
                 }
 
                 // 8 & 9. Adaptive "About" & "Related Artists" Sections
-                val distinctArtists = remember(relatedSection) {
-                    relatedSection?.items?.filterIsInstance<ArtistItem>()?.distinctBy { it.id }.orEmpty()
-                }
-                val topRowArtists = remember(distinctArtists) {
-                    distinctArtists.filterIndexed { index, _ -> index % 2 == 0 }
-                }
-                val bottomRowArtists = remember(distinctArtists) {
-                    distinctArtists.filterIndexed { index, _ -> index % 2 != 0 }
-                }
-
-                val description = artistPage?.description
-                val descriptionRuns = artistPage?.descriptionRuns
-                val hasDescription = !description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()
-                val hasAudienceStat = !artistPage?.monthlyListenerCount.isNullOrBlank() || !artistPage?.subscriberCountText.isNullOrBlank()
-                val hasAbout = showArtistDescription && artistPage != null && (hasDescription || hasAudienceStat)
-
-                val portraitUrl = thumbnail
-                    ?: artistPage?.artist?.thumbnail
-                    ?: libraryArtist?.artist?.thumbnailUrl
-                val monthlyListeners = artistPage?.monthlyListenerCount
-                val subscribers = artistPage?.subscriberCountText
-                val audienceStat = when {
-                    !monthlyListeners.isNullOrBlank() -> {
-                        if (monthlyListeners.contains("listener", ignoreCase = true)) {
-                            monthlyListeners
-                        } else {
-                            "$monthlyListeners monthly listeners"
-                        }
-                    }
-                    !subscribers.isNullOrBlank() -> {
-                        if (subscribers.contains("subscriber", ignoreCase = true)) {
-                            subscribers
-                        } else {
-                            "$subscribers subscribers"
-                        }
-                    }
-                    else -> null
-                }
-                val bioText = description ?: descriptionRuns?.joinToString(separator = "") { it.text }
-
                 if (isLandscape && hasAbout && distinctArtists.isNotEmpty()) {
                     // Landscape / Tablet Side-by-Side Row
                     item(key = "section_about_and_related_row") {
