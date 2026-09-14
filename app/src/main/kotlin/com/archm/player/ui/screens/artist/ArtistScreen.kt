@@ -228,7 +228,30 @@ fun ArtistScreen(
     val unknownArtist = stringResource(R.string.unknown_artist)
     val artistName = artistPage?.artist?.title ?: libraryArtist?.artist?.name
     val thumbnail = artistPage?.artist?.thumbnail ?: libraryArtist?.artist?.thumbnailUrl
-    val isArtistVerified = artistPage?.isVerified == true || artistPage?.artist?.isVerified == true
+    val isArtistVerified = remember(artistPage) {
+        if (artistPage?.isVerified == true || artistPage?.artist?.isVerified == true) {
+            true
+        } else {
+            // Grab all text sources from artistPage
+            val statsText = listOfNotNull(
+                artistPage?.subscriberCountText,
+                artistPage?.monthlyListenerCount,
+                artistPage?.description,
+                artistPage?.descriptionRuns?.joinToString(" ") { it.text },
+            ).joinToString(" ")
+
+            // Check for Millions, Billions, or >= 70K
+            val hasMillionOrBillion = Regex("""\d+(?:\.\d+)?\s*[MmBb]""").containsMatchIn(statsText)
+            val has70kOrMore = Regex("""(\d+(?:\.\d+)?)\s*[Kk]""").findAll(statsText).any { match ->
+                (match.groupValues.getOrNull(1)?.toDoubleOrNull() ?: 0.0) >= 70.0
+            }
+            val hasNumbersAbove70k = Regex("""\b(\d{1,3}(?:,\d{3})+|\d{5,})\b""").findAll(statsText).any { match ->
+                (match.groupValues.getOrNull(1)?.replace(",", "")?.toDoubleOrNull() ?: 0.0) >= 70000.0
+            }
+
+            hasMillionOrBillion || has70kOrMore || hasNumbersAbove70k
+        }
+    }
 
     val firstItemVisible by remember {
         derivedStateOf { lazyListState.firstVisibleItemIndex == 0 }
@@ -691,38 +714,38 @@ fun ArtistScreen(
                                         modifier = Modifier.wrapContentHeight(),
                                         horizontalAlignment = Alignment.Start,
                                     ) {
-                                        // 1. "Verified Artist" row with the scalloped verified badge vector
-                                        if (isArtistVerified) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.verified),
-                                                    contentDescription = "Verified",
-                                                    tint = Color(0xFF3897F0),
-                                                    modifier = Modifier.size(20.dp),
-                                                )
-                                                Text(
-                                                    text = "Verified Artist",
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = Color.White.copy(alpha = 0.9f),
-                                                )
+                                        // Artist Name: Bold display typography with Inline Verified Badge
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Start,
+                                        ) {
+                                            Text(
+                                                text = artistName ?: unknownArtist,
+                                                style = titleStyle,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false),
+                                            )
+                                            if (isArtistVerified) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(20.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Color(0xFF3D91F4)),
+                                                    contentAlignment = Alignment.Center,
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.check),
+                                                        contentDescription = "Verified",
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(12.dp),
+                                                    )
+                                                }
                                             }
-
-                                            Spacer(modifier = Modifier.height(4.dp))
                                         }
-
-                                        // 2. Artist Name: Bold display typography
-                                        Text(
-                                            text = artistName ?: unknownArtist,
-                                            style = titleStyle,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
 
                                         // 3. Stats pills row (Subscribers / Monthly)
                                         val subscriberText = if (showArtistSubscriberCount) {
@@ -934,12 +957,20 @@ fun ArtistScreen(
                                     )
                                     if (isArtistVerified) {
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Icon(
-                                            painter = painterResource(R.drawable.verified),
-                                            contentDescription = "Verified",
-                                            tint = Color(0xFF3897F0),
-                                            modifier = Modifier.size(20.dp),
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF3D91F4)),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.check),
+                                                contentDescription = "Verified",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(12.dp),
+                                            )
+                                        }
                                     }
                                 }
 
