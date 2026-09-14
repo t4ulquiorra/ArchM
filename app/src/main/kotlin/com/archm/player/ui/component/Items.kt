@@ -10,9 +10,11 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -52,6 +54,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AutoAwesome
 import com.archm.player.ui.menu.SavedInBottomSheet
@@ -164,6 +167,7 @@ inline fun ListItem(
     thumbnailContent: @Composable () -> Unit,
     crossinline trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
+    inSelectionMode: Boolean = isSelected == true,
     isActive: Boolean = false,
     isAvailable: Boolean = true,
     showActiveContainer: Boolean = true,
@@ -175,8 +179,8 @@ inline fun ListItem(
 ) {
     val resolvedColor = if (color != Color.Transparent) color else containerColor
     val titleColor =
-        if (isActive && showActiveContainer) {
-            MaterialTheme.colorScheme.onSecondaryContainer
+        if (isActive) {
+            MaterialTheme.colorScheme.primary
         } else {
             MaterialTheme.colorScheme.onSurface
         }
@@ -216,6 +220,39 @@ inline fun ListItem(
             .then(modifier)
             .height(ListItemHeight)
     ) {
+        AnimatedVisibility(
+            visible = inSelectionMode,
+            enter = fadeIn() + expandHorizontally(),
+            exit = fadeOut() + shrinkHorizontally(),
+        ) {
+            Box(
+                modifier = Modifier.padding(start = 10.dp, end = 2.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (isSelected == true) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                    )
+                }
+            }
+        }
+
         Box(
             modifier = Modifier.padding(start = 4.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
             contentAlignment = Alignment.Center
@@ -253,8 +290,10 @@ inline fun ListItem(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 color = titleColor,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .basicMarquee(),
             )
 
             if (subtitle != null) {
@@ -285,6 +324,7 @@ fun ListItem(
     thumbnailContent: @Composable () -> Unit,
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
+    inSelectionMode: Boolean = isSelected == true,
     isActive: Boolean = false,
     showActiveContainer: Boolean = true,
     shape: Shape = RoundedCornerShape(12.dp),
@@ -310,6 +350,7 @@ fun ListItem(
     trailingContent = trailingContent,
     modifier = modifier,
     isSelected = isSelected,
+    inSelectionMode = inSelectionMode,
     isActive = isActive,
     showActiveContainer = showActiveContainer,
     shape = shape,
@@ -329,6 +370,7 @@ fun ListItem(
     thumbnailContent: @Composable () -> Unit,
     trailingContent: @Composable RowScope.() -> Unit = {},
     isSelected: Boolean? = false,
+    inSelectionMode: Boolean = isSelected == true,
     isActive: Boolean = false,
     showActiveContainer: Boolean = true,
     shape: Shape = RoundedCornerShape(12.dp),
@@ -355,6 +397,7 @@ fun ListItem(
     trailingContent = trailingContent,
     modifier = modifier,
     isSelected = isSelected,
+    inSelectionMode = inSelectionMode,
     isActive = isActive,
     showActiveContainer = showActiveContainer,
     shape = shape,
@@ -552,6 +595,7 @@ fun SongListItem(
         }
     },
     isSelected: Boolean = false,
+    inSelectionMode: Boolean = isSelected,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
@@ -568,7 +612,7 @@ fun SongListItem(
     val resolvedColor = if (color != Color.Transparent) color else containerColor
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
-        if (!isSelected && song.song.liked) {
+        if (song.song.liked) {
             Box(
                 modifier = Modifier
                     .size(24.dp)
@@ -621,6 +665,7 @@ fun SongListItem(
             trailingContent = resolvedTrailingContent,
             modifier = modifier,
             isSelected = isSelected,
+            inSelectionMode = inSelectionMode,
             isActive = isActive,
             shape = shape,
             containerColor = resolvedColor,
@@ -1169,6 +1214,7 @@ fun MediaMetadataListItem(
     mediaMetadata: MediaMetadata,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
+    inSelectionMode: Boolean = isSelected,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     shape: Shape = RoundedCornerShape(12.dp),
@@ -1185,7 +1231,7 @@ fun MediaMetadataListItem(
     val isLiked = dbSong?.song?.liked == true
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
-        if (!isSelected && isLiked) {
+        if (isLiked) {
             Box(
                 modifier = Modifier
                     .size(24.dp)
@@ -1250,6 +1296,8 @@ fun MediaMetadataListItem(
         },
         trailingContent = resolvedTrailingContent,
         modifier = modifier,
+        isSelected = isSelected,
+        inSelectionMode = inSelectionMode,
         isActive = isActive,
         shape = shape,
         containerColor = resolvedColor,
@@ -1271,6 +1319,7 @@ fun YouTubeListItem(
     albumIndex: Int? = null,
     viewCountText: String? = null,
     isSelected: Boolean = false,
+    inSelectionMode: Boolean = isSelected,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
@@ -1305,7 +1354,7 @@ fun YouTubeListItem(
     val isLiked = item is SongItem && dbSong?.song?.liked == true
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
-        if (!isSelected && isLiked && item is SongItem) {
+        if (isLiked && item is SongItem) {
             Box(
                 modifier = Modifier
                     .size(24.dp)
@@ -1345,7 +1394,9 @@ fun YouTubeListItem(
                 is SongItem -> {
                     val validArtists = item.artists.filter { !it.name.contains(":") && it.name.parseTime() == null }.map { it.name }
                     val artistsText = validArtists.joinToString(", ").takeIf { it.isNotBlank() }
-                    val durationText = item.durationText ?: item.formattedDuration()
+                    val durationText = (item.durationText ?: item.formattedDuration())
+                        ?.takeIf { it.isNotBlank() }
+                        ?: dbSong?.song?.duration?.takeIf { it > 0 }?.let { makeTimeString(it * 1000L) }?.takeIf { it.isNotBlank() }
                     val subtitleText = if (artistsText.isNullOrBlank() || artistsText == durationText) {
                         listOfNotNull(durationText, viewCountText).joinToString(" • ")
                     } else {
@@ -1372,6 +1423,7 @@ fun YouTubeListItem(
             trailingContent = resolvedTrailingContent,
             modifier = modifier,
             isSelected = isSelected,
+            inSelectionMode = inSelectionMode,
             isActive = isActive,
             showActiveContainer = showActiveContainer,
             shape = shape,
@@ -1862,7 +1914,7 @@ fun ItemThumbnail(
 ) {
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val isArtist = shape == CircleShape
-    val resolvedContentScale = contentScale ?: if (cropAlbumArt || isArtist) ContentScale.Crop else ContentScale.Fit
+    val resolvedContentScale = contentScale ?: ContentScale.Crop
     
     Box(
         contentAlignment = Alignment.Center,
@@ -1895,22 +1947,6 @@ fun ItemThumbnail(
                 Text(
                     text = albumIndex.toString(),
                     style = MaterialTheme.typography.labelLarge
-                )
-            }
-        }
-
-        if (isSelected) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f)
-                    .clip(shape)
-                    .background(Color.Black.copy(alpha = 0.5f))
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.done),
-                    contentDescription = null
                 )
             }
         }

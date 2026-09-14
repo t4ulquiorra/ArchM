@@ -153,6 +153,7 @@ import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.IconButton
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.bouncyClickable
 import com.archm.player.ui.component.rememberBouncyScale
 import com.archm.player.ui.component.shimmer.ButtonPlaceholder
@@ -1099,43 +1100,55 @@ fun ArtistScreen(
                             items = distinctSongs.take(5),
                             key = { "popular_song_${it.id}" },
                         ) { song ->
-                            ArtistSongRow(
-                                song = song,
-                                isPlaying = song.id == mediaMetadata?.id && isPlaying,
-                                selectionMode = selectionState.isActive,
+                            YouTubeListItem(
+                                item = song,
+                                isActive = song.id == mediaMetadata?.id,
+                                isPlaying = isPlaying,
+                                inSelectionMode = selectionState.isActive,
                                 isSelected = selectionState.isSelected(song.id),
-                                onClick = {
-                                    if (song.id == mediaMetadata?.id) {
-                                        playerConnection.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                WatchEndpoint(videoId = song.id),
-                                                song.toMediaMetadata(),
-                                            ),
+                                trailingContent = {
+                                    IconButton(
+                                        onClick = {
+                                            menuState.show {
+                                                YouTubeSongMenu(
+                                                    song = song,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.more_vert),
+                                            contentDescription = null,
                                         )
                                     }
                                 },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    selectionState.start(song.id)
-                                },
-                                onSelectToggle = {
-                                    selectionState.toggle(song.id)
-                                },
-                                onAddToQueue = {
-                                    playerConnection.addToQueue(listOf(song.toMediaItem()))
-                                    Toast.makeText(context, context.getString(R.string.add_to_queue), Toast.LENGTH_SHORT).show()
-                                },
-                                onMoreClick = {
-                                    menuState.show {
-                                        YouTubeSongMenu(
-                                            song = song,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (selectionState.isActive) {
+                                                selectionState.toggle(song.id)
+                                            } else if (song.id == mediaMetadata?.id) {
+                                                playerConnection.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = song.id),
+                                                        song.toMediaMetadata(),
+                                                    ),
+                                                )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!selectionState.isActive) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                selectionState.start(song.id)
+                                            }
+                                        },
+                                    ),
                             )
                         }
                     }
@@ -2079,215 +2092,6 @@ fun ArtistScreen(
                     .fillMaxWidth()
                     .background(topBarBackgroundColor),
             )
-        }
-    }
-}
-
-/**
- * Port of SimpMusic's SongFullWidthItems:
- * - 16.dp leading alignment
- * - Swipe right gesture to reveal queue icon and add to queue
- * - Multi-selection support (animated checkbox + primary background tint)
- */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ArtistSongRow(
-    song: SongItem,
-    isPlaying: Boolean,
-    selectionMode: Boolean,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    onSelectToggle: () -> Unit,
-    onAddToQueue: () -> Unit,
-    onMoreClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
-    val maxOffset = 360f
-    val offsetX = remember { Animatable(initialValue = 0f) }
-    var heightDp by remember { mutableStateOf(0.dp) }
-
-    Box(modifier = modifier.fillMaxWidth()) {
-        // Behind row: revealed Add to Queue icon
-        Crossfade(
-            targetState = offsetX.value >= maxOffset / 2,
-            label = "addToQueueCrossfade",
-        ) { shouldShow ->
-            if (shouldShow) {
-                Box(
-                    modifier = Modifier
-                        .height(heightDp)
-                        .aspectRatio(1f)
-                        .padding(start = 16.dp)
-                        .align(Alignment.CenterStart),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.queue_music),
-                        contentDescription = stringResource(R.string.add_to_queue),
-                        tint = Color.White,
-                    )
-                }
-            }
-        }
-
-        val targetBg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent
-        val animatedBg by animateColorAsState(
-            targetValue = targetBg,
-            animationSpec = tween(durationMillis = 200),
-            label = "ArtistSongRowBg",
-        )
-
-        // Foreground row
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-                .padding(horizontal = 12.dp, vertical = 2.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(animatedBg)
-                .combinedClickable(
-                    onClick = {
-                        if (selectionMode) {
-                            onSelectToggle()
-                        } else {
-                            onClick()
-                        }
-                    },
-                    onLongClick = {
-                        if (!selectionMode) {
-                            onLongClick()
-                        }
-                    },
-                )
-                .pointerInput(selectionMode) {
-                    if (!selectionMode) {
-                        detectHorizontalDragGestures(
-                            onHorizontalDrag = { change, dragAmount ->
-                                if (offsetX.value + dragAmount > 0) {
-                                    change.consume()
-                                    coroutineScope.launch {
-                                        offsetX.snapTo((offsetX.value + dragAmount).coerceAtMost(maxOffset))
-                                    }
-                                }
-                            },
-                            onDragEnd = {
-                                if (offsetX.value >= maxOffset * 0.75f) {
-                                    onAddToQueue()
-                                }
-                                coroutineScope.launch {
-                                    offsetX.animateTo(0f)
-                                }
-                            },
-                            onDragCancel = {
-                                coroutineScope.launch {
-                                    offsetX.animateTo(0f)
-                                }
-                            },
-                        )
-                    }
-                }
-                .onGloballyPositioned { coordinates ->
-                    with(density) {
-                        heightDp = coordinates.size.height.toDp()
-                    }
-                },
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Checkbox when selectionMode is true
-                AnimatedVisibility(
-                    visible = selectionMode,
-                    enter = fadeIn() + expandHorizontally(),
-                    exit = fadeOut() + shrinkHorizontally(),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                .border(
-                                    width = 1.5.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.6f),
-                                    shape = CircleShape,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (isSelected) {
-                                Icon(
-                                    painter = painterResource(R.drawable.done),
-                                    contentDescription = null,
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                    }
-                }
-
-                // Artwork (48dp) starting directly at 16.dp when selectionMode is false
-                Box(
-                    modifier = Modifier.size(48.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    AsyncImage(
-                        model = song.thumbnail.resize(192, 192),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(4.dp)),
-                    )
-                }
-
-                // Title & artist info
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 12.dp, end = 8.dp),
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    Text(
-                        text = song.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
-                        color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.White,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(align = Alignment.CenterVertically)
-                            .basicMarquee(),
-                    )
-                    Text(
-                        text = song.artists.joinToString(", ") { it.name },
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        color = Color(0xC4FFFFFF),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(align = Alignment.CenterVertically),
-                    )
-                }
-
-                // More button
-                IconButton(
-                    onClick = onMoreClick,
-                    onLongClick = {},
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-            }
         }
     }
 }

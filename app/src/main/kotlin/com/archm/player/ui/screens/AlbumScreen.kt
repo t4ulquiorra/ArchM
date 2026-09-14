@@ -687,32 +687,26 @@ fun AlbumScreen(
                         song = song,
                         isActive = song.id == mediaMetadata?.id,
                         isPlaying = isPlaying,
+                        inSelectionMode = inSelectMode,
                         isSelected = inSelectMode && song.id in selection,
                         showInLibraryIcon = true,
                         shape = RoundedCornerShape(12.dp),
                         trailingContent = {
-                            if (inSelectMode) {
-                                Checkbox(
-                                    checked = song.id in selection,
-                                    onCheckedChange = onCheckedChange
+                            IconButton(
+                                onClick = {
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    contentDescription = null,
                                 )
-                            } else {
-                                IconButton(
-                                    onClick = {
-                                        menuState.show {
-                                            SongMenu(
-                                                originalSong = song,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
-                                    },
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null,
-                                    )
-                                }
                             }
                         },
                         modifier = Modifier

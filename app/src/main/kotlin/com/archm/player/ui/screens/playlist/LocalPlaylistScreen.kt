@@ -1282,45 +1282,39 @@ fun LocalPlaylistScreen(
                                 song = song.song,
                                 isActive = song.song.id == mediaMetadata?.id,
                                 isPlaying = isPlaying,
+                                inSelectionMode = inSelectMode,
                                 isSelected = inSelectMode && selection.contains(song.map.id),
                                 showInLibraryIcon = true,
                                 shape = RoundedCornerShape(12.dp),
                                 trailingContent = {
-                                    if (inSelectMode) {
-                                        Checkbox(
-                                            checked = selection.contains(song.map.id),
-                                            onCheckedChange = onCheckedChange
-                                        )
-                                    } else {
-                                        IconButton(
-                                            onClick = {
-                                                menuState.show {
-                                                    SongMenu(
-                                                        originalSong = song.song,
-                                                        playlistSong = song,
-                                                        playlistBrowseId = pl.playlist.browseId,
-                                                        navController = navController,
-                                                        onDismiss = menuState::dismiss,
-                                                    )
-                                                }
-                                            }
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
-                                            )
-                                        }
-
-                                        if (sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable) {
-                                            IconButton(
-                                                onClick = { },
-                                                modifier = Modifier.draggableHandle(),
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.drag_handle),
-                                                    contentDescription = null,
+                                    IconButton(
+                                        onClick = {
+                                            menuState.show {
+                                                SongMenu(
+                                                    originalSong = song.song,
+                                                    playlistSong = song,
+                                                    playlistBrowseId = pl.playlist.browseId,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
                                                 )
                                             }
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.more_vert),
+                                            contentDescription = null,
+                                        )
+                                    }
+
+                                    if (sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable) {
+                                        IconButton(
+                                            onClick = { },
+                                            modifier = Modifier.draggableHandle(),
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.drag_handle),
+                                                contentDescription = null,
+                                            )
                                         }
                                     }
                                 },

@@ -710,6 +710,7 @@ fun OnlinePlaylistScreen(
                             item = songItem,
                             isActive = mediaMetadata?.id == songItem.id,
                             isPlaying = isPlaying,
+                            inSelectionMode = inSelectMode,
                             isSelected = inSelectMode && songItem.id in selection,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
@@ -743,21 +744,14 @@ fun OnlinePlaylistScreen(
                                 )
                                 .animateItem(),
                             trailingContent = {
-                                if (inSelectMode) {
-                                    Checkbox(
-                                        checked = songItem.id in selection,
-                                        onCheckedChange = onCheckedChange,
-                                    )
-                                } else {
-                                    IconButton(
-                                        onClick = {
-                                            menuState.show {
-                                                YouTubeSongMenu(songItem, navController, menuState::dismiss)
-                                            }
+                                IconButton(
+                                    onClick = {
+                                        menuState.show {
+                                            YouTubeSongMenu(songItem, navController, menuState::dismiss)
                                         }
-                                    ) {
-                                        Icon(painterResource(R.drawable.more_vert), null)
                                     }
+                                ) {
+                                    Icon(painterResource(R.drawable.more_vert), null)
                                 }
                             }
                         )
