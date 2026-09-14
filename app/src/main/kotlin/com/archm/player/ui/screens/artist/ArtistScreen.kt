@@ -60,7 +60,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -1700,10 +1699,11 @@ fun ArtistScreen(
                 if (isLandscape && hasAbout && distinctArtists.isNotEmpty()) {
                     // Landscape / Tablet Side-by-Side Row
                     item(key = "section_about_and_related_row") {
+                        val sectionHeight = 316.dp
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(IntrinsicSize.Min)
                                 .padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(20.dp),
                         ) {
@@ -1727,16 +1727,13 @@ fun ArtistScreen(
                                     onNavigateToAbout = onNavigateToAbout,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .aspectRatio(1.1f)
-                                        .heightIn(max = 320.dp),
+                                        .height(sectionHeight),
                                 )
                             }
 
                             // Right Pane: Related Artists with 2 Independent Scrollable Rows (~52% width)
                             Column(
-                                modifier = Modifier
-                                    .weight(1.1f)
-                                    .fillMaxHeight(),
+                                modifier = Modifier.weight(1.1f),
                             ) {
                                 ArtistSectionHeader(
                                     title = "Related Artists",
@@ -1758,7 +1755,7 @@ fun ArtistScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .weight(1f)
+                                        .height(sectionHeight)
                                         .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                                         .drawWithContent {
                                             drawContent()
@@ -1772,7 +1769,7 @@ fun ArtistScreen(
                                                 blendMode = BlendMode.DstIn,
                                             )
                                         },
-                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    verticalArrangement = Arrangement.spacedBy(24.dp),
                                 ) {
                                     LazyRow(
                                         contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
@@ -1788,7 +1785,7 @@ fun ArtistScreen(
                                                 subscribers = null,
                                                 thumbnailUrl = artist.thumbnail,
                                                 onClick = { navController.navigate("artist/${artist.id}") },
-                                                avatarSize = 124.dp,
+                                                avatarSize = 122.dp,
                                                 isSingleLine = true,
                                                 labelSpacing = 6.dp,
                                             )
@@ -1810,7 +1807,7 @@ fun ArtistScreen(
                                                     subscribers = null,
                                                     thumbnailUrl = artist.thumbnail,
                                                     onClick = { navController.navigate("artist/${artist.id}") },
-                                                    avatarSize = 124.dp,
+                                                    avatarSize = 122.dp,
                                                     isSingleLine = true,
                                                     labelSpacing = 6.dp,
                                                 )
@@ -2570,7 +2567,7 @@ private fun HomeItemArtist(
         ) {
             Text(
                 text = title,
-                style = if (isSingleLine) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleSmall,
+                style = if (isSingleLine) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleSmall,
                 color = Color.White,
                 maxLines = if (isSingleLine) 1 else 2,
                 overflow = TextOverflow.Ellipsis,
