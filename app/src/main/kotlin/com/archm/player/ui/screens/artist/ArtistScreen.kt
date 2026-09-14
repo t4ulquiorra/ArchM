@@ -2946,9 +2946,10 @@ private fun ArtistAboutCard(
                     .padding(horizontal = 16.dp)
                     .padding(top = 4.dp, bottom = 12.dp),
             ) {
-                // Row 1: Artist Name (titleMedium, bold), Verified Badge (only if verified), Follow/Following pill button
+                // Top Row: Artist Name (and verified badge) + Follow Button aligned together
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
@@ -2983,7 +2984,7 @@ private fun ArtistAboutCard(
                         }
                     }
 
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     OutlinedFollowPillButton(
                         isFollowed = isFollowed,
@@ -2992,13 +2993,13 @@ private fun ArtistAboutCard(
                     )
                 }
 
-                // Row 2: Monthly Listeners (bodySmall, secondary text)
+                // Monthly Listeners below the name row
                 if (!audienceStat.isNullOrBlank()) {
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = audienceStat,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
