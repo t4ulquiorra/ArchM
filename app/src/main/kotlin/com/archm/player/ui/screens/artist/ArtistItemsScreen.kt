@@ -1110,7 +1110,6 @@ fun ArtistItemsScreen(
                             isPlaying = isPlaying,
                             fillMaxWidth = true,
                             coroutineScope = coroutineScope,
-                            thumbnailCornerRadius = 10.dp,
                             onClick = {
                                 when (item) {
                                     is SongItem -> playerConnection.playQueue(

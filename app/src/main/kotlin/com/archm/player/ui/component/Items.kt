@@ -416,6 +416,7 @@ fun GridItem(
             Modifier
         }
 
+    val innerPadding = 5.dp
     Column(
         modifier =
             modifier
@@ -427,7 +428,7 @@ fun GridItem(
                 }.clip(RoundedCornerShape(18.dp))
                 .background(cardBgColor)
                 .then(clickableModifier)
-                .padding(12.dp),
+                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
         val artworkModifier =
             if (fillMaxWidth) {
@@ -435,7 +436,7 @@ fun GridItem(
                     .fillMaxWidth()
                     .aspectRatio(thumbnailRatio)
             } else {
-                val artworkWidth = cardWidth - 24.dp
+                val artworkWidth = cardWidth - (innerPadding * 2)
                 Modifier
                     .width(artworkWidth)
                     .aspectRatio(thumbnailRatio)
@@ -444,7 +445,7 @@ fun GridItem(
         Box(
             modifier =
                 artworkModifier
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
             BoxWithConstraints(
@@ -455,9 +456,14 @@ fun GridItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 3.dp),
+        ) {
             title()
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -650,13 +656,12 @@ fun SongGridItem(
     },
     badges = badges,
     thumbnailContent = {
-        val gridHeight = currentGridThumbnailHeight()
         ItemThumbnail(
             thumbnailUrl = song.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
-            modifier = Modifier.size(gridHeight)
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxSize(),
         )
         if (!isActive) {
             OverlayPlayButton(
@@ -891,7 +896,8 @@ fun AlbumGridItem(
             thumbnailUrl = album.album.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxSize(),
         )
 
         AlbumPlayButton(
@@ -1118,7 +1124,7 @@ fun PlaylistGridItem(
                     )
                 }
             },
-            shape = RoundedCornerShape(ThumbnailCornerRadius)
+            shape = RoundedCornerShape(14.dp)
         )
     },
     fillMaxWidth = fillMaxWidth,
@@ -1315,7 +1321,7 @@ fun YouTubeGridItem(
     fillMaxWidth: Boolean = false,
     thumbnailSize: Dp? = null,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    thumbnailCornerRadius: Dp = 12.dp,
+    thumbnailCornerRadius: Dp = 14.dp,
     containerColor: Color? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
@@ -1443,6 +1449,7 @@ fun VideoGridItem(
         label = "VideoGridItemScale",
     )
 
+    val innerPadding = 5.dp
     Column(
         modifier =
             modifier
@@ -1459,14 +1466,14 @@ fun VideoGridItem(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(12.dp),
+                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
@@ -1497,11 +1504,12 @@ fun VideoGridItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 3.dp)
                 .heightIn(min = 48.dp),
         ) {
             Text(
@@ -1657,8 +1665,8 @@ fun LocalSongsGrid(
             thumbnailUrl = thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
-            modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxSize(),
             showCenterPlay = true,
             playButtonVisible = false
         )
@@ -1687,7 +1695,7 @@ fun LocalArtistsGrid(
             isActive = false,
             isPlaying = false,
             shape = CircleShape,
-            modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            modifier = Modifier.fillMaxSize(),
             showCenterPlay = false,
             playButtonVisible = false
         )
@@ -1715,8 +1723,8 @@ fun LocalAlbumsGrid(
             thumbnailUrl = thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
-            modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxSize(),
             showCenterPlay = false,
             playButtonVisible = true
         )

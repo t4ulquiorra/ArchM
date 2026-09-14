@@ -33,7 +33,7 @@ import com.archm.player.utils.rememberEnumPreference
 @Composable
 fun GridItemPlaceHolder(
     modifier: Modifier = Modifier,
-    thumbnailShape: Shape = RoundedCornerShape(10.dp),
+    thumbnailShape: Shape = RoundedCornerShape(14.dp),
     fillMaxWidth: Boolean = false,
 ) {
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
@@ -49,9 +49,9 @@ fun GridItemPlaceHolder(
     Column(
         modifier =
             baseModifier
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .padding(8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(
@@ -71,9 +71,13 @@ fun GridItemPlaceHolder(
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 3.dp),
+        ) {
             TextPlaceholder()
             TextPlaceholder()
         }

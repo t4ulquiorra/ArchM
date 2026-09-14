@@ -790,7 +790,6 @@ fun OnlinePlaylistScreen(
                                         item = item,
                                         thumbnailSize = 150.dp,
                                         contentPadding = PaddingValues(0.dp),
-                                        thumbnailCornerRadius = 12.dp,
                                         onClick = {
                                             when (item) {
                                                 is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
