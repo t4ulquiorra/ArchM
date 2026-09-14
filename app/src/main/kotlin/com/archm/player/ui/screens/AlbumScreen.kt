@@ -162,9 +162,9 @@ fun AlbumScreen(
     val primaryArtist = albumWithSongs?.artists?.firstOrNull()
     val artistName = primaryArtist?.name ?: "Artist"
     val onMoreByArtistClick: (() -> Unit)? = primaryArtist?.id?.let { artistId ->
-        {
-            val endpoint = moreByArtistEndpoint
-            if (endpoint != null) {
+        val endpoint = moreByArtistEndpoint
+        if (endpoint != null) {
+            {
                 navController.navigate(
                     buildArtistItemsRoute(
                         artistId = artistId,
@@ -173,9 +173,9 @@ fun AlbumScreen(
                         artistName = artistName,
                     )
                 )
-            } else {
-                navController.navigate("artist/$artistId/albums")
             }
+        } else {
+            null
         }
     }
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
@@ -837,20 +837,26 @@ fun AlbumScreen(
                     }
 
                     item(key = "releases_for_you_grid") {
-                        val chunkedRecommendations = remember(distinctRecommendations) {
-                            distinctRecommendations.chunked(2)
+                        val configuration = LocalConfiguration.current
+                        val screenWidthDp = configuration.screenWidthDp.dp
+                        val columnCount = remember(screenWidthDp) {
+                            maxOf(2, ((screenWidthDp - 32.dp) / 152.dp).toInt())
+                        }
+                        val chunkedRecommendations = remember(distinctRecommendations, columnCount) {
+                            distinctRecommendations.chunked(columnCount)
                         }
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
                                 .padding(bottom = 14.dp)
                                 .animateItem(),
                             verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
                             chunkedRecommendations.forEach { rowItems ->
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
                                     for (item in rowItems) {
@@ -871,7 +877,7 @@ fun AlbumScreen(
                                             )
                                         }
                                     }
-                                    if (rowItems.size == 1) {
+                                    repeat(columnCount - rowItems.size) {
                                         Spacer(modifier = Modifier.weight(1f))
                                     }
                                 }

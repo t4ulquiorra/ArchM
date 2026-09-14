@@ -4,7 +4,9 @@ package com.archm.player.ui.screens.artist
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
@@ -97,10 +99,18 @@ fun ArtistAlbumsScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+        val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
-            contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = insetsPadding.calculateTopPadding() + 8.dp,
+                bottom = 120.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(
                 key = "header",
@@ -109,7 +119,7 @@ fun ArtistAlbumsScreen(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Spacer(Modifier.weight(1f))
 

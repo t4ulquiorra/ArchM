@@ -776,20 +776,26 @@ fun OnlinePlaylistScreen(
                         }
 
                         item(key = "related_grid") {
-                            val chunkedRelatedItems = remember(relatedItems) {
-                                relatedItems.chunked(2)
+                            val configuration = LocalConfiguration.current
+                            val screenWidthDp = configuration.screenWidthDp.dp
+                            val columnCount = remember(screenWidthDp) {
+                                maxOf(2, ((screenWidthDp - 32.dp) / 152.dp).toInt())
+                            }
+                            val chunkedRelatedItems = remember(relatedItems, columnCount) {
+                                relatedItems.chunked(columnCount)
                             }
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
                                     .padding(bottom = 14.dp)
                                     .animateItem(),
                                 verticalArrangement = Arrangement.spacedBy(14.dp),
                             ) {
                                 chunkedRelatedItems.forEach { rowItems ->
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp),
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
                                         for (item in rowItems) {
@@ -835,7 +841,7 @@ fun OnlinePlaylistScreen(
                                                 )
                                             }
                                         }
-                                        if (rowItems.size == 1) {
+                                        repeat(columnCount - rowItems.size) {
                                             Spacer(modifier = Modifier.weight(1f))
                                         }
                                     }
