@@ -2848,6 +2848,7 @@ private fun ArtistAboutCard(
     modifier: Modifier = Modifier,
 ) {
     val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val followButtonHeight = 32.dp
 
     Box(
         modifier = modifier
@@ -2940,6 +2941,7 @@ private fun ArtistAboutCard(
                     OutlinedFollowPillButton(
                         isFollowed = isFollowed,
                         onClick = onToggleFollow,
+                        height = followButtonHeight,
                     )
                 }
 
@@ -2957,7 +2959,7 @@ private fun ArtistAboutCard(
 
                 // Row 3: Description/Bio ONLY if !bioText.isNullOrBlank()
                 if (!bioText.isNullOrBlank()) {
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(followButtonHeight))
                     Text(
                         text = bioText,
                         style = MaterialTheme.typography.bodySmall.copy(
