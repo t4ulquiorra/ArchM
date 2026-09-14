@@ -503,9 +503,10 @@ fun ArtistScreen(
                                         .padding(horizontal = 20.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
+                                    Spacer(modifier = Modifier.height(24.dp))
                                     Box(
                                         modifier = Modifier
-                                            .size(avatarSize)
+                                            .size(160.dp)
                                             .clip(CircleShape)
                                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                     )
@@ -816,14 +817,16 @@ fun ArtistScreen(
                                     .fillMaxWidth()
                                     .wrapContentHeight()
                                     .windowInsetsPadding(WindowInsets.statusBars)
-                                    .padding(top = topContentPadding, bottom = 24.dp)
+                                    .padding(top = topContentPadding, bottom = if (latestRelease != null) 0.dp else 24.dp)
                                     .padding(horizontal = 20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
+                                Spacer(modifier = Modifier.height(24.dp))
+
                                 // Centered Circular Avatar
                                 Box(
                                     modifier = Modifier
-                                        .size(avatarSize)
+                                        .size(160.dp)
                                         .clip(CircleShape)
                                         .border(
                                             border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
@@ -986,16 +989,8 @@ fun ArtistScreen(
 
                 // Latest Release Section (placed directly above Popular)
                 latestRelease?.let { release ->
-                    item(key = "section_latest_release_header") {
-                        ArtistSectionHeader(
-                            title = stringResource(R.string.latest_release),
-                            topSpacing = 16.dp,
-                            bottomSpacing = 8.dp,
-                            horizontalPadding = if (isLandscape) 36.dp else 16.dp,
-                        )
-                    }
-
                     item(key = "section_latest_release_card") {
+                        Spacer(modifier = Modifier.height(20.dp))
                         ArtistLatestReleaseCard(
                             release = release,
                             onClick = { navController.navigate("album/${release.id}") },
@@ -2780,70 +2775,85 @@ private fun ArtistLatestReleaseCard(
         release.year?.toString(),
     ).joinToString(" • ")
 
-    Row(
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = if (isLandscape) 36.dp else 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = if (isLandscape) 36.dp else 16.dp),
     ) {
-        if (release.thumbnail.isNotBlank()) {
-            AsyncImage(
-                model = release.thumbnail.resize(width = 256, height = 256),
-                contentDescription = release.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Album Artwork
+            if (release.thumbnail.isNotBlank()) {
+                AsyncImage(
+                    model = release.thumbnail.resize(width = 300, height = 300),
+                    contentDescription = release.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(76.dp)
+                        .clip(RoundedCornerShape(14.dp)),
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(76.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.album),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(36.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.album),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(32.dp),
+                // Eyebrow label inside the card
+                Text(
+                    text = "LATEST RELEASE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.1.sp,
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Album Title
+                Text(
+                    text = release.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Subtitle (e.g. "Album • 2026")
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+            // No chevron (>) or trailing icon
         }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = release.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        Icon(
-            painter = painterResource(R.drawable.navigate_next),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.size(24.dp),
-        )
     }
 }
 
