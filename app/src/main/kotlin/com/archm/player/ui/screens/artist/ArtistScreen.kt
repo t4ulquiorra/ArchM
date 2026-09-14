@@ -1117,6 +1117,7 @@ fun ArtistScreen(
                                                 )
                                             }
                                         },
+                                        onLongClick = {},
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.more_vert),
