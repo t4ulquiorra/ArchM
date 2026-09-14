@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -40,7 +41,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import com.archm.player.ui.screens.library.rememberArtworkCardColor
@@ -82,7 +85,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
-import androidx.compose.material3.ripple
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -93,6 +95,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -171,6 +174,7 @@ import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.pages.ArtistPage
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -2290,15 +2294,11 @@ private fun HomeItemContentPlaylist(
         )
 
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1.0f,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow,
-            ),
-        label = "HomeItemCardScale",
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.97f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
     val innerPadding = 5.dp
@@ -2405,15 +2405,11 @@ private fun HomeItemVideo(
         )
 
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1.0f,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow,
-            ),
-        label = "HomeItemVideoScale",
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.97f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
     val innerPadding = 5.dp
@@ -2517,15 +2513,11 @@ private fun HomeItemArtist(
     labelSpacing: Dp = 8.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1.0f,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow,
-            ),
-        label = "HomeItemArtistScale",
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.95f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
     Column(
@@ -2700,20 +2692,78 @@ private fun buildArtistItemsRoute(
 }
 
 @Composable
+fun rememberBouncyScale(
+    interactionSource: InteractionSource,
+    targetShrinkScale: Float = 0.94f,
+    stiffness: Float = Spring.StiffnessMedium,
+    dampingRatio: Float = Spring.DampingRatioMediumBouncy,
+): State<Float> {
+    val animatable = remember { Animatable(1f) }
+    LaunchedEffect(interactionSource, targetShrinkScale, stiffness, dampingRatio) {
+        var pressJob: Job? = null
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> {
+                    pressJob?.cancel()
+                    pressJob = launch {
+                        animatable.animateTo(
+                            targetValue = targetShrinkScale,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = stiffness,
+                            ),
+                        )
+                    }
+                }
+                is PressInteraction.Release -> {
+                    pressJob?.cancel()
+                    pressJob = launch {
+                        // Guaranteed tap bounce: on light taps, finish the punch-down before spring release
+                        if (animatable.value > targetShrinkScale + 0.01f) {
+                            animatable.animateTo(
+                                targetValue = targetShrinkScale,
+                                animationSpec = tween(durationMillis = 60, easing = FastOutLinearInEasing),
+                            )
+                        }
+                        animatable.animateTo(
+                            targetValue = 1f,
+                            animationSpec = spring(
+                                dampingRatio = dampingRatio,
+                                stiffness = stiffness,
+                            ),
+                        )
+                    }
+                }
+                is PressInteraction.Cancel -> {
+                    pressJob?.cancel()
+                    pressJob = launch {
+                        animatable.animateTo(
+                            targetValue = 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = stiffness,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+    return animatable.asState()
+}
+
+@Composable
 fun Modifier.bouncyClickable(
     enabled: Boolean = true,
     shrinkScale: Float = 0.94f,
     onClick: () -> Unit,
 ): Modifier {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && enabled) shrinkScale else 1.0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow,
-        ),
-        label = "BouncyClickableScale",
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = if (enabled) shrinkScale else 1.0f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
     )
     return this
         .graphicsLayer {
@@ -2739,13 +2789,11 @@ fun OutlinedFollowPillButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.94f else 1.0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow,
-        ),
-        label = "FollowButtonScale",
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.94f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
     )
     val backgroundColor = if (isPressed) Color.White.copy(alpha = 0.08f) else Color.Transparent
 
@@ -2813,9 +2861,8 @@ private fun ArtistSectionHeader(
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(color = Color.White, bounded = true),
+                        .bouncyClickable(
+                            shrinkScale = 0.94f,
                             onClick = onMoreClick,
                         )
                         .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -3004,12 +3051,16 @@ private fun ArtistLatestReleaseCard(
     ).joinToString(" • ")
 
     Surface(
-        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = if (isLandscape) 36.dp else 16.dp),
+            .padding(horizontal = if (isLandscape) 36.dp else 16.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .bouncyClickable(
+                shrinkScale = 0.97f,
+                onClick = onClick,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -3054,7 +3105,7 @@ private fun ArtistLatestReleaseCard(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.1.sp,
                     ),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
