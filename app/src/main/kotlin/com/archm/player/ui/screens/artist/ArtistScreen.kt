@@ -732,20 +732,12 @@ fun ArtistScreen(
                                             )
                                             if (isArtistVerified) {
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(20.dp)
-                                                        .clip(CircleShape)
-                                                        .background(Color(0xFF3D91F4)),
-                                                    contentAlignment = Alignment.Center,
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.check),
-                                                        contentDescription = "Verified",
-                                                        tint = Color.White,
-                                                        modifier = Modifier.size(12.dp),
-                                                    )
-                                                }
+                                                Icon(
+                                                    painter = painterResource(R.drawable.ic_verified_badge),
+                                                    contentDescription = "Verified",
+                                                    tint = Color.Unspecified, // Keeps the built-in blue and white colors
+                                                    modifier = Modifier.size(20.dp),
+                                                )
                                             }
                                         }
 
@@ -959,20 +951,12 @@ fun ArtistScreen(
                                     )
                                     if (isArtistVerified) {
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clip(CircleShape)
-                                                .background(Color(0xFF3D91F4)),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.check),
-                                                contentDescription = "Verified",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(12.dp),
-                                            )
-                                        }
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_verified_badge),
+                                            contentDescription = "Verified",
+                                            tint = Color.Unspecified, // Keeps the built-in blue and white colors
+                                            modifier = Modifier.size(20.dp),
+                                        )
                                     }
                                 }
 
@@ -2921,20 +2905,12 @@ private fun ArtistAboutCard(
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                             if (isVerified) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF3D91F4)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.check),
-                                        contentDescription = "Verified",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(10.dp)
-                                    )
-                                }
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_verified_badge),
+                                    contentDescription = "Verified",
+                                    tint = Color.Unspecified, // Keeps the built-in blue and white colors
+                                    modifier = Modifier.size(20.dp),
+                                )
                             }
                         }
 
