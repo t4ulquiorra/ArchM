@@ -107,8 +107,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -422,7 +425,7 @@ fun ArtistScreen(
 
     Box(Modifier.fillMaxSize()) {
         val configuration = LocalConfiguration.current
-        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp >= 600
         val headerHeight = (configuration.screenHeightDp * 0.45f).dp
         val avatarSize = if (isLandscape) {
             if (headerHeight >= 220.dp) 125.dp else 110.dp
@@ -1647,14 +1650,201 @@ fun ArtistScreen(
                     }
                 }
 
-                // 8. Horizontal "Related Artists" Carousel (LazyRow with circular images)
-                relatedSection?.let { section ->
-                    val distinctArtists = section.items.filterIsInstance<ArtistItem>().distinctBy { it.id }
+                // 8 & 9. Adaptive "About" & "Related Artists" Sections
+                val distinctArtists = remember(relatedSection) {
+                    relatedSection?.items?.filterIsInstance<ArtistItem>()?.distinctBy { it.id }.orEmpty()
+                }
+                val topRowArtists = remember(distinctArtists) {
+                    distinctArtists.filterIndexed { index, _ -> index % 2 == 0 }
+                }
+                val bottomRowArtists = remember(distinctArtists) {
+                    distinctArtists.filterIndexed { index, _ -> index % 2 != 0 }
+                }
+
+                val description = artistPage?.description
+                val descriptionRuns = artistPage?.descriptionRuns
+                val hasDescription = !description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()
+                val hasAudienceStat = !artistPage?.monthlyListenerCount.isNullOrBlank() || !artistPage?.subscriberCountText.isNullOrBlank()
+                val hasAbout = showArtistDescription && artistPage != null && (hasDescription || hasAudienceStat)
+
+                val portraitUrl = thumbnail
+                    ?: artistPage?.artist?.thumbnail
+                    ?: libraryArtist?.artist?.thumbnailUrl
+                val monthlyListeners = artistPage?.monthlyListenerCount
+                val subscribers = artistPage?.subscriberCountText
+                val audienceStat = when {
+                    !monthlyListeners.isNullOrBlank() -> {
+                        if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                            monthlyListeners
+                        } else {
+                            "$monthlyListeners monthly listeners"
+                        }
+                    }
+                    !subscribers.isNullOrBlank() -> {
+                        if (subscribers.contains("subscriber", ignoreCase = true)) {
+                            subscribers
+                        } else {
+                            "$subscribers subscribers"
+                        }
+                    }
+                    else -> null
+                }
+                val bioText = description ?: descriptionRuns?.joinToString(separator = "") { it.text }
+
+                if (isLandscape && hasAbout && distinctArtists.isNotEmpty()) {
+                    // Landscape / Tablet Side-by-Side Row
+                    item(key = "section_about_and_related_row") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        ) {
+                            // Left Pane: About Pod (~48% width)
+                            Column(
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                ArtistSectionHeader(
+                                    title = "About",
+                                    horizontalPadding = 0.dp,
+                                )
+                                ArtistAboutCard(
+                                    artistName = artistName,
+                                    portraitUrl = portraitUrl,
+                                    audienceStat = audienceStat,
+                                    bioText = bioText,
+                                    isFollowed = isFollowed,
+                                    isLandscape = true,
+                                    onToggleFollow = onToggleFollow,
+                                    onNavigateToAbout = onNavigateToAbout,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(1.1f)
+                                        .heightIn(max = 320.dp),
+                                )
+                            }
+
+                            // Right Pane: Related Artists with 2 Independent Scrollable Rows (~52% width)
+                            Column(
+                                modifier = Modifier.weight(1.1f),
+                            ) {
+                                ArtistSectionHeader(
+                                    title = "Related Artists",
+                                    horizontalPadding = 0.dp,
+                                    onMoreClick = relatedSection?.moreEndpoint?.let { moreEndpoint ->
+                                        {
+                                            navController.navigate(
+                                                buildArtistItemsRoute(
+                                                    viewModel.artistId,
+                                                    moreEndpoint,
+                                                    title = "Related Artists",
+                                                    artistName = artistName,
+                                                ),
+                                            )
+                                        }
+                                    },
+                                )
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                        .drawWithContent {
+                                            drawContent()
+                                            drawRect(
+                                                brush = Brush.horizontalGradient(
+                                                    0f to Color.Transparent,
+                                                    0.06f to Color.Black,
+                                                    0.95f to Color.Black,
+                                                    1f to Color.Transparent,
+                                                ),
+                                                blendMode = BlendMode.DstIn,
+                                            )
+                                        },
+                                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                                ) {
+                                    LazyRow(
+                                        contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        items(
+                                            items = topRowArtists,
+                                            key = { "related_top_${it.id}" },
+                                        ) { artist ->
+                                            HomeItemArtist(
+                                                title = artist.title,
+                                                subscribers = null,
+                                                thumbnailUrl = artist.thumbnail,
+                                                onClick = { navController.navigate("artist/${artist.id}") },
+                                                avatarSize = 110.dp,
+                                            )
+                                        }
+                                    }
+
+                                    if (bottomRowArtists.isNotEmpty()) {
+                                        LazyRow(
+                                            contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            items(
+                                                items = bottomRowArtists,
+                                                key = { "related_bottom_${it.id}" },
+                                            ) { artist ->
+                                                HomeItemArtist(
+                                                    title = artist.title,
+                                                    subscribers = null,
+                                                    thumbnailUrl = artist.thumbnail,
+                                                    onClick = { navController.navigate("artist/${artist.id}") },
+                                                    avatarSize = 110.dp,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Portrait Mode (or single section in Landscape)
+                    if (hasAbout) {
+                        item(key = "section_about_header") {
+                            ArtistSectionHeader(
+                                title = "About",
+                            )
+                        }
+
+                        item(key = "section_about_card") {
+                            ArtistAboutCard(
+                                artistName = artistName,
+                                portraitUrl = portraitUrl,
+                                audienceStat = audienceStat,
+                                bioText = bioText,
+                                isFollowed = isFollowed,
+                                isLandscape = isLandscape,
+                                onToggleFollow = onToggleFollow,
+                                onNavigateToAbout = onNavigateToAbout,
+                                modifier = if (isLandscape) {
+                                    Modifier
+                                        .fillMaxWidth(0.5f)
+                                        .padding(horizontal = 16.dp)
+                                        .aspectRatio(1.1f)
+                                        .heightIn(max = 320.dp)
+                                } else {
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
+                                },
+                            )
+                        }
+                    }
+
                     if (distinctArtists.isNotEmpty()) {
                         item(key = "section_related_header") {
                             ArtistSectionHeader(
                                 title = "Related Artists",
-                                onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
+                                onMoreClick = relatedSection?.moreEndpoint?.let { moreEndpoint ->
                                     {
                                         navController.navigate(
                                             buildArtistItemsRoute(
@@ -1685,186 +1875,6 @@ fun ArtistScreen(
                                         thumbnailUrl = artist.thumbnail,
                                         onClick = { navController.navigate("artist/${artist.id}") },
                                     )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 9. Spotify-Style "About" Section
-                if (showArtistDescription && artistPage != null) {
-                    val description = artistPage.description
-                    val descriptionRuns = artistPage.descriptionRuns
-                    val hasDescription = !description.isNullOrBlank() || !descriptionRuns.isNullOrEmpty()
-                    val hasAudienceStat = !artistPage.monthlyListenerCount.isNullOrBlank() || !artistPage.subscriberCountText.isNullOrBlank()
-
-                    if (hasDescription || hasAudienceStat) {
-                        item(key = "section_about_header") {
-                            ArtistSectionHeader(
-                                title = "About",
-                            )
-                        }
-
-                        item(key = "section_about_card") {
-                            val podSurfaceColor = MaterialTheme.colorScheme.surfaceContainer
-                            val portraitUrl = thumbnail
-                                ?: artistPage.artist.thumbnail
-                                ?: libraryArtist?.artist?.thumbnailUrl
-                            val monthlyListeners = artistPage.monthlyListenerCount
-                            val subscribers = artistPage.subscriberCountText
-                            val audienceStat = when {
-                                !monthlyListeners.isNullOrBlank() -> {
-                                    if (monthlyListeners?.contains("listener", ignoreCase = true) == true) {
-                                        monthlyListeners
-                                    } else {
-                                        "$monthlyListeners monthly listeners"
-                                    }
-                                }
-                                !subscribers.isNullOrBlank() -> {
-                                    if (subscribers?.contains("subscriber", ignoreCase = true) == true) {
-                                        subscribers
-                                    } else {
-                                        "$subscribers subscribers"
-                                    }
-                                }
-                                else -> null
-                            }
-
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(podSurfaceColor)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = ripple(color = Color.White),
-                                        onClick = onNavigateToAbout,
-                                    ),
-                            ) {
-                                // Top Half: Artist portrait/banner with bottom gradient fade into pod surface
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp),
-                                ) {
-                                    if (!portraitUrl.isNullOrBlank()) {
-                                        AsyncImage(
-                                            model = portraitUrl?.resize(1280, 720) ?: portraitUrl,
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize(),
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    colors = listOf(
-                                                        Color.Transparent,
-                                                        podSurfaceColor.copy(alpha = 0.3f),
-                                                        podSurfaceColor,
-                                                    ),
-                                                ),
-                                            ),
-                                    )
-                                }
-
-                                // Identity & Actions Row
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                        .padding(top = 4.dp, bottom = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        ) {
-                                            Text(
-                                                text = artistName.orEmpty(),
-                                                style = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(16.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color(0xFF3D91F4)),
-                                                contentAlignment = Alignment.Center,
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.check),
-                                                    contentDescription = "Verified",
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(10.dp),
-                                                )
-                                            }
-                                        }
-                                        if (!audienceStat.isNullOrBlank()) {
-                                            Spacer(Modifier.height(4.dp))
-                                            Text(
-                                                text = audienceStat,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = Color.White.copy(alpha = 0.7f),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(Modifier.width(12.dp))
-
-                                    OutlinedFollowPillButton(
-                                        isFollowed = isFollowed,
-                                        onClick = onToggleFollow,
-                                    )
-                                }
-
-                                // Bio Section
-                                val bioText = description ?: descriptionRuns?.joinToString(separator = "") { it.text }
-                                if (!bioText.isNullOrBlank()) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp)
-                                            .padding(bottom = 16.dp),
-                                    ) {
-                                        Text(
-                                            text = bioText,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                lineHeight = 20.sp,
-                                            ),
-                                            color = Color.White.copy(alpha = 0.85f),
-                                            maxLines = 3,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Spacer(Modifier.height(8.dp))
-                                        Text(
-                                            text = "see more",
-                                            style = MaterialTheme.typography.labelLarge.copy(
-                                                fontWeight = FontWeight.Bold,
-                                            ),
-                                            color = Color.White,
-                                            modifier = Modifier
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = null,
-                                                    onClick = onNavigateToAbout,
-                                                )
-                                                .padding(vertical = 4.dp),
-                                        )
-                                    }
-                                } else {
-                                    Spacer(Modifier.height(16.dp))
                                 }
                             }
                         }
@@ -2763,6 +2773,157 @@ private fun ArtistSectionHeader(
             }
         }
         Spacer(modifier = Modifier.height(bottomSpacing))
+    }
+}
+
+@Composable
+private fun ArtistAboutCard(
+    artistName: String?,
+    portraitUrl: String?,
+    audienceStat: String?,
+    bioText: String?,
+    isFollowed: Boolean,
+    isLandscape: Boolean,
+    onToggleFollow: () -> Unit,
+    onNavigateToAbout: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val podSurfaceColor = MaterialTheme.colorScheme.surfaceContainer
+
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(podSurfaceColor)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(color = Color.White),
+                onClick = onNavigateToAbout,
+            ),
+    ) {
+        // Top Half: Artist portrait/banner with bottom gradient fade into pod surface
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(if (isLandscape) 140.dp else 200.dp),
+        ) {
+            val nonNullPortrait = portraitUrl
+            if (!nonNullPortrait.isNullOrBlank()) {
+                AsyncImage(
+                    model = nonNullPortrait.resize(1280, 720),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                podSurfaceColor.copy(alpha = 0.3f),
+                                podSurfaceColor,
+                            ),
+                        ),
+                    ),
+            )
+        }
+
+        // Identity & Actions Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(top = 4.dp, bottom = if (isLandscape) 4.dp else 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = artistName.orEmpty(),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF3D91F4)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.check),
+                            contentDescription = "Verified",
+                            tint = Color.White,
+                            modifier = Modifier.size(10.dp),
+                        )
+                    }
+                }
+                if (!audienceStat.isNullOrBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = audienceStat,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            OutlinedFollowPillButton(
+                isFollowed = isFollowed,
+                onClick = onToggleFollow,
+            )
+        }
+
+        // Bio Section
+        if (!bioText.isNullOrBlank()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = if (isLandscape) 12.dp else 16.dp),
+            ) {
+                Text(
+                    text = bioText,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        lineHeight = 20.sp,
+                    ),
+                    color = Color.White.copy(alpha = 0.85f),
+                    maxLines = if (isLandscape) 2 else 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(if (isLandscape) 4.dp else 8.dp))
+                Text(
+                    text = "see more",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    color = Color.White,
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onNavigateToAbout,
+                        )
+                        .padding(vertical = 4.dp),
+                )
+            }
+        } else {
+            Spacer(Modifier.height(16.dp))
+        }
     }
 }
 
