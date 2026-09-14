@@ -109,7 +109,6 @@ import com.archm.player.playback.ExoDownloadService
 import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.ui.component.CombinedIconButton
 import com.archm.player.ui.component.ExpandableText
-import com.archm.player.ui.component.GridCardPod
 import com.archm.player.ui.component.LinkSegment
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
@@ -827,59 +826,47 @@ fun AlbumScreen(
                     }
                 }
 
-                // 6. You Might Also Like 2-Column Grid
+                // 6. You Might Also Like Carousel
                 if (distinctRecommendations.isNotEmpty()) {
-                    item(key = "releases_for_you_title") {
-                        NavigationTitle(
-                            title = stringResource(R.string.you_might_also_like),
-                            modifier = Modifier.animateItem(),
-                        )
-                    }
-
-                    item(key = "releases_for_you_grid") {
-                        val configuration = LocalConfiguration.current
-                        val screenWidthDp = configuration.screenWidthDp.dp
-                        val columnCount = remember(screenWidthDp) {
-                            maxOf(2, ((screenWidthDp - 32.dp) / 152.dp).toInt())
-                        }
-                        val chunkedRecommendations = remember(distinctRecommendations, columnCount) {
-                            distinctRecommendations.chunked(columnCount)
-                        }
+                    item(key = "releases_for_you_carousel") {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 14.dp)
                                 .animateItem(),
-                            verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
-                            chunkedRecommendations.forEach { rowItems ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    for (item in rowItems) {
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            GridCardPod(
-                                                item = item,
-                                                onClick = { navController.navigate("album/${item.id}") },
-                                                onLongClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    menuState.show {
-                                                        YouTubeAlbumMenu(
-                                                            albumItem = item,
-                                                            navController = navController,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    }
-                                                },
-                                            )
-                                        }
-                                    }
-                                    repeat(columnCount - rowItems.size) {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
+                            AlbumSectionHeader(
+                                title = stringResource(R.string.you_might_also_like),
+                                bottomSpacing = 9.dp,
+                            )
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                items(
+                                    items = distinctRecommendations,
+                                    key = { "recommendation_${it.id}" },
+                                ) { item ->
+                                    YouTubeGridItem(
+                                        item = item,
+                                        isActive = mediaMetadata?.album?.id == item.id,
+                                        isPlaying = isPlaying,
+                                        coroutineScope = scope,
+                                        thumbnailSize = 150.dp,
+                                        contentPadding = PaddingValues(0.dp),
+                                        onClick = { navController.navigate("album/${item.id}") },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                YouTubeAlbumMenu(
+                                                    albumItem = item,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.animateItem(),
+                                    )
                                 }
                             }
                         }
