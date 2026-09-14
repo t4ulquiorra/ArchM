@@ -253,6 +253,12 @@ fun LocalPlaylistScreen(
         selection.clear()
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     val exportCsvLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri != null) {
             coroutineScope.launch(Dispatchers.IO) {
@@ -1265,6 +1271,9 @@ fun LocalPlaylistScreen(
                                 selection.add(song.map.id)
                             } else {
                                 selection.remove(Integer.valueOf(song.map.id))
+                                if (selection.isEmpty()) {
+                                    inSelectMode = false
+                                }
                             }
                         }
 
@@ -1406,7 +1415,7 @@ fun LocalPlaylistScreen(
                         checked = selection.size == songs.size && selection.isNotEmpty(),
                         onCheckedChange = {
                             if (selection.size == songs.size) {
-                                selection.clear()
+                                onExitSelectionMode()
                             } else {
                                 selection.clear()
                                 selection.addAll(songs.map { it.map.id })

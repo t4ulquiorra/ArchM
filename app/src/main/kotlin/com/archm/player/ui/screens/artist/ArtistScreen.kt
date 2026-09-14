@@ -153,6 +153,8 @@ import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.IconButton
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.bouncyClickable
+import com.archm.player.ui.component.rememberBouncyScale
 import com.archm.player.ui.component.shimmer.ButtonPlaceholder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
@@ -2372,18 +2374,18 @@ private fun HomeItemContentPlaylist(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .size(28.dp)
+                            .padding(8.dp)
+                            .size(36.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(Color.Black.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(14.dp),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -2485,18 +2487,18 @@ private fun HomeItemVideo(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .size(28.dp)
+                            .padding(8.dp)
+                            .size(36.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(Color.Black.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(14.dp),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -2725,92 +2727,6 @@ private fun buildArtistItemsRoute(
     }
 }
 
-@Composable
-fun rememberBouncyScale(
-    interactionSource: InteractionSource,
-    targetShrinkScale: Float = 0.94f,
-    stiffness: Float = Spring.StiffnessMedium,
-    dampingRatio: Float = Spring.DampingRatioMediumBouncy,
-): State<Float> {
-    val animatable = remember { Animatable(1f) }
-    LaunchedEffect(interactionSource, targetShrinkScale, stiffness, dampingRatio) {
-        var pressJob: Job? = null
-        interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is PressInteraction.Press -> {
-                    pressJob?.cancel()
-                    pressJob = launch {
-                        animatable.animateTo(
-                            targetValue = targetShrinkScale,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = stiffness,
-                            ),
-                        )
-                    }
-                }
-                is PressInteraction.Release -> {
-                    pressJob?.cancel()
-                    pressJob = launch {
-                        // Guaranteed tap bounce: on light taps, finish the punch-down before spring release
-                        if (animatable.value > targetShrinkScale + 0.01f) {
-                            animatable.animateTo(
-                                targetValue = targetShrinkScale,
-                                animationSpec = tween(durationMillis = 60, easing = FastOutLinearInEasing),
-                            )
-                        }
-                        animatable.animateTo(
-                            targetValue = 1f,
-                            animationSpec = spring(
-                                dampingRatio = dampingRatio,
-                                stiffness = stiffness,
-                            ),
-                        )
-                    }
-                }
-                is PressInteraction.Cancel -> {
-                    pressJob?.cancel()
-                    pressJob = launch {
-                        animatable.animateTo(
-                            targetValue = 1f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = stiffness,
-                            ),
-                        )
-                    }
-                }
-            }
-        }
-    }
-    return animatable.asState()
-}
-
-@Composable
-fun Modifier.bouncyClickable(
-    enabled: Boolean = true,
-    shrinkScale: Float = 0.94f,
-    onClick: () -> Unit,
-): Modifier {
-    val interactionSource = remember { MutableInteractionSource() }
-    val scale by rememberBouncyScale(
-        interactionSource = interactionSource,
-        targetShrinkScale = if (enabled) shrinkScale else 1.0f,
-        stiffness = Spring.StiffnessMedium,
-        dampingRatio = Spring.DampingRatioMediumBouncy,
-    )
-    return this
-        .graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        }
-        .clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = enabled,
-            onClick = onClick,
-        )
-}
 
 @Composable
 fun OutlinedFollowPillButton(

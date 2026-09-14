@@ -126,7 +126,10 @@ import com.archm.player.db.entities.Playlist
 import com.archm.player.db.entities.Song
 import com.archm.player.extensions.toMediaItem
 import com.archm.player.models.MediaMetadata
+import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.LocalAlbumRadio
+import com.archm.player.playback.queues.YouTubeQueue
+import com.music.innertube.models.WatchEndpoint
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.isLocalMediaId
 import com.archm.player.utils.joinByBullet
@@ -1379,27 +1382,43 @@ fun YouTubeGridItem(
             modifier = Modifier.fillMaxSize(),
         )
 
-        if (item is SongItem && !isActive) {
-            OverlayPlayButton(
-                visible = true
-            )
-        }
-
+        val isPlayable = (item is AlbumItem || item is PlaylistItem || item is SongItem) && !isActive
         AlbumPlayButton(
-            visible = item is AlbumItem && !isActive,
+            visible = isPlayable,
             onClick = {
                 scope.launch(Dispatchers.IO) {
-                    var albumWithSongs = database.albumWithSongs(item.id).first()
-                    if (albumWithSongs?.songs.isNullOrEmpty()) {
-                        YouTube.album(item.id).onSuccess { albumPage ->
-                            database.transaction { insert(albumPage) }
-                            albumWithSongs = database.albumWithSongs(item.id).first()
-                        }.onFailure { reportException(it) }
-                    }
-                    albumWithSongs?.let {
-                        withContext(Dispatchers.Main) {
-                            playerConnection.playQueue(LocalAlbumRadio(it))
+                    when (item) {
+                        is SongItem -> {
+                            withContext(Dispatchers.Main) {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(videoId = item.id),
+                                        item.toMediaMetadata(),
+                                    ),
+                                )
+                            }
                         }
+                        is AlbumItem -> {
+                            var albumWithSongs = database.albumWithSongs(item.id).first()
+                            if (albumWithSongs?.songs.isNullOrEmpty()) {
+                                YouTube.album(item.id).onSuccess { albumPage ->
+                                    database.transaction { insert(albumPage) }
+                                    albumWithSongs = database.albumWithSongs(item.id).first()
+                                }.onFailure { reportException(it) }
+                            }
+                            albumWithSongs?.let {
+                                withContext(Dispatchers.Main) {
+                                    playerConnection.playQueue(LocalAlbumRadio(it))
+                                }
+                            }
+                        }
+                        is PlaylistItem -> {
+                            val endpoint = item.playEndpoint ?: WatchEndpoint(playlistId = item.id)
+                            withContext(Dispatchers.Main) {
+                                playerConnection.playQueue(YouTubeQueue(endpoint))
+                            }
+                        }
+                        else -> {}
                     }
                 }
             }
@@ -1487,18 +1506,18 @@ fun VideoGridItem(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .size(28.dp)
+                            .padding(8.dp)
+                            .size(36.dp)
+                            .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .clickable(onClick = onPlayClick),
+                            .background(Color.Black.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(14.dp),
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -2015,7 +2034,7 @@ fun BoxScope.OverlayPlayButton(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
+                .background(Color.Black.copy(alpha = 0.55f))
         ) {
             Icon(
                 painter = painterResource(R.drawable.play),
@@ -2071,21 +2090,21 @@ fun BoxScope.AlbumPlayButton(
         exit = fadeOut(),
         modifier = Modifier
             .align(Alignment.BottomEnd)
-            .padding(6.dp)
+            .padding(8.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(28.dp)
+                .size(36.dp)
+                .bouncyClickable(onClick = onClick)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable(onClick = onClick)
+                .background(Color.Black.copy(alpha = 0.55f))
         ) {
             Icon(
                 painter = painterResource(R.drawable.play),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(14.dp)
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
     }

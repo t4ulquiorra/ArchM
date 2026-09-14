@@ -216,6 +216,12 @@ fun AlbumScreen(
         BackHandler(onBack = onExitSelectionMode)
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     LaunchedEffect(filteredSongs) {
         selection.fastForEachReversed { songId ->
             if (filteredSongs.find { it.id == songId } == null) {
@@ -671,6 +677,9 @@ fun AlbumScreen(
                             selection.add(song.id)
                         } else {
                             selection.remove(song.id)
+                            if (selection.isEmpty()) {
+                                inSelectMode = false
+                            }
                         }
                     }
 
@@ -972,7 +981,7 @@ fun AlbumScreen(
                         checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
                         onCheckedChange = {
                             if (selection.size == filteredSongs.size) {
-                                selection.clear()
+                                onExitSelectionMode()
                             } else {
                                 selection.clear()
                                 selection.addAll(filteredSongs.map { it.id })

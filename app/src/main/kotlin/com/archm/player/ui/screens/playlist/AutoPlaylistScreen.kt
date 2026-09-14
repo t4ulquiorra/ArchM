@@ -193,6 +193,12 @@ fun AutoPlaylistScreen(
         selection.clear()
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     BackHandler(enabled = inSelectMode || isSearching) {
         if (inSelectMode) {
             onExitSelectionMode()
@@ -767,6 +773,9 @@ fun AutoPlaylistScreen(
                                 selection.add(song.id)
                             } else {
                                 selection.remove(song.id)
+                                if (selection.isEmpty()) {
+                                    inSelectMode = false
+                                }
                             }
                         }
 
@@ -889,7 +898,7 @@ fun AutoPlaylistScreen(
                         checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
                         onCheckedChange = {
                             if (selection.size == filteredSongs.size) {
-                                selection.clear()
+                                onExitSelectionMode()
                             } else {
                                 selection.clear()
                                 selection.addAll(filteredSongs.map { it.id })

@@ -209,6 +209,12 @@ fun OnlinePlaylistScreen(
         selection.clear()
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(isSearching) { if (isSearching) focusRequester.requestFocus() }
 
@@ -694,6 +700,9 @@ fun OnlinePlaylistScreen(
                                 selection.add(songItem.id)
                             } else {
                                 selection.remove(songItem.id)
+                                if (selection.isEmpty()) {
+                                    inSelectMode = false
+                                }
                             }
                         }
 
@@ -892,7 +901,7 @@ fun OnlinePlaylistScreen(
                         checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
                         onCheckedChange = {
                             if (selection.size == filteredSongs.size) {
-                                selection.clear()
+                                onExitSelectionMode()
                             } else {
                                 selection.clear()
                                 selection.addAll(filteredSongs.map { it.second.id })

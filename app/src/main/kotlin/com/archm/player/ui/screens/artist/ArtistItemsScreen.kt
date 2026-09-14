@@ -247,6 +247,12 @@ fun ArtistItemsScreen(
         selection.clear()
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     BackHandler(enabled = inSelectMode || showSearchBar) {
         if (inSelectMode) {
             onExitSelectionMode()
@@ -755,6 +761,9 @@ fun ArtistItemsScreen(
                                 selection.add(songItem.id)
                             } else {
                                 selection.remove(songItem.id)
+                                if (selection.isEmpty()) {
+                                    inSelectMode = false
+                                }
                             }
                         }
 
@@ -878,6 +887,7 @@ fun ArtistItemsScreen(
                             onCheckedChange = {
                                 if (selection.size == filteredSongs.size) {
                                     selection.clear()
+                                    onExitSelectionMode()
                                 } else {
                                     selection.clear()
                                     selection.addAll(filteredSongs.map { it.id })

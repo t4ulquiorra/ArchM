@@ -164,6 +164,12 @@ fun TopPlaylistScreen(
         selection.clear()
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     val filteredSongs = remember(songs, query) {
         if (query.text.isEmpty()) songs ?: emptyList()
         else songs?.filter { song ->
@@ -702,6 +708,9 @@ fun TopPlaylistScreen(
                                 selection.add(song.id)
                             } else {
                                 selection.remove(song.id)
+                                if (selection.isEmpty()) {
+                                    inSelectMode = false
+                                }
                             }
                         }
 
@@ -814,7 +823,7 @@ fun TopPlaylistScreen(
                         checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
                         onCheckedChange = {
                             if (selection.size == filteredSongs.size) {
-                                selection.clear()
+                                onExitSelectionMode()
                             } else {
                                 selection.clear()
                                 selection.addAll(filteredSongs.map { it.id })

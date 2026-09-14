@@ -226,6 +226,12 @@ fun CachePlaylistScreen(
         selection.clear()
     }
 
+    LaunchedEffect(selection.size) {
+        if (inSelectMode && selection.isEmpty()) {
+            inSelectMode = false
+        }
+    }
+
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue()) }
     val focusRequester = remember { FocusRequester() }
@@ -655,6 +661,9 @@ fun CachePlaylistScreen(
                             selection.add(song.id)
                         } else {
                             selection.remove(song.id)
+                            if (selection.isEmpty()) {
+                                inSelectMode = false
+                            }
                         }
                     }
 
@@ -766,7 +775,7 @@ fun CachePlaylistScreen(
                         checked = selection.size == filteredSongs.size && selection.isNotEmpty(),
                         onCheckedChange = {
                             if (selection.size == filteredSongs.size) {
-                                selection.clear()
+                                onExitSelectionMode()
                             } else {
                                 selection.clear()
                                 selection.addAll(filteredSongs.map { it.id })
