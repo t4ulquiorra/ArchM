@@ -836,42 +836,45 @@ fun AlbumScreen(
                         )
                     }
 
-                    val chunkedRecommendations = remember(distinctRecommendations) {
-                        distinctRecommendations.chunked(2)
-                    }
-
-                    items(
-                        items = chunkedRecommendations,
-                        key = { row -> "releases_for_you_row_${row.first().id}" },
-                    ) { rowItems ->
-                        Row(
+                    item(key = "releases_for_you_grid") {
+                        val chunkedRecommendations = remember(distinctRecommendations) {
+                            distinctRecommendations.chunked(2)
+                        }
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
                                 .padding(bottom = 14.dp)
                                 .animateItem(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
-                            for (item in rowItems) {
-                                Box(modifier = Modifier.weight(1f)) {
-                                    GridCardPod(
-                                        item = item,
-                                        onClick = { navController.navigate("album/${item.id}") },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                YouTubeAlbumMenu(
-                                                    albumItem = item,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        },
-                                    )
+                            chunkedRecommendations.forEach { rowItems ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    for (item in rowItems) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            GridCardPod(
+                                                item = item,
+                                                onClick = { navController.navigate("album/${item.id}") },
+                                                onLongClick = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    menuState.show {
+                                                        YouTubeAlbumMenu(
+                                                            albumItem = item,
+                                                            navController = navController,
+                                                            onDismiss = menuState::dismiss,
+                                                        )
+                                                    }
+                                                },
+                                            )
+                                        }
+                                    }
+                                    if (rowItems.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
                                 }
-                            }
-                            if (rowItems.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }

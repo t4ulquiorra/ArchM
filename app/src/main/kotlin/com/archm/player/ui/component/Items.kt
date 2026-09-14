@@ -2358,7 +2358,7 @@ fun GridCardPod(
             item.artists.joinToString { it.name }.takeIf { it.isNotBlank() },
             item.durationText ?: item.formattedDuration(),
         ).joinToString(" • ")
-        is ArtistItem -> item.subscribers
+        is ArtistItem -> null
     }
 
     GridCardPod(

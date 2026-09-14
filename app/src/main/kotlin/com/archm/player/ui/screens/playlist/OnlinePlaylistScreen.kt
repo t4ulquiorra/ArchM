@@ -775,67 +775,70 @@ fun OnlinePlaylistScreen(
                             )
                         }
 
-                        val chunkedRelatedItems = remember(relatedItems) {
-                            relatedItems.chunked(2)
-                        }
-
-                        items(
-                            items = chunkedRelatedItems,
-                            key = { row -> "related_row_${row.first().id}" },
-                        ) { rowItems ->
-                            Row(
+                        item(key = "related_grid") {
+                            val chunkedRelatedItems = remember(relatedItems) {
+                                relatedItems.chunked(2)
+                            }
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
                                     .padding(bottom = 14.dp)
                                     .animateItem(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
                             ) {
-                                for (item in rowItems) {
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        GridCardPod(
-                                            item = item,
-                                            onClick = {
-                                                when (item) {
-                                                    is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
-                                                    is AlbumItem -> navController.navigate("album/${item.browseId}")
-                                                    is ArtistItem -> navController.navigate("artist/${item.id}")
-                                                    is SongItem -> playerConnection.playQueue(
-                                                        YouTubeQueue(WatchEndpoint(videoId = item.id))
-                                                    )
-                                                }
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                menuState.show {
-                                                    when (item) {
-                                                        is PlaylistItem -> YouTubePlaylistMenu(
-                                                            playlist = item,
-                                                            coroutineScope = coroutineScope,
-                                                            onDismiss = menuState::dismiss
-                                                        )
-                                                        is SongItem -> YouTubeSongMenu(
-                                                            song = item,
-                                                            navController = navController,
-                                                            onDismiss = menuState::dismiss
-                                                        )
-                                                        is AlbumItem -> YouTubeAlbumMenu(
-                                                            albumItem = item,
-                                                            navController = navController,
-                                                            onDismiss = menuState::dismiss
-                                                        )
-                                                        is ArtistItem -> YouTubeArtistMenu(
-                                                            artist = item,
-                                                            onDismiss = menuState::dismiss
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                        )
+                                chunkedRelatedItems.forEach { rowItems ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        for (item in rowItems) {
+                                            Box(modifier = Modifier.weight(1f)) {
+                                                GridCardPod(
+                                                    item = item,
+                                                    onClick = {
+                                                        when (item) {
+                                                            is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                                            is AlbumItem -> navController.navigate("album/${item.browseId}")
+                                                            is ArtistItem -> navController.navigate("artist/${item.id}")
+                                                            is SongItem -> playerConnection.playQueue(
+                                                                YouTubeQueue(WatchEndpoint(videoId = item.id))
+                                                            )
+                                                        }
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        menuState.show {
+                                                            when (item) {
+                                                                is PlaylistItem -> YouTubePlaylistMenu(
+                                                                    playlist = item,
+                                                                    coroutineScope = coroutineScope,
+                                                                    onDismiss = menuState::dismiss
+                                                                )
+                                                                is SongItem -> YouTubeSongMenu(
+                                                                    song = item,
+                                                                    navController = navController,
+                                                                    onDismiss = menuState::dismiss
+                                                                )
+                                                                is AlbumItem -> YouTubeAlbumMenu(
+                                                                    albumItem = item,
+                                                                    navController = navController,
+                                                                    onDismiss = menuState::dismiss
+                                                                )
+                                                                is ArtistItem -> YouTubeArtistMenu(
+                                                                    artist = item,
+                                                                    onDismiss = menuState::dismiss
+                                                                )
+                                                            }
+                                                        }
+                                                    },
+                                                )
+                                            }
+                                        }
+                                        if (rowItems.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
                                     }
-                                }
-                                if (rowItems.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }
