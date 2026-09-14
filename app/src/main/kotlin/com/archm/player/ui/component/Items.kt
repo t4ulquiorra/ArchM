@@ -2253,5 +2253,123 @@ object Icon {
 
 }
 
+/**
+ * Standardized dark surface container pod for 2-column grid placement (e.g., "You might also like" sections).
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun GridCardPod(
+    title: String,
+    subtitle: String?,
+    thumbnailUrl: String?,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        label = "GridCardPodScale",
+    )
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+    ) {
+        AsyncImage(
+            model = thumbnailUrl?.resize(544, 544),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(12.dp)),
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 3.dp)
+                    .heightIn(min = 40.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GridCardPod(
+    item: YTItem,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val subtitle = when (item) {
+        is AlbumItem -> listOfNotNull(
+            item.year?.toString(),
+            item.artists?.joinToString { it.name }?.takeIf { it.isNotBlank() },
+        ).joinToString(" • ")
+        is PlaylistItem -> listOfNotNull(
+            item.author?.name?.takeIf { it.isNotBlank() },
+            item.songCountText?.takeIf { it.isNotBlank() },
+        ).joinToString(" • ")
+        is SongItem -> listOfNotNull(
+            item.artists.joinToString { it.name }.takeIf { it.isNotBlank() },
+            item.durationText ?: item.formattedDuration(),
+        ).joinToString(" • ")
+        is ArtistItem -> item.subscribers
+    }
+
+    GridCardPod(
+        title = item.title,
+        subtitle = subtitle,
+        thumbnailUrl = item.thumbnail,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier = modifier,
+    )
+}
+
 
 

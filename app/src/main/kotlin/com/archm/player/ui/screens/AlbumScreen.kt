@@ -15,7 +15,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -110,6 +109,7 @@ import com.archm.player.playback.ExoDownloadService
 import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.ui.component.CombinedIconButton
 import com.archm.player.ui.component.ExpandableText
+import com.archm.player.ui.component.GridCardPod
 import com.archm.player.ui.component.LinkSegment
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
@@ -832,39 +832,46 @@ fun AlbumScreen(
                     item(key = "releases_for_you_title") {
                         NavigationTitle(
                             title = stringResource(R.string.you_might_also_like),
-                            modifier = Modifier.animateItem()
+                            modifier = Modifier.animateItem(),
                         )
                     }
-                    item(key = "releases_for_you_grid") {
-                        FlowRow(
+
+                    val chunkedRecommendations = remember(distinctRecommendations) {
+                        distinctRecommendations.chunked(2)
+                    }
+
+                    items(
+                        items = chunkedRecommendations,
+                        key = { row -> "releases_for_you_row_${row.first().id}" },
+                    ) { rowItems ->
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .padding(bottom = 12.dp)
+                                .padding(bottom = 14.dp)
                                 .animateItem(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            distinctRecommendations.forEach { item ->
-                                YouTubeGridItem(
-                                    item = item,
-                                    isActive = mediaMetadata?.album?.id == item.id,
-                                    isPlaying = isPlaying,
-                                    coroutineScope = scope,
-                                    thumbnailSize = 150.dp,
-                                    contentPadding = PaddingValues(0.dp),
-                                    onClick = { navController.navigate("album/${item.id}") },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                            YouTubeAlbumMenu(
-                                                albumItem = item,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
-                                    },
-                                )
+                            for (item in rowItems) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    GridCardPod(
+                                        item = item,
+                                        onClick = { navController.navigate("album/${item.id}") },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                YouTubeAlbumMenu(
+                                                    albumItem = item,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                            if (rowItems.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
