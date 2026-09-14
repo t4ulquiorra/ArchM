@@ -125,9 +125,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -2937,96 +2940,114 @@ private fun ArtistAboutCard(
                 )
             }
 
-            // Bottom Text Pane ("Water"): Fixed at the bottom of the card
+            // Bottom Text Pane ("Water")
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
                     .background(containerColor)
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 4.dp, bottom = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
-                // Top Row: Artist Name (and verified badge) + Follow Button aligned together
+                // 1. Header Row: Left Column (Artist Name + Monthly Listeners) | Right (Follow Button)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
+                    // Left Column: Name on line 1, Monthly listeners on line 2
+                    Column(
                         modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Text(
-                            text = artistName.orEmpty(),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (isVerified) {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF3D91F4)),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.check),
-                                    contentDescription = "Verified",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(10.dp),
-                                )
+                        // Artist Name + Verified Badge
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = artistName.orEmpty(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            if (isVerified) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF3D91F4)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.check),
+                                        contentDescription = "Verified",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
                             }
+                        }
+
+                        // Monthly Listeners
+                        if (!audienceStat.isNullOrBlank()) {
+                            Text(
+                                text = audienceStat,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
 
+                    // Follow Button vertically centered with the (Name + Listeners) block
                     OutlinedFollowPillButton(
                         isFollowed = isFollowed,
                         onClick = onToggleFollow,
-                        height = followButtonHeight,
+                        height = followButtonHeight
                     )
                 }
 
-                // Monthly Listeners below the name row
-                if (!audienceStat.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = audienceStat,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                // Row 3: Description/Bio ONLY if !bioText.isNullOrBlank()
+                // 2. Description / Bio Section
                 if (!bioText.isNullOrBlank()) {
-                    Spacer(Modifier.height(followButtonHeight))
+                    Spacer(modifier = Modifier.height(14.dp))
+                    
+                    // Render 3 lines with inline clickable "...see more"
+                    val displayBio = remember(bioText) {
+                        val cleaned = bioText.trim()
+                        if (cleaned.length > 180) {
+                            cleaned.take(180).trimEnd() + "..."
+                        } else {
+                            cleaned
+                        }
+                    }
+
                     Text(
-                        text = bioText,
+                        text = buildAnnotatedString {
+                            append(displayBio)
+                            if (bioText.length > 180) {
+                                withStyle(
+                                    SpanStyle(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                ) {
+                                    append("see more")
+                                }
+                            }
+                        },
                         style = MaterialTheme.typography.bodySmall.copy(
-                            lineHeight = 18.sp,
+                            lineHeight = 18.sp
                         ),
                         color = Color.White.copy(alpha = 0.85f),
                         maxLines = if (isLandscape) 2 else 3,
                         overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = "see more",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        color = Color.White,
-                        modifier = Modifier
-                            .bouncyClickable(onClick = onNavigateToAbout)
-                            .padding(vertical = 2.dp),
+                        modifier = Modifier.bouncyClickable(onClick = onNavigateToAbout)
                     )
                 }
             }
