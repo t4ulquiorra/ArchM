@@ -2276,6 +2276,9 @@ private fun HomeItemContentPlaylist(
         label = "HomeItemCardScale",
     )
 
+    val innerPadding = 5.dp
+    val artworkSize = thumbSize - (innerPadding * 2)
+
     Column(
         modifier =
             modifier
@@ -2291,14 +2294,13 @@ private fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(12.dp),
+                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
-        val artworkSize = thumbSize - 24.dp
         Box(
             modifier =
                 Modifier
                     .size(artworkSize)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540),
@@ -2328,10 +2330,12 @@ private fun HomeItemContentPlaylist(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
@@ -2341,6 +2345,7 @@ private fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -2386,6 +2391,8 @@ private fun HomeItemVideo(
         label = "HomeItemVideoScale",
     )
 
+    val innerPadding = 5.dp
+
     Column(
         modifier =
             modifier
@@ -2402,14 +2409,14 @@ private fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(12.dp),
+                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
@@ -2440,11 +2447,12 @@ private fun HomeItemVideo(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 3.dp)
                 .heightIn(min = 48.dp),
         ) {
             Text(
