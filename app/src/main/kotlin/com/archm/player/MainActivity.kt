@@ -234,6 +234,7 @@ import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
 import kotlin.random.Random
 import com.archm.player.ui.component.*
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import com.archm.player.ui.component.backdrop.backdrops.layerBackdrop
 import com.archm.player.ui.menu.YouTubeSongMenu
@@ -1320,7 +1321,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     },
                                     leadingIcon = {
-                                        IconButton(
+                                        LongClickIconButton(
                                             onClick = {
                                                 when {
                                                     active -> {

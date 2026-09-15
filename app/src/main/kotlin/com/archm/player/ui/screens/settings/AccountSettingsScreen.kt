@@ -39,6 +39,7 @@ import com.music.innertube.utils.parseCookieString
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.constants.*
 import com.archm.player.ui.component.*
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.AccountSettingsViewModel
@@ -85,7 +86,7 @@ fun AccountSettingsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.account)) },
                 navigationIcon = {
-                    IconButton(
+                    LongClickIconButton(
                         onClick = navController::navigateUp,
                         onLongClick = navController::backToMain
                     ) {
