@@ -49,7 +49,7 @@ import com.archm.player.discord.DiscordAuthCoordinator
 import com.archm.player.discord.DiscordOAuthRepository
 import com.archm.player.ui.component.EditTextPreference
 import com.archm.player.ui.component.EnumListPreference
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.ListPreference
 import com.archm.player.ui.component.PreferenceEntry
 
@@ -349,7 +349,7 @@ fun DiscordSettings(
                     Text(text = stringResource(R.string.discord_integration))
                 },
                 navigationIcon = {
-                    IconButton(
+                    LongClickIconButton(
                         onClick = navController::navigateUp,
                         onLongClick = navController::backToMain,
                     ) {

@@ -48,7 +48,7 @@ import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.archm.player.BuildConfig
 import com.archm.player.LocalPlayerAwareWindowInsets
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.screens.Screens
@@ -391,7 +391,7 @@ highlightKey: String? = null) {
             }
         },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain
             ) {

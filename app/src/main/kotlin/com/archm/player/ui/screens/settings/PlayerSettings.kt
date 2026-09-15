@@ -74,7 +74,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.archm.player.ui.component.DefaultDialog
 import com.archm.player.ui.component.EnumDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -1181,7 +1181,7 @@ highlightKey: String? = null) {
     TopAppBar(
         title = { Text(stringResource(R.string.player_and_audio)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain
             ) {

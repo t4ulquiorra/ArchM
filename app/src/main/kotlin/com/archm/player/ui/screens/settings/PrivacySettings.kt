@@ -37,7 +37,7 @@ import com.archm.player.constants.DisableScreenshotKey
 import com.archm.player.constants.PauseListenHistoryKey
 import com.archm.player.constants.PauseSearchHistoryKey
 import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -268,7 +268,7 @@ highlightKey: String? = null) {
     TopAppBar(
         title = { Text(stringResource(R.string.privacy)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

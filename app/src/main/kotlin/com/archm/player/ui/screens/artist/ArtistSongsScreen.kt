@@ -47,7 +47,7 @@ import com.archm.player.constants.HideExplicitKey
 import com.archm.player.extensions.toMediaItem
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.ui.component.HideOnScrollFAB
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.SortHeader
@@ -188,7 +188,7 @@ fun ArtistSongsScreen(
         TopAppBar(
             title = { Text(artist?.artist?.name.orEmpty()) },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = navController::navigateUp,
                     onLongClick = navController::backToMain,
                 ) {

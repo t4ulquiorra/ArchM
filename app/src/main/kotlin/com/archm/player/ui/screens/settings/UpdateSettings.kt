@@ -34,7 +34,7 @@ import android.net.Uri
 import androidx.navigation.NavController
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.R
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.echomusic.component.UpdateInfoDialog
@@ -323,7 +323,7 @@ fun UpdateSettings(
     TopAppBar(
         title = { Text(stringResource(R.string.update_settings_title)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain
             ) {

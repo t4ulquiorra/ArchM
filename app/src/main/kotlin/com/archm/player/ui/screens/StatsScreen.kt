@@ -47,7 +47,7 @@ import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ChoiceChipsRow
 import com.archm.player.ui.component.HideOnScrollFAB
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalAlbumsGrid
 import com.archm.player.ui.component.LocalArtistsGrid
 import com.archm.player.ui.component.LocalMenuState
@@ -419,7 +419,7 @@ fun StatsScreen(
         TopAppBar(
             title = { Text(stringResource(R.string.stats)) },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = navController::navigateUp,
                     onLongClick = navController::backToMain,
                 ) {

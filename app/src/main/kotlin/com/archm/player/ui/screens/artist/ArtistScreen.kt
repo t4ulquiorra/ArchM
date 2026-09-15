@@ -151,7 +151,8 @@ import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.LocalAlbumRadio
 import com.archm.player.playback.queues.YouTubeQueue
-import com.archm.player.ui.component.IconButton
+import androidx.compose.material3.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.bouncyClickable
@@ -1117,7 +1118,6 @@ fun ArtistScreen(
                                                 )
                                             }
                                         },
-                                        onLongClick = {},
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.more_vert),
@@ -1969,7 +1969,6 @@ fun ArtistScreen(
                     Box(Modifier.padding(horizontal = 5.dp)) {
                         IconButton(
                             onClick = { selectionState.exit() },
-                            onLongClick = {},
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.close),
@@ -1993,7 +1992,6 @@ fun ArtistScreen(
                             val allIds = popularSongs.take(MAX_SONG_SELECTION).map { it.id }
                             selectionState.toggleSelectAll(allIds)
                         },
-                        onLongClick = {},
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.select_all),
@@ -2014,7 +2012,6 @@ fun ArtistScreen(
                                     )
                                 }
                             },
-                            onLongClick = {},
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.more_vert),
@@ -2051,14 +2048,14 @@ fun ArtistScreen(
                                 .basicMarquee(
                                     iterations = Int.MAX_VALUE,
                                     animationMode = MarqueeAnimationMode.Immediately,
-                                )
+                                    )
                                 .focusable(),
                         )
                     }
                 },
                 navigationIcon = {
                     Box(Modifier.padding(horizontal = 5.dp)) {
-                        IconButton(
+                        LongClickIconButton(
                             onClick = navController::navigateUp,
                             onLongClick = navController::backToMain,
                         ) {
@@ -2074,7 +2071,6 @@ fun ArtistScreen(
                 actions = {
                     IconButton(
                         onClick = showArtistOverflowMenu,
-                        onLongClick = {},
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.more_horiz),

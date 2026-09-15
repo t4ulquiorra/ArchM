@@ -62,7 +62,7 @@ import com.archm.player.R
 import com.archm.player.constants.ThumbnailCornerRadius
 import com.archm.player.db.entities.RecognitionHistory
 import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
 import com.archm.player.ui.utils.backToMain
@@ -187,7 +187,7 @@ fun RecognitionHistoryScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.recognition_history)) },
                 navigationIcon = {
-                    IconButton(
+                    LongClickIconButton(
                         onClick = { navController.navigateUp() },
                         onLongClick = { navController.backToMain() }
                     ) {

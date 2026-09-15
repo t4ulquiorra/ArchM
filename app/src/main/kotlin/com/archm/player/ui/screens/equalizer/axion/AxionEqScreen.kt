@@ -52,9 +52,8 @@ fun AxionEqScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.echo_equalizer)) },
                 navigationIcon = {
-                    com.archm.player.ui.component.IconButton(
+                    IconButton(
                         onClick = onBackClick,
-                        onLongClick = {}
                     ) {
                         Icon(
                             painter = androidx.compose.ui.res.painterResource(R.drawable.arrow_back),

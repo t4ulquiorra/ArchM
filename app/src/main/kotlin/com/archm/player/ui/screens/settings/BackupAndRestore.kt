@@ -40,7 +40,7 @@ import androidx.navigation.NavController
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.R
 import com.archm.player.db.entities.Song
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.menu.AddToPlaylistDialogOnline
@@ -246,7 +246,7 @@ fun BackupAndRestore(
     TopAppBar(
         title = { Text(titleRes) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = {
                     if (currentScreen != BackupSubScreen.MAIN) {
                         currentScreen = BackupSubScreen.MAIN

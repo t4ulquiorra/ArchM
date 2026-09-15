@@ -92,9 +92,9 @@ fun CombinedIconButton(
 }
 
 @Composable
-fun IconButton(
+fun LongClickIconButton(
     onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
@@ -103,7 +103,7 @@ fun IconButton(
 ) = CombinedIconButton(
     onClick = onClick,
     modifier = modifier,
-    onLongClick = onLongClick,
+    onLongClick = onLongClick ?: {},
     enabled = enabled,
     colors = colors,
     interactionSource = interactionSource,

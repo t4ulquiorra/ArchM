@@ -55,7 +55,7 @@ import com.archm.player.constants.LiquidGlassVibrancyKey
 import com.archm.player.constants.UseFloatingNavBarKey
 import com.archm.player.ui.component.ColorPickerDialog
 import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.IconButton as AppIconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -541,7 +541,7 @@ fun GlassEffectSettings(
     TopAppBar(
         title = { Text(stringResource(R.string.liquid_glass_settings)) },
         navigationIcon = {
-            AppIconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

@@ -32,7 +32,7 @@ import com.archm.player.constants.GridItemSize
 import com.archm.player.constants.GridItemsSizeKey
 import com.archm.player.constants.GridThumbnailHeight
 import com.archm.player.ui.component.ChipsRow
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeGridItem
 import com.archm.player.ui.component.shimmer.GridItemPlaceHolder
@@ -192,7 +192,7 @@ fun AccountScreen(
     TopAppBar(
         title = { Text(stringResource(R.string.account)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

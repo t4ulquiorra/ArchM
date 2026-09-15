@@ -52,7 +52,7 @@ import com.archm.player.constants.MaxImageCacheSizeKey
 import com.archm.player.constants.MaxSongCacheSizeKey
 import com.archm.player.extensions.tryOrNull
 import com.archm.player.ui.component.ActionPromptDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -563,7 +563,7 @@ fun StorageSettings(
     TopAppBar(
         title = { Text(stringResource(R.string.storage)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

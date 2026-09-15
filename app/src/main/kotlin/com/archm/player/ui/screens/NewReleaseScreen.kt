@@ -31,7 +31,7 @@ import com.archm.player.R
 import com.archm.player.constants.GridItemSize
 import com.archm.player.constants.GridItemsSizeKey
 import com.archm.player.constants.GridThumbnailHeight
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeGridItem
 import com.archm.player.ui.component.shimmer.GridItemPlaceHolder
@@ -101,7 +101,7 @@ fun NewReleaseScreen(
     TopAppBar(
         title = { Text(stringResource(R.string.new_release_albums)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

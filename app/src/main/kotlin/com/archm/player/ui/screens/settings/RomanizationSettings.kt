@@ -46,7 +46,7 @@ import com.archm.player.constants.LyricsRomanizeRussianKey
 import com.archm.player.constants.LyricsRomanizeSerbianKey
 import com.archm.player.constants.LyricsRomanizeUkrainianKey
 import com.archm.player.ui.component.ActionPromptDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -444,7 +444,7 @@ highlightKey: String? = null) {
     TopAppBar(
         title = { Text(stringResource(R.string.lyrics_romanize_title)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

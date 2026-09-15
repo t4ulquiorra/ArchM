@@ -97,8 +97,7 @@ import com.archm.player.listentogether.UserInfo
 import com.archm.player.ui.component.ListDialog
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
-import com.archm.player.ui.component.IconButton
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.utils.rememberPreference
 import kotlinx.coroutines.launch
@@ -478,7 +477,7 @@ fun ListenTogetherScreen(
         TopAppBar(
             title = { Text(stringResource(R.string.listen_together)) },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = navController::navigateUp,
                     onLongClick = navController::backToMain
                 ) {

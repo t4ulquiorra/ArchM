@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import com.archm.player.R
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.utils.backToMain
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +49,7 @@ fun ArtistAboutScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
+                    LongClickIconButton(
                         onClick = navController::navigateUp,
                         onLongClick = navController::backToMain,
                     ) {

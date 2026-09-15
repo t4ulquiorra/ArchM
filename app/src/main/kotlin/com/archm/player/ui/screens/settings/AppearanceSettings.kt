@@ -106,7 +106,7 @@ import com.archm.player.constants.UseNewPlayerDesignKey
 import com.archm.player.ui.component.ThumbnailCornerRadiusModal
 import com.archm.player.ui.component.DefaultDialog
 import com.archm.player.ui.component.EnumDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.component.PlayerSliderTrack
@@ -2040,7 +2040,7 @@ highlightKey: String? = null) {
     TopAppBar(
         title = { Text(stringResource(R.string.appearance)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

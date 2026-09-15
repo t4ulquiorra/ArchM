@@ -54,7 +54,7 @@ import com.archm.player.constants.CONTENT_TYPE_HEADER
 import com.archm.player.constants.GridItemSize
 import com.archm.player.constants.GridItemsSizeKey
 import com.archm.player.constants.GridThumbnailHeight
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LibraryAlbumGridItem
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.utils.backToMain
@@ -157,7 +157,7 @@ fun ArtistAlbumsScreen(
         TopAppBar(
             title = { Text(text = screenTitle) },
             navigationIcon = {
-                IconButton(
+                LongClickIconButton(
                     onClick = navController::navigateUp,
                     onLongClick = navController::backToMain
                 ) {

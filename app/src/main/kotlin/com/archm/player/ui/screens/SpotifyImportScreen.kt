@@ -42,7 +42,7 @@ import com.archm.player.spotifyimport.SpotifyImportSummaryUi
 import com.archm.player.spotifyimport.SpotifyImportSourceUi
 import com.archm.player.spotifyimport.SpotifyImportSourceType
 import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -67,7 +67,7 @@ fun SpotifyImportScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.spotify_import_title)) },
                 navigationIcon = {
-                    IconButton(
+                    LongClickIconButton(
                         onClick = navController::navigateUp,
                         onLongClick = navController::backToMain
                     ) {

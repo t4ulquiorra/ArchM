@@ -72,7 +72,7 @@ import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.ChipsRow
 import com.archm.player.ui.component.HideOnScrollFAB
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
 import com.archm.player.ui.component.SongListItem
@@ -465,7 +465,7 @@ fun HistoryScreen(
                     )
                 }
             } else {
-                IconButton(
+                LongClickIconButton(
                     onClick = {
                         if (isSearching) {
                             isSearching = false

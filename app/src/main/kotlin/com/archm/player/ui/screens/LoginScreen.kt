@@ -36,7 +36,7 @@ import com.archm.player.constants.AccountNameKey
 import com.archm.player.constants.DataSyncIdKey
 import com.archm.player.constants.InnerTubeCookieKey
 import com.archm.player.constants.VisitorDataKey
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.utils.rememberPreference
 import com.archm.player.utils.reportException
@@ -147,7 +147,7 @@ fun LoginScreen(
     TopAppBar(
         title = { Text(stringResource(R.string.login)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain
             ) {

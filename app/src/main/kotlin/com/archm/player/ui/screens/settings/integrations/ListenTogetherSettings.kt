@@ -76,7 +76,8 @@ import com.archm.player.listentogether.LogEntry
 import com.archm.player.listentogether.LogLevel
 import com.archm.player.listentogether.RoomRole
 import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.IconButton
+import androidx.compose.material3.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.IntegrationCard
 import com.archm.player.ui.component.IntegrationCardItem
 import com.archm.player.ui.utils.backToMain
@@ -189,7 +190,7 @@ highlightKey: String? = null) {
                 },
                 trailingIcon = {
                     if (tempUsername.isNotBlank()) {
-                        IconButton(onClick = { tempUsername = "" }, onLongClick = {}) {
+                        IconButton(onClick = { tempUsername = "" }) {
                             Icon(painterResource(R.drawable.close), contentDescription = null)
                         }
                     }
@@ -475,7 +476,7 @@ highlightKey: String? = null) {
     TopAppBar(
         title = { Text(stringResource(R.string.listen_together)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {

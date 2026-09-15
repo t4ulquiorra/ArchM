@@ -63,7 +63,7 @@ import com.archm.player.constants.ScrobbleDelayPercentKey
 import com.archm.player.constants.ScrobbleDelaySecondsKey
 import com.archm.player.constants.ScrobbleMinSongDurationKey
 import com.archm.player.ui.component.DefaultDialog
-import com.archm.player.ui.component.IconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.Material3SettingsGroup
 import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.utils.backToMain
@@ -625,7 +625,7 @@ fun LastFMSettingsScreen(
     TopAppBar(
         title = { Text(stringResource(R.string.lastfm_integration)) },
         navigationIcon = {
-            IconButton(
+            LongClickIconButton(
                 onClick = navController::navigateUp,
                 onLongClick = navController::backToMain,
             ) {
