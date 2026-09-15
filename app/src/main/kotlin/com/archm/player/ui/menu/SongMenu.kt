@@ -95,6 +95,7 @@ import com.archm.player.ui.component.NewActionGrid
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.TextFieldDialog
 import com.archm.player.ui.menu.SavedInBottomSheet
+import com.archm.player.ui.menu.LocalSavedInSheetState
 import com.archm.player.utils.listItemShape
 import com.archm.player.ui.utils.ShowMediaInfo
 import com.archm.player.utils.rememberPreference
@@ -124,6 +125,7 @@ fun SongMenu(
     val syncUtils = LocalSyncUtils.current
     val listenTogetherManager = LocalListenTogetherManager.current
     val menuState = LocalMenuState.current
+    val savedInSheetState = LocalSavedInSheetState.current
     val scope = rememberCoroutineScope()
     
     val (enableExportAsMp3) = rememberPreference(key = EnableExportAsMp3Key, defaultValue = false)
@@ -386,12 +388,8 @@ fun SongMenu(
                         },
                         text = stringResource(R.string.add_to_an_playlist),
                         onClick = {
-                            menuState.show {
-                                SavedInBottomSheet(
-                                    song = song,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
+                            onDismiss()
+                            savedInSheetState.show(song.toMediaMetadata())
                         }
                     ),
                     NewAction(

@@ -201,9 +201,11 @@ import com.archm.player.ui.component.WavySlider
 import com.archm.player.ui.component.rememberBottomSheetState
 import com.archm.player.ui.menu.OldPlayerMenu
 import com.archm.player.ui.menu.PlayerMenu
+import com.archm.player.models.toMediaMetadata
 import com.archm.player.ui.component.VolumeSlider
 import com.archm.player.ui.component.CustomSnackbarHost
 import com.archm.player.ui.component.CustomSnackbarManager
+import com.archm.player.ui.menu.LocalSavedInSheetState
 import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.theme.PlayerColorExtractor
@@ -304,6 +306,7 @@ fun BottomSheetPlayer(
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
+    val savedInSheetState = LocalSavedInSheetState.current
     val playerConnection = LocalPlayerConnection.current ?: return
 
     val (useNewPlayerDesign, onUseNewPlayerDesignChange) = rememberPreference(
@@ -419,12 +422,17 @@ fun BottomSheetPlayer(
     val onPlayerLikeClick: () -> Unit = {
         val isLiked = currentSong?.song?.liked == true
         if (isLiked) {
-            menuState.show {
-                SavedInBottomSheet(
-                    song = currentSong?.song,
-                    mediaMetadata = mediaMetadata,
-                    onDismiss = menuState::dismiss,
-                )
+            val target = mediaMetadata ?: currentSong?.toMediaMetadata()
+            if (target != null) {
+                savedInSheetState.show(target)
+            } else {
+                menuState.show {
+                    SavedInBottomSheet(
+                        song = currentSong?.song,
+                        mediaMetadata = mediaMetadata,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
             }
         } else {
             playerConnection.toggleLike()

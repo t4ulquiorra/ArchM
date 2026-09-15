@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 object CustomSnackbarManager {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
+    val messages: StateFlow<String?> = message
 
     private var currentJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())

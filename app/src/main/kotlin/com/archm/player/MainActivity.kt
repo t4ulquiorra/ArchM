@@ -45,7 +45,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
@@ -237,6 +239,10 @@ import com.archm.player.ui.component.*
 import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import com.archm.player.ui.component.backdrop.backdrops.layerBackdrop
+import com.archm.player.ui.menu.SavedInBottomSheet
+import com.archm.player.ui.menu.SavedInSheetState
+import com.archm.player.ui.menu.LocalSavedInSheetState
+import androidx.compose.ui.zIndex
 import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.player.BottomSheetPlayer
 import com.archm.player.ui.screens.Screens
@@ -1083,8 +1089,14 @@ class MainActivity : ComponentActivity() {
 
                 val ringtoneViewModel: RingtoneViewModel = viewModel()
                 val ringtoneUiState by ringtoneViewModel.uiState.collectAsState()
+                val menuState = remember { MenuState() }
+                val bottomSheetPageState = remember { BottomSheetPageState() }
+                val savedInSheetState = remember { SavedInSheetState() }
 
                 CompositionLocalProvider(
+                    LocalSavedInSheetState provides savedInSheetState,
+                    LocalMenuState provides menuState,
+                    LocalBottomSheetPageState provides bottomSheetPageState,
                     LocalRingtoneViewModel provides ringtoneViewModel,
                     LocalDatabase provides database,
                     LocalContentColor provides if (pureBlack) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
@@ -1099,7 +1111,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     Scaffold(
-                        snackbarHost = { CustomSnackbarHost(hostState = snackbarHostState) },
+                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                         topBar = {
                             if (shouldShowTopBar) {
                                 val shouldUseFloatingTopBar =
@@ -1843,14 +1855,30 @@ class MainActivity : ComponentActivity() {
                     }
 
                     BottomSheetMenu(
-                        state = LocalMenuState.current,
+                        state = menuState,
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
 
                     BottomSheetPage(
-                        state = LocalBottomSheetPageState.current,
+                        state = bottomSheetPageState,
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
+
+                    val (savedInTargetSong, setSavedInTargetSong) = remember { mutableStateOf<MediaMetadata?>(null) }
+
+                    LaunchedEffect(savedInSheetState.targetSong) {
+                        setSavedInTargetSong(savedInSheetState.targetSong)
+                    }
+
+                    if (savedInTargetSong != null) {
+                        SavedInBottomSheet(
+                            song = savedInTargetSong,
+                            onDismissRequest = {
+                                setSavedInTargetSong(null)
+                                savedInSheetState.dismiss()
+                            }
+                        )
+                    }
 
 
 
@@ -1909,6 +1937,22 @@ class MainActivity : ComponentActivity() {
                                 setLastOpenedVersionCode(BuildConfig.VERSION_CODE)
                             }
                         )
+                    }
+
+                    val floatingSnackbarMessage by CustomSnackbarManager.messages.collectAsState()
+
+                    AnimatedVisibility(
+                        visible = floatingSnackbarMessage != null,
+                        enter = fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 2 },
+                        exit = fadeOut(tween(250)) + slideOutVertically(tween(250)) { it / 2 },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 96.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
+                            .zIndex(999f),
+                    ) {
+                        floatingSnackbarMessage?.let { text ->
+                            CustomFloatingSnackbar(message = text)
+                        }
                     }
 
                 }

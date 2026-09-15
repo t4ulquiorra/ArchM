@@ -27,14 +27,18 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -43,6 +47,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -124,6 +129,66 @@ fun PlaylistSelectionIndicator(
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp),
+            )
+        }
+    }
+}
+
+@Stable
+class SavedInSheetState(
+    targetSong: MediaMetadata? = null,
+) {
+    var targetSong by mutableStateOf<MediaMetadata?>(targetSong)
+
+    val isVisible: Boolean
+        get() = targetSong != null
+
+    fun show(mediaMetadata: MediaMetadata) {
+        targetSong = mediaMetadata
+    }
+
+    fun show(song: Song) {
+        targetSong = song.toMediaMetadata()
+    }
+
+    fun show(songItem: SongItem) {
+        targetSong = songItem.toMediaMetadata()
+    }
+
+    fun dismiss() {
+        targetSong = null
+    }
+}
+
+val LocalSavedInSheetState = staticCompositionLocalOf { SavedInSheetState() }
+
+/**
+ * Root-level hoisted Spotify-style multi-playlist picker bottom sheet.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SavedInBottomSheet(
+    song: MediaMetadata?,
+    onDismissRequest: () -> Unit,
+) {
+    if (song != null) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+        ModalBottomSheet(
+            onDismissRequest = onDismissRequest,
+            sheetState = sheetState,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .size(width = 40.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            },
+        ) {
+            SavedInBottomSheet(
+                mediaMetadata = song,
+                onDismiss = onDismissRequest,
             )
         }
     }

@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AutoAwesome
 import com.archm.player.ui.menu.SavedInBottomSheet
+import com.archm.player.ui.menu.LocalSavedInSheetState
 import androidx.compose.foundation.border
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.LocalContentColor
@@ -608,6 +609,7 @@ fun SongListItem(
     horizontalPadding: Dp = 12.dp,
 ) {
     val menuState = LocalMenuState.current
+    val savedInSheetState = LocalSavedInSheetState.current
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
     val resolvedColor = if (color != Color.Transparent) color else containerColor
 
@@ -618,12 +620,7 @@ fun SongListItem(
                     .size(24.dp)
                     .bouncyClickable(
                         onClick = {
-                            menuState.show {
-                                SavedInBottomSheet(
-                                    song = song,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
+                            savedInSheetState.show(song.toMediaMetadata())
                         }
                     ),
                 contentAlignment = Alignment.Center,
@@ -1225,6 +1222,7 @@ fun MediaMetadataListItem(
     val resolvedColor = if (color != Color.Transparent) color else containerColor
     val database = LocalDatabase.current
     val menuState = LocalMenuState.current
+    val savedInSheetState = LocalSavedInSheetState.current
     val dbSong by produceState<Song?>(initialValue = null, mediaMetadata.id) {
         database.song(mediaMetadata.id).collect { value = it }
     }
@@ -1237,13 +1235,7 @@ fun MediaMetadataListItem(
                     .size(24.dp)
                     .bouncyClickable(
                         onClick = {
-                            menuState.show {
-                                SavedInBottomSheet(
-                                    song = dbSong?.song,
-                                    mediaMetadata = mediaMetadata,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
+                            savedInSheetState.show(mediaMetadata)
                         }
                     ),
                 contentAlignment = Alignment.Center,
@@ -1346,6 +1338,7 @@ fun YouTubeListItem(
 ) {
     val database = LocalDatabase.current
     val menuState = LocalMenuState.current
+    val savedInSheetState = LocalSavedInSheetState.current
     val dbSong by produceState<Song?>(initialValue = null, item.id) {
         if (item is SongItem) {
             database.song(item.id).collect { value = it }
@@ -1360,13 +1353,7 @@ fun YouTubeListItem(
                     .size(24.dp)
                     .bouncyClickable(
                         onClick = {
-                            menuState.show {
-                                SavedInBottomSheet(
-                                    song = dbSong?.song,
-                                    songItem = item,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
+                            savedInSheetState.show(item.toMediaMetadata())
                         }
                     ),
                 contentAlignment = Alignment.Center,
