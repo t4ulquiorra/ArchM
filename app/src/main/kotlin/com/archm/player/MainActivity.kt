@@ -239,6 +239,7 @@ import com.archm.player.ui.component.*
 import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.backdrop.backdrops.rememberLayerBackdrop
 import com.archm.player.ui.component.backdrop.backdrops.layerBackdrop
+import com.archm.player.models.MediaMetadata
 import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.ui.menu.SavedInSheetState
 import com.archm.player.ui.menu.LocalSavedInSheetState
@@ -1111,7 +1112,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     Scaffold(
-                        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                        snackbarHost = { },
                         topBar = {
                             if (shouldShowTopBar) {
                                 val shouldUseFloatingTopBar =
@@ -1864,19 +1865,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
 
-                    val (savedInTargetSong, setSavedInTargetSong) = remember { mutableStateOf<MediaMetadata?>(null) }
-
-                    LaunchedEffect(savedInSheetState.targetSong) {
-                        setSavedInTargetSong(savedInSheetState.targetSong)
-                    }
-
-                    if (savedInTargetSong != null) {
+                    val targetSong = savedInSheetState.targetSong
+                    if (targetSong != null) {
                         SavedInBottomSheet(
-                            song = savedInTargetSong,
-                            onDismissRequest = {
-                                setSavedInTargetSong(null)
-                                savedInSheetState.dismiss()
-                            }
+                            song = targetSong,
+                            onDismissRequest = { savedInSheetState.dismiss() }
                         )
                     }
 
@@ -1939,20 +1932,15 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    val floatingSnackbarMessage by CustomSnackbarManager.messages.collectAsState()
-
-                    AnimatedVisibility(
-                        visible = floatingSnackbarMessage != null,
-                        enter = fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 2 },
-                        exit = fadeOut(tween(250)) + slideOutVertically(tween(250)) { it / 2 },
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 96.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding())
+                            .fillMaxSize()
+                            .navigationBarsPadding()
+                            .padding(bottom = 80.dp)
                             .zIndex(999f),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
-                        floatingSnackbarMessage?.let { text ->
-                            CustomFloatingSnackbar(message = text)
-                        }
+                        CustomSnackbarHost(hostState = snackbarHostState)
                     }
 
                 }
