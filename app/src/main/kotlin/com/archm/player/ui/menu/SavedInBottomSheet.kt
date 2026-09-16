@@ -33,6 +33,8 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -81,6 +83,7 @@ import com.archm.player.ui.component.CustomSnackbarManager
 import com.archm.player.ui.component.PlaylistThumbnail
 import com.music.innertube.YouTube
 import com.music.innertube.models.SongItem
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -172,7 +175,20 @@ fun SavedInBottomSheet(
     onDismissRequest: () -> Unit,
 ) {
     if (song != null) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = false,
+            confirmValueChange = { true },
+        )
+
+        LaunchedEffect(sheetState.hasPartiallyExpandedState) {
+            if (sheetState.hasPartiallyExpandedState) {
+                try {
+                    sheetState.partialExpand()
+                } catch (_: Exception) {
+                }
+            }
+        }
+
         ModalBottomSheet(
             onDismissRequest = onDismissRequest,
             sheetState = sheetState,
@@ -189,6 +205,7 @@ fun SavedInBottomSheet(
             SavedInBottomSheet(
                 mediaMetadata = song,
                 onDismiss = onDismissRequest,
+                sheetState = sheetState,
             )
         }
     }
@@ -198,24 +215,29 @@ fun SavedInBottomSheet(
  * Spotify-style multi-playlist picker bottom sheet.
  * Supports passing SongEntity, SongItem, or MediaMetadata.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SavedInBottomSheet(
     song: Song,
     onDismiss: () -> Unit,
+    sheetState: SheetState? = null,
 ) {
     SavedInBottomSheet(
         song = song.song,
         mediaMetadata = song.toMediaMetadata(),
         onDismiss = onDismiss,
+        sheetState = sheetState,
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SavedInBottomSheet(
     song: SongEntity? = null,
     songItem: SongItem? = null,
     mediaMetadata: MediaMetadata? = null,
     onDismiss: () -> Unit,
+    sheetState: SheetState? = null,
 ) {
     val database = LocalDatabase.current
     val syncUtils = LocalSyncUtils.current
@@ -295,7 +317,19 @@ fun SavedInBottomSheet(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = {
+                    if (sheetState != null) {
+                        coroutineScope.launch {
+                            sheetState.hide()
+                        }.invokeOnCompletion {
+                            onDismiss()
+                        }
+                    } else {
+                        onDismiss()
+                    }
+                }
+            ) {
                 Text(
                     text = stringResource(R.string.cancel),
                     style = MaterialTheme.typography.labelLarge,
@@ -304,9 +338,29 @@ fun SavedInBottomSheet(
             }
             TextButton(
                 onClick = {
-                    coroutineScope.launch(Dispatchers.IO) {
+                    // 1. Drop sheet immediately on frame 1
+                    if (sheetState != null) {
+                        coroutineScope.launch {
+                            sheetState.hide()
+                        }.invokeOnCompletion {
+                            onDismiss()
+                        }
+                    } else {
+                        onDismiss()
+                    }
+
+                    // 2. Snapshot state for background execution
+                    val toAdd = selectedPlaylistIds.toSet() - initialPlaylistIds
+                    val toRemove = initialPlaylistIds - selectedPlaylistIds.toSet()
+                    val initialLikedVal = initialIsLiked ?: false
+                    val currentLikedVal = isLiked ?: false
+                    val likedChanged = (currentLikedVal != initialLikedVal)
+                    val userPlaylistsSnapshot = userPlaylists.toList()
+
+                    // 3. Offload DB operations & remote sync to background
+                    CoroutineScope(Dispatchers.IO).launch {
                         // Ensure song exists in database
-                        val existingSong = database.song(targetSongId).firstOrNull()
+                        var existingSong = database.song(targetSongId).firstOrNull()
                         if (existingSong == null) {
                             val meta = mediaMetadata ?: songItem?.toMediaMetadata()
                             if (meta != null) {
@@ -320,15 +374,9 @@ fun SavedInBottomSheet(
                             }
                         }
 
-                        val toAdd = selectedPlaylistIds.toSet() - initialPlaylistIds
-                        val toRemove = initialPlaylistIds - selectedPlaylistIds.toSet()
-                        val initialLikedVal = initialIsLiked ?: false
-                        val currentLikedVal = isLiked ?: false
-                        val likedChanged = (currentLikedVal != initialLikedVal)
-
                         // 1. Additions
                         for (plId in toAdd) {
-                            val pl = userPlaylists.firstOrNull { it.id == plId }
+                            val pl = userPlaylistsSnapshot.firstOrNull { it.id == plId }
                             database.query {
                                 insert(
                                     PlaylistSongMap(
@@ -352,7 +400,7 @@ fun SavedInBottomSheet(
                                     delete(map)
                                 }
                             }
-                            val pl = userPlaylists.firstOrNull { it.id == plId }
+                            val pl = userPlaylistsSnapshot.firstOrNull { it.id == plId }
                             if (pl?.playlist?.browseId != null && map?.setVideoId != null) {
                                 YouTube.removeFromPlaylist(pl.playlist.browseId!!, targetSongId, map.setVideoId!!)
                             }
@@ -407,7 +455,7 @@ fun SavedInBottomSheet(
                         val summaryText = when {
                             toAdd.isNotEmpty() -> {
                                 if (toAdd.size == 1) {
-                                    val plName = userPlaylists.firstOrNull { it.id == toAdd.first() }?.playlist?.name ?: "playlist"
+                                    val plName = userPlaylistsSnapshot.firstOrNull { it.id == toAdd.first() }?.playlist?.name ?: "playlist"
                                     "Saved to $plName"
                                 } else {
                                     "Saved to ${toAdd.size} playlists"
@@ -417,7 +465,7 @@ fun SavedInBottomSheet(
                             likedChanged && !currentLikedVal -> "Removed from Liked Songs"
                             toRemove.isNotEmpty() -> {
                                 if (toRemove.size == 1) {
-                                    val plName = userPlaylists.firstOrNull { it.id == toRemove.first() }?.playlist?.name ?: "playlist"
+                                    val plName = userPlaylistsSnapshot.firstOrNull { it.id == toRemove.first() }?.playlist?.name ?: "playlist"
                                     "Removed from $plName"
                                 } else {
                                     "Removed from ${toRemove.size} playlists"
@@ -426,10 +474,7 @@ fun SavedInBottomSheet(
                             else -> "Changes saved"
                         }
 
-                        withContext(Dispatchers.Main) {
-                            CustomSnackbarManager.show(summaryText)
-                            onDismiss()
-                        }
+                        CustomSnackbarManager.show(summaryText)
                     }
                 }
             ) {
