@@ -116,6 +116,7 @@ import com.archm.player.ui.component.DraggableScrollbar
 import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.PlaylistHeader
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.SortHeader
 import com.archm.player.ui.menu.AutoPlaylistMenu
@@ -333,11 +334,6 @@ fun AutoPlaylistScreen(
         songs?.any { it.song.explicit } == true
     }
 
-    val configuration = LocalConfiguration.current
-    val isPortrait = configuration.screenWidthDp < configuration.screenHeightDp
-    val heroHeight = if (isPortrait) (configuration.screenHeightDp / 2).dp else 280.dp
-    val gradientHeight = if (isPortrait) (configuration.screenHeightDp * 0.35f).dp else 180.dp
-
     val backdropThumbnail = songs?.firstOrNull()?.thumbnailUrl
 
     Box(
@@ -382,110 +378,12 @@ fun AutoPlaylistScreen(
                     if (!isSearching) {
                         // 1. Full-bleed Hero Section with Gradient Fade and Overlaid Metadata
                         item(key = "hero_header") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(heroHeight)
-                            ) {
-                                // Full-bleed hero image centered and cropped
-                                AsyncImage(
-                                    model = backdropThumbnail?.resize(1080, 1080) ?: backdropThumbnail,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    alignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-
-                                // Continuous gradient fade into background surface
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(gradientHeight)
-                                        .align(Alignment.BottomCenter)
-                                        .background(
-                                            Brush.verticalGradient(
-                                                0.00f to Color.Transparent,
-                                                0.30f to Color.Transparent,
-                                                0.60f to MaterialTheme.colorScheme.background.copy(alpha = 0.35f),
-                                                0.82f to MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
-                                                1.00f to MaterialTheme.colorScheme.background,
-                                            ),
-                                        ),
-                                )
-
-                                // Overlaid Header Metadata at Bottom of Hero
-                                Column(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp)
-                                        .padding(bottom = 16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                ) {
-                                    Text(
-                                        text = playlist,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 2,
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.playlist),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color(0xC4FFFFFF),
-                                            textAlign = TextAlign.Center,
-                                        )
-                                        if (hasExplicitContent) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.explicit),
-                                                contentDescription = "Explicit",
-                                                tint = Color(0xC4FFFFFF),
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Floating circular Back button at top-left
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopStart)
-                                        .padding(start = 16.dp, top = 4.dp)
-                                        .windowInsetsPadding(WindowInsets.statusBars)
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.Black.copy(alpha = 0.35f))
-                                        .combinedClickable(
-                                            onClick = navController::navigateUp,
-                                            onLongClick = navController::backToMain,
-                                        ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.arrow_back),
-                                        contentDescription = "Back",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp),
-                                    )
-                                }
-
-                                // Floating circular action pill at top-right
-                                Row(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(end = 16.dp, top = 4.dp)
-                                        .windowInsetsPadding(WindowInsets.statusBars)
-                                        .height(48.dp)
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(Color.Black.copy(alpha = 0.35f)),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
+                            PlaylistHeader(
+                                backdropThumbnail = backdropThumbnail?.resize(1080, 1080) ?: backdropThumbnail,
+                                lazyListState = lazyListState,
+                                onBack = navController::navigateUp,
+                                onBackLongClick = navController::backToMain,
+                                actions = {
                                     IconButton(
                                         onClick = { isSearching = true },
                                     ) {
@@ -546,6 +444,35 @@ fun AutoPlaylistScreen(
                                             contentDescription = stringResource(R.string.more_options),
                                             tint = Color.White,
                                             modifier = Modifier.size(22.dp),
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    text = playlist,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 2,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.playlist),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color(0xC4FFFFFF),
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    if (hasExplicitContent) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.explicit),
+                                            contentDescription = "Explicit",
+                                            tint = Color(0xC4FFFFFF),
+                                            modifier = Modifier.size(14.dp)
                                         )
                                     }
                                 }
