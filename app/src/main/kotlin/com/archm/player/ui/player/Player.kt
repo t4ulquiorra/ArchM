@@ -203,7 +203,6 @@ import com.archm.player.ui.menu.OldPlayerMenu
 import com.archm.player.ui.menu.PlayerMenu
 import com.archm.player.models.toMediaMetadata
 import com.archm.player.ui.component.VolumeSlider
-import com.archm.player.ui.component.CustomSnackbarHost
 import com.archm.player.ui.component.CustomSnackbarManager
 import com.archm.player.ui.menu.LocalSavedInSheetState
 import com.archm.player.ui.menu.SavedInBottomSheet
@@ -2917,12 +2916,6 @@ fun BottomSheetPlayer(
                 onToggleLyrics = {
                     showInlineLyrics = !showInlineLyrics
                 },
-            )
-
-            CustomSnackbarHost(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 80.dp),
             )
         }
     }

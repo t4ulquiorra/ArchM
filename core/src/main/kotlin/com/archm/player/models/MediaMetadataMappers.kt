@@ -32,6 +32,9 @@ fun Song.toMediaMetadata() =
         album = album?.let { MediaMetadata.Album(id = it.id, title = it.title) } 
             ?: song.albumId?.let { albumId -> MediaMetadata.Album(id = albumId, title = song.albumName.orEmpty()) },
         explicit = song.explicit,
+        liked = song.liked,
+        likedDate = song.likedDate,
+        inLibrary = song.inLibrary,
         musicVideoType = if (song.isVideo) "MUSIC_VIDEO_TYPE_OMV" else null,
         suggestedBy = null,
         source = QueueItemSource.USER,

@@ -227,17 +227,36 @@ fun SavedInBottomSheet(
     val dbSong by database.song(targetSongId).collectAsState(initial = null)
     val rawPlaylists by database.playlists(PlaylistSortType.NAME, false).collectAsState(initial = emptyList())
     val userPlaylists = remember(rawPlaylists) {
-        rawPlaylists.filter { it.playlist.isEditable || it.playlist.bookmarkedAt != null }
+        rawPlaylists.filter {
+            (it.playlist.isEditable || it.playlist.bookmarkedAt != null) && it.id != "liked"
+        }
     }
 
+    val passedLikeStatus = song?.liked ?: mediaMetadata?.liked ?: false
     var isLiked by remember(targetSongId) { mutableStateOf<Boolean?>(null) }
     var initialIsLiked by remember(targetSongId) { mutableStateOf<Boolean?>(null) }
+    var userToggledLiked by remember(targetSongId) { mutableStateOf(false) }
 
-    LaunchedEffect(dbSong, song) {
-        if (isLiked == null) {
-            val likedVal = song?.liked ?: dbSong?.song?.liked ?: false
-            isLiked = likedVal
-            initialIsLiked = likedVal
+    LaunchedEffect(targetSongId, dbSong) {
+        if (!userToggledLiked) {
+            val dbLiked = dbSong?.song?.liked
+            if (dbLiked != null) {
+                isLiked = dbLiked
+                if (initialIsLiked == null) {
+                    initialIsLiked = dbLiked
+                }
+            } else if (isLiked == null) {
+                val dbSongDirect = withContext(Dispatchers.IO) {
+                    database.song(targetSongId).firstOrNull()?.song
+                }
+                val resolvedLiked = dbSongDirect?.liked ?: passedLikeStatus
+                if (!userToggledLiked) {
+                    isLiked = resolvedLiked
+                    if (initialIsLiked == null) {
+                        initialIsLiked = resolvedLiked
+                    }
+                }
+            }
         }
     }
 
@@ -341,20 +360,40 @@ fun SavedInBottomSheet(
 
                         // 3. Like / Unlike
                         if (likedChanged) {
-                            val s = database.song(targetSongId).firstOrNull()?.song
+                            var currentDbSong = database.song(targetSongId).firstOrNull()?.song
+                            if (currentDbSong == null) {
+                                val meta = mediaMetadata ?: songItem?.toMediaMetadata()
+                                if (meta != null) {
+                                    database.transaction {
+                                        insert(meta)
+                                    }
+                                } else if (song != null) {
+                                    database.query {
+                                        insert(song)
+                                    }
+                                }
+                                currentDbSong = database.song(targetSongId).firstOrNull()?.song ?: song
+                            }
+
                             if (currentLikedVal) {
-                                val updated = s?.toggleLike() ?: song?.toggleLike()
-                                if (updated != null) {
+                                if (currentDbSong != null) {
+                                    val updated = currentDbSong.copy(
+                                        liked = true,
+                                        likedDate = currentDbSong.likedDate ?: LocalDateTime.now(),
+                                        inLibrary = currentDbSong.inLibrary ?: LocalDateTime.now(),
+                                    )
                                     database.query {
                                         update(updated)
                                     }
                                     syncUtils.likeSong(updated)
-                                } else {
-                                    YouTube.likeVideo(targetSongId, true)
                                 }
+                                YouTube.likeVideo(targetSongId, true)
                             } else {
-                                if (s != null) {
-                                    val updated = s.copy(liked = false, likedDate = null)
+                                if (currentDbSong != null) {
+                                    val updated = currentDbSong.copy(
+                                        liked = false,
+                                        likedDate = null,
+                                    )
                                     database.query {
                                         update(updated)
                                     }
@@ -438,7 +477,10 @@ fun SavedInBottomSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { isLiked = !isSongLiked }
+                        .clickable {
+                            userToggledLiked = true
+                            isLiked = !isSongLiked
+                        }
                         .padding(horizontal = 20.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

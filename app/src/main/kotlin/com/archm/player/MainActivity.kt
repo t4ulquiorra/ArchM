@@ -252,6 +252,7 @@ import com.archm.player.ui.screens.navigationBuilder
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.TextFieldDefaults
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -1935,10 +1936,9 @@ class MainActivity : ComponentActivity() {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .navigationBarsPadding()
-                            .padding(bottom = 80.dp)
+                            .statusBarsPadding()
                             .zIndex(999f),
-                        contentAlignment = Alignment.BottomCenter
+                        contentAlignment = Alignment.TopCenter
                     ) {
                         CustomSnackbarHost(hostState = snackbarHostState)
                     }
