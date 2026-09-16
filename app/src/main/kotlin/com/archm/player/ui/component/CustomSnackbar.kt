@@ -140,6 +140,7 @@ fun CustomFloatingSnackbar(
             .shadow(elevation = 6.dp, shape = shape),
         shape = shape,
         color = Color.White,
+        contentColor = Color(0xFF121212),
         shadowElevation = 6.dp,
         tonalElevation = 0.dp,
     ) {
@@ -149,7 +150,7 @@ fun CustomFloatingSnackbar(
         ) {
             Text(
                 text = message,
-                color = MaterialTheme.colorScheme.primary,
+                color = Color(0xFF121212),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
