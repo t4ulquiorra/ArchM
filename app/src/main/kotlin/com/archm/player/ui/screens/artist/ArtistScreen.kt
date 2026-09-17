@@ -543,9 +543,14 @@ fun ArtistScreen(
             .background(Color.Black),
     ) {
         val screenHeight = maxHeight
-        val backdropHeight = screenHeight * 0.45f // Exactly 45% screen height
-        val transparentSpacerHeight = screenHeight * 0.28f // Reveals upper artist face/torso
-        val gradientZoneHeight = screenHeight * 0.22f // 28% -> 50% transition (22% height)
+        val photoHeight = screenHeight * 0.45f // Layer 1 backdrop height (45% screen height)
+        val backdropHeight = photoHeight
+        val nameHeight = 36.dp
+        val nameToBadgePadding = 4.dp
+        val badgeHeight = 20.dp
+        val badgeToListenersPadding = 12.dp
+        val onImageContentHeight = nameHeight + nameToBadgePadding + badgeHeight + (badgeToListenersPadding / 2) // ~66.dp
+        val transparentSpacerHeight = photoHeight - onImageContentHeight
 
         val headerHeight = (configuration.screenHeightDp * 0.45f).dp
         val avatarSize = if (isLandscape) {
@@ -593,6 +598,19 @@ fun ArtistScreen(
                         )
                     }
                 }
+
+                // Dark Contrast Scrim gradient behind text covering onImageContentHeight + 32.dp at the bottom of the photo
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(onImageContentHeight + 32.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
+                            ),
+                        ),
+                )
             }
         }
 
@@ -628,16 +646,14 @@ fun ArtistScreen(
                 derivedStateOf {
                     val firstIndex = lazyListState.firstVisibleItemIndex
                     val firstOffset = lazyListState.firstVisibleItemScrollOffset
-                    if (firstIndex == 0) {
-                        val spacerPx = with(density) { transparentSpacerHeight.toPx() }
-                        val gradientPx = with(density) { gradientZoneHeight.toPx() }
-                        (spacerPx + gradientPx - firstOffset).coerceAtLeast(0f)
-                    } else if (firstIndex == 1) {
-                        val gradientPx = with(density) { gradientZoneHeight.toPx() }
-                        (gradientPx - firstOffset).coerceAtLeast(0f)
+                    val backdropPx = with(density) { backdropHeight.toPx() }
+                    val currentScroll = if (firstIndex == 0) {
+                        firstOffset.toFloat()
                     } else {
-                        0f
+                        val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                        spacerPx + firstOffset.toFloat()
                     }
+                    (backdropPx - currentScroll).coerceAtLeast(0f)
                 }
             }
 
@@ -719,19 +735,19 @@ fun ArtistScreen(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .heightIn(min = gradientZoneHeight)
                                             .background(
                                                 Brush.verticalGradient(
                                                     listOf(Color.Transparent, Color.Black),
                                                 ),
                                             )
-                                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                                        verticalArrangement = Arrangement.Bottom,
+                                            .padding(horizontal = 16.dp),
                                     ) {
-                                        TextPlaceholder(height = 32.dp, modifier = Modifier.fillMaxWidth(0.6f))
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                        TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.6f))
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                        Spacer(modifier = Modifier.height(12.dp))
                                         TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
-                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Spacer(modifier = Modifier.height(12.dp))
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1041,14 +1057,12 @@ fun ArtistScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = gradientZoneHeight)
                                 .background(
                                     Brush.verticalGradient(
                                         listOf(Color.Transparent, Color.Black),
                                     ),
                                 )
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.Bottom,
+                                .padding(horizontal = 16.dp),
                         ) {
                             // Over the bottom of the photo:
                             // Large Artist Name (bold, pure white)
@@ -1065,7 +1079,7 @@ fun ArtistScreen(
 
                             // ✔ Verified Artist badge and label directly beneath the name
                             if (isArtistVerified) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(nameToBadgePadding))
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1086,7 +1100,11 @@ fun ArtistScreen(
                                 }
                             }
 
-                            // Shelf & Action Area (over the black transition):
+                            // Total padding between Verified Artist and Monthly Listeners: 12.dp
+                            // Half (6.dp) is above the photo bottom edge; half (6.dp) is below.
+                            Spacer(modifier = Modifier.height(badgeToListenersPadding))
+
+                            // Shelf & Action Area (over the black transition / below photo):
                             // Text("${monthlyListeners} Monthly Listeners", color = Color.White.copy(alpha = 0.7f)) on its own row
                             val monthlyListenersDisplay = when {
                                 showMonthlyListeners && !monthlyListeners.isNullOrBlank() -> {
@@ -1113,7 +1131,6 @@ fun ArtistScreen(
                                 else -> null
                             }
                             if (monthlyListenersDisplay != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = monthlyListenersDisplay,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -1121,9 +1138,8 @@ fun ArtistScreen(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
+                                Spacer(modifier = Modifier.height(12.dp))
                             }
-
-                            Spacer(modifier = Modifier.height(12.dp))
 
                             // Action Row:
                             // Left group: ((•)) Radio pill + Following pill + ⋮ 3-dots overflow button
