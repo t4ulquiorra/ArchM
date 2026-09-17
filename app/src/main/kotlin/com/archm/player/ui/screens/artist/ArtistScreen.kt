@@ -50,11 +50,13 @@ import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -135,6 +137,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -257,12 +260,17 @@ fun ArtistScreen(
         }
     }
 
-    val firstItemVisible by remember {
-        derivedStateOf { lazyListState.firstVisibleItemIndex == 0 }
-    }
-    var shouldHideTopBar by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(firstItemVisible) {
-        shouldHideTopBar = !firstItemVisible
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp >= 600
+
+    val topBarTitleVisible by remember {
+        derivedStateOf {
+            if (isLandscape) {
+                lazyListState.firstVisibleItemIndex > 0
+            } else {
+                lazyListState.firstVisibleItemIndex > 1 || (lazyListState.firstVisibleItemIndex == 1 && lazyListState.firstVisibleItemScrollOffset > 80)
+            }
+        }
     }
 
     val maxSelectionReachedString = stringResource(R.string.max_selection_reached, MAX_SONG_SELECTION)
@@ -372,6 +380,18 @@ fun ArtistScreen(
         else -> null
     }
     val bioText = description ?: descriptionRuns?.joinToString(separator = "") { it.text }
+    val audienceStats = buildList {
+        if (showArtistSubscriberCount) {
+            artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }?.let {
+                add("$it ${stringResource(R.string.subscribers)}")
+            }
+        }
+        if (showMonthlyListeners) {
+            artistPage?.monthlyListenerCount?.takeIf { it.isNotBlank() }?.let {
+                add("$it ${stringResource(R.string.monthly_listeners)}")
+            }
+        }
+    }.joinToString(" • ")
 
     val isFollowed = libraryArtist?.artist?.bookmarkedAt != null
 
@@ -498,9 +518,16 @@ fun ArtistScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        val configuration = LocalConfiguration.current
-        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp >= 600
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+    ) {
+        val screenHeight = maxHeight
+        val backdropHeight = screenHeight * 0.45f // Exactly 45% of screen height
+        val transparentSpacerHeight = screenHeight * 0.30f // Top 30% window
+        val gradientZoneHeight = screenHeight * 0.20f // 30% -> 50% transition (20% height)
+
         val headerHeight = (configuration.screenHeightDp * 0.45f).dp
         val avatarSize = if (isLandscape) {
             if (headerHeight >= 220.dp) 125.dp else 110.dp
@@ -514,11 +541,80 @@ fun ArtistScreen(
         val topContentPadding = if (headerHeight < 240.dp) 36.dp else 56.dp
         val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
 
+        // Layer 1: Pinned Background Photo (zIndex 0f)
+        if (!isLandscape) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(backdropHeight)
+                    .align(Alignment.TopCenter)
+                    .zIndex(0f),
+            ) {
+                if (portraitUrl != null) {
+                    AsyncImage(
+                        model = portraitUrl.resize(1080, 1080) ?: portraitUrl,
+                        contentDescription = artistName,
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.artist_screen),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(64.dp),
+                        )
+                    }
+                }
+            }
+        }
+
+        val density = LocalDensity.current
+        if (!isLandscape) {
+            val contentSheetOffsetY by remember {
+                derivedStateOf {
+                    val firstIndex = lazyListState.firstVisibleItemIndex
+                    val firstOffset = lazyListState.firstVisibleItemScrollOffset
+                    if (firstIndex == 0) {
+                        val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                        val gradientPx = with(density) { gradientZoneHeight.toPx() }
+                        (spacerPx + gradientPx - firstOffset).coerceAtLeast(0f)
+                    } else if (firstIndex == 1) {
+                        val gradientPx = with(density) { gradientZoneHeight.toPx() }
+                        (gradientPx - firstOffset).coerceAtLeast(0f)
+                    } else {
+                        0f
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        translationY = contentSheetOffsetY
+                    }
+                    .background(Color.Black)
+                    .zIndex(0.5f),
+            )
+        }
+
+        // Layer 2: Sliding Content Sheet (zIndex 1f)
         LazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
                 bottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding(),
             ),
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(1f),
         ) {
             if (artistPage == null) {
                 item(key = "shimmer") {
@@ -572,53 +668,58 @@ fun ArtistScreen(
                                     }
                                 }
                             } else {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentHeight()
-                                        .windowInsetsPadding(WindowInsets.statusBars)
-                                        .padding(top = topContentPadding, bottom = 24.dp)
-                                        .padding(horizontal = 20.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                ) {
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                    Box(
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Spacer(modifier = Modifier.height(transparentSpacerHeight))
+                                    Column(
                                         modifier = Modifier
-                                            .size(160.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    TextPlaceholder(height = 28.dp, modifier = Modifier.fillMaxWidth(0.55f))
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.4f))
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                        ButtonPlaceholder(modifier = Modifier.width(88.dp).height(42.dp))
-                                        ButtonPlaceholder(modifier = Modifier.width(96.dp).height(42.dp))
+                                            .fillMaxWidth()
+                                            .heightIn(min = gradientZoneHeight)
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(Color.Transparent, Color.Black),
+                                                ),
+                                            )
+                                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        verticalArrangement = Arrangement.Bottom,
+                                    ) {
+                                        TextPlaceholder(height = 32.dp, modifier = Modifier.fillMaxWidth(0.6f))
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                ButtonPlaceholder(modifier = Modifier.width(96.dp).height(36.dp))
+                                                ButtonPlaceholder(modifier = Modifier.size(36.dp))
+                                            }
+                                            ButtonPlaceholder(modifier = Modifier.size(56.dp))
+                                        }
                                     }
                                 }
                             }
                         }
                         repeat(6) {
-                            ListItemPlaceHolder()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color.Black),
+                            ) {
+                                ListItemPlaceHolder()
+                            }
                         }
                     }
                 }
             } else {
-                // Spotify Tablet Landscape Hero Header with Ambient Blurred Backdrop
-                item(key = "header") {
-                    Box(
-                        modifier = if (isLandscape) {
-                            Modifier
+                if (isLandscape) {
+                    item(key = "header_landscape") {
+                        Box(
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .height(headerHeight)
-                        } else {
-                            Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                        },
-                    ) {
+                                .height(headerHeight),
+                        ) {
                         // Ambient blurred backdrop with vertical gradient fade to AMOLED black
                         Box(
                             modifier = Modifier.matchParentSize(),
@@ -882,167 +983,97 @@ fun ArtistScreen(
                                     }
                                 }
                             }
-                        } else {
-                            // Portrait: Centered Circular Layout
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentHeight()
-                                    .windowInsetsPadding(WindowInsets.statusBars)
-                                    .padding(top = topContentPadding, bottom = if (latestRelease != null) 0.dp else 24.dp)
-                                    .padding(horizontal = 20.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                        }
+                    }
+                } else {
+                    // Item 1 (Transparent Spacer)
+                    item(key = "transparent_spacer") {
+                        Spacer(modifier = Modifier.height(transparentSpacerHeight))
+                    }
+
+                    // Item 2 (The Gradient & Identity Zone)
+                    item(key = "identity_zone") {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = gradientZoneHeight)
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, Color.Black),
+                                    ),
+                                )
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.Bottom,
+                        ) {
+                            // Artist Name + Scalloped Rosette Badge (ic_verified_badge)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start,
                             ) {
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                // Centered Circular Avatar
-                                Box(
-                                    modifier = Modifier
-                                        .size(160.dp)
-                                        .clip(CircleShape)
-                                        .border(
-                                            border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.15f)),
-                                            shape = CircleShape,
-                                        ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    if (thumbnail != null) {
-                                        AsyncImage(
-                                            model = thumbnail.resize(
-                                                width = 500,
-                                                height = 500,
-                                            ),
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            alignment = Alignment.Center,
-                                            modifier = Modifier.fillMaxSize(),
-                                        )
-                                    } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.artist_screen),
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(56.dp),
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Centered Artist Name with Inline Verified Badge
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                ) {
-                                    Text(
-                                        text = artistName ?: unknownArtist,
-                                        style = titleStyle,
+                                Text(
+                                    text = artistName ?: unknownArtist,
+                                    style = MaterialTheme.typography.headlineLarge.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        textAlign = TextAlign.Center,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f, fill = false),
-                                    )
-                                    if (isArtistVerified) {
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_verified_badge),
-                                            contentDescription = "Verified",
-                                            tint = Color.Unspecified, // Keeps the built-in blue and white colors
-                                            modifier = Modifier.size(20.dp),
-                                        )
-                                    }
-                                }
-
-                                // Centered Listener / Subscriber stats text
-                                val audienceStats = buildList {
-                                    if (showArtistSubscriberCount) {
-                                        artistPage?.subscriberCountText?.takeIf { it.isNotBlank() }?.let {
-                                            add("$it ${stringResource(R.string.subscribers)}")
-                                        }
-                                    }
-                                    if (showMonthlyListeners) {
-                                        artistPage?.monthlyListenerCount?.takeIf { it.isNotBlank() }?.let {
-                                            add("$it ${stringResource(R.string.monthly_listeners)}")
-                                        }
-                                    }
-                                }.joinToString(" • ")
-
-                                if (audienceStats.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = audienceStats,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
+                                        fontSize = 32.sp,
+                                    ),
+                                    color = Color.White,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                                if (isArtistVerified) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_verified_badge),
+                                        contentDescription = "Verified",
+                                        tint = Color.Unspecified, // Keeps the built-in blue and white colors
+                                        modifier = Modifier.size(24.dp),
                                     )
                                 }
+                            }
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                            // Subtitle: "$subscribers Subscribers • $monthlyListeners Monthly"
+                            if (audienceStats.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = audienceStats,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
 
-                                // Centered Action Button Row: Primary Play, Follow, Radio
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Action Row:
+                            // Left: "Following" pill button + "Radio" pill button
+                            // Right: Large circular Play button (FAB style)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    // Primary Play / Pause capsule button
-                                    Box(
-                                        modifier = Modifier
-                                            .bouncyClickable(onClick = onPlay)
-                                            .height(42.dp)
-                                            .clip(RoundedCornerShape(50))
-                                            .background(Color.White)
-                                            .padding(start = 14.dp, end = 18.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(if (isCurrentArtistPlaying) R.drawable.pause else R.drawable.play),
-                                                contentDescription = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
-                                                tint = Color.Black,
-                                                modifier = Modifier.size(18.dp),
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
-                                                style = MaterialTheme.typography.labelLarge.copy(
-                                                    fontWeight = FontWeight.SemiBold,
-                                                ),
-                                                color = Color.Black,
-                                            )
-                                        }
-                                    }
-
-                                    // Secondary Outlined Follow capsule button
                                     OutlinedFollowPillButton(
                                         isFollowed = isFollowed,
                                         onClick = onToggleFollow,
-                                        height = 42.dp,
-                                        horizontalPadding = 20.dp,
-                                        borderAlpha = 0.25f,
+                                        height = 36.dp,
+                                        horizontalPadding = 18.dp,
+                                        borderAlpha = 0.35f,
                                     )
 
-                                    // Radio icon button
                                     if (onRadio != null) {
                                         Box(
                                             modifier = Modifier
                                                 .bouncyClickable(onClick = onRadio)
-                                                .size(42.dp)
+                                                .size(36.dp)
                                                 .clip(CircleShape)
                                                 .border(
-                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
                                                     shape = CircleShape,
                                                 ),
                                             contentAlignment = Alignment.Center,
@@ -1051,10 +1082,27 @@ fun ArtistScreen(
                                                 painter = painterResource(R.drawable.radio),
                                                 contentDescription = stringResource(R.string.start_radio),
                                                 tint = Color.White,
-                                                modifier = Modifier.size(20.dp),
+                                                modifier = Modifier.size(18.dp),
                                             )
                                         }
                                     }
+                                }
+
+                                // Right: Large circular Play button (FAB style)
+                                Box(
+                                    modifier = Modifier
+                                        .bouncyClickable(onClick = onPlay)
+                                        .size(56.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(if (isCurrentArtistPlaying) R.drawable.pause else R.drawable.play),
+                                        contentDescription = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(26.dp),
+                                    )
                                 }
                             }
                         }
@@ -1064,12 +1112,20 @@ fun ArtistScreen(
                 // Latest Release Section (placed directly above Popular)
                 latestRelease?.let { release ->
                     item(key = "section_latest_release_card") {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        ArtistLatestReleaseCard(
-                            release = release,
-                            onClick = { navController.navigate("album/${release.id}") },
-                            isLandscape = isLandscape,
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.Black),
+                        ) {
+                            Column {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                ArtistLatestReleaseCard(
+                                    release = release,
+                                    onClick = { navController.navigate("album/${release.id}") },
+                                    isLandscape = isLandscape,
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -1935,7 +1991,12 @@ fun ArtistScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .background(Color.Black),
+                    )
                 }
             }
         }
@@ -1945,7 +2006,8 @@ fun ArtistScreen(
             hostState = snackbarHostState,
             modifier = Modifier
                 .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
-                .align(Alignment.BottomCenter),
+                .align(Alignment.BottomCenter)
+                .zIndex(4f),
         )
 
         // Selection TopAppBar (shown when multi-selection mode is active)
@@ -1953,6 +2015,9 @@ fun ArtistScreen(
             visible = selectionState.isActive,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(3f),
         ) {
             TopAppBar(
                 windowInsets = WindowInsets.statusBars,
@@ -2024,71 +2089,92 @@ fun ArtistScreen(
             )
         }
 
-        // TopAppBar (transparent at top, surface container on scroll; back and options icons always legible)
+        // Layer 3: Top Navigation Overlay (zIndex 2f)
         if (!selectionState.isActive) {
             val topBarBackgroundColor by animateColorAsState(
-                targetValue = if (shouldHideTopBar) MaterialTheme.colorScheme.surface.copy(alpha = 0.85f) else Color.Transparent,
+                targetValue = if (topBarTitleVisible) Color.Black.copy(alpha = 0.85f) else Color.Transparent,
                 animationSpec = tween(durationMillis = 200),
             )
-            TopAppBar(
-                windowInsets = WindowInsets.statusBars,
-                title = {
-                    AnimatedVisibility(
-                        visible = shouldHideTopBar,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .zIndex(2f)
+                    .background(topBarBackgroundColor)
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Pinned floating Back arrow (top-left) in circular semi-translucent dark pill background
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.4f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    LongClickIconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain,
+                        modifier = Modifier.size(40.dp),
                     ) {
-                        Text(
-                            text = artistName ?: unknownArtist,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(align = Alignment.CenterVertically)
-                                .basicMarquee(
-                                    iterations = Int.MAX_VALUE,
-                                    animationMode = MarqueeAnimationMode.Immediately,
-                                    )
-                                .focusable(),
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_back),
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
-                },
-                navigationIcon = {
-                    Box(Modifier.padding(horizontal = 5.dp)) {
-                        LongClickIconButton(
-                            onClick = navController::navigateUp,
-                            onLongClick = navController::backToMain,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.arrow_back),
-                                contentDescription = "Back",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp),
+                }
+
+                AnimatedVisibility(
+                    visible = topBarTitleVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp),
+                ) {
+                    Text(
+                        text = artistName ?: unknownArtist,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .basicMarquee(
+                                iterations = Int.MAX_VALUE,
+                                animationMode = MarqueeAnimationMode.Immediately,
                             )
-                        }
-                    }
-                },
-                actions = {
+                            .focusable(),
+                    )
+                }
+
+                // Pinned floating 3-dot menu (top-right) in circular semi-translucent dark pill background
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.4f)),
+                    contentAlignment = Alignment.Center,
+                ) {
                     IconButton(
                         onClick = showArtistOverflowMenu,
+                        modifier = Modifier.size(40.dp),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.more_horiz),
                             contentDescription = stringResource(R.string.more_options),
                             tint = Color.White,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = topBarBackgroundColor,
-                    navigationIconContentColor = Color.White,
-                    titleContentColor = Color.White,
-                    actionIconContentColor = Color.White,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(topBarBackgroundColor),
-            )
+                }
+            }
         }
     }
 }
