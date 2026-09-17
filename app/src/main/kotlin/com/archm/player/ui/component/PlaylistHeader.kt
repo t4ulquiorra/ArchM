@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -133,6 +134,7 @@ fun PlaylistHeader(
                         val artworkScale = 1.0f - (0.75f * scrollRatio) // Scales 1.0 -> 0.25
                         scaleX = artworkScale
                         scaleY = artworkScale
+                        transformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1.0f)
                     }
                     .shadow(elevation = 16.dp, shape = RoundedCornerShape(8.dp))
                     .clip(RoundedCornerShape(8.dp))
