@@ -118,6 +118,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -365,7 +366,14 @@ fun ArtistScreen(
         thumbnailUrl = portraitUrl,
         fallbackColor = MaterialTheme.colorScheme.surfaceVariant,
     )
-    val dominantAccentColor = artworkGradientColors.firstOrNull() ?: MaterialTheme.colorScheme.surfaceVariant
+    val rawAccentColor = artworkGradientColors.firstOrNull() ?: MaterialTheme.colorScheme.surfaceVariant
+    val dominantAccentColor = remember(rawAccentColor) {
+        if (rawAccentColor.luminance() > 0.6f) {
+            Color(0xFF242424)
+        } else {
+            rawAccentColor
+        }
+    }
     val animatedAccentColor by animateColorAsState(
         targetValue = dominantAccentColor,
         animationSpec = tween(durationMillis = 600),
@@ -590,6 +598,32 @@ fun ArtistScreen(
 
         val density = LocalDensity.current
         if (!isLandscape) {
+            val maxScrollPx = with(density) { backdropHeight.toPx() }
+            val scrollOffset by remember {
+                derivedStateOf {
+                    val firstIndex = lazyListState.firstVisibleItemIndex
+                    val firstOffset = lazyListState.firstVisibleItemScrollOffset
+                    if (firstIndex == 0) {
+                        firstOffset.toFloat()
+                    } else {
+                        val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                        spacerPx + firstOffset.toFloat()
+                    }
+                }
+            }
+            val washAlpha = (scrollOffset / maxScrollPx).coerceIn(0f, 0.75f)
+
+            // Scroll-Driven Accent Wash Layer (zIndex 0.5f)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(backdropHeight)
+                    .align(Alignment.TopCenter)
+                    .alpha(washAlpha)
+                    .background(animatedAccentColor)
+                    .zIndex(0.5f),
+            )
+
             val contentSheetOffsetY by remember {
                 derivedStateOf {
                     val firstIndex = lazyListState.firstVisibleItemIndex
@@ -614,7 +648,7 @@ fun ArtistScreen(
                         translationY = contentSheetOffsetY
                     }
                     .background(Color.Black)
-                    .zIndex(0.5f),
+                    .zIndex(0.6f),
             )
         }
 
@@ -688,9 +722,7 @@ fun ArtistScreen(
                                             .heightIn(min = gradientZoneHeight)
                                             .background(
                                                 Brush.verticalGradient(
-                                                    0.0f to Color.Transparent,
-                                                    0.45f to animatedAccentColor.copy(alpha = 0.85f),
-                                                    1.0f to Color.Black,
+                                                    listOf(Color.Transparent, Color.Black),
                                                 ),
                                             )
                                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -706,6 +738,7 @@ fun ArtistScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                ButtonPlaceholder(modifier = Modifier.size(36.dp))
                                                 ButtonPlaceholder(modifier = Modifier.width(96.dp).height(36.dp))
                                                 ButtonPlaceholder(modifier = Modifier.size(36.dp))
                                             }
@@ -1011,46 +1044,78 @@ fun ArtistScreen(
                                 .heightIn(min = gradientZoneHeight)
                                 .background(
                                     Brush.verticalGradient(
-                                        0.0f to Color.Transparent,
-                                        0.45f to animatedAccentColor.copy(alpha = 0.85f),
-                                        1.0f to Color.Black,
+                                        listOf(Color.Transparent, Color.Black),
                                     ),
                                 )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.Bottom,
                         ) {
-                            // Artist Name + Scalloped Rosette Badge (ic_verified_badge)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Start,
-                            ) {
-                                Text(
-                                    text = artistName ?: unknownArtist,
-                                    style = MaterialTheme.typography.headlineLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 32.sp,
-                                    ),
-                                    color = Color.White,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                )
-                                if (isArtistVerified) {
-                                    Spacer(modifier = Modifier.width(8.dp))
+                            // Over the bottom of the photo:
+                            // Large Artist Name (bold, pure white)
+                            Text(
+                                text = artistName ?: unknownArtist,
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 32.sp,
+                                ),
+                                color = Color.White,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+
+                            // ✔ Verified Artist badge and label directly beneath the name
+                            if (isArtistVerified) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_verified_badge),
-                                        contentDescription = "Verified",
+                                        contentDescription = "Verified Artist",
                                         tint = Color.Unspecified, // Keeps the built-in blue and white colors
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Text(
+                                        text = "Verified Artist",
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Medium,
+                                        ),
+                                        color = Color.White.copy(alpha = 0.85f),
                                     )
                                 }
                             }
 
-                            // Subtitle: "$subscribers Subscribers • $monthlyListeners Monthly"
-                            if (audienceStats.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                            // Shelf & Action Area (over the black transition):
+                            // Text("${monthlyListeners} Monthly Listeners", color = Color.White.copy(alpha = 0.7f)) on its own row
+                            val monthlyListenersDisplay = when {
+                                showMonthlyListeners && !monthlyListeners.isNullOrBlank() -> {
+                                    if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                                        monthlyListeners
+                                    } else {
+                                        "$monthlyListeners Monthly Listeners"
+                                    }
+                                }
+                                showArtistSubscriberCount && !subscribers.isNullOrBlank() -> {
+                                    if (subscribers.contains("subscriber", ignoreCase = true)) {
+                                        subscribers
+                                    } else {
+                                        "$subscribers Subscribers"
+                                    }
+                                }
+                                !monthlyListeners.isNullOrBlank() -> {
+                                    if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                                        monthlyListeners
+                                    } else {
+                                        "$monthlyListeners Monthly Listeners"
+                                    }
+                                }
+                                else -> null
+                            }
+                            if (monthlyListenersDisplay != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = audienceStats,
+                                    text = monthlyListenersDisplay,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White.copy(alpha = 0.7f),
                                     maxLines = 1,
@@ -1061,8 +1126,8 @@ fun ArtistScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             // Action Row:
-                            // Left: "Following" pill button + "Radio" pill button
-                            // Right: Large circular Play button (FAB style)
+                            // Left group: ((•)) Radio pill + Following pill + ⋮ 3-dots overflow button
+                            // Right: Large circular Play FAB (white circle with black play icon)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1072,14 +1137,7 @@ fun ArtistScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    OutlinedFollowPillButton(
-                                        isFollowed = isFollowed,
-                                        onClick = onToggleFollow,
-                                        height = 36.dp,
-                                        horizontalPadding = 18.dp,
-                                        borderAlpha = 0.35f,
-                                    )
-
+                                    // ((•)) Radio pill
                                     if (onRadio != null) {
                                         Box(
                                             modifier = Modifier
@@ -1100,9 +1158,38 @@ fun ArtistScreen(
                                             )
                                         }
                                     }
+
+                                    // Following pill
+                                    OutlinedFollowPillButton(
+                                        isFollowed = isFollowed,
+                                        onClick = onToggleFollow,
+                                        height = 36.dp,
+                                        horizontalPadding = 18.dp,
+                                        borderAlpha = 0.35f,
+                                    )
+
+                                    // ⋮ 3-dots overflow button
+                                    Box(
+                                        modifier = Modifier
+                                            .bouncyClickable(onClick = showArtistOverflowMenu)
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .border(
+                                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+                                                shape = CircleShape,
+                                            ),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.more_vert),
+                                            contentDescription = stringResource(R.string.more_options),
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    }
                                 }
 
-                                // Right: Large circular Play button (FAB style)
+                                // Right: Large circular Play FAB (white circle with black play icon)
                                 Box(
                                     modifier = Modifier
                                         .bouncyClickable(onClick = onPlay)
