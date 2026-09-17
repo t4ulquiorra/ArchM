@@ -754,10 +754,8 @@ fun ArtistScreen(
                                     ),
                             )
                         }
-
-                        if (isLandscape) {
-                            // Landscape: Circular Avatar Flush Layout (Horizontal Row)
-                            Box(
+                        // Landscape: Circular Avatar Flush Layout (Horizontal Row)
+                        Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .windowInsetsPadding(WindowInsets.statusBars)
