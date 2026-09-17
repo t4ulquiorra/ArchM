@@ -44,7 +44,7 @@ import com.archm.player.R
 
 /**
  * Redesigned header with a static blurred atmosphere background and
- * a floating square artwork that smoothly scales down by 75% on scroll
+ * a floating square artwork that smoothly scales down by 50% on scroll
  * before naturally moving off-screen.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -131,7 +131,7 @@ fun PlaylistHeader(
                             lazyListState.firstVisibleItemScrollOffset.toFloat()
                         }
                         val scrollRatio = (currentScrollOffset / maxScrollPx).coerceIn(0f, 1f)
-                        val artworkScale = 1.0f - (0.75f * scrollRatio) // Scales 1.0 -> 0.25
+                        val artworkScale = 1.0f - (0.50f * scrollRatio) // Scales 1.0 -> 0.50
                         scaleX = artworkScale
                         scaleY = artworkScale
                         transformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1.0f)
