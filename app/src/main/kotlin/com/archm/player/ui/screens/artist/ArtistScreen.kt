@@ -537,6 +537,8 @@ fun ArtistScreen(
         }
     }
 
+    var identityZonePx by remember { mutableStateOf(0f) }
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -642,18 +644,22 @@ fun ArtistScreen(
                     .zIndex(0.5f),
             )
 
+            val defaultIdentityZonePx = with(density) { 176.dp.toPx() }
             val contentSheetOffsetY by remember {
                 derivedStateOf {
                     val firstIndex = lazyListState.firstVisibleItemIndex
                     val firstOffset = lazyListState.firstVisibleItemScrollOffset
-                    val backdropPx = with(density) { backdropHeight.toPx() }
+                    val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                    val effectiveIdentityPx = if (identityZonePx > 0f) identityZonePx else defaultIdentityZonePx
+                    val baseLinePx = spacerPx + effectiveIdentityPx
                     val currentScroll = if (firstIndex == 0) {
                         firstOffset.toFloat()
-                    } else {
-                        val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                    } else if (firstIndex == 1) {
                         spacerPx + firstOffset.toFloat()
+                    } else {
+                        baseLinePx
                     }
-                    (backdropPx - currentScroll).coerceAtLeast(0f)
+                    (baseLinePx - currentScroll).coerceAtLeast(0f)
                 }
             }
 
@@ -735,16 +741,26 @@ fun ArtistScreen(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    listOf(Color.Transparent, Color.Black),
-                                                ),
-                                            )
                                             .padding(horizontal = 16.dp),
                                     ) {
                                         TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.6f))
                                         Spacer(modifier = Modifier.height(4.dp))
                                         TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black,
+                                                    ),
+                                                ),
+                                            )
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 16.dp),
+                                    ) {
                                         Spacer(modifier = Modifier.height(12.dp))
                                         TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
                                         Spacer(modifier = Modifier.height(12.dp))
@@ -1057,107 +1073,156 @@ fun ArtistScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(Color.Transparent, Color.Black),
-                                    ),
-                                )
-                                .padding(horizontal = 16.dp),
+                                .onGloballyPositioned { coordinates ->
+                                    identityZonePx = coordinates.size.height.toFloat()
+                                },
                         ) {
                             // Over the bottom of the photo:
                             // Large Artist Name (bold, pure white)
-                            Text(
-                                text = artistName ?: unknownArtist,
-                                style = MaterialTheme.typography.headlineLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 32.sp,
-                                ),
-                                color = Color.White,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-
-                            // ✔ Verified Artist badge and label directly beneath the name
-                            if (isArtistVerified) {
-                                Spacer(modifier = Modifier.height(nameToBadgePadding))
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_verified_badge),
-                                        contentDescription = "Verified Artist",
-                                        tint = Color.Unspecified, // Keeps the built-in blue and white colors
-                                        modifier = Modifier.size(16.dp),
-                                    )
-                                    Text(
-                                        text = "Verified Artist",
-                                        style = MaterialTheme.typography.labelMedium.copy(
-                                            fontWeight = FontWeight.Medium,
-                                        ),
-                                        color = Color.White.copy(alpha = 0.85f),
-                                    )
-                                }
-                            }
-
-                            // Total padding between Verified Artist and Monthly Listeners: 12.dp
-                            // Half (6.dp) is above the photo bottom edge; half (6.dp) is below.
-                            Spacer(modifier = Modifier.height(badgeToListenersPadding))
-
-                            // Shelf & Action Area (over the black transition / below photo):
-                            // Text("${monthlyListeners} Monthly Listeners", color = Color.White.copy(alpha = 0.7f)) on its own row
-                            val monthlyListenersDisplay = when {
-                                showMonthlyListeners && !monthlyListeners.isNullOrBlank() -> {
-                                    if (monthlyListeners.contains("listener", ignoreCase = true)) {
-                                        monthlyListeners
-                                    } else {
-                                        "$monthlyListeners Monthly Listeners"
-                                    }
-                                }
-                                showArtistSubscriberCount && !subscribers.isNullOrBlank() -> {
-                                    if (subscribers.contains("subscriber", ignoreCase = true)) {
-                                        subscribers
-                                    } else {
-                                        "$subscribers Subscribers"
-                                    }
-                                }
-                                !monthlyListeners.isNullOrBlank() -> {
-                                    if (monthlyListeners.contains("listener", ignoreCase = true)) {
-                                        monthlyListeners
-                                    } else {
-                                        "$monthlyListeners Monthly Listeners"
-                                    }
-                                }
-                                else -> null
-                            }
-                            if (monthlyListenersDisplay != null) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                            ) {
                                 Text(
-                                    text = monthlyListenersDisplay,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    maxLines = 1,
+                                    text = artistName ?: unknownArtist,
+                                    style = MaterialTheme.typography.headlineLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 32.sp,
+                                    ),
+                                    color = Color.White,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // ✔ Verified Artist badge and label directly beneath the name
+                                if (isArtistVerified) {
+                                    Spacer(modifier = Modifier.height(nameToBadgePadding))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_verified_badge),
+                                            contentDescription = "Verified Artist",
+                                            tint = Color.Unspecified, // Keeps the built-in blue and white colors
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                        Text(
+                                            text = "Verified Artist",
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontWeight = FontWeight.Medium,
+                                            ),
+                                            color = Color.White.copy(alpha = 0.85f),
+                                        )
+                                    }
+                                }
                             }
 
-                            // Action Row:
-                            // Left group: ((•)) Radio pill + Following pill + ⋮ 3-dots overflow button
-                            // Right: Large circular Play FAB (white circle with black play icon)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
+                            // Action / Identity Shelf with smooth upward gradient fade:
+                            // Top: Color.Transparent (above Monthly Listeners / below Verified Artist)
+                            // Bottom: Color.Black (aligned with the bottom of the Play FAB)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent, // Top (above Monthly Listeners / below Verified Artist)
+                                                Color.Black,       // Bottom (aligned with the bottom of the Play FAB)
+                                            ),
+                                        ),
+                                    )
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = 16.dp),
                             ) {
+                                // Total padding between Verified Artist and Monthly Listeners: 12.dp
+                                Spacer(modifier = Modifier.height(badgeToListenersPadding))
+
+                                // Shelf & Action Area (over the black transition / below photo):
+                                // Text("${monthlyListeners} Monthly Listeners", color = Color.White.copy(alpha = 0.7f)) on its own row
+                                val monthlyListenersDisplay = when {
+                                    showMonthlyListeners && !monthlyListeners.isNullOrBlank() -> {
+                                        if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                                            monthlyListeners
+                                        } else {
+                                            "$monthlyListeners Monthly Listeners"
+                                        }
+                                    }
+                                    showArtistSubscriberCount && !subscribers.isNullOrBlank() -> {
+                                        if (subscribers.contains("subscriber", ignoreCase = true)) {
+                                            subscribers
+                                        } else {
+                                            "$subscribers Subscribers"
+                                        }
+                                    }
+                                    !monthlyListeners.isNullOrBlank() -> {
+                                        if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                                            monthlyListeners
+                                        } else {
+                                            "$monthlyListeners Monthly Listeners"
+                                        }
+                                    }
+                                    else -> null
+                                }
+                                if (monthlyListenersDisplay != null) {
+                                    Text(
+                                        text = monthlyListenersDisplay,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                }
+
+                                // Action Row:
+                                // Left group: ((•)) Radio pill + Following pill + ⋮ 3-dots overflow button
+                                // Right: Large circular Play FAB (white circle with black play icon)
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    // ((•)) Radio pill
-                                    if (onRadio != null) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        // ((•)) Radio pill
+                                        if (onRadio != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .bouncyClickable(onClick = onRadio)
+                                                    .size(36.dp)
+                                                    .clip(CircleShape)
+                                                    .border(
+                                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+                                                        shape = CircleShape,
+                                                    ),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.radio),
+                                                    contentDescription = stringResource(R.string.start_radio),
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(18.dp),
+                                                )
+                                            }
+                                        }
+
+                                        // Following pill
+                                        OutlinedFollowPillButton(
+                                            isFollowed = isFollowed,
+                                            onClick = onToggleFollow,
+                                            height = 36.dp,
+                                            horizontalPadding = 18.dp,
+                                            borderAlpha = 0.35f,
+                                        )
+
+                                        // ⋮ 3-dots overflow button
                                         Box(
                                             modifier = Modifier
-                                                .bouncyClickable(onClick = onRadio)
+                                                .bouncyClickable(onClick = showArtistOverflowMenu)
                                                 .size(36.dp)
                                                 .clip(CircleShape)
                                                 .border(
@@ -1167,59 +1232,30 @@ fun ArtistScreen(
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             Icon(
-                                                painter = painterResource(R.drawable.radio),
-                                                contentDescription = stringResource(R.string.start_radio),
+                                                painter = painterResource(R.drawable.more_vert),
+                                                contentDescription = stringResource(R.string.more_options),
                                                 tint = Color.White,
                                                 modifier = Modifier.size(18.dp),
                                             )
                                         }
                                     }
 
-                                    // Following pill
-                                    OutlinedFollowPillButton(
-                                        isFollowed = isFollowed,
-                                        onClick = onToggleFollow,
-                                        height = 36.dp,
-                                        horizontalPadding = 18.dp,
-                                        borderAlpha = 0.35f,
-                                    )
-
-                                    // ⋮ 3-dots overflow button
+                                    // Right: Large circular Play FAB (white circle with black play icon)
                                     Box(
                                         modifier = Modifier
-                                            .bouncyClickable(onClick = showArtistOverflowMenu)
-                                            .size(36.dp)
+                                            .bouncyClickable(onClick = onPlay)
+                                            .size(56.dp)
                                             .clip(CircleShape)
-                                            .border(
-                                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
-                                                shape = CircleShape,
-                                            ),
+                                            .background(Color.White),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
-                                            painter = painterResource(R.drawable.more_vert),
-                                            contentDescription = stringResource(R.string.more_options),
-                                            tint = Color.White,
-                                            modifier = Modifier.size(18.dp),
+                                            painter = painterResource(if (isCurrentArtistPlaying) R.drawable.pause else R.drawable.play),
+                                            contentDescription = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
+                                            tint = Color.Black,
+                                            modifier = Modifier.size(26.dp),
                                         )
                                     }
-                                }
-
-                                // Right: Large circular Play FAB (white circle with black play icon)
-                                Box(
-                                    modifier = Modifier
-                                        .bouncyClickable(onClick = onPlay)
-                                        .size(56.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(if (isCurrentArtistPlaying) R.drawable.pause else R.drawable.play),
-                                        contentDescription = stringResource(if (isCurrentArtistPlaying) R.string.pause else R.string.play),
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(26.dp),
-                                    )
                                 }
                             }
                         }
@@ -2271,26 +2307,8 @@ fun ArtistScreen(
                     )
                 }
 
-                // Pinned floating 3-dot menu (top-right) in circular semi-translucent dark pill background
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.45f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    IconButton(
-                        onClick = showArtistOverflowMenu,
-                        modifier = Modifier.size(40.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.more_horiz),
-                            contentDescription = stringResource(R.string.more_options),
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
+                // Balance spacer for centered title when visible
+                Spacer(modifier = Modifier.size(40.dp))
             }
         }
     }
