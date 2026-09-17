@@ -47,6 +47,7 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import com.archm.player.ui.screens.library.rememberArtworkCardColor
+import com.archm.player.ui.screens.library.rememberArtworkGradient
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -360,6 +361,16 @@ fun ArtistScreen(
     val portraitUrl = thumbnail
         ?: artistPage?.artist?.thumbnail
         ?: libraryArtist?.artist?.thumbnailUrl
+    val artworkGradientColors = rememberArtworkGradient(
+        thumbnailUrl = portraitUrl,
+        fallbackColor = MaterialTheme.colorScheme.surfaceVariant,
+    )
+    val dominantAccentColor = artworkGradientColors.firstOrNull() ?: MaterialTheme.colorScheme.surfaceVariant
+    val animatedAccentColor by animateColorAsState(
+        targetValue = dominantAccentColor,
+        animationSpec = tween(durationMillis = 600),
+        label = "ArtistAccentColor",
+    )
     val monthlyListeners = artistPage?.monthlyListenerCount
     val subscribers = artistPage?.subscriberCountText
     val audienceStat = when {
@@ -524,9 +535,9 @@ fun ArtistScreen(
             .background(Color.Black),
     ) {
         val screenHeight = maxHeight
-        val backdropHeight = screenHeight * 0.45f // Exactly 45% of screen height
-        val transparentSpacerHeight = screenHeight * 0.30f // Top 30% window
-        val gradientZoneHeight = screenHeight * 0.20f // 30% -> 50% transition (20% height)
+        val backdropHeight = screenHeight * 0.45f // Exactly 45% screen height
+        val transparentSpacerHeight = screenHeight * 0.28f // Reveals upper artist face/torso
+        val gradientZoneHeight = screenHeight * 0.22f // 28% -> 50% transition (22% height)
 
         val headerHeight = (configuration.screenHeightDp * 0.45f).dp
         val avatarSize = if (isLandscape) {
@@ -541,13 +552,14 @@ fun ArtistScreen(
         val topContentPadding = if (headerHeight < 240.dp) 36.dp else 56.dp
         val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
 
-        // Layer 1: Pinned Background Photo (zIndex 0f)
+        // Layer 1: Pinned Backdrop (zIndex 0f)
         if (!isLandscape) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(backdropHeight)
                     .align(Alignment.TopCenter)
+                    .background(animatedAccentColor)
                     .zIndex(0f),
             ) {
                 if (portraitUrl != null) {
@@ -562,13 +574,13 @@ fun ArtistScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                            .background(animatedAccentColor),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.artist_screen),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(64.dp),
                         )
                     }
@@ -676,7 +688,9 @@ fun ArtistScreen(
                                             .heightIn(min = gradientZoneHeight)
                                             .background(
                                                 Brush.verticalGradient(
-                                                    colors = listOf(Color.Transparent, Color.Black),
+                                                    0.0f to Color.Transparent,
+                                                    0.45f to animatedAccentColor.copy(alpha = 0.85f),
+                                                    1.0f to Color.Black,
                                                 ),
                                             )
                                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -997,7 +1011,9 @@ fun ArtistScreen(
                                 .heightIn(min = gradientZoneHeight)
                                 .background(
                                     Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, Color.Black),
+                                        0.0f to Color.Transparent,
+                                        0.45f to animatedAccentColor.copy(alpha = 0.85f),
+                                        1.0f to Color.Black,
                                     ),
                                 )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -2110,7 +2126,7 @@ fun ArtistScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.4f)),
+                        .background(Color.Black.copy(alpha = 0.45f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     LongClickIconButton(
@@ -2157,7 +2173,7 @@ fun ArtistScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.4f)),
+                        .background(Color.Black.copy(alpha = 0.45f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     IconButton(
