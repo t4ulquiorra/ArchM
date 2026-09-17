@@ -367,6 +367,35 @@ fun CachePlaylistScreen(
                                     )
                                 }
                             }
+                        ) {
+                            Text(
+                                text = titleText,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 2,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.playlist),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xC4FFFFFF),
+                                    textAlign = TextAlign.Center,
+                                )
+                                if (hasExplicitContent) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.explicit),
+                                        contentDescription = "Explicit",
+                                        tint = Color(0xC4FFFFFF),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
                         }
                     }
 
