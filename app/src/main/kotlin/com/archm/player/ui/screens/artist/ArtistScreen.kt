@@ -601,19 +601,6 @@ fun ArtistScreen(
                         )
                     }
                 }
-
-                // Dark Contrast Scrim gradient behind text covering onImageContentHeight + 32.dp at the bottom of the photo
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(onImageContentHeight + 32.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                            ),
-                        ),
-                )
             }
         }
 
