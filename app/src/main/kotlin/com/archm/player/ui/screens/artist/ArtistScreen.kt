@@ -265,16 +265,6 @@ fun ArtistScreen(
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp >= 600
 
-    val topBarTitleVisible by remember {
-        derivedStateOf {
-            if (isLandscape) {
-                lazyListState.firstVisibleItemIndex > 0
-            } else {
-                lazyListState.firstVisibleItemIndex > 1 || (lazyListState.firstVisibleItemIndex == 1 && lazyListState.firstVisibleItemScrollOffset > 80)
-            }
-        }
-    }
-
     val maxSelectionReachedString = stringResource(R.string.max_selection_reached, MAX_SONG_SELECTION)
     val selectionState = remember {
         SongSelectionState(
@@ -617,6 +607,34 @@ fun ArtistScreen(
         }
 
         val density = LocalDensity.current
+        val defaultIdentityZonePx = with(density) { 176.dp.toPx() }
+        val topBarAlpha by remember {
+            derivedStateOf {
+                if (isLandscape) {
+                    val headerPx = with(density) { headerHeight.toPx() }
+                    val scrollOffset = if (lazyListState.firstVisibleItemIndex == 0) {
+                        lazyListState.firstVisibleItemScrollOffset.toFloat()
+                    } else {
+                        headerPx + lazyListState.firstVisibleItemScrollOffset.toFloat()
+                    }
+                    val collapseThresholdPx = headerPx * 0.25f
+                    val transitionDistancePx = (headerPx * 0.5f).coerceAtLeast(1f)
+                    ((scrollOffset - collapseThresholdPx) / transitionDistancePx).coerceIn(0f, 1f)
+                } else {
+                    val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                    val effectiveIdentityPx = if (identityZonePx > 0f) identityZonePx else defaultIdentityZonePx
+                    val scrollOffset = when (lazyListState.firstVisibleItemIndex) {
+                        0 -> lazyListState.firstVisibleItemScrollOffset.toFloat()
+                        1 -> spacerPx + lazyListState.firstVisibleItemScrollOffset.toFloat()
+                        else -> spacerPx + effectiveIdentityPx + lazyListState.firstVisibleItemScrollOffset.toFloat()
+                    }
+                    val collapseThresholdPx = spacerPx
+                    val transitionDistancePx = effectiveIdentityPx.coerceAtLeast(1f)
+                    ((scrollOffset - collapseThresholdPx) / transitionDistancePx).coerceIn(0f, 1f)
+                }
+            }
+        }
+
         if (!isLandscape) {
             val maxScrollPx = with(density) { backdropHeight.toPx() }
             val scrollOffset by remember {
@@ -644,7 +662,6 @@ fun ArtistScreen(
                     .zIndex(0.5f),
             )
 
-            val defaultIdentityZonePx = with(density) { 176.dp.toPx() }
             val contentSheetOffsetY by remember {
                 derivedStateOf {
                     val firstIndex = lazyListState.firstVisibleItemIndex
@@ -2244,71 +2261,101 @@ fun ArtistScreen(
 
         // Layer 3: Top Navigation Overlay (zIndex 2f)
         if (!selectionState.isActive) {
-            val topBarBackgroundColor by animateColorAsState(
-                targetValue = if (topBarTitleVisible) Color.Black.copy(alpha = 0.85f) else Color.Transparent,
-                animationSpec = tween(durationMillis = 200),
-            )
+            val dominantColor = animatedAccentColor
 
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
                     .zIndex(2f)
-                    .background(topBarBackgroundColor)
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                    .background(dominantColor.copy(alpha = topBarAlpha)),
             ) {
-                // Pinned floating Back arrow (top-left) in circular semi-translucent dark pill background
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.45f)),
-                    contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(top = 8.dp, start = 8.dp, end = 8.dp)
+                        .height(56.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    LongClickIconButton(
-                        onClick = navController::navigateUp,
-                        onLongClick = navController::backToMain,
-                        modifier = Modifier.size(40.dp),
+                    // Pinned floating Back arrow (top-left) in circular semi-translucent dark pill background
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.45f * (1f - topBarAlpha))),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp),
-                        )
+                        LongClickIconButton(
+                            onClick = navController::navigateUp,
+                            onLongClick = navController::backToMain,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
+
+                    // Artist name marquee title (centered, fades in alongside 3-dot menu)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp)
+                            .graphicsLayer { alpha = topBarAlpha },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (topBarAlpha > 0f) {
+                            Text(
+                                text = artistName ?: unknownArtist,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .basicMarquee(
+                                        iterations = Int.MAX_VALUE,
+                                        animationMode = MarqueeAnimationMode.Immediately,
+                                    ),
+                            )
+                        }
+                    }
+
+                    // Pinned 3-dot overflow menu (top-right, fades in alongside title)
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .graphicsLayer { alpha = topBarAlpha },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (topBarAlpha > 0.2f) {
+                            IconButton(
+                                onClick = showArtistOverflowMenu,
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.more_vert),
+                                    contentDescription = stringResource(R.string.more_options),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        } else if (topBarAlpha > 0f) {
+                            Icon(
+                                painter = painterResource(R.drawable.more_vert),
+                                contentDescription = stringResource(R.string.more_options),
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
-
-                AnimatedVisibility(
-                    visible = topBarTitleVisible,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 12.dp),
-                ) {
-                    Text(
-                        text = artistName ?: unknownArtist,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .basicMarquee(
-                                iterations = Int.MAX_VALUE,
-                                animationMode = MarqueeAnimationMode.Immediately,
-                            )
-                            .focusable(),
-                    )
-                }
-
-                // Balance spacer for centered title when visible
-                Spacer(modifier = Modifier.size(40.dp))
             }
         }
     }
