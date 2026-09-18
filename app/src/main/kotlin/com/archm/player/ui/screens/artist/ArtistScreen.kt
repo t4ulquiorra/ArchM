@@ -660,6 +660,65 @@ fun ArtistScreen(
                     .zIndex(0.5f),
             )
 
+            // Layer 1.5: Backing Sheet (zIndex 0.6f)
+            val effectiveIdentityPx = if (identityZonePx > 0f) identityZonePx else defaultIdentityZonePx
+            val identityZoneHeight = with(density) { effectiveIdentityPx.toDp() }
+            val sheetHeight = screenHeight + transparentSpacerHeight + identityZoneHeight
+
+            val contentSheetOffsetY by remember {
+                derivedStateOf {
+                    val firstIndex = lazyListState.firstVisibleItemIndex
+                    val firstOffset = lazyListState.firstVisibleItemScrollOffset
+                    val spacerPx = with(density) { transparentSpacerHeight.toPx() }
+                    val currentIdentityPx = if (identityZonePx > 0f) identityZonePx else defaultIdentityZonePx
+                    val rawOffset = when (firstIndex) {
+                        0 -> spacerPx - firstOffset.toFloat()
+                        1 -> -firstOffset.toFloat()
+                        else -> -currentIdentityPx
+                    }
+                    rawOffset.coerceIn(-currentIdentityPx, spacerPx)
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(sheetHeight)
+                    .align(Alignment.TopCenter)
+                    .graphicsLayer {
+                        translationY = contentSheetOffsetY
+                    }
+                    .zIndex(0.6f),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    // Top section: identical vertical gradient fade matching identity zone
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(identityZoneHeight)
+                            .background(
+                                Brush.verticalGradient(
+                                    0.00f to Color.Transparent,
+                                    0.15f to Color.Black.copy(alpha = 0.25f),
+                                    0.30f to Color.Black.copy(alpha = 0.70f),
+                                    0.70f to Color.Black.copy(alpha = 0.95f),
+                                    1.00f to Color.Black,
+                                ),
+                            )
+                            .padding(top = 6.dp),
+                    )
+
+                    // Remainder: continue as solid Color.Black down to the bottom of the sheet
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(Color.Black),
+                    )
+                }
+            }
         }
 
         // Layer 2: Sliding Content Sheet (zIndex 1f)
