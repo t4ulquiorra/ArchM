@@ -164,34 +164,36 @@ fun PlaylistHeader(
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 16.dp, top = 4.dp)
+                .padding(start = 8.dp, top = 8.dp)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .size(48.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.35f))
-                .combinedClickable(
-                    onClick = onBack,
-                    onLongClick = onBackLongClick,
-                ),
+                .background(Color.Black.copy(alpha = 0.45f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.arrow_back),
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
-            )
+            LongClickIconButton(
+                onClick = onBack,
+                onLongClick = onBackLongClick,
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.arrow_back),
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
 
         // Floating circular action pill at top-right
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(end = 16.dp, top = 4.dp)
+                .padding(end = 8.dp, top = 8.dp)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .height(48.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.Black.copy(alpha = 0.35f)),
+                .height(40.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.Black.copy(alpha = 0.45f)),
             verticalAlignment = Alignment.CenterVertically,
             content = actions,
         )

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -157,14 +158,17 @@ fun ArtistAlbumsScreen(
         TopAppBar(
             title = { Text(text = screenTitle) },
             navigationIcon = {
-                LongClickIconButton(
-                    onClick = navController::navigateUp,
-                    onLongClick = navController::backToMain
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.arrow_back),
-                        contentDescription = null
-                    )
+                Box(Modifier.padding(horizontal = 5.dp)) {
+                    LongClickIconButton(
+                        onClick = navController::navigateUp,
+                        onLongClick = navController::backToMain
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.arrow_back),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             },
             scrollBehavior = scrollBehavior

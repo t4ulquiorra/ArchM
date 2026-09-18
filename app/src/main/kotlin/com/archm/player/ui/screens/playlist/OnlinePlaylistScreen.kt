@@ -336,22 +336,24 @@ fun OnlinePlaylistScreen(
                                 actions = {
                                     IconButton(
                                         onClick = toggleBookmark,
+                                        modifier = Modifier.size(40.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(if (isBookmarked) R.drawable.favorite else R.drawable.favorite_border),
                                             contentDescription = stringResource(if (isBookmarked) R.string.saved else R.string.save),
                                             tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.White,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                     IconButton(
                                         onClick = { isSearching = true },
+                                        modifier = Modifier.size(40.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.search),
                                             contentDescription = stringResource(R.string.search),
                                             tint = Color.White,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                     IconButton(
@@ -365,12 +367,13 @@ fun OnlinePlaylistScreen(
                                                 )
                                             }
                                         },
+                                        modifier = Modifier.size(40.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.more_vert),
                                             contentDescription = stringResource(R.string.more_options),
                                             tint = Color.White,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                 }
@@ -797,18 +800,25 @@ fun OnlinePlaylistScreen(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 navigationIcon = {
-                    IconButton(
-                        onClick = onExitSelectionMode,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = stringResource(R.string.close),
-                        )
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        IconButton(
+                            onClick = onExitSelectionMode,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.close),
+                                contentDescription = stringResource(R.string.close),
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 },
                 title = {
@@ -845,6 +855,8 @@ fun OnlinePlaylistScreen(
                         Icon(
                             painter = painterResource(R.drawable.more_vert),
                             contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
@@ -861,21 +873,28 @@ fun OnlinePlaylistScreen(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            isSearching = false
-                            query = TextFieldValue()
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back",
-                        )
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        IconButton(
+                            onClick = {
+                                isSearching = false
+                                query = TextFieldValue()
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 },
                 title = {
@@ -912,6 +931,8 @@ fun OnlinePlaylistScreen(
                             Icon(
                                 painter = painterResource(R.drawable.close),
                                 contentDescription = "Clear",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -929,19 +950,26 @@ fun OnlinePlaylistScreen(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 navigationIcon = {
-                    CombinedIconButton(
-                        onClick = navController::navigateUp,
-                        onLongClick = navController::backToMain,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back",
-                        )
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        CombinedIconButton(
+                            onClick = navController::navigateUp,
+                            onLongClick = navController::backToMain,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 },
                 title = {
@@ -963,6 +991,7 @@ fun OnlinePlaylistScreen(
                                 painter = painterResource(if (isBookmarked) R.drawable.favorite else R.drawable.favorite_border),
                                 contentDescription = stringResource(if (isBookmarked) R.string.saved else R.string.save),
                                 tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                         IconButton(
@@ -971,6 +1000,8 @@ fun OnlinePlaylistScreen(
                             Icon(
                                 painter = painterResource(R.drawable.search),
                                 contentDescription = stringResource(R.string.search),
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                         IconButton(
@@ -990,6 +1021,8 @@ fun OnlinePlaylistScreen(
                             Icon(
                                 painter = painterResource(R.drawable.more_vert),
                                 contentDescription = stringResource(R.string.more_options),
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }

@@ -335,12 +335,13 @@ fun CachePlaylistScreen(
                             actions = {
                                 IconButton(
                                     onClick = { isSearching = true },
+                                    modifier = Modifier.size(40.dp),
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.search),
                                         contentDescription = stringResource(R.string.search),
                                         tint = Color.White,
-                                        modifier = Modifier.size(22.dp),
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                                 IconButton(
@@ -358,12 +359,13 @@ fun CachePlaylistScreen(
                                             )
                                         }
                                     },
+                                    modifier = Modifier.size(40.dp),
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.more_vert),
                                         contentDescription = stringResource(R.string.more_options),
                                         tint = Color.White,
-                                        modifier = Modifier.size(22.dp),
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                             }
@@ -661,7 +663,7 @@ fun CachePlaylistScreen(
             headerItems = if (isSearching) 1 else 3
         )
 
-        // Selection TopAppBar (shown during multi-selection mode)
+        // Selection TopAppBar (shown when multi-selection mode is active)
         AnimatedVisibility(
             visible = inSelectMode,
             enter = fadeIn() + slideInVertically(),
@@ -671,18 +673,25 @@ fun CachePlaylistScreen(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 navigationIcon = {
-                    IconButton(
-                        onClick = onExitSelectionMode,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = stringResource(R.string.close),
-                        )
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        IconButton(
+                            onClick = onExitSelectionMode,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.close),
+                                contentDescription = stringResource(R.string.close),
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 },
                 title = {
@@ -717,7 +726,9 @@ fun CachePlaylistScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.more_vert),
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
@@ -734,22 +745,29 @@ fun CachePlaylistScreen(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            isSearching = false
-                            query = TextFieldValue()
-                            focusManager.clearFocus()
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back",
-                        )
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        IconButton(
+                            onClick = {
+                                isSearching = false
+                                query = TextFieldValue()
+                                focusManager.clearFocus()
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 },
                 title = {
@@ -786,6 +804,8 @@ fun CachePlaylistScreen(
                             Icon(
                                 painter = painterResource(R.drawable.close),
                                 contentDescription = "Clear",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -803,19 +823,26 @@ fun CachePlaylistScreen(
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 navigationIcon = {
-                    CombinedIconButton(
-                        onClick = navController::navigateUp,
-                        onLongClick = navController::backToMain,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back",
-                        )
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        CombinedIconButton(
+                            onClick = navController::navigateUp,
+                            onLongClick = navController::backToMain,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 },
                 title = {
@@ -833,6 +860,8 @@ fun CachePlaylistScreen(
                         Icon(
                             painter = painterResource(R.drawable.search),
                             contentDescription = stringResource(R.string.search),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                     IconButton(
@@ -854,6 +883,8 @@ fun CachePlaylistScreen(
                         Icon(
                             painter = painterResource(R.drawable.more_vert),
                             contentDescription = stringResource(R.string.more_options),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }

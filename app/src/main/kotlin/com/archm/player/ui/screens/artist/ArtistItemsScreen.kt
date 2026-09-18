@@ -128,6 +128,7 @@ import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.CombinedIconButton
+import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeGridItem
 import com.archm.player.ui.component.YouTubeListItem
@@ -503,44 +504,47 @@ fun ArtistItemsScreen(
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
-                                        .padding(start = 16.dp, top = 4.dp)
+                                        .padding(start = 8.dp, top = 8.dp)
                                         .windowInsetsPadding(WindowInsets.statusBars)
-                                        .size(48.dp)
+                                        .size(40.dp)
                                         .clip(CircleShape)
-                                        .background(Color.Black.copy(alpha = 0.35f))
-                                        .combinedClickable(
-                                            onClick = navController::navigateUp,
-                                            onLongClick = navController::backToMain,
-                                        ),
+                                        .background(Color.Black.copy(alpha = 0.45f)),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.arrow_back),
-                                        contentDescription = "Back",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp),
-                                    )
+                                    LongClickIconButton(
+                                        onClick = navController::navigateUp,
+                                        onLongClick = navController::backToMain,
+                                        modifier = Modifier.size(40.dp),
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.arrow_back),
+                                            contentDescription = "Back",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
                                 }
 
                                 // Floating circular action buttons at top-right
                                 Row(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(end = 16.dp, top = 4.dp)
+                                        .padding(end = 8.dp, top = 8.dp)
                                         .windowInsetsPadding(WindowInsets.statusBars)
-                                        .height(48.dp)
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(Color.Black.copy(alpha = 0.35f)),
+                                        .height(40.dp)
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color.Black.copy(alpha = 0.45f)),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     IconButton(
                                         onClick = { viewModel.togglePlaylistBookmark() },
+                                        modifier = Modifier.size(40.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(if (isBookmarked) R.drawable.favorite else R.drawable.favorite_border),
                                             contentDescription = stringResource(if (isBookmarked) R.string.saved else R.string.save),
                                             tint = if (isBookmarked) MaterialTheme.colorScheme.primary else Color.White,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                     IconButton(
@@ -548,22 +552,24 @@ fun ArtistItemsScreen(
                                             showSearchBar = !showSearchBar
                                             if (!showSearchBar) searchQuery = ""
                                         },
+                                        modifier = Modifier.size(40.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.search),
                                             contentDescription = stringResource(R.string.search),
                                             tint = Color.White,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                     IconButton(
                                         onClick = showOverflowMenu,
+                                        modifier = Modifier.size(40.dp),
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.more_vert),
                                             contentDescription = stringResource(R.string.more_options),
                                             tint = Color.White,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                 }
@@ -855,18 +861,25 @@ fun ArtistItemsScreen(
                     windowInsets = WindowInsets.statusBars,
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        navigationIconContentColor = Color.White,
+                        titleContentColor = Color.White,
+                        actionIconContentColor = Color.White,
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                     navigationIcon = {
-                        IconButton(
-                            onClick = onExitSelectionMode,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.close),
-                                contentDescription = stringResource(R.string.close),
-                            )
+                        Box(Modifier.padding(horizontal = 5.dp)) {
+                            IconButton(
+                                onClick = onExitSelectionMode,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.close),
+                                    contentDescription = stringResource(R.string.close),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                         }
                     },
                     title = {
@@ -903,6 +916,8 @@ fun ArtistItemsScreen(
                             Icon(
                                 painter = painterResource(R.drawable.more_vert),
                                 contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -1029,6 +1044,7 @@ fun ArtistItemsScreen(
                                 painter = painterResource(R.drawable.search),
                                 contentDescription = stringResource(R.string.search),
                                 tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                         IconButton(
@@ -1038,6 +1054,7 @@ fun ArtistItemsScreen(
                                 painter = painterResource(R.drawable.more_vert),
                                 contentDescription = stringResource(R.string.more_options),
                                 tint = Color.White,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     },
@@ -1196,7 +1213,7 @@ fun ArtistItemsScreen(
                     )
                 },
                 navigationIcon = {
-                    Box(Modifier.padding(horizontal = 4.dp)) {
+                    Box(Modifier.padding(horizontal = 5.dp)) {
                         CombinedIconButton(
                             onClick = navController::navigateUp,
                             onLongClick = navController::backToMain,
