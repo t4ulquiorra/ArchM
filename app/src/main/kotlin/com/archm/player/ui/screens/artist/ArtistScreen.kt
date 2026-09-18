@@ -700,11 +700,8 @@ fun ArtistScreen(
                             .height(identityZoneHeight)
                             .background(
                                 Brush.verticalGradient(
-                                    0.00f to Color.Transparent,
-                                    0.15f to Color.Black.copy(alpha = 0.25f),
-                                    0.30f to Color.Black.copy(alpha = 0.70f),
-                                    0.70f to Color.Black.copy(alpha = 0.95f),
-                                    1.00f to Color.Black,
+                                    0.0f to Color.Transparent,
+                                    1.0f to Color.Black,
                                 ),
                             )
                             .padding(top = 6.dp),
@@ -790,11 +787,8 @@ fun ArtistScreen(
                                             .fillMaxWidth()
                                             .background(
                                                 Brush.verticalGradient(
-                                                    0.00f to Color.Transparent,
-                                                    0.15f to Color.Black.copy(alpha = 0.25f),
-                                                    0.30f to Color.Black.copy(alpha = 0.70f),
-                                                    0.70f to Color.Black.copy(alpha = 0.95f),
-                                                    1.00f to Color.Black,
+                                                    0.0f to Color.Transparent,
+                                                    1.0f to Color.Black,
                                                 ),
                                             )
                                             .padding(top = 6.dp)
@@ -1118,11 +1112,8 @@ fun ArtistScreen(
                                 .fillMaxWidth()
                                 .background(
                                     Brush.verticalGradient(
-                                        0.00f to Color.Transparent,
-                                        0.15f to Color.Black.copy(alpha = 0.25f),
-                                        0.30f to Color.Black.copy(alpha = 0.70f),
-                                        0.70f to Color.Black.copy(alpha = 0.95f),
-                                        1.00f to Color.Black,
+                                        0.0f to Color.Transparent,
+                                        1.0f to Color.Black,
                                     ),
                                 )
                                 .padding(top = 6.dp)
