@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import com.archm.player.ui.screens.library.rememberArtworkGradient
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -535,6 +536,7 @@ fun ArtistScreen(
             .background(Color.Black),
     ) {
         val screenHeight = maxHeight
+        val dominantColor = animatedAccentColor
         val photoHeight = screenHeight * 0.45f // Layer 1 backdrop height (45% screen height)
         val backdropHeight = photoHeight
         val nameHeight = 36.dp
@@ -559,12 +561,21 @@ fun ArtistScreen(
 
         // Layer 1: Pinned Backdrop (zIndex 0f)
         if (!isLandscape) {
+            // Fill bottom 55% space below the photo with extracted dominant accent color
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .background(dominantColor)
+                    .zIndex(0f),
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(backdropHeight)
                     .align(Alignment.TopCenter)
-                    .background(animatedAccentColor)
+                    .background(dominantColor)
                     .zIndex(0f),
             ) {
                 if (portraitUrl != null) {
@@ -1104,8 +1115,9 @@ fun ArtistScreen(
                                 Text(
                                     text = artistName ?: unknownArtist,
                                     style = MaterialTheme.typography.headlineLarge.copy(
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.Black,
                                         fontSize = 32.sp,
+                                        letterSpacing = (-0.5).sp,
                                     ),
                                     color = Color.White,
                                     maxLines = 2,
@@ -2261,14 +2273,22 @@ fun ArtistScreen(
 
         // Layer 3: Top Navigation Overlay (zIndex 2f)
         if (!selectionState.isActive) {
-            val dominantColor = animatedAccentColor
+            val topBarBrush = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF141414).copy(alpha = topBarAlpha),
+                    dominantColor.copy(alpha = topBarAlpha),
+                ),
+            )
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
                     .zIndex(2f)
-                    .background(dominantColor.copy(alpha = topBarAlpha)),
+                    .pointerInput(Unit) {
+                        detectTapGestures { /* Consumes touches so background items are not clicked */ }
+                    }
+                    .background(topBarBrush),
             ) {
                 Row(
                     modifier = Modifier
