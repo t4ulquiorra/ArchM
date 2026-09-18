@@ -758,10 +758,11 @@ fun ArtistScreen(
                                             .fillMaxWidth()
                                             .background(
                                                 Brush.verticalGradient(
-                                                    colors = listOf(
-                                                        Color.Transparent,
-                                                        Color.Black,
-                                                    ),
+                                                    0.00f to Color.Transparent,
+                                                    0.15f to Color.Black.copy(alpha = 0.15f),
+                                                    0.30f to Color.Black.copy(alpha = 0.65f),
+                                                    0.65f to Color.Black.copy(alpha = 0.92f),
+                                                    1.00f to Color.Black,
                                                 ),
                                             )
                                             .padding(top = 6.dp),
@@ -1096,10 +1097,11 @@ fun ArtistScreen(
                                 .fillMaxWidth()
                                 .background(
                                     Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Black,
-                                        ),
+                                        0.00f to Color.Transparent,
+                                        0.15f to Color.Black.copy(alpha = 0.15f),
+                                        0.30f to Color.Black.copy(alpha = 0.65f),
+                                        0.65f to Color.Black.copy(alpha = 0.92f),
+                                        1.00f to Color.Black,
                                     ),
                                 )
                                 .padding(top = 6.dp)
