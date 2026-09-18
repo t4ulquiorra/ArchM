@@ -764,7 +764,7 @@ fun ArtistScreen(
                                                     ),
                                                 ),
                                             )
-                                            .padding(top = 12.dp),
+                                            .padding(top = 6.dp),
                                     ) {
                                         Column(
                                             modifier = Modifier
@@ -1102,7 +1102,7 @@ fun ArtistScreen(
                                         ),
                                     ),
                                 )
-                                .padding(top = 12.dp)
+                                .padding(top = 6.dp)
                                 .onGloballyPositioned { coordinates ->
                                     identityZonePx = coordinates.size.height.toFloat()
                                 },
