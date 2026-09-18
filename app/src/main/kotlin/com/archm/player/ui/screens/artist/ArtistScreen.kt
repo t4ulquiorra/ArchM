@@ -756,15 +756,6 @@ fun ArtistScreen(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 16.dp),
-                                    ) {
-                                        TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.6f))
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.35f))
-                                    }
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
                                             .background(
                                                 Brush.verticalGradient(
                                                     colors = listOf(
@@ -773,23 +764,38 @@ fun ArtistScreen(
                                                     ),
                                                 ),
                                             )
-                                            .padding(horizontal = 16.dp)
-                                            .padding(bottom = 16.dp),
+                                            .padding(top = 12.dp),
                                     ) {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp),
                                         ) {
-                                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                                ButtonPlaceholder(modifier = Modifier.size(36.dp))
-                                                ButtonPlaceholder(modifier = Modifier.width(96.dp).height(36.dp))
-                                                ButtonPlaceholder(modifier = Modifier.size(36.dp))
+                                            TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.6f))
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                        }
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp)
+                                                .padding(bottom = 16.dp),
+                                        ) {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                    ButtonPlaceholder(modifier = Modifier.size(36.dp))
+                                                    ButtonPlaceholder(modifier = Modifier.width(96.dp).height(36.dp))
+                                                    ButtonPlaceholder(modifier = Modifier.size(36.dp))
+                                                }
+                                                ButtonPlaceholder(modifier = Modifier.size(56.dp))
                                             }
-                                            ButtonPlaceholder(modifier = Modifier.size(56.dp))
                                         }
                                     }
                                 }
@@ -1088,6 +1094,15 @@ fun ArtistScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Black,
+                                        ),
+                                    ),
+                                )
+                                .padding(top = 12.dp)
                                 .onGloballyPositioned { coordinates ->
                                     identityZonePx = coordinates.size.height.toFloat()
                                 },
@@ -1135,20 +1150,10 @@ fun ArtistScreen(
                                 }
                             }
 
-                            // Action / Identity Shelf with smooth upward gradient fade:
-                            // Top: Color.Transparent (above Monthly Listeners / below Verified Artist)
-                            // Bottom: Color.Black (aligned with the bottom of the Play FAB)
+                            // Action / Identity Shelf:
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent, // Top (above Monthly Listeners / below Verified Artist)
-                                                Color.Black,       // Bottom (aligned with the bottom of the Play FAB)
-                                            ),
-                                        ),
-                                    )
                                     .padding(horizontal = 16.dp)
                                     .padding(bottom = 16.dp),
                             ) {
