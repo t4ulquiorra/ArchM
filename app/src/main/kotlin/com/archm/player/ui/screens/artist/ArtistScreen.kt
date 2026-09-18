@@ -765,38 +765,27 @@ fun ArtistScreen(
                                                     1.00f to Color.Black,
                                                 ),
                                             )
-                                            .padding(top = 6.dp),
+                                            .padding(top = 6.dp)
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 16.dp),
                                     ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 16.dp),
+                                        TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.6f))
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.35f))
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
                                         ) {
-                                            TextPlaceholder(height = 36.dp, modifier = Modifier.fillMaxWidth(0.6f))
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            TextPlaceholder(height = 20.dp, modifier = Modifier.fillMaxWidth(0.35f))
-                                        }
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 16.dp)
-                                                .padding(bottom = 16.dp),
-                                        ) {
-                                            Spacer(modifier = Modifier.height(12.dp))
-                                            TextPlaceholder(height = 14.dp, modifier = Modifier.fillMaxWidth(0.45f))
-                                            Spacer(modifier = Modifier.height(12.dp))
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                                    ButtonPlaceholder(modifier = Modifier.size(36.dp))
-                                                    ButtonPlaceholder(modifier = Modifier.width(96.dp).height(36.dp))
-                                                    ButtonPlaceholder(modifier = Modifier.size(36.dp))
-                                                }
-                                                ButtonPlaceholder(modifier = Modifier.size(56.dp))
+                                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                ButtonPlaceholder(modifier = Modifier.size(36.dp))
+                                                ButtonPlaceholder(modifier = Modifier.width(96.dp).height(36.dp))
+                                                ButtonPlaceholder(modifier = Modifier.size(36.dp))
                                             }
+                                            ButtonPlaceholder(modifier = Modifier.size(56.dp))
                                         }
                                     }
                                 }
