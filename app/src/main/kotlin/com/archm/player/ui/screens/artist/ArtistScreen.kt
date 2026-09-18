@@ -2529,6 +2529,7 @@ private fun HomeItemContentPlaylist(
 
     val innerPadding = 5.dp
     val artworkSize = thumbSize - (innerPadding * 2)
+    val cardShape = RoundedCornerShape(18.dp)
 
     Column(
         modifier =
@@ -2538,8 +2539,10 @@ private fun HomeItemContentPlaylist(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                }.clip(RoundedCornerShape(18.dp))
+                }
+                .clip(cardShape)
                 .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -2639,6 +2642,7 @@ private fun HomeItemVideo(
     )
 
     val innerPadding = 5.dp
+    val cardShape = RoundedCornerShape(18.dp)
 
     Column(
         modifier =
@@ -2648,8 +2652,9 @@ private fun HomeItemVideo(
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(RoundedCornerShape(18.dp))
+                .clip(cardShape)
                 .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -3066,11 +3071,13 @@ private fun ArtistAboutCard(
 ) {
     val textBackgroundColor = Color(20, 20, 20)
     val followButtonHeight = 32.dp
+    val cardShape = RoundedCornerShape(20.dp)
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(textBackgroundColor),
+            .clip(cardShape)
+            .background(textBackgroundColor)
+            .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -3236,7 +3243,7 @@ private fun ArtistLatestReleaseCard(
     Surface(
         shape = cardShape,
         color = Color(20, 20, 20),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = if (isLandscape) 36.dp else 16.dp)

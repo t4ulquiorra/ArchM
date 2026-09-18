@@ -466,6 +466,7 @@ fun GridItem(
         }
 
     val innerPadding = 5.dp
+    val cardShape = RoundedCornerShape(18.dp)
     Column(
         modifier =
             modifier
@@ -474,8 +475,10 @@ fun GridItem(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
-                }.clip(RoundedCornerShape(18.dp))
+                }
+                .clip(cardShape)
                 .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .then(clickableModifier)
                 .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
