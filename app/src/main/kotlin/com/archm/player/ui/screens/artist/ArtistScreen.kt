@@ -115,6 +115,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -3031,13 +3032,13 @@ private fun ArtistAboutCard(
     onNavigateToAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val textBackgroundColor = Color(20, 20, 20)
     val followButtonHeight = 32.dp
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(containerColor),
+            .background(textBackgroundColor),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -3057,7 +3058,7 @@ private fun ArtistAboutCard(
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
-                // Soft bottom gradient seam (height ~28.dp) dissolving into surfaceContainerHigh
+                // Soft bottom gradient seam (height ~28.dp) dissolving into textBackgroundColor
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -3067,7 +3068,7 @@ private fun ArtistAboutCard(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    containerColor,
+                                    textBackgroundColor,
                                 ),
                             ),
                         ),
@@ -3079,7 +3080,7 @@ private fun ArtistAboutCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .background(containerColor)
+                    .background(textBackgroundColor)
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
                 // 1. Header Row: Left Column (Artist Name + Monthly Listeners) | Right (Follow Button)
@@ -3198,13 +3199,17 @@ private fun ArtistLatestReleaseCard(
         release.year?.toString(),
     ).joinToString(" • ")
 
+    val cardShape = RoundedCornerShape(16.dp)
+
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f),
+        shape = cardShape,
+        color = Color(20, 20, 20),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = if (isLandscape) 36.dp else 16.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .shadow(elevation = 3.dp, shape = cardShape)
+            .clip(cardShape)
             .bouncyClickable(
                 shrinkScale = 0.97f,
                 onClick = onClick,
