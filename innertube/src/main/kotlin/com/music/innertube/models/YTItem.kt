@@ -69,6 +69,7 @@ data class AlbumItem(
     override val thumbnail: String,
     override val explicit: Boolean = false,
     val description: String? = null,
+    val explicitType: String? = null,
 ) : YTItem() {
     override val shareLink: String
         get() = "https://share.echomusic.fun/playlist?list=$playlistId"

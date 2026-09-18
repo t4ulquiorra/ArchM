@@ -1417,14 +1417,15 @@ fun ArtistScreen(
                                     .background(Color.Black),
                             ) {
                                 ArtistSectionHeader(
-                                    title = "Singles",
+                                    title = "Singles & EPs",
+                                    moreText = "More releases >",
                                     onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
                                         {
                                             navController.navigate(
                                                 buildArtistItemsRoute(
                                                     viewModel.artistId,
                                                     moreEndpoint,
-                                                    title = "Singles",
+                                                    title = "Singles & EPs",
                                                     artistName = artistName,
                                                 ),
                                             )
@@ -1451,7 +1452,7 @@ fun ArtistScreen(
                                     ) { single ->
                                         HomeItemContentPlaylist(
                                             title = single.title,
-                                            subtitle = single.year?.toString(),
+                                            subtitle = formatReleaseSubtitle(single),
                                             thumbnailUrl = single.thumbnail,
                                             thumbSize = 150.dp,
                                             onClick = { navController.navigate("album/${single.id}") },
@@ -1501,6 +1502,7 @@ fun ArtistScreen(
                             ) {
                                 ArtistSectionHeader(
                                     title = section.title,
+                                    moreText = "More releases >",
                                     onMoreClick = section.moreEndpoint?.let { moreEndpoint ->
                                         {
                                             navController.navigate(
@@ -2967,6 +2969,35 @@ fun OutlinedFollowPillButton(
     }
 }
 
+private fun formatReleaseSubtitle(item: AlbumItem): String {
+    val rawType = item.explicitType ?: item.description
+    if (!rawType.isNullOrBlank()) {
+        if (rawType.contains("•") || (item.year != null && rawType.contains(item.year.toString()))) {
+            return rawType.trim()
+        }
+        val type = when {
+            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> "EP"
+            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> "Single"
+            else -> rawType.trim()
+        }
+        return if (item.year != null && !type.contains(item.year.toString())) {
+            "$type • ${item.year}"
+        } else {
+            type
+        }
+    }
+    val typeFromTitle = when {
+        Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "EP"
+        Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "Single"
+        else -> "Single"
+    }
+    return if (item.year != null) {
+        "$typeFromTitle • ${item.year}"
+    } else {
+        typeFromTitle
+    }
+}
+
 @Composable
 private fun ArtistSectionHeader(
     title: String,
@@ -2974,6 +3005,7 @@ private fun ArtistSectionHeader(
     topSpacing: Dp = 28.dp,
     bottomSpacing: Dp = 9.dp,
     horizontalPadding: Dp = 16.dp,
+    moreText: String = stringResource(R.string.more),
     onMoreClick: (() -> Unit)? = null,
 ) {
     Column(
@@ -3007,7 +3039,7 @@ private fun ArtistSectionHeader(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = stringResource(R.string.more),
+                        text = moreText,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = Color.White,

@@ -82,19 +82,25 @@ data class ArtistItemsPage(
 
         fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): YTItem? {
             return when {
-                renderer.isAlbum -> AlbumItem(
-                    browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
-                    playlistId = renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer
-                        ?.content?.musicPlayButtonRenderer?.playNavigationEndpoint
-                        ?.anyWatchEndpoint?.playlistId ?: return null,
-                    title = renderer.title.runs?.firstOrNull()?.text ?: return null,
-                    artists = null,
-                    year = renderer.subtitle?.runs?.lastOrNull()?.text?.toIntOrNull(),
-                    thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
-                    explicit = renderer.subtitleBadges?.find {
-                        it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
-                    } != null
-                )
+                renderer.isAlbum -> {
+                    val subtitleRuns = renderer.subtitle?.runs
+                    val releaseType = subtitleRuns?.firstOrNull()?.text
+                    val year = subtitleRuns?.lastOrNull()?.text?.toIntOrNull()
+                    AlbumItem(
+                        browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
+                        playlistId = renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer
+                            ?.content?.musicPlayButtonRenderer?.playNavigationEndpoint
+                            ?.anyWatchEndpoint?.playlistId ?: return null,
+                        title = renderer.title.runs?.firstOrNull()?.text ?: return null,
+                        artists = null,
+                        year = year,
+                        thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+                        explicit = renderer.subtitleBadges?.find {
+                            it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
+                        } != null,
+                        explicitType = if (releaseType != null && releaseType != year?.toString()) releaseType else null,
+                    )
+                }
                 // Video
                 renderer.isSong -> SongItem(
                     id = renderer.navigationEndpoint.watchEndpoint?.videoId ?: return null,
