@@ -660,33 +660,6 @@ fun ArtistScreen(
                     .zIndex(0.5f),
             )
 
-            val contentSheetOffsetY by remember {
-                derivedStateOf {
-                    val firstIndex = lazyListState.firstVisibleItemIndex
-                    val firstOffset = lazyListState.firstVisibleItemScrollOffset
-                    val spacerPx = with(density) { transparentSpacerHeight.toPx() }
-                    val effectiveIdentityPx = if (identityZonePx > 0f) identityZonePx else defaultIdentityZonePx
-                    val baseLinePx = spacerPx + effectiveIdentityPx
-                    val currentScroll = if (firstIndex == 0) {
-                        firstOffset.toFloat()
-                    } else if (firstIndex == 1) {
-                        spacerPx + firstOffset.toFloat()
-                    } else {
-                        baseLinePx
-                    }
-                    (baseLinePx - currentScroll).coerceAtLeast(0f)
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        translationY = contentSheetOffsetY
-                    }
-                    .background(Color.Black)
-                    .zIndex(0.6f),
-            )
         }
 
         // Layer 2: Sliding Content Sheet (zIndex 1f)
