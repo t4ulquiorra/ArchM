@@ -571,15 +571,6 @@ fun ArtistScreen(
 
         // Layer 1: Pinned Backdrop (zIndex 0f)
         if (!isLandscape) {
-            // Fill bottom 55% space below the photo with extracted dominant accent color
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .background(dominantColor)
-                    .zIndex(0f),
-            )
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -732,7 +723,7 @@ fun ArtistScreen(
         LazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
-                bottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding(),
+                bottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding() + 16.dp,
             ),
             modifier = Modifier
                 .fillMaxSize()
