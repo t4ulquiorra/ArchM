@@ -585,6 +585,7 @@ fun SongListItem(
     showInLibraryIcon: Boolean = false,
     showDownloadIcon: Boolean = true,
     showSize: Boolean = false,
+    showDuration: Boolean = true,
     badges: @Composable RowScope.() -> Unit = {
         if (song.song.explicit) {
             Icon.Explicit()
@@ -643,7 +644,7 @@ fun SongListItem(
             title = song.song.title,
             subtitle = joinByBullet(
                 song.artists.joinToString { it.name },
-                makeTimeString(song.song.duration * 1000L),
+                if (showDuration) makeTimeString(song.song.duration * 1000L) else null,
                 if (showSize && song.format?.contentLength != null) {
                     android.text.format.Formatter.formatFileSize(LocalContext.current, song.format!!.contentLength)
                 } else null
@@ -1364,6 +1365,7 @@ fun YouTubeListItem(
     isPlaying: Boolean = false,
     isSwipeable: Boolean = true,
     showActiveContainer: Boolean = true,
+    showDuration: Boolean = true,
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
@@ -1427,9 +1429,11 @@ fun YouTubeListItem(
                 is SongItem -> {
                     val validArtists = item.artists.filter { !it.name.contains(":") && it.name.parseTime() == null }.map { it.name }
                     val artistsText = validArtists.joinToString(", ").takeIf { it.isNotBlank() }
-                    val durationText = (item.durationText ?: item.formattedDuration())
-                        ?.takeIf { it.isNotBlank() }
-                        ?: dbSong?.song?.duration?.takeIf { it > 0 }?.let { makeTimeString(it * 1000L) }?.takeIf { it.isNotBlank() }
+                    val durationText = if (showDuration) {
+                        (item.durationText ?: item.formattedDuration())
+                            ?.takeIf { it.isNotBlank() }
+                            ?: dbSong?.song?.duration?.takeIf { it > 0 }?.let { makeTimeString(it * 1000L) }?.takeIf { it.isNotBlank() }
+                    } else null
                     val subtitleText = if (artistsText.isNullOrBlank() || artistsText == durationText) {
                         listOfNotNull(durationText, viewCountText).joinToString(" • ")
                     } else {

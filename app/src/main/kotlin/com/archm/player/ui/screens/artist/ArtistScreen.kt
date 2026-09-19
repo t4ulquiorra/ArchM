@@ -1397,6 +1397,7 @@ fun ArtistScreen(
                                     isPlaying = isPlaying,
                                     inSelectionMode = selectionState.isActive,
                                     isSelected = selectionState.isSelected(song.id),
+                                    showDuration = false,
                                     accentColor = screenAccentColor,
                                     trailingContent = {
                                         IconButton(
