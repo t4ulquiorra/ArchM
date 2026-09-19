@@ -568,7 +568,6 @@ fun ArtistScreen(
             }
         }
         val topContentPadding = if (headerHeight < 240.dp) 36.dp else 56.dp
-        val titleStyle = if (headerHeight < 240.dp) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineLarge
 
         // Layer 1: Pinned Backdrop (zIndex 0f)
         if (!isLandscape) {
@@ -951,8 +950,13 @@ fun ArtistScreen(
                                         ) {
                                             Text(
                                                 text = artistName ?: unknownArtist,
-                                                style = titleStyle,
-                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.headlineLarge.copy(
+                                                    fontFamily = PaytoneOne,
+                                                    fontWeight = FontWeight.Normal,
+                                                    fontSize = 30.sp,
+                                                    lineHeight = 36.sp,
+                                                    letterSpacing = (-0.5).sp,
+                                                ),
                                                 color = Color.White,
                                                 maxLines = 2,
                                                 overflow = TextOverflow.Ellipsis,
