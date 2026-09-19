@@ -552,6 +552,8 @@ fun ArtistScreen(
         val nameToBadgePadding = 4.dp
         val badgeHeight = 20.dp
         val badgeToListenersPadding = 12.dp
+        val unverifiedTopSpacer = 28.dp
+        val unverifiedNameToListenersPadding = 6.dp
         val onImageContentHeight = nameHeight + nameToBadgePadding + badgeHeight + (badgeToListenersPadding / 2) // ~66.dp
         val transparentSpacerHeight = photoHeight - onImageContentHeight
 
@@ -1116,6 +1118,31 @@ fun ArtistScreen(
 
                     // Item 2 (The Gradient & Identity Zone)
                     item(key = "identity_zone") {
+                        val monthlyListenersDisplay = when {
+                            showMonthlyListeners && !monthlyListeners.isNullOrBlank() -> {
+                                if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                                    monthlyListeners
+                                } else {
+                                    "$monthlyListeners Monthly Listeners"
+                                }
+                            }
+                            showArtistSubscriberCount && !subscribers.isNullOrBlank() -> {
+                                if (subscribers.contains("subscriber", ignoreCase = true)) {
+                                    subscribers
+                                } else {
+                                    "$subscribers Subscribers"
+                                }
+                            }
+                            !monthlyListeners.isNullOrBlank() -> {
+                                if (monthlyListeners.contains("listener", ignoreCase = true)) {
+                                    monthlyListeners
+                                } else {
+                                    "$monthlyListeners Monthly Listeners"
+                                }
+                            }
+                            else -> null
+                        }
+
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1130,13 +1157,18 @@ fun ArtistScreen(
                                     identityZonePx = coordinates.size.height.toFloat()
                                 },
                         ) {
-                            // Over the bottom of the photo:
-                            // Large Artist Name (bold, pure white)
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = 16.dp),
                             ) {
+                                if (!isArtistVerified) {
+                                    // When unverified, drop artist name down toward the controls (taking middle vertical space)
+                                    Spacer(modifier = Modifier.height(unverifiedTopSpacer))
+                                }
+
+                                // Large Artist Name (bold, pure white)
                                 Text(
                                     text = artistName ?: unknownArtist,
                                     style = MaterialTheme.typography.headlineLarge.copy(
@@ -1151,8 +1183,8 @@ fun ArtistScreen(
                                     overflow = TextOverflow.Ellipsis,
                                 )
 
-                                // ✔ Verified Artist badge and label directly beneath the name
                                 if (isArtistVerified) {
+                                    // ✔ Verified Artist badge and label directly beneath the name
                                     Spacer(modifier = Modifier.height(nameToBadgePadding))
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -1172,45 +1204,14 @@ fun ArtistScreen(
                                             color = Color.White.copy(alpha = 0.85f),
                                         )
                                     }
+                                    Spacer(modifier = Modifier.height(badgeToListenersPadding))
+                                } else if (monthlyListenersDisplay != null) {
+                                    // Tight, consistent spacing between artist name and subscribers/listeners
+                                    Spacer(modifier = Modifier.height(unverifiedNameToListenersPadding))
                                 }
-                            }
-
-                            // Action / Identity Shelf:
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(bottom = 16.dp),
-                            ) {
-                                // Total padding between Verified Artist and Monthly Listeners: 12.dp
-                                Spacer(modifier = Modifier.height(badgeToListenersPadding))
 
                                 // Shelf & Action Area (over the black transition / below photo):
                                 // Text("${monthlyListeners} Monthly Listeners", color = Color.White.copy(alpha = 0.7f)) on its own row
-                                val monthlyListenersDisplay = when {
-                                    showMonthlyListeners && !monthlyListeners.isNullOrBlank() -> {
-                                        if (monthlyListeners.contains("listener", ignoreCase = true)) {
-                                            monthlyListeners
-                                        } else {
-                                            "$monthlyListeners Monthly Listeners"
-                                        }
-                                    }
-                                    showArtistSubscriberCount && !subscribers.isNullOrBlank() -> {
-                                        if (subscribers.contains("subscriber", ignoreCase = true)) {
-                                            subscribers
-                                        } else {
-                                            "$subscribers Subscribers"
-                                        }
-                                    }
-                                    !monthlyListeners.isNullOrBlank() -> {
-                                        if (monthlyListeners.contains("listener", ignoreCase = true)) {
-                                            monthlyListeners
-                                        } else {
-                                            "$monthlyListeners Monthly Listeners"
-                                        }
-                                    }
-                                    else -> null
-                                }
                                 if (monthlyListenersDisplay != null) {
                                     Text(
                                         text = monthlyListenersDisplay,
@@ -1219,6 +1220,8 @@ fun ArtistScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                } else if (!isArtistVerified) {
                                     Spacer(modifier = Modifier.height(12.dp))
                                 }
 
