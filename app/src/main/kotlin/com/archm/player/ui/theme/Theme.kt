@@ -20,6 +20,7 @@ import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
@@ -48,6 +49,7 @@ import kotlin.math.min
 val Marble = Color(0xFFF2F8FC)
 val SurfaceContainerColor = Color(0xFF141414)
 val DefaultThemeColor = Marble
+val LocalAccentColor = compositionLocalOf { Marble }
 
 val AmoledDarkColorScheme: ColorScheme by lazy {
     materialKolorDynamicColorScheme(

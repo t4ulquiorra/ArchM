@@ -52,6 +52,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.CompositionLocalProvider
+import com.archm.player.ui.screens.library.rememberArtworkGradient
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -298,6 +305,14 @@ fun OnlinePlaylistScreen(
     val backdropThumbnail = playlist?.thumbnail
         ?: songs.firstOrNull()?.thumbnail
         ?: dbPlaylist?.playlist?.thumbnailUrl
+
+    val artworkGradientColors = rememberArtworkGradient(
+        thumbnailUrl = backdropThumbnail,
+        fallbackColor = Marble,
+    )
+    val screenAccentColor = remember(artworkGradientColors) {
+        artworkGradientColors.firstOrNull()?.takeIf { it != Color.Transparent && it != Color.Black } ?: Marble
+    }
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
@@ -625,54 +640,62 @@ fun OnlinePlaylistScreen(
                         items = filteredSongs,
                         key = { _, (_, songItem) -> songItem.id },
                     ) { index, (_, songItem) ->
-                        val onCheckedChange: (Boolean) -> Unit = {
-                            if (it) {
-                                selection.add(songItem.id)
-                            } else {
-                                selection.remove(songItem.id)
-                                if (selection.isEmpty()) {
-                                    inSelectMode = false
+                        CompositionLocalProvider(
+                            LocalAccentColor provides screenAccentColor,
+                            LocalIndication provides ripple(color = screenAccentColor),
+                        ) {
+                            val itemInteractionSource = remember { MutableInteractionSource() }
+                            val onCheckedChange: (Boolean) -> Unit = {
+                                if (it) {
+                                    selection.add(songItem.id)
+                                } else {
+                                    selection.remove(songItem.id)
+                                    if (selection.isEmpty()) {
+                                        inSelectMode = false
+                                    }
                                 }
                             }
-                        }
 
-                        YouTubeListItem(
-                            item = songItem,
-                            isActive = mediaMetadata?.id == songItem.id,
-                            isPlaying = isPlaying,
-                            inSelectionMode = inSelectMode,
-                            isSelected = inSelectMode && songItem.id in selection,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    enabled = !hideExplicit || !songItem.explicit,
-                                    onClick = {
-                                        if (inSelectMode) {
-                                            onCheckedChange(songItem.id !in selection)
-                                        } else if (songItem.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                YouTubePlaylistQueue(
-                                                    playlistId = pl.id,
-                                                    playlistTitle = pl.title,
-                                                    initialSongs = filteredSongs.map { it.second },
-                                                    initialContinuation = viewModel.continuation,
-                                                    startIndex = index,
+                            YouTubeListItem(
+                                item = songItem,
+                                isActive = mediaMetadata?.id == songItem.id,
+                                isPlaying = isPlaying,
+                                inSelectionMode = inSelectMode,
+                                isSelected = inSelectMode && songItem.id in selection,
+                                accentColor = screenAccentColor,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .combinedClickable(
+                                        interactionSource = itemInteractionSource,
+                                        indication = ripple(color = screenAccentColor),
+                                        enabled = !hideExplicit || !songItem.explicit,
+                                        onClick = {
+                                            if (inSelectMode) {
+                                                onCheckedChange(songItem.id !in selection)
+                                            } else if (songItem.id == mediaMetadata?.id) {
+                                                playerConnection.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    YouTubePlaylistQueue(
+                                                        playlistId = pl.id,
+                                                        playlistTitle = pl.title,
+                                                        initialSongs = filteredSongs.map { it.second },
+                                                        initialContinuation = viewModel.continuation,
+                                                        startIndex = index,
+                                                    )
                                                 )
-                                            )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!inSelectMode) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                inSelectMode = true
+                                                onCheckedChange(true)
+                                            }
                                         }
-                                    },
-                                    onLongClick = {
-                                        if (!inSelectMode) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            inSelectMode = true
-                                            onCheckedChange(true)
-                                        }
-                                    }
-                                )
-                                .animateItem(),
+                                    )
+                                    .animateItem(),
                             trailingContent = {
                                 IconButton(
                                     onClick = {
@@ -686,6 +709,7 @@ fun OnlinePlaylistScreen(
                             }
                         )
                     }
+                }
 
                     if (isLoadingMore) {
                         item(key = "loading_more") {

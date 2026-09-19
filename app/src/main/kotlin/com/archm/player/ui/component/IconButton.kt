@@ -56,6 +56,34 @@ fun ResizableIconButton(
     )
 }
 
+@Composable
+fun IconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    indication: Indication? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(color = colors.containerColor)
+            .clickable(
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = indication ?: ripple(bounded = false),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        val contentColor = colors.contentColor
+        CompositionLocalProvider(LocalContentColor provides contentColor, content = content)
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CombinedIconButton(

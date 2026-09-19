@@ -34,6 +34,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -43,6 +44,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.CompositionLocalProvider
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
@@ -379,6 +384,13 @@ fun ArtistScreen(
         animationSpec = tween(durationMillis = 600),
         label = "ArtistAccentColor",
     )
+    val screenAccentColor = remember(rawAccentColor) {
+        if (rawAccentColor != MaterialTheme.colorScheme.surfaceVariant && rawAccentColor != Color.Transparent && rawAccentColor != Color.Black) {
+            rawAccentColor
+        } else {
+            Marble
+        }
+    }
     val monthlyListeners = artistPage?.monthlyListenerCount
     val subscribers = artistPage?.subscriberCountText
     val audienceStat = when {
@@ -1372,56 +1384,65 @@ fun ArtistScreen(
                             items = distinctSongs.take(5),
                             key = { "popular_song_${it.id}" },
                         ) { song ->
-                            YouTubeListItem(
-                                item = song,
-                                isActive = song.id == mediaMetadata?.id,
-                                isPlaying = isPlaying,
-                                inSelectionMode = selectionState.isActive,
-                                isSelected = selectionState.isSelected(song.id),
-                                trailingContent = {
-                                    IconButton(
-                                        onClick = {
-                                            menuState.show {
-                                                YouTubeSongMenu(
-                                                    song = song,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        },
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.more_vert),
-                                            contentDescription = null,
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (selectionState.isActive) {
-                                                selectionState.toggle(song.id)
-                                            } else if (song.id == mediaMetadata?.id) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(
-                                                    YouTubeQueue(
-                                                        WatchEndpoint(videoId = song.id),
-                                                        song.toMediaMetadata(),
-                                                    ),
-                                                )
-                                            }
-                                        },
-                                        onLongClick = {
-                                            if (!selectionState.isActive) {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                selectionState.start(song.id)
-                                            }
-                                        },
-                                    ),
-                            )
+                            CompositionLocalProvider(
+                                LocalAccentColor provides screenAccentColor,
+                                LocalIndication provides ripple(color = screenAccentColor),
+                            ) {
+                                val itemInteractionSource = remember { MutableInteractionSource() }
+                                YouTubeListItem(
+                                    item = song,
+                                    isActive = song.id == mediaMetadata?.id,
+                                    isPlaying = isPlaying,
+                                    inSelectionMode = selectionState.isActive,
+                                    isSelected = selectionState.isSelected(song.id),
+                                    accentColor = screenAccentColor,
+                                    trailingContent = {
+                                        IconButton(
+                                            onClick = {
+                                                menuState.show {
+                                                    YouTubeSongMenu(
+                                                        song = song,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                }
+                                            },
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.more_vert),
+                                                contentDescription = null,
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .combinedClickable(
+                                            interactionSource = itemInteractionSource,
+                                            indication = ripple(color = screenAccentColor),
+                                            onClick = {
+                                                if (selectionState.isActive) {
+                                                    selectionState.toggle(song.id)
+                                                } else if (song.id == mediaMetadata?.id) {
+                                                    playerConnection.togglePlayPause()
+                                                } else {
+                                                    playerConnection.playQueue(
+                                                        YouTubeQueue(
+                                                            WatchEndpoint(videoId = song.id),
+                                                            song.toMediaMetadata(),
+                                                        ),
+                                                    )
+                                                }
+                                            },
+                                            onLongClick = {
+                                                if (!selectionState.isActive) {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    selectionState.start(song.id)
+                                                }
+                                            },
+                                        ),
+                                )
+                            }
                         }
                     }
                 }

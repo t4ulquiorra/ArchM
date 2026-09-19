@@ -60,9 +60,11 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import com.archm.player.ui.menu.SavedInBottomSheet
 import com.archm.player.ui.menu.LocalSavedInSheetState
 import androidx.compose.foundation.border
-import androidx.compose.ui.unit.sp
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -177,11 +179,12 @@ inline fun ListItem(
     horizontalPadding: Dp = 12.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
+    accentColor: Color = LocalAccentColor.current,
 ) {
     val resolvedColor = if (color != Color.Transparent) color else containerColor
     val titleColor =
         if (isActive) {
-            MaterialTheme.colorScheme.primary
+            accentColor
         } else {
             MaterialTheme.colorScheme.onSurface
         }
@@ -200,8 +203,8 @@ inline fun ListItem(
     val itemShape = if (shape != RectangleShape) shape else RoundedCornerShape(12.dp)
 
     val targetBackgroundColor = when {
-        isSelected == true && drawHighlight -> MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-        isActive && showActiveContainer -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = ActiveBoxAlpha)
+        isSelected == true && drawHighlight -> accentColor.copy(alpha = 0.18f)
+        isActive && showActiveContainer -> accentColor.copy(alpha = ActiveBoxAlpha)
         resolvedColor != Color.Transparent -> resolvedColor
         else -> Color.Transparent
     }
@@ -234,13 +237,14 @@ inline fun ListItem(
                     Box(
                         modifier = Modifier
                             .size(20.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                            .background(accentColor, CircleShape)
+                            .border(1.5.dp, accentColor, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Check,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = Color.Black,
                             modifier = Modifier.size(14.dp),
                         )
                     }
@@ -333,6 +337,7 @@ fun ListItem(
     horizontalPadding: Dp = 12.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
+    accentColor: Color = LocalAccentColor.current,
 ) = ListItem(
     title = title,
     subtitle = {
@@ -359,6 +364,7 @@ fun ListItem(
     horizontalPadding = horizontalPadding,
     containerColor = containerColor,
     color = color,
+    accentColor = accentColor,
 )
 
 
@@ -379,6 +385,7 @@ fun ListItem(
     horizontalPadding: Dp = 12.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
+    accentColor: Color = LocalAccentColor.current,
 ) = ListItem(
     title = title,
     subtitle = {
@@ -406,6 +413,7 @@ fun ListItem(
     horizontalPadding = horizontalPadding,
     containerColor = containerColor,
     color = color,
+    accentColor = accentColor,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -610,6 +618,7 @@ fun SongListItem(
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
     horizontalPadding: Dp = 12.dp,
+    accentColor: Color = LocalAccentColor.current,
 ) {
     val menuState = LocalMenuState.current
     val savedInSheetState = LocalSavedInSheetState.current
@@ -618,20 +627,17 @@ fun SongListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (song.song.liked) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .bouncyClickable(
-                        onClick = {
-                            savedInSheetState.show(song.toMediaMetadata())
-                        }
-                    ),
-                contentAlignment = Alignment.Center,
+            IconButton(
+                onClick = {
+                    savedInSheetState.show(song.toMediaMetadata())
+                },
+                indication = ripple(bounded = false, color = accentColor),
+                modifier = Modifier.size(24.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = stringResource(R.string.liked),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = accentColor,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -659,7 +665,8 @@ fun SongListItem(
                     isActive = isActive,
                     isPlaying = isPlaying,
                     shape = RoundedCornerShape(ThumbnailCornerRadius),
-                    modifier = Modifier.size(ListThumbnailSize)
+                    modifier = Modifier.size(ListThumbnailSize),
+                    accentColor = accentColor,
                 )
             },
             trailingContent = resolvedTrailingContent,
@@ -671,7 +678,8 @@ fun SongListItem(
             containerColor = resolvedColor,
             color = resolvedColor,
             drawHighlight = drawHighlight,
-            horizontalPadding = horizontalPadding
+            horizontalPadding = horizontalPadding,
+            accentColor = accentColor,
         )
     }
 
@@ -1220,6 +1228,7 @@ fun MediaMetadataListItem(
     shape: Shape = RoundedCornerShape(12.dp),
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
+    accentColor: Color = LocalAccentColor.current,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     val resolvedColor = if (color != Color.Transparent) color else containerColor
@@ -1233,20 +1242,17 @@ fun MediaMetadataListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (isLiked) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .bouncyClickable(
-                        onClick = {
-                            savedInSheetState.show(mediaMetadata)
-                        }
-                    ),
-                contentAlignment = Alignment.Center,
+            IconButton(
+                onClick = {
+                    savedInSheetState.show(mediaMetadata)
+                },
+                indication = ripple(bounded = false, color = accentColor),
+                modifier = Modifier.size(24.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = stringResource(R.string.liked),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = accentColor,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -1286,7 +1292,8 @@ fun MediaMetadataListItem(
                 isActive = isActive,
                 isPlaying = isPlaying,
                 shape = RoundedCornerShape(ThumbnailCornerRadius),
-                modifier = Modifier.size(ListThumbnailSize)
+                modifier = Modifier.size(ListThumbnailSize),
+                accentColor = accentColor,
             )
         },
         trailingContent = resolvedTrailingContent,
@@ -1296,7 +1303,8 @@ fun MediaMetadataListItem(
         isActive = isActive,
         shape = shape,
         containerColor = resolvedColor,
-        color = resolvedColor
+        color = resolvedColor,
+        accentColor = accentColor,
     )
 }
 
@@ -1383,6 +1391,7 @@ fun YouTubeListItem(
     },
     shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
+    accentColor: Color = LocalAccentColor.current,
 ) {
     val database = LocalDatabase.current
     val menuState = LocalMenuState.current
@@ -1396,20 +1405,17 @@ fun YouTubeListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (isLiked && item is SongItem) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .bouncyClickable(
-                        onClick = {
-                            savedInSheetState.show(item.toMediaMetadata())
-                        }
-                    ),
-                contentAlignment = Alignment.Center,
+            IconButton(
+                onClick = {
+                    savedInSheetState.show(item.toMediaMetadata())
+                },
+                indication = ripple(bounded = false, color = accentColor),
+                modifier = Modifier.size(24.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = stringResource(R.string.liked),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = accentColor,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -1452,7 +1458,8 @@ fun YouTubeListItem(
                     isActive = isActive,
                     isPlaying = isPlaying,
                     shape = if (isArtist) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
-                    modifier = Modifier.size(ListThumbnailSize)
+                    modifier = Modifier.size(ListThumbnailSize),
+                    accentColor = accentColor,
                 )
             },
             trailingContent = resolvedTrailingContent,
@@ -1465,6 +1472,7 @@ fun YouTubeListItem(
             drawHighlight = drawHighlight,
             containerColor = resolvedColor,
             color = resolvedColor,
+            accentColor = accentColor,
         )
     }
 
@@ -1946,6 +1954,7 @@ fun ItemThumbnail(
     isSelected: Boolean = false,
     thumbnailRatio: Float = 1f,
     contentScale: ContentScale? = null,
+    accentColor: Color = LocalAccentColor.current,
 ) {
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val isArtist = shape == CircleShape
@@ -1989,7 +1998,7 @@ fun ItemThumbnail(
         PlayingIndicatorBox(
             isActive = isActive,
             playWhenReady = isPlaying,
-            color = if (albumIndex != null) MaterialTheme.colorScheme.onBackground else Color.White,
+            color = accentColor,
             modifier = Modifier
                 .fillMaxSize()
                 .background(

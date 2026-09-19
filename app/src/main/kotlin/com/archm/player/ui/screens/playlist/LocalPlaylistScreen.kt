@@ -70,6 +70,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.CompositionLocalProvider
+import com.archm.player.ui.screens.library.rememberArtworkGradient
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -675,6 +682,14 @@ fun LocalPlaylistScreen(
         ?: songs.firstOrNull()?.song?.thumbnailUrl
         ?: playlist?.playlist?.thumbnailUrl
 
+    val artworkGradientColors = rememberArtworkGradient(
+        thumbnailUrl = backdropThumbnail,
+        fallbackColor = Marble,
+    )
+    val screenAccentColor = remember(artworkGradientColors) {
+        artworkGradientColors.firstOrNull()?.takeIf { it != Color.Transparent && it != Color.Black } ?: Marble
+    }
+
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -1209,74 +1224,83 @@ fun LocalPlaylistScreen(
                         }
 
                         val content: @Composable () -> Unit = {
-                            SongListItem(
-                                song = song.song,
-                                isActive = song.song.id == mediaMetadata?.id,
-                                isPlaying = isPlaying,
-                                inSelectionMode = inSelectMode,
-                                isSelected = inSelectMode && selection.contains(song.map.id),
-                                showInLibraryIcon = true,
-                                shape = RoundedCornerShape(12.dp),
-                                trailingContent = {
-                                    IconButton(
-                                        onClick = {
-                                            menuState.show {
-                                                SongMenu(
-                                                    originalSong = song.song,
-                                                    playlistSong = song,
-                                                    playlistBrowseId = pl.playlist.browseId,
-                                                    navController = navController,
-                                                    onDismiss = menuState::dismiss,
-                                                )
-                                            }
-                                        }
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.more_vert),
-                                            contentDescription = null,
-                                        )
-                                    }
-
-                                    if (sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable) {
+                            CompositionLocalProvider(
+                                LocalAccentColor provides screenAccentColor,
+                                LocalIndication provides ripple(color = screenAccentColor),
+                            ) {
+                                val itemInteractionSource = remember { MutableInteractionSource() }
+                                SongListItem(
+                                    song = song.song,
+                                    isActive = song.song.id == mediaMetadata?.id,
+                                    isPlaying = isPlaying,
+                                    inSelectionMode = inSelectMode,
+                                    isSelected = inSelectMode && selection.contains(song.map.id),
+                                    showInLibraryIcon = true,
+                                    accentColor = screenAccentColor,
+                                    shape = RoundedCornerShape(12.dp),
+                                    trailingContent = {
                                         IconButton(
-                                            onClick = { },
-                                            modifier = Modifier.draggableHandle(),
+                                            onClick = {
+                                                menuState.show {
+                                                    SongMenu(
+                                                        originalSong = song.song,
+                                                        playlistSong = song,
+                                                        playlistBrowseId = pl.playlist.browseId,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                }
+                                            }
                                         ) {
                                             Icon(
-                                                painter = painterResource(R.drawable.drag_handle),
+                                                painter = painterResource(R.drawable.more_vert),
                                                 contentDescription = null,
                                             )
                                         }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (inSelectMode) {
-                                                onCheckedChange(!selection.contains(song.map.id))
-                                            } else if (song.song.id == mediaMetadata?.id) {
-                                                playerConnection.togglePlayPause()
-                                            } else {
-                                                playerConnection.playQueue(
-                                                    ListQueue(
-                                                        title = pl.playlist.name,
-                                                        items = songs.map { it.song.toMediaItem() },
-                                                        startIndex = songs.indexOfFirst { it.map.id == song.map.id },
-                                                    ),
+
+                                        if (sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable) {
+                                            IconButton(
+                                                onClick = { },
+                                                modifier = Modifier.draggableHandle(),
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.drag_handle),
+                                                    contentDescription = null,
                                                 )
                                             }
-                                        },
-                                        onLongClick = {
-                                            if (!inSelectMode) {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                inSelectMode = true
-                                                onCheckedChange(true)
-                                            }
-                                        },
-                                    ),
-                            )
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .combinedClickable(
+                                            interactionSource = itemInteractionSource,
+                                            indication = ripple(color = screenAccentColor),
+                                            onClick = {
+                                                if (inSelectMode) {
+                                                    onCheckedChange(!selection.contains(song.map.id))
+                                                } else if (song.song.id == mediaMetadata?.id) {
+                                                    playerConnection.togglePlayPause()
+                                                } else {
+                                                    playerConnection.playQueue(
+                                                        ListQueue(
+                                                            title = pl.playlist.name,
+                                                            items = songs.map { it.song.toMediaItem() },
+                                                            startIndex = songs.indexOfFirst { it.map.id == song.map.id },
+                                                        ),
+                                                    )
+                                                }
+                                            },
+                                            onLongClick = {
+                                                if (!inSelectMode) {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    inSelectMode = true
+                                                    onCheckedChange(true)
+                                                }
+                                            },
+                                        ),
+                                )
+                            }
                         }
 
                         if (locked || inSelectMode || !swipeRemoveEnabled) {

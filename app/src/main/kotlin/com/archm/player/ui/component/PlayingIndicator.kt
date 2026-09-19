@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.archm.player.R
 import com.archm.player.constants.ThumbnailCornerRadius
+import com.archm.player.ui.theme.LocalAccentColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -87,7 +88,7 @@ fun PlayingIndicatorBox(
     modifier: Modifier = Modifier,
     isActive: Boolean,
     playWhenReady: Boolean,
-    color: Color = Color.White,
+    color: Color = LocalAccentColor.current,
 ) {
     AnimatedVisibility(
         visible = isActive,
