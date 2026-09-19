@@ -52,7 +52,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -184,10 +183,8 @@ import com.music.innertube.models.WatchEndpoint
 import com.archm.player.constants.AppBarHeight
 import com.archm.player.constants.AiRecommendationsKey
 import com.archm.player.constants.AppLanguageKey
-import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.DefaultOpenTabKey
 import com.archm.player.constants.DisableScreenshotKey
-import com.archm.player.constants.DynamicThemeKey
 import com.archm.player.constants.EnableHighRefreshRateKey
 import com.archm.player.constants.FloatingToolbarBottomPadding
 import com.archm.player.constants.FloatingToolbarHorizontalPadding
@@ -208,7 +205,6 @@ import com.archm.player.constants.PauseListenHistoryKey
 import com.archm.player.constants.PauseSearchHistoryKey
 import com.archm.player.constants.PureBlackKey
 import com.archm.player.constants.SYSTEM_DEFAULT
-import com.archm.player.constants.SelectedThemeColorKey
 import com.archm.player.constants.StopMusicOnTaskClearKey
 import com.archm.player.constants.UseNewMiniPlayerDesignKey
 import com.archm.player.constants.*
@@ -269,10 +265,8 @@ import com.archm.player.ui.utils.backToMain
 import com.archm.player.viewmodels.OnlineSearchSort
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.screens.settings.NavigationTab
-import com.archm.player.ui.theme.ColorSaver
 import com.archm.player.ui.theme.DefaultThemeColor
 import com.archm.player.ui.theme.echomusicTheme
-import com.archm.player.ui.theme.extractThemeColor
 import com.archm.player.ui.utils.appBarScrollBehavior
 import com.archm.player.ui.utils.resetHeightOffset
 import com.archm.player.utils.SyncUtils
@@ -493,7 +487,6 @@ class MainActivity : ComponentActivity() {
         downloadUtil: DownloadUtil,
         syncUtils: SyncUtils,
     ) {
-        val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
         val context = LocalContext.current
         var showUpdateDialog by remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -561,73 +554,19 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
-        val isSystemInDarkTheme = isSystemInDarkTheme()
-        val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
-            if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+        LaunchedEffect(Unit) {
+            setSystemBarAppearance(true)
         }
 
-        LaunchedEffect(useDarkTheme) {
-            setSystemBarAppearance(useDarkTheme)
-        }
-
-        val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
-        val pureBlack = remember(pureBlackEnabled, useDarkTheme) {
-            pureBlackEnabled && useDarkTheme
-        }
-
-        val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
-        val selectedThemeColor = Color(selectedThemeColorInt)
-
-        var themeColor by rememberSaveable(stateSaver = ColorSaver) {
-            mutableStateOf(selectedThemeColor)
-        }
-
-        LaunchedEffect(selectedThemeColor) {
-            if (!enableDynamicTheme) {
-                themeColor = selectedThemeColor
-            }
-        }
-
-        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor) {
-            val playerConnection = playerConnection
-            if (!enableDynamicTheme || playerConnection == null) {
-                themeColor = selectedThemeColor
-                return@LaunchedEffect
-            }
-
-            playerConnection.service.currentMediaMetadata.collectLatest { song ->
-                if (song?.thumbnailUrl != null) {
-                    withContext(Dispatchers.IO) {
-                        try {
-                            val result = imageLoader.execute(
-                                ImageRequest.Builder(this@MainActivity)
-                                    .data(song.thumbnailUrl)
-                                    .allowHardware(false)
-                                    .memoryCachePolicy(CachePolicy.ENABLED)
-                                    .diskCachePolicy(CachePolicy.ENABLED)
-                                    .networkCachePolicy(CachePolicy.ENABLED)
-                                    .crossfade(false)
-                                    .build()
-                            )
-                            themeColor = result.image?.toBitmap()?.extractThemeColor() ?: selectedThemeColor
-                        } catch (e: Exception) {
-                            
-                            themeColor = selectedThemeColor
-                        }
-                    }
-                } else {
-                    themeColor = selectedThemeColor
-                }
-            }
-        }
+        val pureBlack = true
+        val themeColor = DefaultThemeColor
 
         val (enableHaptics) = rememberPreference(com.archm.player.constants.EnableHapticsKey, defaultValue = false)
         val view = LocalView.current
         var lastScrollHapticTime by remember { mutableStateOf(0L) }
 
         echomusicTheme(
-            darkTheme = useDarkTheme,
+            darkTheme = true,
             pureBlack = pureBlack,
             themeColor = themeColor,
         ) {
@@ -644,7 +583,7 @@ class MainActivity : ComponentActivity() {
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
+                    .background(Color.Black)
                     .pointerInput(enableHaptics) {
                         if (enableHaptics) {
                             awaitPointerEventScope {
@@ -2063,17 +2002,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @SuppressLint("ObsoleteSdkInt")
-    private fun setSystemBarAppearance(isDark: Boolean) {
+    private fun setSystemBarAppearance(isDark: Boolean = true) {
         WindowCompat.getInsetsController(window, window.decorView.rootView).apply {
-            isAppearanceLightStatusBars = !isDark
-            isAppearanceLightNavigationBars = !isDark
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
         }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            window.statusBarColor = (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
-        }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            window.navigationBarColor = (if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.2f)).toArgb()
-        }
+        window.statusBarColor = Color.Transparent.toArgb()
+        window.navigationBarColor = Color.Transparent.toArgb()
     }
     private fun handleRecognitionIntent(
         intent: Intent,

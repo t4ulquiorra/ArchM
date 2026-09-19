@@ -7,9 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.border
-import androidx.core.content.edit
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,7 +62,6 @@ import com.archm.player.constants.CropAlbumArtKey
 import com.archm.player.constants.DefaultOpenTabKey
 import com.archm.player.constants.DensityScale
 import com.archm.player.constants.DensityScaleKey
-import com.archm.player.constants.DynamicThemeKey
 import com.archm.player.constants.EnableDynamicIconKey
 import com.archm.player.constants.EnableHighRefreshRateKey
 import com.archm.player.constants.EnableHapticsKey
@@ -85,7 +82,6 @@ import com.archm.player.constants.PlayerButtonsStyle
 import com.archm.player.constants.PlayerButtonsStyleKey
 
 import com.archm.player.constants.RotatingThumbnailKey
-import com.archm.player.constants.SelectedThemeColorKey
 import com.archm.player.constants.ShowCachedPlaylistKey
 import com.archm.player.constants.ShowExportedPlaylistKey
 import com.archm.player.constants.ShowDownloadedPlaylistKey
@@ -112,7 +108,6 @@ import com.archm.player.ui.component.Material3SettingsItem
 import com.archm.player.ui.component.PlayerSliderTrack
 import com.archm.player.ui.component.SquigglySlider
 import com.archm.player.ui.component.WavySlider
-import com.archm.player.ui.theme.DefaultThemeColor
 import com.archm.player.ui.theme.PlayerSliderColors
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.utils.IconUtils
@@ -139,10 +134,6 @@ fun AppearanceSettings(
 highlightKey: String? = null) {
     val scrollState = androidx.compose.foundation.rememberScrollState()
 
-    val (dynamicTheme, onDynamicThemeChange) = rememberPreference(
-        DynamicThemeKey,
-        defaultValue = true
-    )
     val (enableLegacyIcon, onEnableLegacyIconChange) = rememberPreference(
         com.archm.player.constants.EnableLegacyIconKey,
         defaultValue = false
@@ -155,12 +146,6 @@ highlightKey: String? = null) {
         com.archm.player.constants.EnableHapticsKey,
         defaultValue = false
     )
-    val (selectedThemeColorInt) = rememberPreference(
-        SelectedThemeColorKey,
-        defaultValue = DefaultThemeColor.toArgb()
-    )
-    
-    val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
     val coroutineScope = rememberCoroutineScope()
 
     fun handleIconChange(legacyEnabled: Boolean) {
@@ -791,7 +776,7 @@ highlightKey: String? = null) {
             val sliderPreviewColors = PlayerSliderColors.getSliderColors(
                 MaterialTheme.colorScheme.primary,
                 PlayerBackgroundStyle.DEFAULT,
-                isSystemInDarkTheme()
+                true
             )
 
             Column(
@@ -1010,7 +995,7 @@ highlightKey: String? = null) {
 
                 add(
                     Material3SettingsItem(
-    isHighlighted = (highlightKey == stringResource(R.string.legacy_icon)),
+                        isHighlighted = (highlightKey == stringResource(R.string.legacy_icon)),
                         customIcon = { Icon(painterResource(R.mipmap.legacy_icon_monochrome), contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary) },
                         title = { Text(stringResource(R.string.legacy_icon)) },
                         description = { Text(stringResource(R.string.legacy_icon_desc)) },
@@ -1034,15 +1019,6 @@ highlightKey: String? = null) {
                 )
                 add(
                     Material3SettingsItem(
-    isHighlighted = (highlightKey == stringResource(R.string.theme)),
-                        icon = painterResource(R.drawable.palette),
-                        title = { Text(stringResource(R.string.theme)) },
-                        description = { Text(stringResource(R.string.theme_desc)) },
-                        onClick = { navController.navigate("settings/appearance/theme") }
-                    )
-                )
-                add(
-                    Material3SettingsItem(
                         icon = painterResource(R.drawable.water_drop),
                         title = { Text(stringResource(R.string.liquid_glass)) },
                         description = { Text(stringResource(R.string.liquid_glass_settings)) },
@@ -1051,7 +1027,7 @@ highlightKey: String? = null) {
                 )
                 add(
                     Material3SettingsItem(
-    isHighlighted = (highlightKey == stringResource(R.string.enable_high_refresh_rate)),
+                        isHighlighted = (highlightKey == stringResource(R.string.enable_high_refresh_rate)),
                         icon = painterResource(R.drawable.speed),
                         title = { Text(stringResource(R.string.enable_high_refresh_rate)) },
                         description = { Text(stringResource(R.string.enable_high_refresh_rate_desc)) },
@@ -1073,34 +1049,6 @@ highlightKey: String? = null) {
                         onClick = { onEnableHighRefreshRateChange(!enableHighRefreshRate) }
                     )
                 )
-                
-                
-                if (!isUsingCustomColor) {
-                    add(
-                        Material3SettingsItem(
-    isHighlighted = (highlightKey == stringResource(R.string.enable_dynamic_theme)),
-                            icon = painterResource(R.drawable.palette),
-                            title = { Text(stringResource(R.string.enable_dynamic_theme)) },
-                            description = { Text(stringResource(R.string.enable_dynamic_theme_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = dynamicTheme,
-                                    onCheckedChange = onDynamicThemeChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter = painterResource(
-                                                id = if (dynamicTheme) R.drawable.check else R.drawable.close
-                                            ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize)
-                                        )
-                                    }
-                                )
-                            },
-                            onClick = { onDynamicThemeChange(!dynamicTheme) }
-                        )
-                    )
-                }
             }
         )
 

@@ -13,14 +13,11 @@ import android.util.Base64
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.snap
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.produceState
@@ -48,7 +45,33 @@ import com.archm.player.constants.AppFontPreference
 import kotlin.math.abs
 import kotlin.math.min
 
-val DefaultThemeColor = Color(0xFFED5564)
+val Marble = Color(0xFFF2F8FC)
+val SurfaceContainerColor = Color(0xFF141414)
+val DefaultThemeColor = Marble
+
+val AmoledDarkColorScheme: ColorScheme by lazy {
+    materialKolorDynamicColorScheme(
+        keyColor = Marble,
+        isDark = true,
+        style = PaletteStyle.Neutral,
+    ).copy(
+        primary = Marble,
+        onPrimary = Color.Black,
+        background = Color.Black,
+        surface = Color.Black,
+        surfaceDim = Color.Black,
+        surfaceBright = Color(0xFF242424),
+        surfaceContainerLowest = Color.Black,
+        surfaceContainerLow = SurfaceContainerColor,
+        surfaceContainer = SurfaceContainerColor,
+        surfaceContainerHigh = Color(0xFF1A1A1A),
+        surfaceContainerHighest = Color(0xFF222222),
+        onBackground = Color.White,
+        onSurface = Color.White,
+        outlineVariant = Color.White.copy(alpha = 0.12f),
+    )
+}
+
 val LocalArchiveTuneFontPreference = staticCompositionLocalOf { AppFontPreference.DEFAULT }
 val LocalArchiveTuneFontFamily = staticCompositionLocalOf { AppFontFamily }
 
@@ -71,9 +94,9 @@ data class ThemeSeedPalette(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArchMTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    pureBlack: Boolean = false,
-    themeColor: Color = DefaultThemeColor,
+    darkTheme: Boolean = true,
+    pureBlack: Boolean = true,
+    themeColor: Color = Marble,
     seedPalette: ThemeSeedPalette? = null,
     disableAnimations: Boolean = false,
     fontPreference: AppFontPreference = AppFontPreference.DEFAULT,
@@ -81,10 +104,10 @@ fun ArchMTheme(
     content: @Composable () -> Unit,
 ) {
     ArchiveTuneTheme(
-        darkTheme = darkTheme,
-        pureBlack = pureBlack,
-        themeColor = themeColor,
-        seedPalette = seedPalette,
+        darkTheme = true,
+        pureBlack = true,
+        themeColor = Marble,
+        seedPalette = null,
         disableAnimations = disableAnimations,
         fontPreference = fontPreference,
         customFontUri = customFontUri,
@@ -94,15 +117,15 @@ fun ArchMTheme(
 
 @Composable
 fun echomusicTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    pureBlack: Boolean = false,
-    themeColor: Color = DefaultThemeColor,
+    darkTheme: Boolean = true,
+    pureBlack: Boolean = true,
+    themeColor: Color = Marble,
     content: @Composable () -> Unit,
 ) {
     ArchiveTuneTheme(
-        darkTheme = darkTheme,
-        pureBlack = pureBlack,
-        themeColor = themeColor,
+        darkTheme = true,
+        pureBlack = true,
+        themeColor = Marble,
         content = content,
     )
 }
@@ -110,9 +133,9 @@ fun echomusicTheme(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArchiveTuneTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    pureBlack: Boolean = false,
-    themeColor: Color = DefaultThemeColor,
+    darkTheme: Boolean = true,
+    pureBlack: Boolean = true,
+    themeColor: Color = Marble,
     seedPalette: ThemeSeedPalette? = null,
     disableAnimations: Boolean = false,
     fontPreference: AppFontPreference = AppFontPreference.DEFAULT,
@@ -120,8 +143,6 @@ fun ArchiveTuneTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val useSystemDynamicColor =
-        (seedPalette == null && themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 
     val customFontFamily =
         produceState<FontFamily?>(
@@ -157,48 +178,8 @@ fun ArchiveTuneTheme(
         remember(disableAnimations) {
             if (disableAnimations) DisabledMotionScheme else MotionScheme.expressive()
         }
-    val paletteStyle =
-        remember(themeColor, seedPalette) {
-            paletteStyleFor(seedPalette?.primary ?: themeColor)
-        }
 
-    val appColorScheme =
-        remember(seedPalette, themeColor, darkTheme) {
-            if (seedPalette != null) {
-                exactPaletteColorScheme(
-                    palette = seedPalette,
-                    isDark = darkTheme,
-                )
-            } else {
-                materialKolorDynamicColorScheme(
-                    keyColor = themeColor,
-                    isDark = darkTheme,
-                    style = paletteStyle,
-                )
-            }
-        }
-
-    val baseColorScheme =
-        if (useSystemDynamicColor) {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        } else {
-            appColorScheme
-        }
-
-    val colorScheme =
-        remember(baseColorScheme, pureBlack, darkTheme) {
-            if (darkTheme && pureBlack) baseColorScheme.pureBlack(true) else baseColorScheme
-        }
-
-    val animatedColorScheme =
-        if (disableAnimations) {
-            colorScheme
-        } else {
-            animateColorScheme(
-                targetColorScheme = colorScheme,
-                animationSpec = motionScheme.defaultEffectsSpec(),
-            )
-        }
+    val colorScheme = AmoledDarkColorScheme
 
     val expressiveShapes =
         remember {
@@ -226,7 +207,7 @@ fun ArchiveTuneTheme(
         LocalArchiveTuneFontFamily provides resolvedFontFamily,
     ) {
         MaterialExpressiveTheme(
-            colorScheme = animatedColorScheme,
+            colorScheme = colorScheme,
             motionScheme = motionScheme,
             typography = typography,
             shapes = expressiveShapes,
