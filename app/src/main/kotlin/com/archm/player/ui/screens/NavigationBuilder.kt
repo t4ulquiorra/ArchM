@@ -3,6 +3,7 @@
 package com.archm.player.ui.screens
 
 import android.app.Activity
+import android.net.Uri
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -221,10 +222,15 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(
-        route = "album/{albumId}",
+        route = "album/{albumId}?releaseType={releaseType}",
         arguments = listOf(
             navArgument("albumId") {
                 type = NavType.StringType
+            },
+            navArgument("releaseType") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
         ),
     ) {
@@ -539,5 +545,14 @@ fun NavGraphBuilder.navigationBuilder(
     }
     composable("settings/commits") {
         CommitScreen(navController, scrollBehavior)
+    }
+}
+
+fun buildAlbumRoute(albumId: String, releaseType: String? = null): String {
+    val encodedId = Uri.encode(albumId)
+    return if (!releaseType.isNullOrBlank()) {
+        "album/$encodedId?releaseType=${Uri.encode(releaseType)}"
+    } else {
+        "album/$encodedId"
     }
 }

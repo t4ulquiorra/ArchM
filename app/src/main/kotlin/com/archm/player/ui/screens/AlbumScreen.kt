@@ -151,6 +151,7 @@ fun AlbumScreen(
     val moreByArtistEndpoint by viewModel.moreByArtistEndpoint.collectAsState()
     val description by viewModel.description.collectAsState()
     val descriptionRuns by viewModel.descriptionRuns.collectAsState()
+    val releaseType by viewModel.releaseType.collectAsState()
 
     val currentAlbumId = viewModel.albumId
     val moreByArtistAlbums = remember(moreByArtist, currentAlbumId) {
@@ -411,8 +412,19 @@ fun AlbumScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
+                            val rawType = releaseType
+                            val resolvedType = when {
+                                rawType?.equals("Single", ignoreCase = true) == true -> stringResource(R.string.release_type_single)
+                                rawType?.equals("EP", ignoreCase = true) == true -> stringResource(R.string.ep)
+                                rawType?.equals("Album", ignoreCase = true) == true -> stringResource(R.string.album_text)
+                                !rawType.isNullOrBlank() -> rawType
+                                Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(currentAlbumWithSongs.album.title) -> stringResource(R.string.ep)
+                                Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(currentAlbumWithSongs.album.title) -> stringResource(R.string.release_type_single)
+                                currentAlbumWithSongs.songs.size == 1 -> stringResource(R.string.release_type_single)
+                                else -> stringResource(R.string.album_text)
+                            }
                             val subText = buildString {
-                                append(stringResource(R.string.album_text))
+                                append(resolvedType)
                                 if (currentAlbumWithSongs.album.year != null) {
                                     append(" • ${currentAlbumWithSongs.album.year}")
                                 }
@@ -696,7 +708,7 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    onClick = { navController.navigate("album/${item.id}") },
+                                    onClick = { navController.navigate(buildAlbumRoute(item.id, item.explicitType)) },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         menuState.show {
@@ -743,7 +755,7 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    onClick = { navController.navigate("album/${item.id}") },
+                                    onClick = { navController.navigate(buildAlbumRoute(item.id, item.explicitType)) },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         menuState.show {
@@ -789,7 +801,7 @@ fun AlbumScreen(
                                         coroutineScope = scope,
                                         thumbnailSize = 150.dp,
                                         contentPadding = PaddingValues(0.dp),
-                                        onClick = { navController.navigate("album/${item.id}") },
+                                        onClick = { navController.navigate(buildAlbumRoute(item.id, item.explicitType)) },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             menuState.show {

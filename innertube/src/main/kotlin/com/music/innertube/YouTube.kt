@@ -292,6 +292,14 @@ object YouTube {
         if (browseId.contains("FEmusic_library_privately_owned_release_detail")) {
             val playlistId =
                 response.header?.musicDetailHeaderRenderer?.menu?.menuRenderer?.topLevelButtons?.firstOrNull()?.buttonRenderer?.navigationEndpoint?.watchPlaylistEndpoint?.playlistId!!
+            val subtitleRuns = response.header.musicDetailHeaderRenderer.subtitle.runs
+            val releaseTypeCandidate = subtitleRuns?.firstOrNull()?.text
+            val year = subtitleRuns?.lastOrNull()?.text?.toIntOrNull()
+            val explicitType = subtitleRuns?.map { it.text.trim() }?.firstOrNull { text ->
+                text.equals("Single", ignoreCase = true) ||
+                text.equals("EP", ignoreCase = true) ||
+                text.equals("Album", ignoreCase = true)
+            } ?: if (releaseTypeCandidate != null && releaseTypeCandidate != year?.toString() && releaseTypeCandidate != "•") releaseTypeCandidate else null
             val albumItem = AlbumItem(
                 browseId = browseId,
                 playlistId = playlistId,
@@ -302,10 +310,11 @@ object YouTube {
                         id = it.navigationEndpoint?.browseEndpoint?.browseId
                     )
                 },
-                year = response.header.musicDetailHeaderRenderer.subtitle.runs?.lastOrNull()?.text?.toIntOrNull(),
+                year = year,
                 thumbnail = response.header.musicDetailHeaderRenderer.thumbnail.croppedSquareThumbnailRenderer?.thumbnail?.thumbnails?.lastOrNull()!!.url,
                 explicit = false, // TODO: Extract explicit badge for albums from YouTube response
-                description = description
+                description = description,
+                explicitType = explicitType,
             )
             return@runCatching AlbumPage(
                 album = albumItem,
@@ -319,21 +328,32 @@ object YouTube {
         } else {
             val playlistId =
                 response.microformat?.microformatDataRenderer?.urlCanonical?.substringAfterLast('=')!!
+            val headerRenderer = response.contents?.twoColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicResponsiveHeaderRenderer
+                ?: response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicResponsiveHeaderRenderer
+            val subtitleRuns = headerRenderer?.subtitle?.runs
+            val releaseTypeCandidate = subtitleRuns?.firstOrNull()?.text
+            val year = subtitleRuns?.lastOrNull()?.text?.toIntOrNull()
+            val explicitType = subtitleRuns?.map { it.text.trim() }?.firstOrNull { text ->
+                text.equals("Single", ignoreCase = true) ||
+                text.equals("EP", ignoreCase = true) ||
+                text.equals("Album", ignoreCase = true)
+            } ?: if (releaseTypeCandidate != null && releaseTypeCandidate != year?.toString() && releaseTypeCandidate != "•") releaseTypeCandidate else null
             val albumItem = AlbumItem(
                 browseId = browseId,
                 playlistId = playlistId,
-                title = response.contents?.twoColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicResponsiveHeaderRenderer?.title?.runs?.firstOrNull()?.text!!,
-                artists = response.contents.twoColumnBrowseResultsRenderer.tabs.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicResponsiveHeaderRenderer?.straplineTextOne?.runs?.oddElements()
+                title = headerRenderer?.title?.runs?.firstOrNull()?.text!!,
+                artists = headerRenderer.straplineTextOne?.runs?.oddElements()
                     ?.map {
                         Artist(
                             name = it.text,
                             id = it.navigationEndpoint?.browseEndpoint?.browseId
                         )
                     }!!,
-                year = response.contents.twoColumnBrowseResultsRenderer.tabs.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicResponsiveHeaderRenderer?.subtitle?.runs?.lastOrNull()?.text?.toIntOrNull(),
-                thumbnail = response.contents.twoColumnBrowseResultsRenderer.tabs.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicResponsiveHeaderRenderer?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.lastOrNull()?.url!!,
+                year = year,
+                thumbnail = headerRenderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.lastOrNull()?.url!!,
                 explicit = false, // TODO: Extract explicit badge for albums from YouTube response
-                description = description
+                description = description,
+                explicitType = explicitType,
             )
             return@runCatching AlbumPage(
                 album = albumItem,
@@ -1145,6 +1165,10 @@ object YouTube {
                     )
                 }
                 renderer.isAlbum -> {
+                    val subtitleRuns = renderer.subtitle?.runs
+                    val releaseType = subtitleRuns?.firstOrNull()?.text
+                    val year = subtitleRuns?.lastOrNull()?.text?.toIntOrNull()
+                    val explicitType = if (releaseType != null && releaseType != year?.toString() && releaseType != "•") releaseType else null
                     AlbumItem(
                         browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
                         playlistId = renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content
@@ -1156,11 +1180,12 @@ object YouTube {
                                 Artist(name = it.text, id = id)
                             }
                         },
-                        year = renderer.subtitle?.runs?.lastOrNull()?.text?.toIntOrNull(),
+                        year = year,
                         thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit = renderer.subtitleBadges?.any {
                             it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
-                        } == true
+                        } == true,
+                        explicitType = explicitType,
                     )
                 }
                 else -> null

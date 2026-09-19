@@ -41,6 +41,20 @@ data class AlbumPage(
             return title?.runs?.lastOrNull()?.text?.toIntOrNull()
         }
 
+        fun getExplicitType(response: BrowseResponse): String? {
+            val subtitleRuns = getHeader(response)?.subtitle?.runs
+                ?: response.header?.musicDetailHeaderRenderer?.subtitle?.runs
+            val explicit = subtitleRuns?.map { it.text.trim() }?.firstOrNull { text ->
+                text.equals("Single", ignoreCase = true) ||
+                text.equals("EP", ignoreCase = true) ||
+                text.equals("Album", ignoreCase = true)
+            }
+            if (explicit != null) return explicit
+            val firstText = subtitleRuns?.firstOrNull()?.text?.trim()
+            val year = subtitleRuns?.lastOrNull()?.text?.toIntOrNull()
+            return if (!firstText.isNullOrBlank() && firstText != year?.toString() && firstText != "•") firstText else null
+        }
+
         fun getThumbnail(response: BrowseResponse): String? {
             return response.background?.musicThumbnailRenderer?.getThumbnailUrl() ?: response.header?.musicDetailHeaderRenderer?.thumbnail
                 ?.croppedSquareThumbnailRenderer?.getThumbnailUrl()

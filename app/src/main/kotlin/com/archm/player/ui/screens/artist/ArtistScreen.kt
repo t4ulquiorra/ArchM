@@ -172,6 +172,7 @@ import com.archm.player.ui.menu.YouTubeAlbumMenu
 import com.archm.player.ui.menu.YouTubePlaylistMenu
 import com.archm.player.ui.menu.YouTubeSelectionSongMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
+import com.archm.player.ui.screens.buildAlbumRoute
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.rememberPreference
@@ -1310,7 +1311,19 @@ fun ArtistScreen(
                                 Spacer(modifier = Modifier.height(20.dp))
                                 ArtistLatestReleaseCard(
                                     release = release,
-                                    onClick = { navController.navigate("album/${release.id}") },
+                                    onClick = {
+                                        val rawType = release.explicitType ?: release.description
+                                        val resolvedReleaseType = when {
+                                            rawType?.equals("Single", ignoreCase = true) == true -> "Single"
+                                            rawType?.equals("EP", ignoreCase = true) == true -> "EP"
+                                            rawType?.equals("Album", ignoreCase = true) == true -> "Album"
+                                            !rawType.isNullOrBlank() -> rawType
+                                            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(release.title) -> "EP"
+                                            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(release.title) -> "Single"
+                                            else -> null
+                                        }
+                                        navController.navigate(buildAlbumRoute(release.id, resolvedReleaseType))
+                                    },
                                     isLandscape = isLandscape,
                                 )
                             }
@@ -1455,7 +1468,10 @@ fun ArtistScreen(
                                             subtitle = formatReleaseSubtitle(single),
                                             thumbnailUrl = single.thumbnail,
                                             thumbSize = 150.dp,
-                                            onClick = { navController.navigate("album/${single.id}") },
+                                            onClick = {
+                                                val singleReleaseType = single.explicitType ?: if (Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(single.title)) "EP" else "Single"
+                                                navController.navigate(buildAlbumRoute(single.id, singleReleaseType))
+                                            },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 menuState.show {
@@ -1539,7 +1555,7 @@ fun ArtistScreen(
                                             subtitle = album.year?.toString(),
                                             thumbnailUrl = album.thumbnail,
                                             thumbSize = 150.dp,
-                                            onClick = { navController.navigate("album/${album.id}") },
+                                            onClick = { navController.navigate(buildAlbumRoute(album.id, album.explicitType ?: "Album")) },
                                             onLongClick = {
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 menuState.show {
@@ -1731,7 +1747,7 @@ fun ArtistScreen(
                                                             feature.toMediaMetadata(),
                                                         ),
                                                     )
-                                                    is AlbumItem -> navController.navigate("album/${feature.id}")
+                                                    is AlbumItem -> navController.navigate(buildAlbumRoute(feature.id, feature.explicitType))
                                                     is PlaylistItem -> navController.navigate("online_playlist/${feature.id}")
                                                     is ArtistItem -> navController.navigate("artist/${feature.id}")
                                                 }
@@ -1868,7 +1884,7 @@ fun ArtistScreen(
                                             onClick = {
                                                 when (playlistItem) {
                                                     is PlaylistItem -> navController.navigate("online_playlist/${playlistItem.id}")
-                                                    is AlbumItem -> navController.navigate("album/${playlistItem.id}")
+                                                    is AlbumItem -> navController.navigate(buildAlbumRoute(playlistItem.id, playlistItem.explicitType))
                                                     is SongItem -> playerConnection.playQueue(
                                                         YouTubeQueue(
                                                             WatchEndpoint(videoId = playlistItem.id),
@@ -2008,7 +2024,7 @@ fun ArtistScreen(
                                                 } else {
                                                     when (item) {
                                                         is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
-                                                        is AlbumItem -> navController.navigate("album/${item.id}")
+                                                        is AlbumItem -> navController.navigate(buildAlbumRoute(item.id, item.explicitType))
                                                         is ArtistItem -> navController.navigate("artist/${item.id}")
                                                         else -> {}
                                                     }
@@ -3228,10 +3244,15 @@ private fun ArtistLatestReleaseCard(
     modifier: Modifier = Modifier,
     isLandscape: Boolean = false,
 ) {
+    val rawType = release.explicitType ?: release.description
     val releaseType = when {
-        release.title.contains("EP", ignoreCase = true) -> stringResource(R.string.ep)
-        release.title.contains("Single", ignoreCase = true) -> stringResource(R.string.release_type_single)
-        else -> stringResource(R.string.release_type_album)
+        rawType?.equals("Single", ignoreCase = true) == true -> stringResource(R.string.release_type_single)
+        rawType?.equals("EP", ignoreCase = true) == true -> stringResource(R.string.ep)
+        rawType?.equals("Album", ignoreCase = true) == true -> stringResource(R.string.album_text)
+        !rawType.isNullOrBlank() -> rawType
+        Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(release.title) -> stringResource(R.string.ep)
+        Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(release.title) -> stringResource(R.string.release_type_single)
+        else -> stringResource(R.string.album_text)
     }
     val subtitle = listOfNotNull(
         releaseType,
@@ -3348,6 +3369,7 @@ val ArtistPage.lastRelease: AlbumItem?
                 thumbnail = explicitSong.thumbnail,
                 year = null,
                 explicit = explicitSong.explicit,
+                explicitType = "Single",
             )
         }
         val releaseItems = sections

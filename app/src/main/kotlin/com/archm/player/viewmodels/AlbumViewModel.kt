@@ -30,6 +30,7 @@ constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     val albumId = savedStateHandle.get<String>("albumId")!!
+    val releaseType = MutableStateFlow<String?>(savedStateHandle.get<String>("releaseType"))
     val playlistId = MutableStateFlow("")
     val albumWithSongs =
         database
@@ -92,6 +93,9 @@ constructor(
                         description.value = it.description
                     }
                     descriptionRuns.value = it.descriptionRuns
+                    if (it.album.explicitType != null) {
+                        releaseType.value = it.album.explicitType
+                    }
                     database.transaction {
                         if (album == null) {
                             insert(it)

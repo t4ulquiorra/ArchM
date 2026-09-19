@@ -142,6 +142,7 @@ import com.archm.player.ui.menu.YouTubeSelectionSongMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.ArtistEntity
+import com.archm.player.ui.screens.buildAlbumRoute
 import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.rememberEnumPreference
@@ -1140,7 +1141,7 @@ fun ArtistItemsScreen(
                                         ),
                                     )
 
-                                    is AlbumItem -> navController.navigate("album/${item.id}")
+                                    is AlbumItem -> navController.navigate(buildAlbumRoute(item.id, item.explicitType))
                                     is ArtistItem -> navController.navigate("artist/${item.id}")
                                     is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
                                 }
