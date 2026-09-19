@@ -2459,11 +2459,10 @@ fun ArtistScreen(
         // Layer 3: Top Navigation Overlay (zIndex 2f)
         if (!selectionState.isActive) {
             val DarkBlackSurface = Color(0xFF141414) // RGB 20, 20, 20
-            val topBarBrush = Brush.verticalGradient(
+            val accentGradient = Brush.verticalGradient(
                 colors = listOf(
-                    dominantColor.copy(alpha = 0.20f * topBarAlpha), // Soft ambient tint at the top
-                    DarkBlackSurface.copy(alpha = 0.85f * topBarAlpha),
-                    DarkBlackSurface.copy(alpha = topBarAlpha),      // Deep dark black container base
+                    dominantColor.copy(alpha = 0.22f * topBarAlpha), // Low opacity, distinct but not glowing/neon
+                    Color.Transparent,                               // Fades cleanly into the #141414 base
                 ),
             )
 
@@ -2475,7 +2474,8 @@ fun ArtistScreen(
                     .pointerInput(Unit) {
                         detectTapGestures { /* Consumes touches so background items are not clicked */ }
                     }
-                    .background(topBarBrush),
+                    .background(DarkBlackSurface.copy(alpha = topBarAlpha))
+                    .background(accentGradient),
             ) {
                 Row(
                     modifier = Modifier
