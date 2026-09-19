@@ -188,7 +188,8 @@ inline fun ListItem(
     val itemShape = if (shape != RectangleShape) shape else RoundedCornerShape(12.dp)
 
     val targetBackgroundColor = when {
-        isSelected == true && drawHighlight -> accentColor.copy(alpha = 0.18f)
+        isSelected == true && drawHighlight -> accentColor.copy(alpha = 0.12f)
+        isActive && showActiveContainer -> accentColor.copy(alpha = 0.12f)
         resolvedColor != Color.Transparent -> resolvedColor
         else -> Color.Transparent
     }
