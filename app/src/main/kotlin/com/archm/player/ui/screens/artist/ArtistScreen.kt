@@ -585,46 +585,58 @@ fun ArtistScreen(
 
         // Layer 1: Pinned Backdrop (zIndex 0f)
         if (!isLandscape) {
-            // Fill bottom 55% space below the photo with extracted dominant accent color
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .background(dominantColor)
-                    .zIndex(0f),
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(backdropHeight)
-                    .align(Alignment.TopCenter)
-                    .background(dominantColor)
+                    .fillMaxSize()
                     .zIndex(0f),
             ) {
-                if (portraitUrl != null) {
-                    AsyncImage(
-                        model = portraitUrl.resize(1080, 1080) ?: portraitUrl,
-                        contentDescription = artistName,
-                        contentScale = ContentScale.Crop,
-                        alignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(animatedAccentColor),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.artist_screen),
-                            contentDescription = null,
-                            tint = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(64.dp),
+                // Top 45%: Artist Photo
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(photoHeight)
+                        .background(dominantColor),
+                ) {
+                    if (portraitUrl != null) {
+                        AsyncImage(
+                            model = portraitUrl.resize(1080, 1080) ?: portraitUrl,
+                            contentDescription = artistName,
+                            contentScale = ContentScale.Crop,
+                            alignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize(),
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(animatedAccentColor),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.artist_screen),
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(64.dp),
+                            )
+                        }
                     }
                 }
+
+                // Middle 25%: Background with image's accent color
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(screenHeight * 0.25f)
+                        .background(dominantColor),
+                )
+
+                // Bottom 30%: Complete Black
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .background(Color.Black),
+                )
             }
         }
 
