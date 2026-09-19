@@ -820,7 +820,42 @@ fun AlbumScreen(
                     }
                 }
 
-                // 7. Relocated About Section at the bottom of LazyColumn
+                // 7. Spacer below carousel cards
+                item(key = "post_carousel_spacer") {
+                    Spacer(Modifier.height(30.dp))
+                }
+
+                // 8. By Artist(s) Section (if multiple artists)
+                if (currentAlbumWithSongs.artists.size > 1) {
+                    item(key = "by_artists_section") {
+                        Text(
+                            text = buildAnnotatedString {
+                                append(stringResource(R.string.by_text))
+                                append(" ")
+                                currentAlbumWithSongs.artists.fastForEachIndexed { index, artist ->
+                                    val link = LinkAnnotation.Clickable(artist.id) {
+                                        navController.navigate("artist/${artist.id}")
+                                    }
+                                    withLink(link) {
+                                        append(artist.name)
+                                    }
+                                    if (index != currentAlbumWithSongs.artists.lastIndex) {
+                                        append(", ")
+                                    }
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(bottom = 20.dp),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                }
+
+                // 9. Relocated About Section at the bottom of LazyColumn
                 item(key = "about_album_section") {
                     val staticDescription = remember(currentAlbumWithSongs) {
                         "${currentAlbumWithSongs.album.title} is an album by ${currentAlbumWithSongs.artists.joinToString { it.name }}${
@@ -831,7 +866,8 @@ fun AlbumScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.about_album),
@@ -851,32 +887,6 @@ fun AlbumScreen(
                             },
                             collapsedMaxLines = 3
                         )
-
-                        if (currentAlbumWithSongs.artists.size > 1) {
-                            Spacer(Modifier.height(16.dp))
-
-                            Text(
-                                text = buildAnnotatedString {
-                                    append(stringResource(R.string.by_text))
-                                    append(" ")
-                                    currentAlbumWithSongs.artists.fastForEachIndexed { index, artist ->
-                                        val link = LinkAnnotation.Clickable(artist.id) {
-                                            navController.navigate("artist/${artist.id}")
-                                        }
-                                        withLink(link) {
-                                            append(artist.name)
-                                        }
-                                        if (index != currentAlbumWithSongs.artists.lastIndex) {
-                                            append(", ")
-                                        }
-                                    }
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Start
-                            )
-                        }
                     }
                 }
 
