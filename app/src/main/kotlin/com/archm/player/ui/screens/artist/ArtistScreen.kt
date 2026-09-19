@@ -90,6 +90,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -2435,10 +2436,12 @@ fun ArtistScreen(
 
         // Layer 3: Top Navigation Overlay (zIndex 2f)
         if (!selectionState.isActive) {
+            val DarkBlackSurface = Color(0xFF141414) // RGB 20, 20, 20
             val topBarBrush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFF141414).copy(alpha = topBarAlpha),
-                    dominantColor.copy(alpha = topBarAlpha),
+                    dominantColor.copy(alpha = 0.20f * topBarAlpha), // Soft ambient tint at the top
+                    DarkBlackSurface.copy(alpha = 0.85f * topBarAlpha),
+                    DarkBlackSurface.copy(alpha = topBarAlpha),      // Deep dark black container base
                 ),
             )
 
@@ -2537,6 +2540,14 @@ fun ArtistScreen(
                             )
                         }
                     }
+                }
+
+                if (topBarAlpha > 0f) {
+                    HorizontalDivider(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        thickness = 1.dp,
+                        color = Color.White.copy(alpha = 0.12f * topBarAlpha),
+                    )
                 }
             }
         }
