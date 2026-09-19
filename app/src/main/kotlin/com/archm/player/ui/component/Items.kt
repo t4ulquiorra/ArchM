@@ -182,29 +182,13 @@ inline fun ListItem(
     accentColor: Color = LocalAccentColor.current,
 ) {
     val resolvedColor = if (color != Color.Transparent) color else containerColor
-    val titleColor =
-        if (isActive) {
-            accentColor
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
-    val subtitleContentColor =
-        if (isActive && showActiveContainer) {
-            MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
-    val trailingContentColor =
-        if (isActive && showActiveContainer) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
+    val titleColor = MaterialTheme.colorScheme.onSurface
+    val subtitleContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val trailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     val itemShape = if (shape != RectangleShape) shape else RoundedCornerShape(12.dp)
 
     val targetBackgroundColor = when {
         isSelected == true && drawHighlight -> accentColor.copy(alpha = 0.18f)
-        isActive && showActiveContainer -> accentColor.copy(alpha = ActiveBoxAlpha)
         resolvedColor != Color.Transparent -> resolvedColor
         else -> Color.Transparent
     }
@@ -221,6 +205,13 @@ inline fun ListItem(
             .padding(horizontal = horizontalPadding)
             .clip(itemShape)
             .background(animatedBackgroundColor)
+            .then(
+                if (resolvedColor != Color.Transparent) {
+                    Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), itemShape)
+                } else {
+                    Modifier
+                }
+            )
             .then(modifier)
             .height(ListItemHeight)
     ) {
@@ -346,7 +337,7 @@ fun ListItem(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isActive && showActiveContainer) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -394,7 +385,7 @@ fun ListItem(
         if (!subtitle.isNullOrEmpty()) {
             Text(
                 text = subtitle,
-                color = if (isActive && showActiveContainer) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
