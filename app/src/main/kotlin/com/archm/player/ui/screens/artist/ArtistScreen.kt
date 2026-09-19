@@ -133,6 +133,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -195,6 +197,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+
+private val PaytoneOne = FontFamily(
+    Font(R.font.paytone_one, FontWeight.Normal),
+)
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -1134,8 +1140,10 @@ fun ArtistScreen(
                                 Text(
                                     text = artistName ?: unknownArtist,
                                     style = MaterialTheme.typography.headlineLarge.copy(
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 32.sp,
+                                        fontFamily = PaytoneOne,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 30.sp,
+                                        lineHeight = 36.sp,
                                         letterSpacing = (-0.5).sp,
                                     ),
                                     color = Color.White,
