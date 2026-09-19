@@ -367,11 +367,12 @@ fun ArtistScreen(
     val portraitUrl = thumbnail
         ?: artistPage?.artist?.thumbnail
         ?: libraryArtist?.artist?.thumbnailUrl
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     val artworkGradientColors = rememberArtworkGradient(
         thumbnailUrl = portraitUrl,
-        fallbackColor = MaterialTheme.colorScheme.surfaceVariant,
+        fallbackColor = surfaceVariant,
     )
-    val rawAccentColor = artworkGradientColors.firstOrNull() ?: MaterialTheme.colorScheme.surfaceVariant
+    val rawAccentColor = artworkGradientColors.firstOrNull() ?: surfaceVariant
     val dominantAccentColor = remember(rawAccentColor) {
         if (rawAccentColor.luminance() > 0.6f) {
             Color(0xFF242424)
@@ -384,8 +385,8 @@ fun ArtistScreen(
         animationSpec = tween(durationMillis = 600),
         label = "ArtistAccentColor",
     )
-    val screenAccentColor = remember(rawAccentColor) {
-        if (rawAccentColor != MaterialTheme.colorScheme.surfaceVariant && rawAccentColor != Color.Transparent && rawAccentColor != Color.Black) {
+    val screenAccentColor = remember(rawAccentColor, surfaceVariant) {
+        if (rawAccentColor != surfaceVariant && rawAccentColor != Color.Transparent && rawAccentColor != Color.Black) {
             rawAccentColor
         } else {
             Marble

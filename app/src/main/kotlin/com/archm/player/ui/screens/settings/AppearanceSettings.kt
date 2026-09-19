@@ -271,9 +271,9 @@ highlightKey: String? = null) {
     val onDensityScaleChange: (Float) -> Unit = { newScale ->
         setDensityScale(newScale)
         
-        sharedPreferences.edit {
-            putFloat("density_scale_factor", newScale)
-        }
+        sharedPreferences.edit()
+            .putFloat("density_scale_factor", newScale)
+            .apply()
         showRestartDialog = true
     }
 
