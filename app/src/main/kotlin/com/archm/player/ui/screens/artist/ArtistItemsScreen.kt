@@ -1141,7 +1141,14 @@ fun ArtistItemsScreen(
                                         ),
                                     )
 
-                                    is AlbumItem -> navController.navigate(buildAlbumRoute(item.id, item.explicitType))
+                                    is AlbumItem -> {
+                                        val releaseType = item.explicitType ?: when {
+                                            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "EP"
+                                            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "Single"
+                                            else -> null
+                                        }
+                                        navController.navigate(buildAlbumRoute(item.id, releaseType))
+                                    }
                                     is ArtistItem -> navController.navigate("artist/${item.id}")
                                     is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
                                 }

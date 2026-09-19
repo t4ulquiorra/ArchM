@@ -1304,6 +1304,51 @@ fun MediaMetadataListItem(
 fun SongItem.formattedDuration(): String? = makeTimeString(duration?.times(1000L))
 val SongItem.durationText: String? get() = formattedDuration()
 
+/**
+ * Formats a standardized release subtitle ("Single • Year", "EP • Year", "Album • Year")
+ * across all cards and release pods throughout the app.
+ */
+@Composable
+fun formatReleaseSubtitle(
+    item: AlbumItem,
+    fallbackType: String? = null,
+): String? {
+    val rawType = item.explicitType?.trim()?.takeIf { it.isNotEmpty() }
+        ?: item.description?.trim()?.takeIf { it.isNotEmpty() }
+
+    val resolvedType = when {
+        rawType != null -> when {
+            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> stringResource(R.string.ep)
+            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> stringResource(R.string.release_type_single)
+            Regex("""\bAlbum\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> stringResource(R.string.album_text)
+            rawType.contains("•") -> rawType.split("•").firstOrNull()?.trim()?.takeIf { it.isNotEmpty() }
+            item.year != null && rawType == item.year.toString() -> fallbackType
+            else -> rawType
+        }
+        Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> stringResource(R.string.ep)
+        Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> stringResource(R.string.release_type_single)
+        fallbackType != null -> when {
+            fallbackType.equals("Single", ignoreCase = true) -> stringResource(R.string.release_type_single)
+            fallbackType.equals("EP", ignoreCase = true) -> stringResource(R.string.ep)
+            fallbackType.equals("Album", ignoreCase = true) -> stringResource(R.string.album_text)
+            else -> fallbackType
+        }
+        else -> null
+    }
+
+    val resolvedYear = item.year
+        ?: if (rawType != null && rawType.contains("•")) {
+            Regex("""\b(19\d\d|20\d\d)\b""").find(rawType)?.value?.toIntOrNull()
+        } else null
+
+    return when {
+        resolvedType != null && resolvedYear != null -> "$resolvedType • $resolvedYear"
+        resolvedType != null -> resolvedType
+        resolvedYear != null -> resolvedYear.toString()
+        else -> null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YouTubeListItem(
@@ -1394,7 +1439,7 @@ fun YouTubeListItem(
                     }
                     subtitleText.takeIf { it.isNotEmpty() }
                 }
-                is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
+                is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, formatReleaseSubtitle(item))
                 is ArtistItem -> null
                 is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
             },
@@ -1492,7 +1537,7 @@ fun YouTubeGridItem(
                 }
                 subtitleText?.takeIf { it.isNotEmpty() }
             }
-            is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, item.year?.toString())
+            is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, formatReleaseSubtitle(item))
             is ArtistItem -> null
             is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
         }
@@ -2487,10 +2532,7 @@ fun GridCardPod(
     modifier: Modifier = Modifier,
 ) {
     val subtitle = when (item) {
-        is AlbumItem -> listOfNotNull(
-            item.year?.toString(),
-            item.artists?.joinToString { it.name }?.takeIf { it.isNotBlank() },
-        ).joinToString(" • ")
+        is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, formatReleaseSubtitle(item))
         is PlaylistItem -> listOfNotNull(
             item.author?.name?.takeIf { it.isNotBlank() },
             item.songCountText?.takeIf { it.isNotBlank() },

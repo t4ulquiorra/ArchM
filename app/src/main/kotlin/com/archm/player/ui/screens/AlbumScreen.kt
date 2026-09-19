@@ -708,7 +708,14 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    onClick = { navController.navigate(buildAlbumRoute(item.id, item.explicitType)) },
+                                    onClick = {
+                                        val relType = item.explicitType ?: when {
+                                            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "EP"
+                                            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "Single"
+                                            else -> null
+                                        }
+                                        navController.navigate(buildAlbumRoute(item.id, relType))
+                                    },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         menuState.show {
@@ -755,7 +762,14 @@ fun AlbumScreen(
                                     coroutineScope = scope,
                                     thumbnailSize = 150.dp,
                                     contentPadding = PaddingValues(0.dp),
-                                    onClick = { navController.navigate(buildAlbumRoute(item.id, item.explicitType)) },
+                                    onClick = {
+                                        val relType = item.explicitType ?: when {
+                                            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "EP"
+                                            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "Single"
+                                            else -> null
+                                        }
+                                        navController.navigate(buildAlbumRoute(item.id, relType))
+                                    },
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         menuState.show {
@@ -801,7 +815,14 @@ fun AlbumScreen(
                                         coroutineScope = scope,
                                         thumbnailSize = 150.dp,
                                         contentPadding = PaddingValues(0.dp),
-                                        onClick = { navController.navigate(buildAlbumRoute(item.id, item.explicitType)) },
+                                        onClick = {
+                                            val relType = item.explicitType ?: when {
+                                                Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "EP"
+                                                Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "Single"
+                                                else -> null
+                                            }
+                                            navController.navigate(buildAlbumRoute(item.id, relType))
+                                        },
                                         onLongClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             menuState.show {

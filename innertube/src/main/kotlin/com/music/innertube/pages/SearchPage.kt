@@ -117,45 +117,49 @@ object SearchPage {
                 )
             }
             renderer.isAlbum -> {
-                AlbumItem(
-                    browseId = renderer.navigationEndpoint?.browseEndpoint?.browseId ?: return null,
-                    playlistId =
-                        renderer.overlay
-                            ?.musicItemThumbnailOverlayRenderer
-                            ?.content
-                            ?.musicPlayButtonRenderer
-                            ?.playNavigationEndpoint
-                            ?.anyWatchEndpoint
-                            ?.playlistId
-                            ?: return null,
-                    title =
-                        renderer.flexColumns
-                            .firstOrNull()
-                            ?.musicResponsiveListItemFlexColumnRenderer
-                            ?.text
-                            ?.runs
-                            ?.firstOrNull()
-                            ?.text ?: return null,
-                    artists =
-                        secondaryLine.getOrNull(1)?.oddElements()?.map {
-                            Artist(
-                                name = it.text,
-                                id = it.navigationEndpoint?.browseEndpoint?.browseId,
-                            )
-                        } ?: return null,
-                    year =
+                val releaseType = secondaryLine.getOrNull(0)?.firstOrNull()?.text
+                    val year =
                         secondaryLine
                             .getOrNull(2)
                             ?.firstOrNull()
                             ?.text
-                            ?.toIntOrNull(),
-                    thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
-                    explicit =
-                        renderer.badges?.find {
-                            it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
-                        } != null,
-                )
-            }
+                            ?.toIntOrNull()
+                    val explicitType = if (releaseType != null && releaseType != year?.toString() && releaseType != "•") releaseType else null
+                    AlbumItem(
+                        browseId = renderer.navigationEndpoint?.browseEndpoint?.browseId ?: return null,
+                        playlistId =
+                            renderer.overlay
+                                ?.musicItemThumbnailOverlayRenderer
+                                ?.content
+                                ?.musicPlayButtonRenderer
+                                ?.playNavigationEndpoint
+                                ?.anyWatchEndpoint
+                                ?.playlistId
+                                ?: return null,
+                        title =
+                            renderer.flexColumns
+                                .firstOrNull()
+                                ?.musicResponsiveListItemFlexColumnRenderer
+                                ?.text
+                                ?.runs
+                                ?.firstOrNull()
+                                ?.text ?: return null,
+                        artists =
+                            secondaryLine.getOrNull(1)?.oddElements()?.map {
+                                Artist(
+                                    name = it.text,
+                                    id = it.navigationEndpoint?.browseEndpoint?.browseId,
+                                )
+                            } ?: return null,
+                        year = year,
+                        thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+                        explicit =
+                            renderer.badges?.find {
+                                it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
+                            } != null,
+                        explicitType = explicitType,
+                    )
+                }
             renderer.isPlaylist -> {
                 PlaylistItem(
                     id =

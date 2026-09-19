@@ -77,7 +77,11 @@ data class RelatedPage(
 
         fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): YTItem? {
             return when {
-                renderer.isAlbum ->
+                renderer.isAlbum -> {
+                    val subtitleRuns = renderer.subtitle?.runs
+                    val releaseType = subtitleRuns?.firstOrNull()?.text
+                    val year = subtitleRuns?.lastOrNull()?.text?.toIntOrNull()
+                    val explicitType = if (releaseType != null && releaseType != year?.toString() && releaseType != "•") releaseType else null
                     AlbumItem(
                         browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
                         playlistId =
@@ -98,18 +102,15 @@ data class RelatedPage(
                                 id = it.navigationEndpoint?.browseEndpoint?.browseId
                             )
                         },
-                        year =
-                            renderer.subtitle
-                                ?.runs
-                                ?.lastOrNull()
-                                ?.text
-                                ?.toIntOrNull(),
+                        year = year,
                         thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
                             renderer.subtitleBadges?.find {
                                 it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
                             } != null,
+                        explicitType = explicitType,
                     )
+                }
                 renderer.isPlaylist ->
                     PlaylistItem(
                         id =

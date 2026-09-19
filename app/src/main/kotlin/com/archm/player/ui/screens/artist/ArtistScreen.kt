@@ -163,6 +163,7 @@ import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.bouncyClickable
+import com.archm.player.ui.component.formatReleaseSubtitle
 import com.archm.player.ui.component.rememberBouncyScale
 import com.archm.player.ui.component.shimmer.ButtonPlaceholder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
@@ -1465,7 +1466,7 @@ fun ArtistScreen(
                                     ) { single ->
                                         HomeItemContentPlaylist(
                                             title = single.title,
-                                            subtitle = formatReleaseSubtitle(single),
+                                            subtitle = formatReleaseSubtitle(single, fallbackType = "Single"),
                                             thumbnailUrl = single.thumbnail,
                                             thumbSize = 150.dp,
                                             onClick = {
@@ -1552,7 +1553,7 @@ fun ArtistScreen(
                                     ) { album ->
                                         HomeItemContentPlaylist(
                                             title = album.title,
-                                            subtitle = album.year?.toString(),
+                                            subtitle = formatReleaseSubtitle(album, fallbackType = "Album"),
                                             thumbnailUrl = album.thumbnail,
                                             thumbSize = 150.dp,
                                             onClick = { navController.navigate(buildAlbumRoute(album.id, album.explicitType ?: "Album")) },
@@ -1727,7 +1728,7 @@ fun ArtistScreen(
                                             },
                                             subtitle = when (feature) {
                                                 is SongItem -> feature.artists.joinToString(", ") { it.name }
-                                                is AlbumItem -> feature.year?.toString()
+                                                is AlbumItem -> formatReleaseSubtitle(feature, fallbackType = "Album")
                                                 is PlaylistItem -> feature.author?.name
                                                 else -> null
                                             },
@@ -1869,7 +1870,7 @@ fun ArtistScreen(
                                             },
                                             subtitle = when (playlistItem) {
                                                 is PlaylistItem -> playlistItem.author?.name
-                                                is AlbumItem -> playlistItem.year?.toString()
+                                                is AlbumItem -> formatReleaseSubtitle(playlistItem, fallbackType = "Album")
                                                 is SongItem -> playlistItem.artists.joinToString(", ") { it.name }
                                                 else -> null
                                             },
@@ -2990,35 +2991,6 @@ fun OutlinedFollowPillButton(
     }
 }
 
-private fun formatReleaseSubtitle(item: AlbumItem): String {
-    val rawType = item.explicitType ?: item.description
-    if (!rawType.isNullOrBlank()) {
-        if (rawType.contains("•") || (item.year != null && rawType.contains(item.year.toString()))) {
-            return rawType.trim()
-        }
-        val type = when {
-            Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> "EP"
-            Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(rawType) -> "Single"
-            else -> rawType.trim()
-        }
-        return if (item.year != null && !type.contains(item.year.toString())) {
-            "$type • ${item.year}"
-        } else {
-            type
-        }
-    }
-    val typeFromTitle = when {
-        Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "EP"
-        Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(item.title) -> "Single"
-        else -> "Single"
-    }
-    return if (item.year != null) {
-        "$typeFromTitle • ${item.year}"
-    } else {
-        typeFromTitle
-    }
-}
-
 @Composable
 private fun ArtistSectionHeader(
     title: String,
@@ -3244,20 +3216,7 @@ private fun ArtistLatestReleaseCard(
     modifier: Modifier = Modifier,
     isLandscape: Boolean = false,
 ) {
-    val rawType = release.explicitType ?: release.description
-    val releaseType = when {
-        rawType?.equals("Single", ignoreCase = true) == true -> stringResource(R.string.release_type_single)
-        rawType?.equals("EP", ignoreCase = true) == true -> stringResource(R.string.ep)
-        rawType?.equals("Album", ignoreCase = true) == true -> stringResource(R.string.album_text)
-        !rawType.isNullOrBlank() -> rawType
-        Regex("""\bEP\b""", RegexOption.IGNORE_CASE).containsMatchIn(release.title) -> stringResource(R.string.ep)
-        Regex("""\bSingle\b""", RegexOption.IGNORE_CASE).containsMatchIn(release.title) -> stringResource(R.string.release_type_single)
-        else -> stringResource(R.string.album_text)
-    }
-    val subtitle = listOfNotNull(
-        releaseType,
-        release.year?.toString(),
-    ).joinToString(" • ")
+    val subtitle = formatReleaseSubtitle(release, fallbackType = "Album").orEmpty()
 
     val cardShape = RoundedCornerShape(16.dp)
 

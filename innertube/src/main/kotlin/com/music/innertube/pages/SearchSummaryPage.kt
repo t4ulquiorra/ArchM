@@ -167,6 +167,9 @@ data class SearchSummaryPage(
                                 )
                             } ?: emptyList()
                     }
+                    val releaseType = subtitle.getOrNull(0)?.firstOrNull()?.text
+                    val year = subtitle.lastOrNull()?.firstOrNull()?.text?.toIntOrNull()
+                    val explicitType = if (releaseType != null && releaseType != year?.toString() && releaseType != "•") releaseType else null
                     AlbumItem(
                         browseId = renderer.onTap.browseEndpoint.browseId,
                         playlistId =
@@ -181,12 +184,13 @@ data class SearchSummaryPage(
                                 ?.firstOrNull()
                                 ?.text ?: return null,
                         artists = artists,
-                        year = null,
+                        year = year,
                         thumbnail = renderer.thumbnail.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
                             renderer.subtitleBadges?.find {
                                 it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
                             } != null,
+                        explicitType = explicitType,
                     )
                 }
 
@@ -342,6 +346,14 @@ data class SearchSummaryPage(
                 }
 
                 renderer.isAlbum -> {
+                    val releaseType = secondaryLine.getOrNull(0)?.firstOrNull()?.text
+                    val year =
+                        secondaryLine
+                            .getOrNull(2)
+                            ?.firstOrNull()
+                            ?.text
+                            ?.toIntOrNull()
+                    val explicitType = if (releaseType != null && releaseType != year?.toString() && releaseType != "•") releaseType else null
                     AlbumItem(
                         browseId = renderer.navigationEndpoint?.browseEndpoint?.browseId ?: return null,
                         playlistId =
@@ -368,17 +380,13 @@ data class SearchSummaryPage(
                                     id = it.navigationEndpoint?.browseEndpoint?.browseId,
                                 )
                             } ?: return null,
-                        year =
-                            secondaryLine
-                                .getOrNull(2)
-                                ?.firstOrNull()
-                                ?.text
-                                ?.toIntOrNull(),
+                        year = year,
                         thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         explicit =
                             renderer.badges?.find {
                                 it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
                             } != null,
+                        explicitType = explicitType,
                     )
                 }
 
