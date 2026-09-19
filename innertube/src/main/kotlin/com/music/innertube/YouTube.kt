@@ -342,7 +342,7 @@ object YouTube {
                 browseId = browseId,
                 playlistId = playlistId,
                 title = headerRenderer?.title?.runs?.firstOrNull()?.text!!,
-                artists = headerRenderer.straplineTextOne?.runs?.oddElements()
+                artists = headerRenderer?.straplineTextOne?.runs?.oddElements()
                     ?.map {
                         Artist(
                             name = it.text,
@@ -350,7 +350,7 @@ object YouTube {
                         )
                     }!!,
                 year = year,
-                thumbnail = headerRenderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.lastOrNull()?.url!!,
+                thumbnail = headerRenderer?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.lastOrNull()?.url!!,
                 explicit = false, // TODO: Extract explicit badge for albums from YouTube response
                 description = description,
                 explicitType = explicitType,
@@ -360,13 +360,13 @@ object YouTube {
                 songs = if (withSongs) albumSongs(
                     playlistId, albumItem
                 ).getOrThrow() else emptyList(),
-                otherVersions = response.contents.twoColumnBrowseResultsRenderer.secondaryContents?.sectionListRenderer?.contents
+                otherVersions = response.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer?.contents
                     ?.find { it.musicCarouselShelfRenderer?.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.any { it.text.contains("versions", ignoreCase = true) } == true }
                     ?.musicCarouselShelfRenderer?.contents
                     ?.mapNotNull { it.musicTwoRowItemRenderer }
                     ?.mapNotNull(NewReleaseAlbumPage::fromMusicTwoRowItemRenderer)
                     .orEmpty(),
-                releasesForYou = response.contents.twoColumnBrowseResultsRenderer.secondaryContents?.sectionListRenderer?.contents
+                releasesForYou = response.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer?.contents
                     ?.find { it.musicCarouselShelfRenderer?.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.any { it.text.contains("releases", ignoreCase = true) || it.text.contains("more from", ignoreCase = true) } == true }
                     ?.musicCarouselShelfRenderer?.contents
                     ?.mapNotNull { it.musicTwoRowItemRenderer }
@@ -388,8 +388,8 @@ object YouTube {
                 AlbumPage.getSong(it, album)
             }!!
             .toMutableList()
-        var continuation = response.contents.twoColumnBrowseResultsRenderer.secondaryContents.sectionListRenderer
-            .contents.firstOrNull()?.musicPlaylistShelfRenderer?.contents?.getContinuation()
+        var continuation = response.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer
+            ?.contents?.firstOrNull()?.musicPlaylistShelfRenderer?.contents?.getContinuation()
         val seenContinuations = mutableSetOf<String>()
         var requestCount = 0
         val maxRequests = 50 // Prevent excessive API calls
