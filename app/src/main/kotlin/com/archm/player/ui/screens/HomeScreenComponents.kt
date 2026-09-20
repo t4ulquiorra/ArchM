@@ -60,6 +60,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -67,6 +68,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -159,13 +161,16 @@ fun HomeTopAppBar(
                 TopAppBarDefaults.windowInsets.only(WindowInsetsSides.Start),
             ),
         title = {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.Center,
+            ) {
                 Text(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 2.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text =
@@ -177,30 +182,49 @@ fun HomeTopAppBar(
                         },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         },
         actions = {
-            IconButton(onClick = { navController.navigate("history") }) {
-                Icon(
-                    painter = painterResource(R.drawable.history),
-                    contentDescription = stringResource(R.string.history),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
-            }
-            IconButton(onClick = { navController.navigate("news") }) {
-                Icon(
-                    painter = painterResource(R.drawable.newspaper),
-                    contentDescription = stringResource(R.string.news),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
-            }
-            IconButton(onClick = { navController.navigate("settings") }) {
-                Icon(
-                    painter = painterResource(R.drawable.settings),
-                    contentDescription = stringResource(R.string.settings),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                IconButton(
+                    onClick = { navController.navigate("history") },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.history),
+                        contentDescription = stringResource(R.string.history),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Spacer(Modifier.width(6.dp))
+                IconButton(
+                    onClick = { navController.navigate("news") },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.newspaper),
+                        contentDescription = stringResource(R.string.news),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Spacer(Modifier.width(6.dp))
+                IconButton(
+                    onClick = { navController.navigate("settings") },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.settings),
+                        contentDescription = stringResource(R.string.settings),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
             }
         },
         colors =
@@ -216,48 +240,66 @@ fun SimpChip(
     isSelected: Boolean = false,
     text: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    ElevatedFilterChip(
-        shape = CircleShape,
-        elevation = FilterChipDefaults.elevatedFilterChipElevation(elevation = 0.dp),
-        colors =
-            FilterChipDefaults.elevatedFilterChipColors(
-                containerColor = Color.Transparent,
-                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            ),
-        onClick = onClick,
-        label = {
-            Text(text, maxLines = 1)
-        },
-        border =
-            FilterChipDefaults.filterChipBorder(
-                enabled = true,
-                selected = isSelected,
-                selectedBorderColor = Color.Transparent,
-                borderColor = MaterialTheme.colorScheme.outline,
-            ),
-        selected = isSelected,
-    )
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        ElevatedFilterChip(
+            shape = CircleShape,
+            elevation = FilterChipDefaults.elevatedFilterChipElevation(elevation = 0.dp),
+            colors =
+                FilterChipDefaults.elevatedFilterChipColors(
+                    containerColor = Color.Transparent,
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            onClick = onClick,
+            label = {
+                Text(text, maxLines = 1, style = MaterialTheme.typography.labelMedium)
+            },
+            border =
+                FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = isSelected,
+                    selectedBorderColor = Color.Transparent,
+                    borderColor = MaterialTheme.colorScheme.outline,
+                ),
+            selected = isSelected,
+            modifier = modifier.height(32.dp),
+        )
+    }
 }
 
 @Composable
 fun HomeCategoryChips(
     chips: List<HomePage.Chip>,
     selectedChip: HomePage.Chip?,
-    onChipSelected: (HomePage.Chip) -> Unit,
+    onChipSelected: (HomePage.Chip?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val filteredChips = remember(chips) {
+        chips.filterNot { it.title.equals("all", ignoreCase = true) }
+    }
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
         modifier =
             modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 15.dp, vertical = 8.dp),
+                .padding(horizontal = 15.dp)
+                .padding(top = 4.dp, bottom = 6.dp),
     ) {
-        chips.forEach { chip ->
+        SimpChip(
+            isSelected = selectedChip == null,
+            text = stringResource(R.string.filter_all),
+            onClick = {
+                if (selectedChip != null) {
+                    onChipSelected(null)
+                }
+            },
+        )
+        filteredChips.forEach { chip ->
             SimpChip(
                 isSelected = chip == selectedChip,
                 text = chip.title,
@@ -278,6 +320,8 @@ fun AccountLayout(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    if (accountName.isBlank() || accountName.equals("Guest", ignoreCase = true)) return
+
     Column(
         modifier =
             modifier

@@ -25,10 +25,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -347,11 +349,18 @@ private fun HomeContent(
         ) {
             LazyColumn(
                 state = lazyListState,
-                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+                contentPadding =
+                    LocalPlayerAwareWindowInsets.current
+                        .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                        .asPaddingValues(),
                 modifier = Modifier.fillMaxSize(),
             ) {
                 // Item 0: Ambient Hero Backdrop + Account Layout + Quick Picks
                 item(key = "home_hero_backdrop") {
+                    val isLoggedIn =
+                        uiState.accountName.isNotBlank() &&
+                            !uiState.accountName.equals("Guest", ignoreCase = true)
+
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Box(
                             modifier =
@@ -370,8 +379,8 @@ private fun HomeContent(
                         }
                         Column(modifier = Modifier.padding(horizontal = 15.dp)) {
                             Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }))
-                            Spacer(Modifier.height(8.dp))
-                            if (uiState.accountName.isNotBlank()) {
+                            if (isLoggedIn) {
+                                Spacer(Modifier.height(8.dp))
                                 AccountLayout(
                                     accountName = uiState.accountName,
                                     url = uiState.accountImageUrl,
