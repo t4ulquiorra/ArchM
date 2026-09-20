@@ -929,7 +929,7 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(navBackStackEntry, active) {
                     val currentRoute = navBackStackEntry?.destination?.route
-                    shouldShowTopBar = !active && currentRoute in topLevelScreens && currentRoute != "settings"
+                    shouldShowTopBar = !active && currentRoute in topLevelScreens && currentRoute != "settings" && currentRoute != Screens.Home.route
                 }
 
                 val coroutineScope = rememberCoroutineScope()

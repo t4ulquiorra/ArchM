@@ -931,4 +931,10 @@
     <string name="together_online">Online</string>
     <string name="block_artist">Block artist</string>
     <string name="unblock_artist">Unblock artist</string>
+    <string name="good_morning">Good morning</string>
+    <string name="good_afternoon">Good afternoon</string>
+    <string name="good_evening">Good evening</string>
+    <string name="good_night">Good night</string>
+    <string name="welcome_back">Welcome back</string>
+    <string name="let_s_start_with_a_radio">LET\'S START WITH A RADIO</string>
 </resources>

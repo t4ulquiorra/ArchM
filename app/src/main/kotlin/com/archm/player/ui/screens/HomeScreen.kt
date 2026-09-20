@@ -10,21 +10,32 @@ package com.archm.player.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -35,30 +46,43 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlinx.coroutines.CoroutineScope
+import androidx.palette.graphics.Palette
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.toBitmap
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
 import com.archm.player.constants.QuickPicks
+import com.archm.player.db.entities.Album
+import com.archm.player.db.entities.Artist
+import com.archm.player.db.entities.Playlist
+import com.archm.player.db.entities.Song
 import com.archm.player.home.HomeAction
 import com.archm.player.home.HomeScreenState
 import com.archm.player.home.HomeUiState
@@ -67,11 +91,10 @@ import com.archm.player.playback.PlayerConnection
 import com.archm.player.ui.component.ExpressivePullToRefreshBox
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.MenuState
-import com.archm.player.ui.utils.SnapLayoutInfoProvider
 import com.archm.player.viewmodels.HomeViewModel
-
-private val HomeFeedMaxWidth = 1_200.dp
-private val HomeSectionSpacing = 18.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -90,7 +113,6 @@ fun HomeScreen(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
     val lazyListState = rememberLazyListState()
-    val forgottenFavoritesGridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val scrollToTop =
@@ -123,12 +145,6 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(uiState?.forgottenFavorites) {
-        if (uiState != null) {
-            forgottenFavoritesGridState.scrollToItem(0)
-        }
-    }
-
     if (selectedChip != null) {
         BackHandler {
             viewModel.onAction(HomeAction.SelectChip(selectedChip))
@@ -141,9 +157,6 @@ fun HomeScreen(
         }
     }
 
-    // Attach the shell's floating-header connection inside this screen (Step 2b) so
-    // Home's scroll/fling writes Home's own header state and can't leak into another
-    // route's header. Bubbling reaches this ancestor Box before any shell connection.
     Box(
         modifier =
             Modifier
@@ -194,7 +207,6 @@ fun HomeScreen(
                     haptic = haptic,
                     scope = scope,
                     lazyListState = lazyListState,
-                    forgottenFavoritesGridState = forgottenFavoritesGridState,
                     onAction = viewModel::onAction,
                 )
             }
@@ -253,10 +265,6 @@ private fun HomeStatePane(
     }
 }
 
-@OptIn(
-    ExperimentalFoundationApi::class,
-    ExperimentalMaterial3ExpressiveApi::class,
-)
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
@@ -268,7 +276,6 @@ private fun HomeContent(
     haptic: HapticFeedback,
     scope: CoroutineScope,
     lazyListState: androidx.compose.foundation.lazy.LazyListState,
-    forgottenFavoritesGridState: LazyGridState,
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -276,138 +283,130 @@ private fun HomeContent(
         uiState
             .takeIf { it.quickPicksMode == QuickPicks.QUICK_PICKS }
             ?.remoteQuickPicks
-    val tonalStart = MaterialTheme.colorScheme.primaryContainer
-    val tonalMiddle = MaterialTheme.colorScheme.secondaryContainer
-    Box(modifier = modifier.fillMaxSize()) {
-        if (uiState.showTonalBackdrop) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(430.dp)
-                        .align(Alignment.TopCenter)
-                        .drawWithCache {
-                            val brush =
-                                Brush.verticalGradient(
-                                    0f to tonalStart.copy(alpha = 0.30f),
-                                    0.42f to tonalMiddle.copy(alpha = 0.14f),
-                                    1f to Color.Transparent,
-                                )
-                            onDrawBehind { drawRect(brush) }
-                        },
-            )
+
+    val isScrollingUp by lazyListState.isScrollingUp()
+    var topAppBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
+
+    val firstThumbnailUrl =
+        remember(uiState) {
+            remoteQuickPicks?.items?.firstOrNull()?.thumbnail
+                ?: uiState.quickPicks.firstOrNull()?.song?.thumbnailUrl
+                ?: uiState.keepListening.firstOrNull()?.let {
+                    when (it) {
+                        is Song -> it.song.thumbnailUrl
+                        is Album -> it.album.thumbnailUrl
+                        is Artist -> it.artist.thumbnailUrl
+                        is Playlist -> it.thumbnails.firstOrNull()
+                    }
+                }
+                ?: uiState.homePage?.sections?.firstOrNull()?.items?.firstOrNull()?.thumbnail
         }
 
+    val context = LocalContext.current
+    val defaultBg = MaterialTheme.colorScheme.background
+    var topHeaderColor by remember { mutableStateOf(defaultBg) }
+    val animatedColor by animateColorAsState(topHeaderColor, tween(500), label = "topHeaderColor")
+
+    LaunchedEffect(firstThumbnailUrl) {
+        if (firstThumbnailUrl != null) {
+            withContext(Dispatchers.IO) {
+                try {
+                    val request =
+                        ImageRequest.Builder(context)
+                            .data(firstThumbnailUrl)
+                            .size(100, 100)
+                            .allowHardware(false)
+                            .build()
+                    val result = context.imageLoader.execute(request)
+                    val bitmap = result.image?.toBitmap()
+                    if (bitmap != null) {
+                        val palette = Palette.from(bitmap).generate()
+                        val dom = palette.getDominantColor(android.graphics.Color.TRANSPARENT)
+                        if (dom != android.graphics.Color.TRANSPARENT) {
+                            val c = Color(dom)
+                            topHeaderColor =
+                                Color(
+                                    red = (c.red * 0.35f).coerceIn(0f, 1f),
+                                    green = (c.green * 0.35f).coerceIn(0f, 1f),
+                                    blue = (c.blue * 0.35f).coerceIn(0f, 1f),
+                                    alpha = 1f,
+                                )
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
+            indicatorOffset = with(LocalDensity.current) { topAppBarHeightPx.toDp() },
             modifier = Modifier.fillMaxSize(),
         ) {
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val forgottenItemWidthFactor = if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
-                val forgottenItemWidth = maxWidth.coerceAtMost(HomeFeedMaxWidth) * forgottenItemWidthFactor
-                val forgottenSnapLayoutInfoProvider =
-                    remember(forgottenFavoritesGridState, forgottenItemWidthFactor) {
-                        SnapLayoutInfoProvider(
-                            lazyGridState = forgottenFavoritesGridState,
-                            positionInLayout = { layoutSize, itemSize ->
-                                layoutSize * forgottenItemWidthFactor / 2f - itemSize / 2f
-                            },
-                        )
-                    }
-
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-                    modifier =
-                        Modifier
-                            .widthIn(max = HomeFeedMaxWidth)
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter),
-                ) {
-                    if (uiState.showCategoryChips) {
-                        item(
-                            key = "home_category_chips",
-                            contentType = "category_chips",
+            LazyColumn(
+                state = lazyListState,
+                contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                // Item 0: Ambient Hero Backdrop + Account Layout + Quick Picks
+                item(key = "home_hero_backdrop") {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .matchParentSize()
+                                    .angledGradientBackground(listOf(animatedColor, defaultBg), 25f),
                         ) {
-                            HomeCategoryChips(
-                                chips = uiState.homePage?.chips.orEmpty(),
-                                selectedChip = uiState.selectedChip,
-                                onChipSelected = { onAction(HomeAction.SelectChip(it)) },
-                                modifier = Modifier.animateItem(),
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp)
+                                        .align(Alignment.BottomCenter)
+                                        .background(artworkScrimBrush(defaultBg)),
                             )
+                        }
+                        Column(modifier = Modifier.padding(horizontal = 15.dp)) {
+                            Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }))
+                            Spacer(Modifier.height(8.dp))
+                            if (uiState.accountName.isNotBlank()) {
+                                AccountLayout(
+                                    accountName = uiState.accountName,
+                                    url = uiState.accountImageUrl,
+                                    onClick = { navController.navigate("account") },
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            if (remoteQuickPicks?.items?.isNotEmpty() == true || uiState.quickPicks.isNotEmpty()) {
+                                SimpQuickPicks(
+                                    quickPicks = uiState.quickPicks,
+                                    remoteQuickPicks = remoteQuickPicks,
+                                    mediaMetadata = mediaMetadata,
+                                    isPlaying = isPlaying,
+                                    navController = navController,
+                                    playerConnection = playerConnection,
+                                    menuState = menuState,
+                                    haptic = haptic,
+                                )
+                            }
                         }
                     }
+                }
 
-                    if (remoteQuickPicks?.items?.isNotEmpty() == true) {
-                        item(
-                            key = "home_remote_quick_picks_header",
-                            contentType = "section_header",
-                        ) {
-                            HomeSectionHeader(
-                                title = remoteQuickPicks.title,
-                                modifier = Modifier.animateItem(),
+                // Speed Dial Section
+                if (uiState.speedDialItems.isNotEmpty()) {
+                    item(key = "home_speed_dial") {
+                        Column(modifier = Modifier.padding(horizontal = 15.dp, vertical = 6.dp)) {
+                            Text(
+                                text = stringResource(R.string.speed_dial),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(vertical = 4.dp),
                             )
-                        }
-                        item(
-                            key = "home_remote_quick_picks",
-                            contentType = "media_shelf",
-                        ) {
-                            HomePageSectionContent(
-                                section = remoteQuickPicks,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                scope = scope,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                    } else if (uiState.quickPicks.isNotEmpty()) {
-                        item(
-                            key = "home_quick_picks_header",
-                            contentType = "section_header",
-                        ) {
-                            HomeSectionHeader(
-                                title = stringResource(R.string.quick_picks),
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                        item(
-                            key = "home_quick_picks",
-                            contentType = "quick_picks",
-                        ) {
-                            QuickPicksSection(
-                                quickPicks = uiState.quickPicks,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                displayMode = uiState.quickPicksDisplayMode,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                    }
-
-                    if (uiState.speedDialItems.isNotEmpty()) {
-                        sectionSpacer("speed_dial")
-                        item(
-                            key = "home_speed_dial_header",
-                            contentType = "section_header",
-                        ) {
-                            HomeSectionHeader(
-                                title = stringResource(R.string.speed_dial),
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                        item(
-                            key = "home_speed_dial",
-                            contentType = "speed_dial",
-                        ) {
                             SpeedDialSection(
                                 speedDialItems = uiState.speedDialItems,
                                 mediaMetadata = mediaMetadata,
@@ -417,27 +416,16 @@ private fun HomeContent(
                                 menuState = menuState,
                                 haptic = haptic,
                                 scope = scope,
-                                modifier = Modifier.animateItem(),
                             )
                         }
                     }
+                }
 
-                    if (uiState.keepListening.isNotEmpty()) {
-                        sectionSpacer("keep_listening")
-                        item(
-                            key = "home_keep_listening_header",
-                            contentType = "section_header",
-                        ) {
-                            HomeSectionHeader(
-                                title = stringResource(R.string.keep_listening),
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                        item(
-                            key = "home_keep_listening",
-                            contentType = "media_shelf",
-                        ) {
-                            KeepListeningSection(
+                // Keep Listening Section
+                if (uiState.keepListening.isNotEmpty()) {
+                    item(key = "home_keep_listening") {
+                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                            KeepListeningShelf(
                                 keepListening = uiState.keepListening,
                                 mediaMetadata = mediaMetadata,
                                 isPlaying = isPlaying,
@@ -446,157 +434,152 @@ private fun HomeContent(
                                 menuState = menuState,
                                 haptic = haptic,
                                 scope = scope,
-                                modifier = Modifier.animateItem(),
                             )
-                        }
-                    }
-
-                    if (uiState.accountPlaylists.isNotEmpty()) {
-                        sectionSpacer("account_playlists")
-                        item(
-                            key = "home_account_playlists",
-                            contentType = "media_shelf",
-                        ) {
-                            Column(modifier = Modifier.animateItem()) {
-                                AccountPlaylistsTitle(
-                                    accountName = uiState.accountName,
-                                    accountImageUrl = uiState.accountImageUrl,
-                                    onClick = { navController.navigate("account") },
-                                )
-                                AccountPlaylistsSection(
-                                    accountPlaylists = uiState.accountPlaylists,
-                                    mediaMetadata = mediaMetadata,
-                                    isPlaying = isPlaying,
-                                    navController = navController,
-                                    playerConnection = playerConnection,
-                                    menuState = menuState,
-                                    haptic = haptic,
-                                    scope = scope,
-                                )
-                            }
-                        }
-                    }
-
-                    if (uiState.forgottenFavorites.isNotEmpty()) {
-                        sectionSpacer("forgotten_favorites")
-                        item(
-                            key = "home_forgotten_favorites_header",
-                            contentType = "section_header",
-                        ) {
-                            HomeSectionHeader(
-                                title = stringResource(R.string.forgotten_favorites),
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                        item(
-                            key = "home_forgotten_favorites",
-                            contentType = "song_shelf",
-                        ) {
-                            ForgottenFavoritesSection(
-                                forgottenFavorites = uiState.forgottenFavorites,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                horizontalLazyGridItemWidth = forgottenItemWidth,
-                                lazyGridState = forgottenFavoritesGridState,
-                                snapLayoutInfoProvider = forgottenSnapLayoutInfoProvider,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                    }
-
-                    uiState.similarRecommendations.forEach { recommendation ->
-                        sectionSpacer("similar_${recommendation.title.id}")
-                        item(
-                            key = "home_similar_header_${recommendation.title.id}",
-                            contentType = "section_header",
-                        ) {
-                            SimilarRecommendationsTitle(
-                                recommendation = recommendation,
-                                navController = navController,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                        item(
-                            key = "home_similar_${recommendation.title.id}",
-                            contentType = "media_shelf",
-                        ) {
-                            SimilarRecommendationsSection(
-                                recommendation = recommendation,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                scope = scope,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                    }
-
-                    uiState.homePage?.sections.orEmpty().forEachIndexed { index, section ->
-                        val sectionKey = "${section.endpoint?.browseId ?: section.title}_$index"
-                        sectionSpacer("remote_$sectionKey")
-                        item(
-                            key = "home_remote_header_$sectionKey",
-                            contentType = "section_header",
-                        ) {
-                            HomePageSectionTitle(
-                                section = section,
-                                navController = navController,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                        item(
-                            key = "home_remote_$sectionKey",
-                            contentType = "media_shelf",
-                        ) {
-                            HomePageSectionContent(
-                                section = section,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                scope = scope,
-                                modifier = Modifier.animateItem(),
-                            )
-                        }
-                    }
-
-                    if (uiState.isLoadingMore) {
-                        item(
-                            key = "home_loading_more",
-                            contentType = "loading",
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp)
-                                        .animateItem(),
-                            ) {
-                                LoadingIndicator()
-                            }
                         }
                     }
                 }
+
+                // Your YouTube Playlists Section
+                if (uiState.accountPlaylists.isNotEmpty()) {
+                    item(key = "home_account_playlists") {
+                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                            AccountPlaylistsShelf(
+                                accountPlaylists = uiState.accountPlaylists,
+                                accountName = uiState.accountName,
+                                accountImageUrl = uiState.accountImageUrl,
+                                navController = navController,
+                            )
+                        }
+                    }
+                }
+
+                // Forgotten Favorites Section
+                if (uiState.forgottenFavorites.isNotEmpty()) {
+                    item(key = "home_forgotten_favorites") {
+                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                            ForgottenFavoritesShelf(
+                                forgottenFavorites = uiState.forgottenFavorites,
+                                mediaMetadata = mediaMetadata,
+                                isPlaying = isPlaying,
+                                navController = navController,
+                                playerConnection = playerConnection,
+                                menuState = menuState,
+                                haptic = haptic,
+                            )
+                        }
+                    }
+                }
+
+                // Similar Recommendations
+                items(
+                    items = uiState.similarRecommendations,
+                    key = { "similar_${it.title.id}" },
+                ) { recommendation ->
+                    Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                        SimilarRecommendationsShelf(
+                            recommendation = recommendation,
+                            mediaMetadata = mediaMetadata,
+                            isPlaying = isPlaying,
+                            navController = navController,
+                            playerConnection = playerConnection,
+                            menuState = menuState,
+                            haptic = haptic,
+                            scope = scope,
+                        )
+                    }
+                }
+
+                // Remote YouTube Music Sections
+                itemsIndexed(
+                    items = uiState.homePage?.sections.orEmpty(),
+                    key = { index, section -> "remote_${section.endpoint?.browseId ?: section.title}_$index" },
+                ) { _, section ->
+                    Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                        HomePageSectionShelf(
+                            section = section,
+                            mediaMetadata = mediaMetadata,
+                            isPlaying = isPlaying,
+                            navController = navController,
+                            playerConnection = playerConnection,
+                            menuState = menuState,
+                            haptic = haptic,
+                            scope = scope,
+                        )
+                    }
+                }
+
+                // Loading More
+                if (uiState.isLoadingMore) {
+                    item(key = "home_loading_more") {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                        ) {
+                            LoadingIndicator()
+                        }
+                    }
+                }
+
+                // Bottom spacer for comfortable end-of-list spacing
+                item(key = "home_bottom_spacer") {
+                    Spacer(Modifier.height(16.dp))
+                }
             }
         }
-    }
-}
 
-private fun androidx.compose.foundation.lazy.LazyListScope.sectionSpacer(key: String) {
-    item(
-        key = "home_section_spacer_$key",
-        contentType = "section_spacer",
-    ) {
-        Spacer(Modifier.height(HomeSectionSpacing))
+        // Sticky Top App Bar & Category Chips Overlay
+        AnimatedContent(
+            targetState = lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0,
+            transitionSpec = {
+                fadeIn(tween(300)).togetherWith(fadeOut(tween(300)))
+            },
+            label = "HomeTopBarOverlay",
+        ) { isAtTop ->
+            Column(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .then(
+                            if (isAtTop) {
+                                Modifier.background(Color.Transparent)
+                            } else {
+                                Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
+                            },
+                        ).onGloballyPositioned { coordinates ->
+                            topAppBarHeightPx = coordinates.size.height
+                        },
+            ) {
+                AnimatedVisibility(
+                    visible = isScrollingUp,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
+                    HomeTopAppBar(navController = navController)
+                }
+                AnimatedVisibility(
+                    visible = !isScrollingUp,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
+                    Spacer(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .windowInsetsPadding(WindowInsets.statusBars),
+                    )
+                }
+                if (uiState.showCategoryChips && uiState.homePage?.chips?.isNotEmpty() == true) {
+                    HomeCategoryChips(
+                        chips = uiState.homePage.chips,
+                        selectedChip = uiState.selectedChip,
+                        onChipSelected = { onAction(HomeAction.SelectChip(it)) },
+                    )
+                }
+            }
+        }
     }
 }
