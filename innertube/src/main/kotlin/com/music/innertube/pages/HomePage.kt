@@ -45,18 +45,32 @@ data class HomePage(
     ) {
         companion object {
             fun fromMusicCarouselShelfRenderer(renderer: MusicCarouselShelfRenderer): Section? {
-                return Section(
-                    title = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null,
-                    label = renderer.header.musicCarouselShelfBasicHeaderRenderer.strapline?.runs?.firstOrNull()?.text,
-                    thumbnail = renderer.header.musicCarouselShelfBasicHeaderRenderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl(),
-                    endpoint = renderer.header.musicCarouselShelfBasicHeaderRenderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint,
-                    items = renderer.contents.mapNotNull {
-                        it.musicTwoRowItemRenderer
-                    }.mapNotNull {
-                        fromMusicTwoRowItemRenderer(it)
-                    }.ifEmpty {
-                        return null
+                val title = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
+                val label = renderer.header.musicCarouselShelfBasicHeaderRenderer.strapline?.runs?.firstOrNull()?.text
+                val thumbnail = renderer.header.musicCarouselShelfBasicHeaderRenderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
+                val endpoint = renderer.header.musicCarouselShelfBasicHeaderRenderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
+                var items = renderer.contents.mapNotNull {
+                    it.musicTwoRowItemRenderer
+                }.mapNotNull {
+                    fromMusicTwoRowItemRenderer(it)
+                }
+                if (title.equals("Forgotten favorites", ignoreCase = true) ||
+                    title.equals("Fresh finds, old favorites", ignoreCase = true)
+                ) {
+                    items = items.filterNot { item ->
+                        item.id == "LM" || item.id == "VLLM" ||
+                            (item is PlaylistItem && item.title.equals("Liked Music", ignoreCase = true))
                     }
+                }
+                if (items.isEmpty()) {
+                    return null
+                }
+                return Section(
+                    title = title,
+                    label = label,
+                    thumbnail = thumbnail,
+                    endpoint = endpoint,
+                    items = items,
                 )
             }
 

@@ -69,6 +69,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -414,8 +415,11 @@ private fun HomeContent(
                         Column(modifier = Modifier.padding(horizontal = 15.dp, vertical = 6.dp)) {
                             Text(
                                 text = stringResource(R.string.speed_dial),
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
+                                style =
+                                    MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                    ),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(vertical = 4.dp),
                             )

@@ -383,8 +383,11 @@ fun AccountLayout(
             )
             Text(
                 text = accountName,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
+                style =
+                    MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(start = 10.dp),
                 maxLines = 1,
@@ -583,8 +586,11 @@ fun SimpQuickPicks(
         )
         Text(
             text = stringResource(R.string.quick_picks),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                ),
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             modifier =
@@ -771,8 +777,11 @@ fun SimpHomeShelf(
                 }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
+                    style =
+                        MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        ),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -1635,6 +1644,16 @@ fun ForgottenFavoritesShelf(
     haptic: HapticFeedback,
     modifier: Modifier = Modifier,
 ) {
+    val shelfItems =
+        remember(forgottenFavorites) {
+            forgottenFavorites.filterNot { song ->
+                song.id == "LM" || song.id == "VLLM" ||
+                    song.song.title.equals("Liked Music", ignoreCase = true)
+            }
+        }
+
+    if (shelfItems.isEmpty()) return
+
     val lazyListState = rememberLazyListState()
     val snapLayoutInfoProvider =
         remember(lazyListState) {
@@ -1653,7 +1672,7 @@ fun ForgottenFavoritesShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = forgottenFavorites,
+                items = shelfItems,
                 key = { it.id },
             ) { song ->
                 val isActive = song.id == mediaMetadata?.id
@@ -1921,6 +1940,24 @@ fun HomePageSectionShelf(
             SnapLayoutInfoProvider(lazyListState = lazyListState)
         }
 
+    val isTargetShelf =
+        section.title.equals("Forgotten favorites", ignoreCase = true) ||
+            section.title.equals("Fresh finds, old favorites", ignoreCase = true)
+
+    val shelfItems =
+        remember(section.items, isTargetShelf) {
+            if (isTargetShelf) {
+                section.items.filterNot { item ->
+                    item.id == "LM" || item.id == "VLLM" ||
+                        (item is PlaylistItem && item.title.equals("Liked Music", ignoreCase = true))
+                }
+            } else {
+                section.items
+            }
+        }
+
+    if (shelfItems.isEmpty()) return
+
     val onMoreClick: (() -> Unit)? =
         section.endpoint?.let { endpoint ->
             {
@@ -1975,7 +2012,7 @@ fun HomePageSectionShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = section.items,
+                items = shelfItems,
                 key = { it.id },
             ) { item ->
                 when (item) {
