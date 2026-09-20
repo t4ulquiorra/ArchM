@@ -798,8 +798,8 @@ fun SimpHomeShelf(
 }
 
 val HomeVideoCardWidth: Dp = (150f * 16f / 9f).dp
-val HomeVideoThumbnailHeight: Dp = (HomeVideoCardWidth - 10.dp) * 9f / 16f
-val HomeVideoPodHeight: Dp = 5.dp + HomeVideoThumbnailHeight + 6.dp + 48.dp + 8.dp
+val HomeVideoThumbnailHeight: Dp = ((HomeVideoCardWidth - 10.dp) * 9f / 16f).coerceAtLeast(0.dp)
+val HomeVideoPodHeight: Dp = (5.dp + HomeVideoThumbnailHeight + 6.dp + 48.dp + 8.dp).coerceAtLeast(0.dp)
 
 // Square card dimensions scaled so total pod/container height matches HomeVideoPodHeight exactly:
 // 5.dp (top) + 155.dp (artwork) + 6.dp (spacer) + 38.dp (text) + 8.dp (bottom) = 212.dp (~HomeVideoPodHeight)
@@ -835,7 +835,7 @@ fun HomeItemContentPlaylist(
     )
 
     val innerPadding = 5.dp
-    val artworkSize = thumbSize - (innerPadding * 2)
+    val artworkSize = (thumbSize - (innerPadding * 2)).coerceAtLeast(0.dp)
     val cardShape = RoundedCornerShape(18.dp)
 
     Column(
@@ -855,7 +855,7 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+                ).padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier =
@@ -949,7 +949,7 @@ fun HomeItemSong(
     )
 
     val innerPadding = 5.dp
-    val artworkSize = thumbSize - (innerPadding * 2)
+    val artworkSize = (thumbSize - (innerPadding * 2)).coerceAtLeast(0.dp)
     val cardShape = RoundedCornerShape(18.dp)
 
     Column(
@@ -969,7 +969,7 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+                ).padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier =
@@ -1106,7 +1106,7 @@ fun HomeItemArtist(
                 modifier = Modifier.fillMaxSize(),
             )
         }
-        Spacer(modifier = Modifier.height(labelSpacing))
+        Spacer(modifier = Modifier.height(labelSpacing.coerceAtLeast(0.dp)))
         Column(
             modifier =
                 Modifier
@@ -1199,7 +1199,7 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+                .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier =

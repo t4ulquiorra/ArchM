@@ -114,7 +114,7 @@ fun BrowseScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = insetsPadding.calculateTopPadding() + 8.dp,
+                top = (insetsPadding.calculateTopPadding() + 8.dp).coerceAtLeast(0.dp),
                 bottom = 120.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -309,7 +309,7 @@ private fun BrowseArtistItem(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp.coerceAtLeast(0.dp)))
 
         Text(
             text = item.title,

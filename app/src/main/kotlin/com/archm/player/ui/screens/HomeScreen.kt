@@ -344,7 +344,7 @@ private fun HomeContent(
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = with(LocalDensity.current) { topAppBarHeightPx.toDp() },
+            indicatorOffset = with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             LazyColumn(
@@ -382,7 +382,7 @@ private fun HomeContent(
                             )
                         }
                         Column(modifier = Modifier.padding(horizontal = 15.dp)) {
-                            Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }))
+                            Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp)))
                             if (isLoggedIn && !isFirstShelfAccountPlaylists) {
                                 Spacer(Modifier.height(8.dp))
                                 AccountLayout(

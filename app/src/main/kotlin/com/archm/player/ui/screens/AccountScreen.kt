@@ -125,7 +125,7 @@ fun AccountScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = insetsPadding.calculateTopPadding() + 8.dp,
+                top = (insetsPadding.calculateTopPadding() + 8.dp).coerceAtLeast(0.dp),
                 bottom = 120.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -140,7 +140,7 @@ fun AccountScreen(
                     ),
                     currentValue = selectedContentType,
                     onValueUpdate = { viewModel.setSelectedContentType(it) },
-                    modifier = Modifier.padding(horizontal = (-16).dp),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
@@ -383,7 +383,7 @@ private fun AccountPlaylistItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+            .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier = Modifier
@@ -466,7 +466,7 @@ private fun AccountAlbumItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+            .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier = Modifier
@@ -565,7 +565,7 @@ private fun AccountArtistItem(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp.coerceAtLeast(0.dp)))
 
         Text(
             text = item.title,
