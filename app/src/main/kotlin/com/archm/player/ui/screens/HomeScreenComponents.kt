@@ -143,11 +143,16 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.models.YTItem
 import com.music.innertube.pages.HomePage
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.graphics.graphicsLayer
+import com.archm.player.ui.component.bouncyClickable
+import com.archm.player.ui.component.rememberBouncyScale
+import com.archm.player.ui.screens.library.rememberArtworkCardColor
+import com.archm.player.ui.utils.resize
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.roundToInt
 import kotlin.random.Random
-
-private val ThumbnailCornerRadius = 8.dp
 
 // ==========================================
 // 1. SimpMusic Top App Bar & Chip Components
@@ -782,364 +787,463 @@ fun SimpHomeShelf(
     }
 }
 
+/**
+ * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeItemContentPlaylist(
-    onClick: () -> Unit,
     title: String,
-    subtitle: String,
+    subtitle: String?,
     thumbnailUrl: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     thumbSize: Dp = 150.dp,
-    modifier: Modifier = Modifier,
+    onPlayClick: (() -> Unit)? = null,
 ) {
-    val cardShape = RoundedCornerShape(12.dp)
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.97f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+    )
+
     val innerPadding = 5.dp
+    val artworkSize = thumbSize - (innerPadding * 2)
+    val cardShape = RoundedCornerShape(18.dp)
+
     Column(
         modifier =
             modifier
                 .width(thumbSize)
+                .heightIn(min = (thumbSize * 168f / 130f))
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .clip(cardShape)
-                .background(Color(0xFF141414))
+                .background(cardBgColor)
                 .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                )
-                .padding(innerPadding),
+                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
-        AsyncImage(
-            model =
-                ImageRequest.Builder(LocalContext.current)
-                    .data(thumbnailUrl)
-                    .crossfade(true)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
-            placeholder = painterResource(R.drawable.music_note),
-            error = painterResource(R.drawable.music_note),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
-        )
+                    .size(artworkSize)
+                    .clip(RoundedCornerShape(14.dp)),
+        ) {
+            AsyncImage(
+                model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (onPlayClick != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .size(36.dp)
+                            .bouncyClickable(onClick = onPlayClick)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.55f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.play),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = title,
-            style =
-                MaterialTheme.typography.titleSmall.copy(
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = subtitle,
-            style =
-                MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 12.sp,
-                ),
-            color = Color(0xFFAAAAAA),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp)
-                    .basicMarquee(
-                        initialDelayMillis = 2000,
-                        repeatDelayMillis = 2000,
-                        velocity = 25.dp,
-                    ),
-        )
-        Spacer(modifier = Modifier.height(2.dp))
+                    .padding(horizontal = 3.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(1.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeItemSong(
-    onClick: () -> Unit,
     title: String,
     subtitle: String,
     thumbnailUrl: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     isExplicit: Boolean = false,
     thumbSize: Dp = 150.dp,
-    modifier: Modifier = Modifier,
+    onPlayClick: (() -> Unit)? = null,
 ) {
-    val cardShape = RoundedCornerShape(12.dp)
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.97f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+    )
+
     val innerPadding = 5.dp
+    val artworkSize = thumbSize - (innerPadding * 2)
+    val cardShape = RoundedCornerShape(18.dp)
+
     Column(
         modifier =
             modifier
                 .width(thumbSize)
+                .heightIn(min = (thumbSize * 168f / 130f))
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .clip(cardShape)
-                .background(Color(0xFF141414))
+                .background(cardBgColor)
                 .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                )
-                .padding(innerPadding),
+                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
-        AsyncImage(
-            model =
-                ImageRequest.Builder(LocalContext.current)
-                    .data(thumbnailUrl)
-                    .crossfade(true)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
-            placeholder = painterResource(R.drawable.music_note),
-            error = painterResource(R.drawable.music_note),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = title,
-            style =
-                MaterialTheme.typography.titleSmall.copy(
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
+                    .size(artworkSize)
+                    .clip(RoundedCornerShape(14.dp)),
         ) {
-            if (isExplicit) {
-                Text(
-                    text = "E",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFFAAAAAA),
+            AsyncImage(
+                model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (onPlayClick != null) {
+                Box(
                     modifier =
                         Modifier
-                            .padding(end = 4.dp)
-                            .background(
-                                Color.White.copy(alpha = 0.12f),
-                                RoundedCornerShape(2.dp),
-                            ).padding(horizontal = 4.dp, vertical = 1.dp),
-                )
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .size(36.dp)
+                            .bouncyClickable(onClick = onPlayClick)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.55f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.play),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 3.dp),
+        ) {
             Text(
-                text = subtitle,
-                style =
-                    MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                    ),
-                color = Color(0xFFAAAAAA),
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .basicMarquee(
-                            initialDelayMillis = 2000,
-                            repeatDelayMillis = 2000,
-                            velocity = 25.dp,
-                        ),
             )
+            if (subtitle.isNotBlank()) {
+                Spacer(modifier = Modifier.height(1.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (isExplicit) {
+                        Text(
+                            text = "E",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            modifier =
+                                Modifier
+                                    .padding(end = 4.dp)
+                                    .background(
+                                        Color.White.copy(alpha = 0.12f),
+                                        RoundedCornerShape(2.dp),
+                                    ).padding(horizontal = 4.dp, vertical = 1.dp),
+                        )
+                    }
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
+/**
+ * Circular avatar Related Artists carousel item matching pod touch interaction with CircleShape bounds.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeItemArtist(
-    onClick: () -> Unit,
     title: String,
     thumbnailUrl: String?,
-    onLongClick: (() -> Unit)? = null,
-    subtitle: String = "",
-    thumbSize: Dp = 150.dp,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    subscribers: String? = null,
+    avatarSize: Dp = 150.dp,
+    isSingleLine: Boolean = false,
+    labelSpacing: Dp = 8.dp,
 ) {
-    val cardShape = RoundedCornerShape(12.dp)
-    val innerPadding = 5.dp
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.95f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+    )
+
     Column(
+        modifier = modifier.width(avatarSize),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            modifier
-                .width(thumbSize)
-                .clip(cardShape)
-                .background(Color(0xFF141414))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                )
-                .padding(innerPadding),
     ) {
-        AsyncImage(
-            model =
-                ImageRequest.Builder(LocalContext.current)
-                    .data(thumbnailUrl)
-                    .crossfade(true)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
-            placeholder = painterResource(R.drawable.person),
-            error = painterResource(R.drawable.person),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(CircleShape),
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = title,
-            style =
-                MaterialTheme.typography.titleSmall.copy(
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-            color = Color.White,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
-        )
-        if (subtitle.isNotBlank()) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = subtitle,
-                style =
-                    MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
+                    .size(avatarSize)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .clip(CircleShape)
+                    .combinedClickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick,
+                        onLongClick = onLongClick,
                     ),
-                color = Color(0xFFAAAAAA),
-                maxLines = 1,
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = thumbnailUrl?.resize(480, 480) ?: thumbnailUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        Spacer(modifier = Modifier.height(labelSpacing))
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick,
+                        onLongClick = onLongClick,
+                    ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = title,
+                style = if (isSingleLine) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                maxLines = if (isSingleLine) 1 else 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 2.dp)
-                        .basicMarquee(
-                            initialDelayMillis = 2000,
-                            repeatDelayMillis = 2000,
-                            velocity = 25.dp,
-                        ),
+                        .wrapContentHeight(align = Alignment.CenterVertically),
             )
+            if (!subscribers.isNullOrBlank()) {
+                Text(
+                    text = subscribers,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xC4FFFFFF),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(align = Alignment.CenterVertically),
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
+/**
+ * Elevated container pod matching Singles/Albums cards for 16:9 widescreen Video carousel items.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeItemVideo(
-    onClick: () -> Unit,
     title: String,
-    subtitle: String,
+    subtitle: String?,
     thumbnailUrl: String?,
-    onLongClick: (() -> Unit)? = null,
-    cardWidth: Dp = 250.dp,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    cardWidth: Dp = (150f * 16f / 9f).dp,
+    onPlayClick: (() -> Unit)? = null,
 ) {
-    val cardShape = RoundedCornerShape(12.dp)
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainer,
+        )
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale by rememberBouncyScale(
+        interactionSource = interactionSource,
+        targetShrinkScale = 0.97f,
+        stiffness = Spring.StiffnessMedium,
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+    )
+
     val innerPadding = 5.dp
+    val cardShape = RoundedCornerShape(18.dp)
+
     Column(
         modifier =
             modifier
                 .width(cardWidth)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .clip(cardShape)
-                .background(Color(0xFF141414))
+                .background(cardBgColor)
                 .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(innerPadding),
+                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
     ) {
-        AsyncImage(
-            model =
-                ImageRequest.Builder(LocalContext.current)
-                    .data(thumbnailUrl)
-                    .crossfade(true)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
-            placeholder = painterResource(R.drawable.music_note),
-            error = painterResource(R.drawable.music_note),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+        Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(8.dp)),
-        )
+                    .clip(RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = thumbnailUrl?.resize(854, 480) ?: thumbnailUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (onPlayClick != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .size(36.dp)
+                            .bouncyClickable(onClick = onPlayClick)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.55f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.play),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = title,
-            style =
-                MaterialTheme.typography.titleSmall.copy(
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-            color = Color.White,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
-        )
-        if (subtitle.isNotBlank()) {
-            Spacer(modifier = Modifier.height(2.dp))
+                    .padding(horizontal = 3.dp)
+                    .heightIn(min = 48.dp),
+        ) {
             Text(
-                text = subtitle,
-                style =
-                    MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                    ),
-                color = Color(0xFFAAAAAA),
-                maxLines = 1,
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 2.dp)
-                        .basicMarquee(
-                            initialDelayMillis = 2000,
-                            repeatDelayMillis = 2000,
-                            velocity = 25.dp,
-                        ),
             )
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee(),
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(2.dp))
     }
 }// ==========================================
 // 5. Speed Dial Section (Spotify-style Matrix)
@@ -1325,7 +1429,8 @@ fun KeepListeningShelf(
         LazyRow(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -1477,7 +1582,8 @@ fun AccountPlaylistsShelf(
         LazyRow(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -1519,7 +1625,8 @@ fun ForgottenFavoritesShelf(
         LazyRow(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -1638,7 +1745,8 @@ fun SimilarRecommendationsShelf(
         LazyRow(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -1839,7 +1947,8 @@ fun HomePageSectionShelf(
         LazyRow(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
