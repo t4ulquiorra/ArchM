@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -93,7 +94,7 @@ import kotlinx.coroutines.withContext
 fun YouTubePlaylistMenu(
     playlist: PlaylistItem,
     songs: List<SongItem> = emptyList(),
-    coroutineScope: CoroutineScope,
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     onDismiss: () -> Unit,
     selectAction: () -> Unit = {},
     canSelect: Boolean = false,

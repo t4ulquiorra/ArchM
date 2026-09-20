@@ -670,7 +670,6 @@ fun YTItem.toQuickPicksCarouselItem(
                     is PlaylistItem ->
                         YouTubePlaylistMenu(
                             playlist = this@toQuickPicksCarouselItem,
-                            navController = navController,
                             onDismiss = menuState::dismiss,
                         )
                 }
