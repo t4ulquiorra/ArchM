@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -833,6 +834,7 @@ fun PlaylistGridCard(
     )
 
     val hiddenAlpha = 1f
+    val cardShape = RoundedCornerShape(32.dp)
 
     Column(
         modifier =
@@ -842,8 +844,9 @@ fun PlaylistGridCard(
                     scaleX = scale
                     scaleY = scale
                     alpha = hiddenAlpha
-                }.clip(RoundedCornerShape(32.dp))
+                }.clip(cardShape)
                 .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,

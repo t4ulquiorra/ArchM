@@ -2469,6 +2469,7 @@ fun GridCardPod(
         label = "GridCardPodScale",
     )
 
+    val cardShape = RoundedCornerShape(16.dp)
     Column(
         modifier =
             modifier
@@ -2477,8 +2478,9 @@ fun GridCardPod(
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(RoundedCornerShape(16.dp))
+                .clip(cardShape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
