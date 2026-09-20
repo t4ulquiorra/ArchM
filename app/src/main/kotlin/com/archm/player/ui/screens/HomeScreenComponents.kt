@@ -1938,10 +1938,20 @@ fun HomePageSectionShelf(
                         navController.navigate("online_playlist/${endpoint.browseId}")
                     }
                     else -> {
-                        val route = if (endpoint.params != null) {
-                            "browse/${endpoint.browseId}?params=${endpoint.params}"
-                        } else {
-                            "browse/${endpoint.browseId}"
+                        val encodedBrowseId = android.net.Uri.encode(endpoint.browseId)
+                        val encodedParams = endpoint.params?.takeIf { it.isNotBlank() }?.let { android.net.Uri.encode(it) }
+                        val encodedTitle = section.title.takeIf { it.isNotBlank() }?.let { android.net.Uri.encode(it) }
+
+                        val route = buildString {
+                            append("browse/")
+                            append(encodedBrowseId)
+                            val queryParams = mutableListOf<String>()
+                            if (encodedParams != null) queryParams.add("params=$encodedParams")
+                            if (encodedTitle != null) queryParams.add("title=$encodedTitle")
+                            if (queryParams.isNotEmpty()) {
+                                append("?")
+                                append(queryParams.joinToString("&"))
+                            }
                         }
                         navController.navigate(route)
                     }
@@ -1953,6 +1963,7 @@ fun HomePageSectionShelf(
         title = section.title,
         subtitle = section.label,
         avatarUrl = if (section.endpoint?.isArtistEndpoint == true) section.thumbnail else null,
+        onHeaderClick = onMoreClick,
         onMoreClick = onMoreClick,
         modifier = modifier,
     ) {

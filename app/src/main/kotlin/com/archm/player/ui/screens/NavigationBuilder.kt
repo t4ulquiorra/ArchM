@@ -173,7 +173,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(
-        route = "browse/{browseId}?params={params}",
+        route = "browse/{browseId}?params={params}&title={title}",
         arguments = listOf(
             navArgument("browseId") {
                 type = NavType.StringType
@@ -182,12 +182,17 @@ fun NavGraphBuilder.navigationBuilder(
                 type = NavType.StringType
                 nullable = true
             },
+            navArgument("title") {
+                type = NavType.StringType
+                nullable = true
+            },
         ),
     ) {
         BrowseScreen(
-            navController,
-            scrollBehavior,
-            it.arguments?.getString("browseId"),
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+            browseId = it.arguments?.getString("browseId"),
+            initialTitle = it.arguments?.getString("title"),
         )
     }
 
