@@ -1546,12 +1546,11 @@ fun KeepListeningShelf(
                     is Playlist -> {
                         val onPlay: () -> Unit = {
                             scope.launch(Dispatchers.IO) {
-                                val playlistWithSongs = database.playlistWithSongs(item.id).first()
-                                playlistWithSongs?.songs?.map { it.toMediaItem() }?.let { mediaItems ->
-                                    if (mediaItems.isNotEmpty()) {
-                                        withContext(Dispatchers.Main) {
-                                            playerConnection.playQueue(ListQueue(items = mediaItems))
-                                        }
+                                val playlistSongs = database.playlistSongs(item.id).first()
+                                val mediaItems = playlistSongs.map { it.song.toMediaItem() }
+                                if (mediaItems.isNotEmpty()) {
+                                    withContext(Dispatchers.Main) {
+                                        playerConnection.playQueue(ListQueue(items = mediaItems))
                                     }
                                 }
                             }
@@ -1619,10 +1618,9 @@ fun AccountPlaylistsShelf(
                     thumbnailUrl = item.thumbnail,
                     onClick = { navController.navigate("online_playlist/${item.id}") },
                     onPlayClick = {
+                        val endpoint = item.playEndpoint ?: WatchEndpoint(playlistId = item.id)
                         playerConnection?.playQueue(
-                            YouTubeQueue(
-                                item.endpoint ?: WatchEndpoint(browseId = item.id),
-                            ),
+                            YouTubeQueue(endpoint),
                         )
                     },
                 )
@@ -1804,7 +1802,7 @@ fun SimilarRecommendationsShelf(
                         }
                         val subtitle = listOfNotNull(
                             item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
-                            item.durationText ?: item.formattedDuration(),
+                            item.durationText,
                         ).joinToString(" • ").ifBlank { item.artists.joinToString { it.name } }
 
                         if (isVideo) {
@@ -1848,7 +1846,7 @@ fun SimilarRecommendationsShelf(
                             onPlayClick = {
                                 playerConnection.playQueue(
                                     YouTubeQueue(
-                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                        WatchEndpoint(playlistId = item.playlistId),
                                     ),
                                 )
                             },
@@ -1874,7 +1872,7 @@ fun SimilarRecommendationsShelf(
                             onPlayClick = {
                                 playerConnection.playQueue(
                                     YouTubeQueue(
-                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                        item.playEndpoint ?: WatchEndpoint(playlistId = item.id),
                                     ),
                                 )
                             },
@@ -1998,7 +1996,7 @@ fun HomePageSectionShelf(
                         }
                         val subtitle = listOfNotNull(
                             item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
-                            item.durationText ?: item.formattedDuration(),
+                            item.durationText,
                         ).joinToString(" • ").ifBlank { item.artists.joinToString { it.name } }
 
                         if (isVideo) {
@@ -2042,7 +2040,7 @@ fun HomePageSectionShelf(
                             onPlayClick = {
                                 playerConnection.playQueue(
                                     YouTubeQueue(
-                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                        WatchEndpoint(playlistId = item.playlistId),
                                     ),
                                 )
                             },
@@ -2068,7 +2066,7 @@ fun HomePageSectionShelf(
                             onPlayClick = {
                                 playerConnection.playQueue(
                                     YouTubeQueue(
-                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                        item.playEndpoint ?: WatchEndpoint(playlistId = item.id),
                                     ),
                                 )
                             },
