@@ -1062,12 +1062,12 @@ fun SimpHomeShelf(
     }
 }
 
-val HomeVideoCardWidth: Dp = 225.dp
+val HomeVideoCardWidth: Dp = 245.dp
 val HomeVideoThumbnailHeight: Dp = ((HomeVideoCardWidth - 10.dp) * 9f / 16f).coerceAtLeast(0.dp)
-val HomeVideoPodHeight: Dp = 185.dp
+val HomeVideoPodHeight: Dp = 190.dp
 
-// Square card: 130dp wide, 120dp artwork (130 - 2*5 padding), ~38dp text area = ~177dp total — fits in 185dp pod.
-val HomeSquareCardThumbSize: Dp = 130.dp
+// Square card: 144dp wide, 134dp artwork (144 - 2*5 padding), compact text = 190dp pod height.
+val HomeSquareCardThumbSize: Dp = 144.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1106,7 +1106,7 @@ fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
-                .heightIn(min = HomeVideoPodHeight)
+                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1119,12 +1119,18 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+                ).padding(
+                    start = innerPadding.coerceAtLeast(0.dp),
+                    top = innerPadding.coerceAtLeast(0.dp),
+                    end = innerPadding.coerceAtLeast(0.dp),
+                    bottom = 6.dp.coerceAtLeast(0.dp),
+                ),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(artworkSize)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(14.dp)),
         ) {
             AsyncImage(
@@ -1155,14 +1161,13 @@ fun HomeItemContentPlaylist(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp)
-                    .heightIn(min = 38.dp),
+                    .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
@@ -1172,7 +1177,7 @@ fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -1220,7 +1225,7 @@ fun HomeItemSong(
         modifier =
             modifier
                 .width(thumbSize)
-                .heightIn(min = HomeVideoPodHeight)
+                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1233,12 +1238,18 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+                ).padding(
+                    start = innerPadding.coerceAtLeast(0.dp),
+                    top = innerPadding.coerceAtLeast(0.dp),
+                    end = innerPadding.coerceAtLeast(0.dp),
+                    bottom = 6.dp.coerceAtLeast(0.dp),
+                ),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(artworkSize)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(14.dp)),
         ) {
             AsyncImage(
@@ -1269,14 +1280,13 @@ fun HomeItemSong(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp)
-                    .heightIn(min = 38.dp),
+                    .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
@@ -1286,7 +1296,7 @@ fun HomeItemSong(
                 overflow = TextOverflow.Ellipsis,
             )
             if (subtitle.isNotBlank()) {
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
@@ -1449,7 +1459,7 @@ fun HomeItemVideo(
         modifier =
             modifier
                 .width(cardWidth)
-                .heightIn(min = HomeVideoPodHeight)
+                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1463,7 +1473,12 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+                .padding(
+                    start = innerPadding.coerceAtLeast(0.dp),
+                    top = innerPadding.coerceAtLeast(0.dp),
+                    end = innerPadding.coerceAtLeast(0.dp),
+                    bottom = 6.dp.coerceAtLeast(0.dp),
+                ),
     ) {
         Box(
             modifier =
@@ -1501,20 +1516,19 @@ fun HomeItemVideo(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp)
-                    .heightIn(min = 48.dp),
+                    .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
