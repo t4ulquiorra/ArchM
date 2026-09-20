@@ -797,6 +797,14 @@ fun SimpHomeShelf(
     }
 }
 
+val HomeVideoCardWidth: Dp = (150f * 16f / 9f).dp
+val HomeVideoThumbnailHeight: Dp = (HomeVideoCardWidth - 10.dp) * 9f / 16f
+val HomeVideoPodHeight: Dp = 5.dp + HomeVideoThumbnailHeight + 6.dp + 48.dp + 8.dp
+
+// Square card dimensions scaled so total pod/container height matches HomeVideoPodHeight exactly:
+// 5.dp (top) + 155.dp (artwork) + 6.dp (spacer) + 38.dp (text) + 8.dp (bottom) = 212.dp (~HomeVideoPodHeight)
+val HomeSquareCardThumbSize: Dp = 165.dp
+
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
  */
@@ -809,7 +817,7 @@ fun HomeItemContentPlaylist(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
-    thumbSize: Dp = 150.dp,
+    thumbSize: Dp = HomeSquareCardThumbSize,
     onPlayClick: (() -> Unit)? = null,
 ) {
     val cardBgColor =
@@ -834,7 +842,7 @@ fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
-                .heightIn(min = (thumbSize * 168f / 130f))
+                .heightIn(min = HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -889,7 +897,8 @@ fun HomeItemContentPlaylist(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp),
+                    .padding(horizontal = 3.dp)
+                    .heightIn(min = 38.dp),
         ) {
             Text(
                 text = title,
@@ -922,7 +931,7 @@ fun HomeItemSong(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     isExplicit: Boolean = false,
-    thumbSize: Dp = 150.dp,
+    thumbSize: Dp = HomeSquareCardThumbSize,
     onPlayClick: (() -> Unit)? = null,
 ) {
     val cardBgColor =
@@ -947,7 +956,7 @@ fun HomeItemSong(
         modifier =
             modifier
                 .width(thumbSize)
-                .heightIn(min = (thumbSize * 168f / 130f))
+                .heightIn(min = HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1002,7 +1011,8 @@ fun HomeItemSong(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp),
+                    .padding(horizontal = 3.dp)
+                    .heightIn(min = 38.dp),
         ) {
             Text(
                 text = title,
@@ -1151,7 +1161,7 @@ fun HomeItemVideo(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
-    cardWidth: Dp = (150f * 16f / 9f).dp,
+    cardWidth: Dp = HomeVideoCardWidth,
     onPlayClick: (() -> Unit)? = null,
 ) {
     val cardBgColor =
@@ -1175,6 +1185,7 @@ fun HomeItemVideo(
         modifier =
             modifier
                 .width(cardWidth)
+                .heightIn(min = HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
