@@ -18,22 +18,21 @@ class BrowseViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val browseId: String? = savedStateHandle.get<String>("browseId")
+    private val params: String? = savedStateHandle.get<String>("params")
  
-    val items = MutableStateFlow<List<YTItem>?>(emptyList())
+    val items = MutableStateFlow<List<YTItem>?>(null)
     val title = MutableStateFlow<String?>("")
  
     init {
         viewModelScope.launch {
             browseId?.let {
-                YouTube.browse(browseId, null).onSuccess { result ->
-                    
+                YouTube.browse(browseId, params).onSuccess { result ->
                     title.value = result.title
- 
-                    
                     val allItems = result.items.flatMap { it.items }
                     items.value = allItems
                 }.onFailure {
                     reportException(it)
+                    items.value = emptyList()
                 }
             }
         }

@@ -151,6 +151,12 @@ import com.archm.player.ui.component.rememberBouncyScale
 import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import com.archm.player.ui.utils.resize
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.archm.player.LocalDatabase
+import com.archm.player.LocalPlayerConnection
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -1416,6 +1422,7 @@ fun KeepListeningShelf(
     scope: CoroutineScope,
     modifier: Modifier = Modifier,
 ) {
+    val database = LocalDatabase.current
     val lazyListState = rememberLazyListState()
     val snapLayoutInfoProvider =
         remember(lazyListState) {
@@ -1447,28 +1454,31 @@ fun KeepListeningShelf(
                 when (item) {
                     is Song -> {
                         val isActive = item.id == mediaMetadata?.id
+                        val onPlay: () -> Unit = {
+                            if (isActive) {
+                                playerConnection.player.togglePlayPause()
+                            } else {
+                                playerConnection.playQueue(YouTubeQueue.radio(item.toMediaMetadata()))
+                            }
+                        }
+                        val onLongClickAction: () -> Unit = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            menuState.show {
+                                SongMenu(
+                                    originalSong = item,
+                                    navController = navController,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
                         if (item.song.isVideo) {
                             HomeItemVideo(
                                 title = item.title,
                                 subtitle = item.artists.joinToString { it.name },
                                 thumbnailUrl = item.song.thumbnailUrl,
-                                onClick = {
-                                    if (isActive) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(YouTubeQueue.radio(item.toMediaMetadata()))
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        SongMenu(
-                                            originalSong = item,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                onClick = onPlay,
+                                onLongClick = onLongClickAction,
+                                onPlayClick = onPlay,
                             )
                         } else {
                             HomeItemSong(
@@ -1476,28 +1486,26 @@ fun KeepListeningShelf(
                                 subtitle = item.artists.joinToString { it.name },
                                 thumbnailUrl = item.song.thumbnailUrl,
                                 isExplicit = item.song.explicit,
-                                onClick = {
-                                    if (isActive) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(YouTubeQueue.radio(item.toMediaMetadata()))
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        SongMenu(
-                                            originalSong = item,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                onClick = onPlay,
+                                onLongClick = onLongClickAction,
+                                onPlayClick = onPlay,
                             )
                         }
                     }
 
                     is Album -> {
+                        val onPlay: () -> Unit = {
+                            scope.launch(Dispatchers.IO) {
+                                val albumWithSongs = database.albumWithSongs(item.id).first()
+                                albumWithSongs?.songs?.map { it.toMediaItem() }?.let { mediaItems ->
+                                    if (mediaItems.isNotEmpty()) {
+                                        withContext(Dispatchers.Main) {
+                                            playerConnection.playQueue(ListQueue(items = mediaItems))
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         HomeItemContentPlaylist(
                             title = item.title,
                             subtitle = item.album.year?.toString() ?: item.artists.joinToString { it.name },
@@ -1513,6 +1521,7 @@ fun KeepListeningShelf(
                                     )
                                 }
                             },
+                            onPlayClick = onPlay,
                         )
                     }
 
@@ -1535,6 +1544,18 @@ fun KeepListeningShelf(
                     }
 
                     is Playlist -> {
+                        val onPlay: () -> Unit = {
+                            scope.launch(Dispatchers.IO) {
+                                val playlistWithSongs = database.playlistWithSongs(item.id).first()
+                                playlistWithSongs?.songs?.map { it.toMediaItem() }?.let { mediaItems ->
+                                    if (mediaItems.isNotEmpty()) {
+                                        withContext(Dispatchers.Main) {
+                                            playerConnection.playQueue(ListQueue(items = mediaItems))
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         HomeItemContentPlaylist(
                             title = item.title,
                             subtitle = stringResource(R.string.playlist),
@@ -1550,6 +1571,7 @@ fun KeepListeningShelf(
                                     )
                                 }
                             },
+                            onPlayClick = onPlay,
                         )
                     }
                 }
@@ -1565,6 +1587,7 @@ fun AccountPlaylistsShelf(
     accountImageUrl: String?,
     navController: NavController,
     modifier: Modifier = Modifier,
+    playerConnection: PlayerConnection? = LocalPlayerConnection.current,
 ) {
     val lazyListState = rememberLazyListState()
     val snapLayoutInfoProvider =
@@ -1595,6 +1618,13 @@ fun AccountPlaylistsShelf(
                     subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
                     thumbnailUrl = item.thumbnail,
                     onClick = { navController.navigate("online_playlist/${item.id}") },
+                    onPlayClick = {
+                        playerConnection?.playQueue(
+                            YouTubeQueue(
+                                item.endpoint ?: WatchEndpoint(browseId = item.id),
+                            ),
+                        )
+                    },
                 )
             }
         }
@@ -1634,34 +1664,37 @@ fun ForgottenFavoritesShelf(
                 key = { it.id },
             ) { song ->
                 val isActive = song.id == mediaMetadata?.id
+                val onPlay: () -> Unit = {
+                    if (isActive) {
+                        playerConnection.player.togglePlayPause()
+                    } else {
+                        playerConnection.playQueue(
+                            if (song.song.isLocal) {
+                                ListQueue(items = listOf(song.toMediaItem()))
+                            } else {
+                                YouTubeQueue.radio(song.toMediaMetadata())
+                            },
+                        )
+                    }
+                }
+                val onLongClickAction: () -> Unit = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    menuState.show {
+                        SongMenu(
+                            originalSong = song,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    }
+                }
                 if (song.song.isVideo) {
                     HomeItemVideo(
                         title = song.song.title,
                         subtitle = song.artists.joinToString { it.name },
                         thumbnailUrl = song.song.thumbnailUrl,
-                        onClick = {
-                            if (isActive) {
-                                playerConnection.player.togglePlayPause()
-                            } else {
-                                playerConnection.playQueue(
-                                    if (song.song.isLocal) {
-                                        ListQueue(items = listOf(song.toMediaItem()))
-                                    } else {
-                                        YouTubeQueue.radio(song.toMediaMetadata())
-                                    },
-                                )
-                            }
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            menuState.show {
-                                SongMenu(
-                                    originalSong = song,
-                                    navController = navController,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
-                        },
+                        onClick = onPlay,
+                        onLongClick = onLongClickAction,
+                        onPlayClick = onPlay,
                     )
                 } else {
                     HomeItemSong(
@@ -1669,29 +1702,9 @@ fun ForgottenFavoritesShelf(
                         subtitle = song.artists.joinToString { it.name },
                         thumbnailUrl = song.song.thumbnailUrl,
                         isExplicit = song.song.explicit,
-                        onClick = {
-                            if (isActive) {
-                                playerConnection.player.togglePlayPause()
-                            } else {
-                                playerConnection.playQueue(
-                                    if (song.song.isLocal) {
-                                        ListQueue(items = listOf(song.toMediaItem()))
-                                    } else {
-                                        YouTubeQueue.radio(song.toMediaMetadata())
-                                    },
-                                )
-                            }
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            menuState.show {
-                                SongMenu(
-                                    originalSong = song,
-                                    navController = navController,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
-                        },
+                        onClick = onPlay,
+                        onLongClick = onLongClickAction,
+                        onPlayClick = onPlay,
                     )
                 }
             }
@@ -1717,16 +1730,6 @@ fun SimilarRecommendationsShelf(
             SnapLayoutInfoProvider(lazyListState = lazyListState)
         }
     val titleItem = recommendation.title
-
-    val isVideoShelf =
-        remember(titleItem, recommendation.items) {
-            val titleLower = titleItem.title.lowercase()
-            titleLower.contains("video") ||
-                titleLower.contains("performance") ||
-                titleLower.contains("live") ||
-                (titleItem is Song && titleItem.song.isVideo) ||
-                recommendation.items.any { it is SongItem && it.isVideoSong }
-        }
 
     SimpHomeShelf(
         title = titleItem.title,
@@ -1772,63 +1775,56 @@ fun SimilarRecommendationsShelf(
                     }
 
                     is SongItem -> {
+                        val isVideo = item.isVideoSong ||
+                            item.title.contains("video", ignoreCase = true) ||
+                            item.title.contains("performance", ignoreCase = true) ||
+                            item.title.contains("live", ignoreCase = true)
                         val isActive = item.id == mediaMetadata?.id
-                        if (isVideoShelf || item.isVideoSong) {
+                        val onPlay: () -> Unit = {
+                            if (isActive) {
+                                playerConnection.player.togglePlayPause()
+                            } else {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(videoId = item.id),
+                                        item.toMediaMetadata(),
+                                    ),
+                                )
+                            }
+                        }
+                        val onLongClickAction: () -> Unit = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            menuState.show {
+                                YouTubeSongMenu(
+                                    song = item,
+                                    navController = navController,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                        val subtitle = listOfNotNull(
+                            item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
+                            item.durationText ?: item.formattedDuration(),
+                        ).joinToString(" • ").ifBlank { item.artists.joinToString { it.name } }
+
+                        if (isVideo) {
                             HomeItemVideo(
                                 title = item.title,
-                                subtitle = item.artists.joinToString { it.name },
+                                subtitle = subtitle,
                                 thumbnailUrl = item.thumbnail,
-                                onClick = {
-                                    if (isActive) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                                item.toMediaMetadata(),
-                                            ),
-                                        )
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubeSongMenu(
-                                            song = item,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                onClick = onPlay,
+                                onLongClick = onLongClickAction,
+                                onPlayClick = onPlay,
                             )
                         } else {
                             HomeItemSong(
                                 title = item.title,
-                                subtitle = item.artists.joinToString { it.name },
+                                subtitle = subtitle,
                                 thumbnailUrl = item.thumbnail,
                                 isExplicit = item.explicit,
-                                onClick = {
-                                    if (isActive) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                                item.toMediaMetadata(),
-                                            ),
-                                        )
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubeSongMenu(
-                                            song = item,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                onClick = onPlay,
+                                onLongClick = onLongClickAction,
+                                onPlayClick = onPlay,
                             )
                         }
                     }
@@ -1849,45 +1845,40 @@ fun SimilarRecommendationsShelf(
                                     )
                                 }
                             },
+                            onPlayClick = {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                    ),
+                                )
+                            },
                         )
                     }
 
                     is PlaylistItem -> {
-                        if (isVideoShelf) {
-                            HomeItemVideo(
-                                title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
-                                thumbnailUrl = item.thumbnail,
-                                onClick = { navController.navigate("online_playlist/${item.id}") },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubePlaylistMenu(
-                                            playlist = item,
-                                            coroutineScope = scope,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
-                            )
-                        } else {
-                            HomeItemContentPlaylist(
-                                title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
-                                thumbnailUrl = item.thumbnail,
-                                onClick = { navController.navigate("online_playlist/${item.id}") },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubePlaylistMenu(
-                                            playlist = item,
-                                            coroutineScope = scope,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
-                            )
-                        }
+                        HomeItemContentPlaylist(
+                            title = item.title,
+                            subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                            thumbnailUrl = item.thumbnail,
+                            onClick = { navController.navigate("online_playlist/${item.id}") },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    YouTubePlaylistMenu(
+                                        playlist = item,
+                                        coroutineScope = scope,
+                                        onDismiss = menuState::dismiss,
+                                    )
+                                }
+                            },
+                            onPlayClick = {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                    ),
+                                )
+                            },
+                        )
                     }
                 }
             }
@@ -1914,27 +1905,31 @@ fun HomePageSectionShelf(
         }
 
     val onMoreClick: (() -> Unit)? =
-        section.endpoint?.browseId?.let { browseId ->
+        section.endpoint?.let { endpoint ->
             {
-                if (browseId == "FEmusic_moods_and_genres") {
-                    navController.navigate(Screens.MoodAndGenres.route)
-                } else {
-                    navController.navigate("browse/$browseId")
+                when {
+                    endpoint.browseId == "FEmusic_moods_and_genres" -> {
+                        navController.navigate(Screens.MoodAndGenres.route)
+                    }
+                    endpoint.isArtistEndpoint -> {
+                        navController.navigate("artist/${endpoint.browseId}")
+                    }
+                    endpoint.isAlbumEndpoint -> {
+                        navController.navigate("album/${endpoint.browseId}")
+                    }
+                    endpoint.isPlaylistEndpoint -> {
+                        navController.navigate("online_playlist/${endpoint.browseId}")
+                    }
+                    else -> {
+                        val route = if (endpoint.params != null) {
+                            "browse/${endpoint.browseId}?params=${endpoint.params}"
+                        } else {
+                            "browse/${endpoint.browseId}"
+                        }
+                        navController.navigate(route)
+                    }
                 }
             }
-        }
-
-    val isVideoShelf =
-        remember(section.title, section.label, section.items) {
-            val titleLower = section.title.lowercase()
-            val labelLower = section.label?.lowercase().orEmpty()
-            titleLower.contains("video") ||
-                titleLower.contains("performance") ||
-                titleLower.contains("live") ||
-                labelLower.contains("video") ||
-                labelLower.contains("performance") ||
-                labelLower.contains("live") ||
-                section.items.any { it is SongItem && it.isVideoSong }
         }
 
     SimpHomeShelf(
@@ -1974,63 +1969,56 @@ fun HomePageSectionShelf(
                     }
 
                     is SongItem -> {
+                        val isVideo = item.isVideoSong ||
+                            item.title.contains("video", ignoreCase = true) ||
+                            item.title.contains("performance", ignoreCase = true) ||
+                            item.title.contains("live", ignoreCase = true)
                         val isActive = item.id == mediaMetadata?.id
-                        if (isVideoShelf || item.isVideoSong) {
+                        val onPlay: () -> Unit = {
+                            if (isActive) {
+                                playerConnection.player.togglePlayPause()
+                            } else {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(videoId = item.id),
+                                        item.toMediaMetadata(),
+                                    ),
+                                )
+                            }
+                        }
+                        val onLongClickAction: () -> Unit = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            menuState.show {
+                                YouTubeSongMenu(
+                                    song = item,
+                                    navController = navController,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        }
+                        val subtitle = listOfNotNull(
+                            item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
+                            item.durationText ?: item.formattedDuration(),
+                        ).joinToString(" • ").ifBlank { item.artists.joinToString { it.name } }
+
+                        if (isVideo) {
                             HomeItemVideo(
                                 title = item.title,
-                                subtitle = item.artists.joinToString { it.name },
+                                subtitle = subtitle,
                                 thumbnailUrl = item.thumbnail,
-                                onClick = {
-                                    if (isActive) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                                item.toMediaMetadata(),
-                                            ),
-                                        )
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubeSongMenu(
-                                            song = item,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                onClick = onPlay,
+                                onLongClick = onLongClickAction,
+                                onPlayClick = onPlay,
                             )
                         } else {
                             HomeItemSong(
                                 title = item.title,
-                                subtitle = item.artists.joinToString { it.name },
+                                subtitle = subtitle,
                                 thumbnailUrl = item.thumbnail,
                                 isExplicit = item.explicit,
-                                onClick = {
-                                    if (isActive) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                                item.toMediaMetadata(),
-                                            ),
-                                        )
-                                    }
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubeSongMenu(
-                                            song = item,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
+                                onClick = onPlay,
+                                onLongClick = onLongClickAction,
+                                onPlayClick = onPlay,
                             )
                         }
                     }
@@ -2051,45 +2039,40 @@ fun HomePageSectionShelf(
                                     )
                                 }
                             },
+                            onPlayClick = {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                    ),
+                                )
+                            },
                         )
                     }
 
                     is PlaylistItem -> {
-                        if (isVideoShelf) {
-                            HomeItemVideo(
-                                title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
-                                thumbnailUrl = item.thumbnail,
-                                onClick = { navController.navigate("online_playlist/${item.id}") },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubePlaylistMenu(
-                                            playlist = item,
-                                            coroutineScope = scope,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
-                            )
-                        } else {
-                            HomeItemContentPlaylist(
-                                title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
-                                thumbnailUrl = item.thumbnail,
-                                onClick = { navController.navigate("online_playlist/${item.id}") },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubePlaylistMenu(
-                                            playlist = item,
-                                            coroutineScope = scope,
-                                            onDismiss = menuState::dismiss,
-                                        )
-                                    }
-                                },
-                            )
-                        }
+                        HomeItemContentPlaylist(
+                            title = item.title,
+                            subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                            thumbnailUrl = item.thumbnail,
+                            onClick = { navController.navigate("online_playlist/${item.id}") },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    YouTubePlaylistMenu(
+                                        playlist = item,
+                                        coroutineScope = scope,
+                                        onDismiss = menuState::dismiss,
+                                    )
+                                }
+                            },
+                            onPlayClick = {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        item.endpoint ?: WatchEndpoint(browseId = item.id),
+                                    ),
+                                )
+                            },
+                        )
                     }
                 }
             }

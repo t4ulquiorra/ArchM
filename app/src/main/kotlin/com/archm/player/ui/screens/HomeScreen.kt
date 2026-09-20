@@ -360,6 +360,10 @@ private fun HomeContent(
                     val isLoggedIn =
                         uiState.accountName.isNotBlank() &&
                             !uiState.accountName.equals("Guest", ignoreCase = true)
+                    val hasPrecedingShelf = (remoteQuickPicks?.items?.isNotEmpty() == true || uiState.quickPicks.isNotEmpty()) ||
+                        uiState.speedDialItems.isNotEmpty() ||
+                        uiState.keepListening.isNotEmpty()
+                    val isFirstShelfAccountPlaylists = uiState.accountPlaylists.isNotEmpty() && !hasPrecedingShelf
 
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Box(
@@ -379,7 +383,7 @@ private fun HomeContent(
                         }
                         Column(modifier = Modifier.padding(horizontal = 15.dp)) {
                             Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }))
-                            if (isLoggedIn) {
+                            if (isLoggedIn && !isFirstShelfAccountPlaylists) {
                                 Spacer(Modifier.height(8.dp))
                                 AccountLayout(
                                     accountName = uiState.accountName,
@@ -456,6 +460,7 @@ private fun HomeContent(
                                 accountName = uiState.accountName,
                                 accountImageUrl = uiState.accountImageUrl,
                                 navController = navController,
+                                playerConnection = playerConnection,
                             )
                         }
                     }
