@@ -1062,13 +1062,12 @@ fun SimpHomeShelf(
     }
 }
 
-val HomeVideoCardWidth: Dp = (150f * 16f / 9f).dp
+val HomeVideoCardWidth: Dp = 225.dp
 val HomeVideoThumbnailHeight: Dp = ((HomeVideoCardWidth - 10.dp) * 9f / 16f).coerceAtLeast(0.dp)
-val HomeVideoPodHeight: Dp = (5.dp + HomeVideoThumbnailHeight + 6.dp + 48.dp + 8.dp).coerceAtLeast(0.dp)
+val HomeVideoPodHeight: Dp = 185.dp
 
-// Square card dimensions scaled so total pod/container height matches HomeVideoPodHeight exactly:
-// 5.dp (top) + 155.dp (artwork) + 6.dp (spacer) + 38.dp (text) + 8.dp (bottom) = 212.dp (~HomeVideoPodHeight)
-val HomeSquareCardThumbSize: Dp = 165.dp
+// Square card: 130dp wide, 120dp artwork (130 - 2*5 padding), ~38dp text area = ~177dp total — fits in 185dp pod.
+val HomeSquareCardThumbSize: Dp = 130.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
