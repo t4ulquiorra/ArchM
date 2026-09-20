@@ -282,10 +282,9 @@ private fun HomeContent(
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val remoteQuickPicks =
-        uiState
-            .takeIf { it.quickPicksMode == QuickPicks.QUICK_PICKS }
-            ?.remoteQuickPicks
+    // Always surface remote Quick picks regardless of quickPicksMode –
+    // ArchM has no DONT_SHOW option so we never need to gate it.
+    val remoteQuickPicks = uiState.remoteQuickPicks
 
     val isScrollingUp by lazyListState.isScrollingUp()
     var topAppBarHeightPx by rememberSaveable { mutableIntStateOf(0) }

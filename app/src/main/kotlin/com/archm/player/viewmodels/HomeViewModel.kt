@@ -789,16 +789,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private val previousRemoteQuickPicks = MutableStateFlow<HomePage.Section?>(null)
+
     fun toggleChip(chip: HomePage.Chip?) {
         if (chip == null || chip == selectedChip.value && previousHomePage.value != null) {
             homePage.value = previousHomePage.value
+            remoteQuickPicks.value = previousRemoteQuickPicks.value
             previousHomePage.value = null
+            previousRemoteQuickPicks.value = null
             selectedChip.value = null
             return
         }
 
         if (selectedChip.value == null) {
             previousHomePage.value = homePage.value
+            previousRemoteQuickPicks.value = remoteQuickPicks.value
         }
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -807,12 +812,15 @@ class HomeViewModel @Inject constructor(
             val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
             val nextSections = YouTube.home(params = chip.endpoint?.params).getOrNull() ?: return@launch
 
-            homePage.value = nextSections.copy(
+            val filteredPage = nextSections.copy(
                 chips = homePage.value?.chips,
                 sections = nextSections.sections.map { section ->
                     section.copy(items = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts))
                 }
             )
+            val (pageWithoutQuickPicks, quickPicksSection) = filteredPage.extractQuickPicks()
+            remoteQuickPicks.value = quickPicksSection
+            homePage.value = pageWithoutQuickPicks
             selectedChip.value = chip
         }
     }
