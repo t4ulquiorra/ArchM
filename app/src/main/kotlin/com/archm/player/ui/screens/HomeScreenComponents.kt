@@ -1035,8 +1035,8 @@ fun SimpHomeShelf(
                     text = title,
                     style =
                         MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.W800,
                         ),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,

@@ -416,8 +416,8 @@ private fun HomeContent(
                                 text = stringResource(R.string.speed_dial),
                                 style =
                                     MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.W800,
                                     ),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(vertical = 4.dp),
