@@ -1,6 +1,7 @@
 package com.archm.player.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -37,11 +38,15 @@ fun SpeedDialGridItem(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
 ) {
+    val cardShape = RoundedCornerShape(ThumbnailCornerRadius)
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(1f) 
-            .clip(RoundedCornerShape(ThumbnailCornerRadius))
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(cardShape)
+                .background(Color(0xFF141414))
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape),
     ) {
         
         ItemThumbnail(
