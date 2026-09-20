@@ -3,6 +3,7 @@
 package com.archm.player.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -402,13 +403,39 @@ class HomeViewModel @Inject constructor(
         }
 
     private fun HomePage.extractQuickPicks(): Pair<HomePage, HomePage.Section?> {
-        val quickPicksIndex = sections.indexOfFirst { section ->
+        val titles = sections.map { it.title }
+        Log.d("HomeViewModel", "extractQuickPicks: FEmusic_home shelf titles (${sections.size}): $titles")
+
+        // 1. Primary: exact or partial "Quick picks"
+        var quickPicksIndex = sections.indexOfFirst { section ->
             section.title.equals(context.getString(R.string.quick_picks), ignoreCase = true) ||
                 section.title.contains("quick pick", ignoreCase = true)
         }
-        if (quickPicksIndex < 0) return this to null
 
-        return copy(sections = sections.toMutableList().apply { removeAt(quickPicksIndex) }) to sections[quickPicksIndex]
+        // 2. Fallback: "Listen again"
+        if (quickPicksIndex < 0) {
+            quickPicksIndex = sections.indexOfFirst { section ->
+                section.title.equals("Listen again", ignoreCase = true) ||
+                    section.title.contains("listen again", ignoreCase = true)
+            }
+        }
+
+        // 3. Fallback: Any shelf containing SongItem (track/song-based shelf)
+        if (quickPicksIndex < 0) {
+            quickPicksIndex = sections.indexOfFirst { section ->
+                section.items.isNotEmpty() && section.items.any { it is SongItem }
+            }
+        }
+
+        if (quickPicksIndex < 0) {
+            Log.d("HomeViewModel", "extractQuickPicks: No suitable shelf found in sections")
+            return this to null
+        }
+
+        val chosenSection = sections[quickPicksIndex]
+        Log.d("HomeViewModel", "extractQuickPicks: Selected shelf '${chosenSection.title}' at index $quickPicksIndex with ${chosenSection.items.size} items")
+
+        return copy(sections = sections.toMutableList().apply { removeAt(quickPicksIndex) }) to chosenSection
     }
 
     fun togglePin(item: YTItem) {
@@ -475,6 +502,19 @@ class HomeViewModel @Inject constructor(
         dailyDiscover.value = items.toList().distinctBy { it.recommendation.id }.shuffled()
     }
 
+    private suspend fun quickPicksWithFallback(primary: List<Song>, hideVideoSongs: Boolean): List<Song> {
+        val sample = primary.filterVideoSongs(hideVideoSongs).distinctBy { it.id }.shuffled().take(20)
+        if (sample.isNotEmpty()) return sample
+
+        val topSongs = database.topSongs(limit = 20).first().filterVideoSongs(hideVideoSongs).distinctBy { it.id }.shuffled().take(20)
+        if (topSongs.isNotEmpty()) return topSongs
+
+        val likedSongs = database.likedSongsByCreateDateAsc().first().filterVideoSongs(hideVideoSongs).distinctBy { it.id }.shuffled().take(20)
+        if (likedSongs.isNotEmpty()) return likedSongs
+
+        return database.allSongs().first().filterVideoSongs(hideVideoSongs).distinctBy { it.id }.shuffled().take(20)
+    }
+
     private suspend fun getQuickPicks() {
         val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
         when (quickPicksEnum.first()) {
@@ -482,7 +522,6 @@ class HomeViewModel @Inject constructor(
                 val relatedSongs = database.quickPicks().first().filterVideoSongs(hideVideoSongs)
                 val forgotten = database.forgottenFavorites().first().filterVideoSongs(hideVideoSongs).take(8)
 
-                
                 val recentSong = database.events().first().firstOrNull()?.song
                 val ytSimilarSongs = mutableListOf<Song>()
 
@@ -490,7 +529,6 @@ class HomeViewModel @Inject constructor(
                     val endpoint = YouTube.next(WatchEndpoint(videoId = recentSong.id)).getOrNull()?.relatedEndpoint
                     if (endpoint != null) {
                         YouTube.related(endpoint).onSuccess { page ->
-                            
                             page.songs.take(10).forEach { ytSong ->
                                 database.song(ytSong.id).first()?.let { localSong ->
                                     if (!hideVideoSongs || !localSong.song.isVideo) {
@@ -502,19 +540,17 @@ class HomeViewModel @Inject constructor(
                     }
                 }
 
-                
                 val combined = (relatedSongs + forgotten + ytSimilarSongs)
-                    .distinctBy { it.id }
-                    .shuffled()
-                    .take(20)
-
-                quickPicks.value = combined.ifEmpty { relatedSongs.shuffled().take(20) }
+                quickPicks.value = quickPicksWithFallback(combined.ifEmpty { relatedSongs }, hideVideoSongs)
             }
             QuickPicks.LAST_LISTEN -> {
                 val song = database.events().first().firstOrNull()?.song
-                if (song != null && database.hasRelatedSongs(song.id)) {
-                    quickPicks.value = database.getRelatedSongs(song.id).first().filterVideoSongs(hideVideoSongs).shuffled().take(20)
+                val lastListenSongs = if (song != null && database.hasRelatedSongs(song.id)) {
+                    database.getRelatedSongs(song.id).first().filterVideoSongs(hideVideoSongs)
+                } else {
+                    emptyList()
                 }
+                quickPicks.value = quickPicksWithFallback(lastListenSongs, hideVideoSongs)
             }
         }
     }
@@ -713,7 +749,14 @@ class HomeViewModel @Inject constructor(
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
                     val (pageWithoutQuickPicks, quickPicksSection) = page.extractQuickPicks()
-                    remoteQuickPicks.value = quickPicksSection
+                    val filteredQuickPicks = quickPicksSection?.let { section ->
+                        val filteredItems = section.items
+                            .filterExplicit(hideExplicit)
+                            .filterVideoSongs(hideVideoSongs)
+                            .filterYoutubeShorts(hideYoutubeShorts)
+                        if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
+                    }
+                    remoteQuickPicks.value = filteredQuickPicks
                     homePage.value = pageWithoutQuickPicks.copy(
                         chips = filterHomeChips(pageWithoutQuickPicks.chips),
                         sections = pageWithoutQuickPicks.sections.mapNotNull { section ->

@@ -86,6 +86,7 @@ import com.archm.player.db.entities.Album
 import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.Playlist
 import com.archm.player.db.entities.Song
+import com.music.innertube.models.SongItem
 import com.archm.player.home.HomeAction
 import com.archm.player.home.HomeScreenState
 import com.archm.player.home.HomeUiState
@@ -282,15 +283,22 @@ private fun HomeContent(
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Always surface remote Quick picks regardless of quickPicksMode –
-    // ArchM has no DONT_SHOW option so we never need to gate it.
-    val remoteQuickPicks = uiState.remoteQuickPicks
+    // Always surface remote Quick picks (fallback to Listen again or any track shelf if not extracted)
+    val remoteQuickPicks =
+        uiState.remoteQuickPicks
+            ?: uiState.homePage?.sections?.firstOrNull { section ->
+                section.title.equals("Quick picks", ignoreCase = true) ||
+                    section.title.contains("quick pick", ignoreCase = true) ||
+                    section.title.equals("Listen again", ignoreCase = true) ||
+                    section.title.contains("listen again", ignoreCase = true) ||
+                    section.items.any { it is SongItem }
+            }
 
     val isScrollingUp by lazyListState.isScrollingUp()
     var topAppBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
 
     val firstThumbnailUrl =
-        remember(uiState) {
+        remember(uiState, remoteQuickPicks) {
             remoteQuickPicks?.items?.firstOrNull()?.thumbnail
                 ?: uiState.quickPicks.firstOrNull()?.song?.thumbnailUrl
                 ?: uiState.keepListening.firstOrNull()?.let {
@@ -392,18 +400,16 @@ private fun HomeContent(
                                 )
                                 Spacer(Modifier.height(8.dp))
                             }
-                            if (remoteQuickPicks?.items?.isNotEmpty() == true || uiState.quickPicks.isNotEmpty()) {
-                                SimpQuickPicks(
-                                    quickPicks = uiState.quickPicks,
-                                    remoteQuickPicks = remoteQuickPicks,
-                                    mediaMetadata = mediaMetadata,
-                                    isPlaying = isPlaying,
-                                    navController = navController,
-                                    playerConnection = playerConnection,
-                                    menuState = menuState,
-                                    haptic = haptic,
-                                )
-                            }
+                            SimpQuickPicks(
+                                quickPicks = uiState.quickPicks,
+                                remoteQuickPicks = remoteQuickPicks,
+                                mediaMetadata = mediaMetadata,
+                                isPlaying = isPlaying,
+                                navController = navController,
+                                playerConnection = playerConnection,
+                                menuState = menuState,
+                                haptic = haptic,
+                            )
                         }
                     }
                 }
@@ -510,9 +516,12 @@ private fun HomeContent(
                     items = uiState.homePage?.sections.orEmpty(),
                     key = { index, section -> "remote_${section.endpoint?.browseId ?: section.title}_$index" },
                 ) { _, section ->
+                    if (section == remoteQuickPicks) return@itemsIndexed
                     Box(modifier = Modifier.padding(horizontal = 15.dp)) {
                         if (section.title.equals("Quick picks", ignoreCase = true) ||
-                            section.title.contains("quick pick", ignoreCase = true)
+                            section.title.contains("quick pick", ignoreCase = true) ||
+                            section.title.equals("Listen again", ignoreCase = true) ||
+                            section.title.contains("listen again", ignoreCase = true)
                         ) {
                             QuickPicksCarouselShelf(
                                 section = section,
