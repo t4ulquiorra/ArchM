@@ -122,8 +122,11 @@ import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.PlayerConnection
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.YouTubeQueue
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import com.archm.player.ui.component.MenuState
 import com.archm.player.ui.component.SpeedDialGridItem
+import com.archm.player.ui.component.SpeedDialPodItem
 import com.archm.player.ui.menu.AlbumMenu
 import com.archm.player.ui.menu.ArtistMenu
 import com.archm.player.ui.menu.PlaylistMenu
@@ -1138,17 +1141,10 @@ fun HomeItemVideo(
         }
         Spacer(modifier = Modifier.height(2.dp))
     }
-}
-
-// ==========================================
-// 5. Speed Dial Section (Paging Grid)
+}// ==========================================
+// 5. Speed Dial Section (Spotify-style Matrix)
 // ==========================================
 
-private const val SpeedDialGridColumns = 2
-private const val SpeedDialGridRows = 4
-private const val SpeedDialItemsPerPage = SpeedDialGridColumns * SpeedDialGridRows
-
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SpeedDialSection(
     speedDialItems: List<LocalItem>,
@@ -1162,122 +1158,33 @@ fun SpeedDialSection(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-
-    data class SpeedDialTile(
-        val key: String,
-        val localItem: LocalItem?,
-        val ytItem: YTItem?,
-    )
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val columns = if (isLandscape) 4 else 2
+    val maxRows = 3
+    val maxItems = columns * maxRows // 6 items in Portrait, 12 items in Landscape
 
     val distinctSpeedDial =
         remember(speedDialItems) {
-            speedDialItems
-                .distinctBy {
-                    when (it) {
-                        is Song -> "song_${it.id}"
-                        is Album -> "album_${it.id}"
-                        is Artist -> "artist_${it.id}"
-                        is Playlist -> "playlist_${it.id}"
-                    }
-                }.take(24)
+            speedDialItems.distinctBy {
+                when (it) {
+                    is Song -> "song_${it.id}"
+                    is Album -> "album_${it.id}"
+                    is Artist -> "artist_${it.id}"
+                    is Playlist -> "playlist_${it.id}"
+                }
+            }
         }
+
+    val displayItems =
+        remember(distinctSpeedDial, maxItems) {
+            distinctSpeedDial.take(maxItems)
+        }
+
     val speedDialSongs = remember(distinctSpeedDial) { distinctSpeedDial.filterIsInstance<Song>() }
     val speedDialSongIndexById =
         remember(speedDialSongs) {
             speedDialSongs.mapIndexed { index, song -> song.id to index }.toMap()
         }
-    val spacing = 10.dp
-
-    val tiles =
-        remember(distinctSpeedDial) {
-            buildList {
-                distinctSpeedDial.forEach { localItem ->
-                    val key =
-                        when (localItem) {
-                            is Song -> "song_${localItem.id}"
-                            is Album -> "album_${localItem.id}"
-                            is Artist -> "artist_${localItem.id}"
-                            is Playlist -> "playlist_${localItem.id}"
-                        }
-                    val ytItem =
-                        when (localItem) {
-                            is Song -> {
-                                SongItem(
-                                    id = localItem.id,
-                                    title = localItem.title,
-                                    artists =
-                                        localItem.artists.map {
-                                            com.music.innertube.models
-                                                .Artist(name = it.name, id = it.id)
-                                        },
-                                    thumbnail = localItem.song.thumbnailUrl.orEmpty(),
-                                    explicit = localItem.song.explicit,
-                                )
-                            }
-
-                            is Album -> {
-                                AlbumItem(
-                                    browseId = localItem.id,
-                                    playlistId = localItem.album.playlistId.orEmpty(),
-                                    title = localItem.title,
-                                    artists =
-                                        localItem.artists.map {
-                                            com.music.innertube.models
-                                                .Artist(name = it.name, id = it.id)
-                                        },
-                                    year = localItem.album.year,
-                                    thumbnail = localItem.album.thumbnailUrl.orEmpty(),
-                                )
-                            }
-
-                            is Artist -> {
-                                ArtistItem(
-                                    id = localItem.id,
-                                    title = localItem.title,
-                                    thumbnail = localItem.artist.thumbnailUrl,
-                                    channelId = localItem.artist.channelId,
-                                    playEndpoint = null,
-                                    shuffleEndpoint = null,
-                                    radioEndpoint = null,
-                                )
-                            }
-
-                            is Playlist -> {
-                                PlaylistItem(
-                                    id = localItem.id,
-                                    title = localItem.title,
-                                    author = null,
-                                    songCountText = localItem.songCount.toString(),
-                                    thumbnail = localItem.thumbnails.firstOrNull(),
-                                    playEndpoint = null,
-                                    shuffleEndpoint = null,
-                                    radioEndpoint = null,
-                                    isEditable = localItem.playlist.isEditable,
-                                )
-                            }
-                        }
-                    add(SpeedDialTile(key = key, localItem = localItem, ytItem = ytItem))
-                }
-                add(SpeedDialTile(key = "random", localItem = null, ytItem = null))
-            }
-        }
-    val tilePages =
-        remember(tiles) {
-            tiles.chunked(SpeedDialItemsPerPage)
-        }
-    val visibleGridRows =
-        remember(tilePages) {
-            if (tilePages.size == 1) {
-                ((tilePages.first().size + SpeedDialGridColumns - 1) / SpeedDialGridColumns)
-                    .coerceIn(1, SpeedDialGridRows)
-            } else {
-                SpeedDialGridRows
-            }
-        }
-    val pagerState =
-        rememberPagerState(
-            pageCount = { tilePages.size },
-        )
 
     fun playSpeedDialQueue(startIndex: Int) {
         if (speedDialSongs.isEmpty()) return
@@ -1290,225 +1197,99 @@ fun SpeedDialSection(
         )
     }
 
-    val selectedDotIndex by
-        remember(pagerState, tilePages) {
-            derivedStateOf {
-                (pagerState.currentPage + pagerState.currentPageOffsetFraction)
-                    .roundToInt()
-                    .coerceIn(0, (tilePages.size - 1).coerceAtLeast(0))
-            }
-        }
-
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = MaterialTheme.shapes.large,
-        tonalElevation = 1.dp,
-        modifier =
-            modifier
-                .fillMaxWidth(),
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(modifier = Modifier.padding(vertical = 12.dp)) {
-            BoxWithConstraints(
-                modifier =
-                    Modifier
-                        .padding(horizontal = 12.dp)
-                        .fillMaxWidth(),
+        displayItems.chunked(columns).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val tileSize: Dp = (maxWidth - spacing * (SpeedDialGridColumns - 1)) / SpeedDialGridColumns
-                val gridHeight: Dp = (tileSize * visibleGridRows) + (spacing * (visibleGridRows - 1))
+                rowItems.forEach { item ->
+                    val isActive =
+                        when (item) {
+                            is Song -> item.id == mediaMetadata?.id
+                            is Album -> item.id == mediaMetadata?.album?.id
+                            is Artist -> false
+                            is Playlist -> false
+                        }
+                    val isCurrentPlaying = isActive && isPlaying
 
-                HorizontalPager(
-                    state = pagerState,
-                    pageSize = PageSize.Fill,
-                    pageSpacing = spacing,
-                    key = { page -> tilePages[page].firstOrNull()?.key ?: "speed_dial_page_$page" },
-                    verticalAlignment = Alignment.Top,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(gridHeight),
-                ) { page ->
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(spacing),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        tilePages[page]
-                            .chunked(SpeedDialGridColumns)
-                            .forEach { rowTiles ->
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(spacing),
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    rowTiles.forEach { tile ->
-                                        val localItem = tile.localItem
-                                        val ytItem = tile.ytItem
-                                        if (localItem == null || ytItem == null) {
-                                            SpeedDialRandomTile(
-                                                onClick = {
-                                                    if (speedDialSongs.isNotEmpty()) {
-                                                        playSpeedDialQueue(Random.nextInt(speedDialSongs.size))
-                                                    }
-                                                },
-                                                modifier = Modifier.size(tileSize),
-                                            )
+                    Box(modifier = Modifier.weight(1f)) {
+                        SpeedDialPodItem(
+                            item = item,
+                            isActive = isActive,
+                            isPlaying = isCurrentPlaying,
+                            onClick = {
+                                when (item) {
+                                    is Song -> {
+                                        if (isActive) {
+                                            playerConnection.player.togglePlayPause()
                                         } else {
-                                            val isActive =
-                                                when (localItem) {
-                                                    is Song -> localItem.id == mediaMetadata?.id
-                                                    is Album -> localItem.id == mediaMetadata?.album?.id
-                                                    is Artist -> false
-                                                    is Playlist -> false
-                                                }
-                                            val songIndex =
-                                                if (localItem is Song) speedDialSongIndexById[localItem.id] ?: 0 else 0
-
-                                            Box(
-                                                modifier =
-                                                    Modifier
-                                                        .size(tileSize)
-                                                        .clip(MaterialTheme.shapes.large)
-                                                        .focusable()
-                                                        .combinedClickable(
-                                                            onClick = {
-                                                                when (localItem) {
-                                                                    is Song -> {
-                                                                        if (isActive) {
-                                                                            playerConnection.player.togglePlayPause()
-                                                                        } else {
-                                                                            playSpeedDialQueue(songIndex)
-                                                                        }
-                                                                    }
-                                                                    is Album -> {
-                                                                        navController.navigate("album/${localItem.id}")
-                                                                    }
-                                                                    is Artist -> {
-                                                                        navController.navigate("artist/${localItem.id}")
-                                                                    }
-                                                                    is Playlist -> {
-                                                                        navController.navigate("local_playlist/${localItem.id}")
-                                                                    }
-                                                                }
-                                                            },
-                                                            onLongClick = {
-                                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                menuState.show {
-                                                                    when (localItem) {
-                                                                        is Song -> {
-                                                                            SongMenu(
-                                                                                originalSong = localItem,
-                                                                                navController = navController,
-                                                                                onDismiss = menuState::dismiss,
-                                                                            )
-                                                                        }
-                                                                        is Album -> {
-                                                                            AlbumMenu(
-                                                                                originalAlbum = localItem,
-                                                                                navController = navController,
-                                                                                onDismiss = menuState::dismiss,
-                                                                            )
-                                                                        }
-                                                                        is Artist -> {
-                                                                            ArtistMenu(
-                                                                                originalArtist = localItem,
-                                                                                coroutineScope = scope,
-                                                                                onDismiss = menuState::dismiss,
-                                                                            )
-                                                                        }
-                                                                        is Playlist -> {
-                                                                            PlaylistMenu(
-                                                                                playlist = localItem,
-                                                                                coroutineScope = scope,
-                                                                                onDismiss = menuState::dismiss,
-                                                                            )
-                                                                        }
-                                                                    }
-                                                                }
-                                                            },
-                                                        ),
-                                            ) {
-                                                SpeedDialGridItem(
-                                                    item = ytItem,
-                                                    isPinned = true,
-                                                    isActive = isActive,
-                                                    isPlaying = isPlaying,
-                                                )
-                                            }
+                                            val songIndex = speedDialSongIndexById[item.id] ?: 0
+                                            playSpeedDialQueue(songIndex)
                                         }
                                     }
-                                    repeat(SpeedDialGridColumns - rowTiles.size) {
-                                        Spacer(modifier = Modifier.size(tileSize))
+
+                                    is Album -> {
+                                        navController.navigate("album/${item.id}")
+                                    }
+
+                                    is Artist -> {
+                                        navController.navigate("artist/${item.id}")
+                                    }
+
+                                    is Playlist -> {
+                                        navController.navigate("local_playlist/${item.id}")
                                     }
                                 }
-                            }
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                menuState.show {
+                                    when (item) {
+                                        is Song -> {
+                                            SongMenu(
+                                                originalSong = item,
+                                                navController = navController,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+
+                                        is Album -> {
+                                            AlbumMenu(
+                                                originalAlbum = item,
+                                                navController = navController,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+
+                                        is Artist -> {
+                                            ArtistMenu(
+                                                originalArtist = item,
+                                                coroutineScope = scope,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+
+                                        is Playlist -> {
+                                            PlaylistMenu(
+                                                playlist = item,
+                                                coroutineScope = scope,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                        )
                     }
                 }
-            }
-
-            if (tilePages.size > 1) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                ) {
-                    repeat(tilePages.size) { index ->
-                        val isSelected = index == selectedDotIndex
-                        val dotColor by animateColorAsState(
-                            targetValue =
-                                if (isSelected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHighest
-                                },
-                            label = "speedDialDotColor",
-                        )
-                        val dotWidth by animateDpAsState(
-                            targetValue = if (isSelected) 22.dp else 8.dp,
-                            label = "speedDialDotWidth",
-                        )
-                        Surface(
-                            color = dotColor,
-                            shape = MaterialTheme.shapes.extraLarge,
-                            modifier =
-                                Modifier
-                                    .width(dotWidth)
-                                    .height(8.dp),
-                        ) {}
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun SpeedDialRandomTile(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val cardShape = RoundedCornerShape(ThumbnailCornerRadius)
-    Surface(
-        color = Color(0xFF141414),
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = cardShape,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-        modifier =
-            modifier
-                .aspectRatio(1f)
-                .combinedClickable(onClick = onClick),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                repeat(3) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = CircleShape,
-                        modifier = Modifier.size(18.dp),
-                    ) {}
+                // Fill empty trailing slots in the last row if uneven
+                val emptySlots = columns - rowItems.size
+                repeat(emptySlots) {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
