@@ -64,6 +64,7 @@ data class HomePage(
                 return when {
                     renderer.isSong -> {
                         val subtitleRuns = renderer.subtitle?.runs?.oddElements() ?: return null
+                        val bestThumb = renderer.thumbnailRenderer.musicThumbnailRenderer?.getBestThumbnail()
                         SongItem(
                             id = renderer.navigationEndpoint.watchEndpoint?.videoId ?: return null,
                             title = renderer.title.runs?.firstOrNull()?.text ?: return null,
@@ -90,14 +91,20 @@ data class HomePage(
                                 )
                             },
                             duration = null,
-                            thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl()
+                            musicVideoType = renderer.musicVideoType,
+                            thumbnail = bestThumb?.normalizedUrl
+                                ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl()
                                 ?: return null,
                             explicit = renderer.subtitleBadges?.any {
                                 it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
-                            } == true
+                            } == true,
+                            endpoint = renderer.navigationEndpoint.watchEndpoint,
+                            thumbnailWidth = bestThumb?.width,
+                            thumbnailHeight = bestThumb?.height,
                         )
                     }
                     renderer.isAlbum -> {
+                        val bestThumb = renderer.thumbnailRenderer.musicThumbnailRenderer?.getBestThumbnail()
                         AlbumItem(
                             browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
                             playlistId = renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content
@@ -111,14 +118,18 @@ data class HomePage(
                                 )
                             },
                             year = null,
-                            thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+                            thumbnail = bestThumb?.normalizedUrl
+                                ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                             explicit = renderer.subtitleBadges?.find {
                                 it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
-                            } != null
+                            } != null,
+                            thumbnailWidth = bestThumb?.width,
+                            thumbnailHeight = bestThumb?.height,
                         )
                     }
 
                     renderer.isPlaylist -> {
+                        val bestThumb = renderer.thumbnailRenderer.musicThumbnailRenderer?.getBestThumbnail()
                         PlaylistItem(
                             id = renderer.navigationEndpoint.browseEndpoint?.browseId?.removePrefix("VL") ?: return null,
                             title = renderer.title.runs?.firstOrNull()?.text ?: return null,
@@ -127,7 +138,8 @@ data class HomePage(
                                 id = null
                             ),
                             songCountText = null,
-                            thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+                            thumbnail = bestThumb?.normalizedUrl
+                                ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                             playEndpoint = renderer.thumbnailOverlay
                                 ?.musicItemThumbnailOverlayRenderer?.content
                                 ?.musicPlayButtonRenderer?.playNavigationEndpoint
@@ -137,21 +149,27 @@ data class HomePage(
                             }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
                             radioEndpoint = renderer.menu.menuRenderer.items.find {
                                 it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
-                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint
+                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint,
+                            thumbnailWidth = bestThumb?.width,
+                            thumbnailHeight = bestThumb?.height,
                         )
                     }
 
                     renderer.isArtist -> {
+                        val bestThumb = renderer.thumbnailRenderer.musicThumbnailRenderer?.getBestThumbnail()
                         ArtistItem(
                             id = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
                             title = renderer.title.runs?.lastOrNull()?.text ?: return null,
-                            thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+                            thumbnail = bestThumb?.normalizedUrl
+                                ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                             shuffleEndpoint = renderer.menu?.menuRenderer?.items?.find {
                                 it.menuNavigationItemRenderer?.icon?.iconType == "MUSIC_SHUFFLE"
                             }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
                             radioEndpoint = renderer.menu.menuRenderer.items.find {
                                 it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
                             }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
+                            thumbnailWidth = bestThumb?.width,
+                            thumbnailHeight = bestThumb?.height,
                         )
                     }
 

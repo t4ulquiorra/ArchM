@@ -6,6 +6,8 @@ sealed class YTItem {
     abstract val id: String
     abstract val title: String
     abstract val thumbnail: String?
+    open val thumbnailWidth: Int? get() = null
+    open val thumbnailHeight: Int? get() = null
     abstract val explicit: Boolean
     abstract val shareLink: String
 }
@@ -38,6 +40,8 @@ data class SongItem(
     val historyRemoveToken: String? = null,
     val viewCountText: String? = null,
     val viewCount: Long? = null,
+    override val thumbnailWidth: Int? = null,
+    override val thumbnailHeight: Int? = null,
 ) : YTItem() {
     val isVideoSong: Boolean
         get() = musicVideoType != null && musicVideoType != MUSIC_VIDEO_TYPE_ATV
@@ -70,6 +74,8 @@ data class AlbumItem(
     override val explicit: Boolean = false,
     val description: String? = null,
     val explicitType: String? = null,
+    override val thumbnailWidth: Int? = null,
+    override val thumbnailHeight: Int? = null,
 ) : YTItem() {
     override val shareLink: String
         get() = "https://share.echomusic.fun/playlist?list=$playlistId"
@@ -87,6 +93,8 @@ data class PlaylistItem(
     val isEditable: Boolean = false,
     val year: String? = null,
     val description: String? = null,
+    override val thumbnailWidth: Int? = null,
+    override val thumbnailHeight: Int? = null,
 ) : YTItem() {
     override val explicit: Boolean
         get() = false
@@ -103,12 +111,35 @@ data class ArtistItem(
     val shuffleEndpoint: WatchEndpoint?,
     val radioEndpoint: WatchEndpoint?,
     val isVerified: Boolean = false,
+    override val thumbnailWidth: Int? = null,
+    override val thumbnailHeight: Int? = null,
 ) : YTItem() {
     override val explicit: Boolean
         get() = false
     override val shareLink: String
         get() = "https://share.echomusic.fun/channel/$id"
 }
+
+val YTItem.thumbnailSourceRatio: Float?
+    get() {
+        val width = thumbnailWidth
+        val height = thumbnailHeight
+        return if (width != null && height != null && width > 0 && height > 0) {
+            width.toFloat() / height.toFloat()
+        } else {
+            null
+        }
+    }
+
+val YTItem.isLandscapeThumbnail: Boolean
+    get() {
+        if (this is ArtistItem) return false
+        val sourceRatio = thumbnailSourceRatio
+        if (sourceRatio != null) {
+            return sourceRatio >= (4f / 3f)
+        }
+        return if (this is SongItem) isVideoSong else false
+    }
 
 fun <T : YTItem> List<T>.filterExplicit(enabled: Boolean = true) =
     if (enabled) {
