@@ -315,7 +315,6 @@ private fun HomeContent(
                         ImageRequest.Builder(context)
                             .data(firstThumbnailUrl)
                             .size(100, 100)
-                            .allowHardware(false)
                             .build()
                     val result = context.imageLoader.execute(request)
                     val bitmap = result.image?.toBitmap()
@@ -572,9 +571,10 @@ private fun HomeContent(
                                 .windowInsetsPadding(WindowInsets.statusBars),
                     )
                 }
-                if (uiState.showCategoryChips && uiState.homePage?.chips?.isNotEmpty() == true) {
+                val chipsList = uiState.homePage?.chips
+                if (uiState.showCategoryChips && !chipsList.isNullOrEmpty()) {
                     HomeCategoryChips(
-                        chips = uiState.homePage.chips,
+                        chips = chipsList,
                         selectedChip = uiState.selectedChip,
                         onChipSelected = { onAction(HomeAction.SelectChip(it)) },
                     )

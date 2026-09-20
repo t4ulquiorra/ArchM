@@ -5,6 +5,8 @@
  * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
  */
 
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+
 package com.archm.player.ui.screens
 
 import androidx.compose.animation.animateColorAsState
@@ -15,6 +17,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -1042,8 +1045,12 @@ fun HomeItemVideo(
 }
 
 // ==========================================
-// 5. Speed Dial Section (Paging 3x3 Grid)
+// 5. Speed Dial Section (Paging Grid)
 // ==========================================
+
+private const val SpeedDialGridColumns = 2
+private const val SpeedDialGridRows = 4
+private const val SpeedDialItemsPerPage = SpeedDialGridColumns * SpeedDialGridRows
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1211,8 +1218,8 @@ fun SpeedDialSection(
                         .padding(horizontal = 12.dp)
                         .fillMaxWidth(),
             ) {
-                val tileSize = (maxWidth - spacing * (SpeedDialGridColumns - 1)) / SpeedDialGridColumns
-                val gridHeight = (tileSize * visibleGridRows) + (spacing * (visibleGridRows - 1))
+                val tileSize: Dp = (maxWidth - spacing * (SpeedDialGridColumns - 1)) / SpeedDialGridColumns
+                val gridHeight: Dp = (tileSize * visibleGridRows) + (spacing * (visibleGridRows - 1))
 
                 HorizontalPager(
                     state = pagerState,
@@ -1574,7 +1581,7 @@ fun AccountPlaylistsShelf(
             ) { item ->
                 HomeItemContentPlaylist(
                     title = item.title,
-                    subtitle = item.author ?: item.songCountText ?: stringResource(R.string.playlist),
+                    subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
                     thumbnailUrl = item.thumbnail,
                     onClick = { navController.navigate("online_playlist/${item.id}") },
                 )
@@ -1792,7 +1799,7 @@ fun SimilarRecommendationsShelf(
                     is PlaylistItem -> {
                         HomeItemContentPlaylist(
                             title = item.title,
-                            subtitle = item.author ?: item.songCountText ?: stringResource(R.string.playlist),
+                            subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
                             thumbnailUrl = item.thumbnail,
                             onClick = { navController.navigate("online_playlist/${item.id}") },
                             onLongClick = {
@@ -1960,7 +1967,7 @@ fun HomePageSectionShelf(
                     is PlaylistItem -> {
                         HomeItemContentPlaylist(
                             title = item.title,
-                            subtitle = item.author ?: item.songCountText ?: stringResource(R.string.playlist),
+                            subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
                             thumbnailUrl = item.thumbnail,
                             onClick = { navController.navigate("online_playlist/${item.id}") },
                             onLongClick = {
