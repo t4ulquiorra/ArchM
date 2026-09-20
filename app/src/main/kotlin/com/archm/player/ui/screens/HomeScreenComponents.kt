@@ -5,7 +5,11 @@
  * Do not remove or alter this notice. - Per GPL-3.0 Section 4 & Section 5
  */
 
-@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@file:OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+)
 
 package com.archm.player.ui.screens
 
@@ -60,6 +64,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -107,6 +114,7 @@ import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.size.Size
 import com.archm.player.R
 import com.archm.player.constants.QuickPicksDisplayMode
 import com.archm.player.db.entities.Album
@@ -544,7 +552,352 @@ fun QuickPicksItem(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+data class QuickPicksCarouselItem(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val thumbnailUrl: String?,
+    val onClick: () -> Unit,
+    val onLongClick: () -> Unit,
+)
+
+fun Song.toQuickPicksCarouselItem(
+    playerConnection: PlayerConnection,
+    navController: NavController,
+    menuState: MenuState,
+    haptic: HapticFeedback,
+    mediaMetadata: MediaMetadata?,
+): QuickPicksCarouselItem {
+    val isActive = id == mediaMetadata?.id
+    return QuickPicksCarouselItem(
+        id = id,
+        title = song.title,
+        subtitle = artists.joinToString { it.name },
+        thumbnailUrl = song.thumbnailUrl,
+        onClick = {
+            if (isActive) {
+                playerConnection.player.togglePlayPause()
+            } else {
+                playerConnection.playQueue(
+                    if (song.isLocal) {
+                        ListQueue(items = listOf(toMediaItem()))
+                    } else {
+                        YouTubeQueue.radio(toMediaMetadata())
+                    },
+                )
+            }
+        },
+        onLongClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            menuState.show {
+                SongMenu(
+                    originalSong = this@toQuickPicksCarouselItem,
+                    navController = navController,
+                    onDismiss = menuState::dismiss,
+                )
+            }
+        },
+    )
+}
+
+fun YTItem.toQuickPicksCarouselItem(
+    playerConnection: PlayerConnection,
+    navController: NavController,
+    menuState: MenuState,
+    haptic: HapticFeedback,
+    mediaMetadata: MediaMetadata?,
+): QuickPicksCarouselItem {
+    val isActive = id in listOf(mediaMetadata?.album?.id, mediaMetadata?.id)
+    val itemTitle =
+        when (this) {
+            is SongItem -> title
+            is AlbumItem -> title
+            is ArtistItem -> title
+            is PlaylistItem -> title
+        }
+    val itemSubtitle =
+        when (this) {
+            is SongItem -> artists.joinToString { it.name }
+            is AlbumItem -> artists?.joinToString { it.name }.orEmpty()
+            is ArtistItem -> ""
+            is PlaylistItem -> author?.name.orEmpty()
+        }
+    return QuickPicksCarouselItem(
+        id = id,
+        title = itemTitle,
+        subtitle = itemSubtitle,
+        thumbnailUrl = thumbnail,
+        onClick = {
+            when (this) {
+                is SongItem -> {
+                    if (isActive) {
+                        playerConnection.player.togglePlayPause()
+                    } else {
+                        playerConnection.playQueue(
+                            YouTubeQueue(
+                                endpoint ?: WatchEndpoint(videoId = id),
+                                toMediaMetadata(),
+                            ),
+                        )
+                    }
+                }
+                is AlbumItem -> navController.navigate("album/$id")
+                is ArtistItem -> navController.navigate("artist/$id")
+                is PlaylistItem -> navController.navigate("online_playlist/$id")
+            }
+        },
+        onLongClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            menuState.show {
+                when (this@toQuickPicksCarouselItem) {
+                    is SongItem ->
+                        YouTubeSongMenu(
+                            song = this@toQuickPicksCarouselItem,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    is AlbumItem ->
+                        YouTubeAlbumMenu(
+                            albumItem = this@toQuickPicksCarouselItem,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                    is ArtistItem ->
+                        YouTubeArtistMenu(
+                            artist = this@toQuickPicksCarouselItem,
+                            onDismiss = menuState::dismiss,
+                        )
+                    is PlaylistItem ->
+                        YouTubePlaylistMenu(
+                            playlist = this@toQuickPicksCarouselItem,
+                            navController = navController,
+                            onDismiss = menuState::dismiss,
+                        )
+                }
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun QuickPicksCarousel(
+    items: List<QuickPicksCarouselItem>,
+    mediaMetadata: MediaMetadata?,
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+    val distinctItems = remember(items) { items.distinctBy { it.id } }
+    if (distinctItems.isEmpty()) return
+
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val heroHeight =
+            when {
+                maxWidth >= 840.dp -> 380.dp
+                maxWidth >= 600.dp -> 356.dp
+                else -> 332.dp
+            }
+        val heroMaxWidth =
+            (maxWidth - 48.dp)
+                .coerceAtLeast(232.dp)
+                .coerceAtMost(440.dp)
+        val density = LocalDensity.current
+        val requestWidthPx = with(density) { heroMaxWidth.roundToPx().coerceAtLeast(1) }
+        val requestHeightPx = with(density) { heroHeight.roundToPx().coerceAtLeast(1) }
+
+        HorizontalCenteredHeroCarousel(
+            state = rememberCarouselState { distinctItems.size },
+            maxItemWidth = heroMaxWidth,
+            itemSpacing = 10.dp,
+            contentPadding = contentPadding,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(heroHeight),
+        ) { index ->
+            val item = distinctItems[index]
+            val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
+            val context = LocalContext.current
+            val imageRequest =
+                remember(item.thumbnailUrl, requestWidthPx, requestHeightPx) {
+                    ImageRequest
+                        .Builder(context)
+                        .data(item.thumbnailUrl)
+                        .size(Size(requestWidthPx, requestHeightPx))
+                        .crossfade(true)
+                        .build()
+                }
+
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge)
+                        .maskBorder(
+                            BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
+                            ),
+                            MaterialTheme.shapes.extraLarge,
+                        ).focusable()
+                        .combinedClickable(
+                            onClick = item.onClick,
+                            onLongClick = item.onLongClick,
+                        ),
+            ) {
+                AsyncImage(
+                    model = imageRequest,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to Color.Transparent,
+                                    0.48f to Color.Black.copy(alpha = 0.08f),
+                                    1f to Color.Black.copy(alpha = 0.84f),
+                                ),
+                            ),
+                )
+
+                if (isActive && isPlaying) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape,
+                        tonalElevation = 2.dp,
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(14.dp)
+                                .size(36.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.volume_up),
+                                contentDescription = null,
+                                modifier = Modifier.size(19.dp),
+                            )
+                        }
+                    }
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(20.dp),
+                ) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleLargeEmphasized,
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (item.subtitle.isNotBlank()) {
+                        Text(
+                            text = item.subtitle,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White.copy(alpha = 0.78f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuickPicksCarouselShelf(
+    section: HomePage.Section,
+    mediaMetadata: MediaMetadata?,
+    isPlaying: Boolean,
+    navController: NavController,
+    playerConnection: PlayerConnection,
+    menuState: MenuState,
+    haptic: HapticFeedback,
+    modifier: Modifier = Modifier,
+) {
+    val carouselItems =
+        remember(section.items, mediaMetadata, isPlaying) {
+            section.items.map {
+                it.toQuickPicksCarouselItem(
+                    playerConnection = playerConnection,
+                    navController = navController,
+                    menuState = menuState,
+                    haptic = haptic,
+                    mediaMetadata = mediaMetadata,
+                )
+            }
+        }
+
+    if (carouselItems.isEmpty()) return
+
+    val onMoreClick: (() -> Unit)? =
+        section.endpoint?.let { endpoint ->
+            {
+                when {
+                    endpoint.browseId == "FEmusic_moods_and_genres" -> {
+                        navController.navigate(Screens.MoodAndGenres.route)
+                    }
+                    endpoint.isArtistEndpoint -> {
+                        navController.navigate("artist/${endpoint.browseId}")
+                    }
+                    endpoint.isAlbumEndpoint -> {
+                        navController.navigate("album/${endpoint.browseId}")
+                    }
+                    endpoint.isPlaylistEndpoint -> {
+                        navController.navigate("online_playlist/${endpoint.browseId}")
+                    }
+                    else -> {
+                        val encodedBrowseId = android.net.Uri.encode(endpoint.browseId)
+                        val encodedParams = endpoint.params?.takeIf { it.isNotBlank() }?.let { android.net.Uri.encode(it) }
+                        val encodedTitle = section.title.takeIf { it.isNotBlank() }?.let { android.net.Uri.encode(it) }
+
+                        val route =
+                            buildString {
+                                append("browse/")
+                                append(encodedBrowseId)
+                                val queryParams = mutableListOf<String>()
+                                if (encodedParams != null) queryParams.add("params=$encodedParams")
+                                if (encodedTitle != null) queryParams.add("title=$encodedTitle")
+                                if (queryParams.isNotEmpty()) {
+                                    append("?")
+                                    append(queryParams.joinToString("&"))
+                                }
+                            }
+                        navController.navigate(route)
+                    }
+                }
+            }
+        }
+
+    SimpHomeShelf(
+        title = section.title,
+        subtitle = section.label,
+        avatarUrl = if (section.endpoint?.isArtistEndpoint == true) section.thumbnail else null,
+        onHeaderClick = onMoreClick,
+        onMoreClick = onMoreClick,
+        modifier = modifier,
+    ) {
+        QuickPicksCarousel(
+            items = carouselItems,
+            mediaMetadata = mediaMetadata,
+            isPlaying = isPlaying,
+        )
+    }
+}
+
 @Composable
 fun SimpQuickPicks(
     quickPicks: List<Song>,
@@ -557,139 +910,43 @@ fun SimpQuickPicks(
     haptic: HapticFeedback,
     modifier: Modifier = Modifier,
 ) {
-    val lazyListState = rememberLazyGridState()
-    val density = LocalDensity.current
-    var widthDp by remember { mutableStateOf(0.dp) }
-    val snapLayoutInfoProvider =
-        remember(lazyListState) {
-            buildSnapLayoutInfoProvider(
-                lazyGridState = lazyListState,
-                positionInLayout = { _, _ -> 0f },
-            )
-        }
-
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .onGloballyPositioned { coordinates ->
-                    with(density) {
-                        widthDp = coordinates.size.width.toDp()
-                    }
-                },
-    ) {
-        Text(
-            text = stringResource(R.string.let_s_start_with_a_radio),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(R.string.quick_picks),
-            style =
-                MaterialTheme.typography.titleMedium.copy(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-        )
-        LazyHorizontalGrid(
-            rows = GridCells.Fixed(4),
-            modifier = Modifier.height(256.dp),
-            state = lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            contentPadding = PaddingValues(vertical = 2.dp),
-        ) {
+    val carouselItems =
+        remember(remoteQuickPicks, quickPicks, mediaMetadata, isPlaying) {
             if (remoteQuickPicks?.items?.isNotEmpty() == true) {
-                items(
-                    items = remoteQuickPicks.items,
-                    key = { it.id },
-                ) { item ->
-                    val isActive = item.id == mediaMetadata?.id
-                    QuickPicksItem(
-                        onClick = {
-                            if (item is SongItem) {
-                                if (isActive) {
-                                    playerConnection.player.togglePlayPause()
-                                } else {
-                                    playerConnection.playQueue(
-                                        YouTubeQueue(
-                                            item.endpoint ?: WatchEndpoint(videoId = item.id),
-                                            item.toMediaMetadata(),
-                                        ),
-                                    )
-                                }
-                            }
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            if (item is SongItem) {
-                                menuState.show {
-                                    YouTubeSongMenu(
-                                        song = item,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            }
-                        },
-                        widthDp = widthDp,
-                        title = item.title,
-                        subtitle = (item as? SongItem)?.artists?.joinToString { it.name } ?: "",
-                        thumbnailUrl = item.thumbnail,
-                        isExplicit = item.explicit,
-                        isActive = isActive,
-                        isPlaying = isPlaying,
+                remoteQuickPicks.items.map {
+                    it.toQuickPicksCarouselItem(
+                        playerConnection = playerConnection,
+                        navController = navController,
+                        menuState = menuState,
+                        haptic = haptic,
+                        mediaMetadata = mediaMetadata,
                     )
                 }
             } else {
-                items(
-                    items = quickPicks,
-                    key = { it.id },
-                ) { song ->
-                    val isActive = song.id == mediaMetadata?.id
-                    QuickPicksItem(
-                        onClick = {
-                            if (isActive) {
-                                playerConnection.player.togglePlayPause()
-                            } else {
-                                playerConnection.playQueue(
-                                    if (song.song.isLocal) {
-                                        ListQueue(items = listOf(song.toMediaItem()))
-                                    } else {
-                                        YouTubeQueue.radio(song.toMediaMetadata())
-                                    },
-                                )
-                            }
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            menuState.show {
-                                SongMenu(
-                                    originalSong = song,
-                                    navController = navController,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
-                        },
-                        widthDp = widthDp,
-                        title = song.song.title,
-                        subtitle = song.artists.joinToString { it.name },
-                        thumbnailUrl = song.song.thumbnailUrl,
-                        isExplicit = song.song.explicit,
-                        isActive = isActive,
-                        isPlaying = isPlaying,
+                quickPicks.map {
+                    it.toQuickPicksCarouselItem(
+                        playerConnection = playerConnection,
+                        navController = navController,
+                        menuState = menuState,
+                        haptic = haptic,
+                        mediaMetadata = mediaMetadata,
                     )
                 }
             }
         }
+
+    if (carouselItems.isEmpty()) return
+
+    SimpHomeShelf(
+        title = remoteQuickPicks?.title ?: stringResource(R.string.quick_picks),
+        subtitle = stringResource(R.string.let_s_start_with_a_radio),
+        modifier = modifier,
+    ) {
+        QuickPicksCarousel(
+            items = carouselItems,
+            mediaMetadata = mediaMetadata,
+            isPlaying = isPlaying,
+        )
     }
 }
 
@@ -1933,6 +2190,22 @@ fun HomePageSectionShelf(
     scope: CoroutineScope,
     modifier: Modifier = Modifier,
 ) {
+    if (section.title.equals("Quick picks", ignoreCase = true) ||
+        section.title.contains("quick pick", ignoreCase = true)
+    ) {
+        QuickPicksCarouselShelf(
+            section = section,
+            mediaMetadata = mediaMetadata,
+            isPlaying = isPlaying,
+            navController = navController,
+            playerConnection = playerConnection,
+            menuState = menuState,
+            haptic = haptic,
+            modifier = modifier,
+        )
+        return
+    }
+
     val lazyListState = rememberLazyListState()
     val database = LocalDatabase.current
     val snapLayoutInfoProvider =

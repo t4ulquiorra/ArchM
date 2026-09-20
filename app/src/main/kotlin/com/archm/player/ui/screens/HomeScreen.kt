@@ -512,16 +512,30 @@ private fun HomeContent(
                     key = { index, section -> "remote_${section.endpoint?.browseId ?: section.title}_$index" },
                 ) { _, section ->
                     Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                        HomePageSectionShelf(
-                            section = section,
-                            mediaMetadata = mediaMetadata,
-                            isPlaying = isPlaying,
-                            navController = navController,
-                            playerConnection = playerConnection,
-                            menuState = menuState,
-                            haptic = haptic,
-                            scope = scope,
-                        )
+                        if (section.title.equals("Quick picks", ignoreCase = true) ||
+                            section.title.contains("quick pick", ignoreCase = true)
+                        ) {
+                            QuickPicksCarouselShelf(
+                                section = section,
+                                mediaMetadata = mediaMetadata,
+                                isPlaying = isPlaying,
+                                navController = navController,
+                                playerConnection = playerConnection,
+                                menuState = menuState,
+                                haptic = haptic,
+                            )
+                        } else {
+                            HomePageSectionShelf(
+                                section = section,
+                                mediaMetadata = mediaMetadata,
+                                isPlaying = isPlaying,
+                                navController = navController,
+                                playerConnection = playerConnection,
+                                menuState = menuState,
+                                haptic = haptic,
+                                scope = scope,
+                            )
+                        }
                     }
                 }
 
