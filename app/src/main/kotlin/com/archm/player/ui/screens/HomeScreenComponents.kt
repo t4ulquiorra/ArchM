@@ -144,6 +144,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+private val ThumbnailCornerRadius = 8.dp
+
 // ==========================================
 // 1. SimpMusic Top App Bar & Chip Components
 // ==========================================
