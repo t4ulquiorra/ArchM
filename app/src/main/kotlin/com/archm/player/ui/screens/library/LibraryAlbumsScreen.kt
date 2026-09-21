@@ -500,13 +500,13 @@ fun LibraryAlbumsScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .aspectRatio(1f)
-                                        .clip(RoundedCornerShape(22.dp)),
+                                        .clip(RoundedCornerShape(14.dp)),
                             ) {
                                 ItemThumbnail(
                                     thumbnailUrl = album.album.thumbnailUrl,
                                     isActive = false,
                                     isPlaying = false,
-                                    shape = RoundedCornerShape(22.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     modifier = Modifier.fillMaxSize(),
                                 )
                                 // Play Overlay button on cover
@@ -535,7 +535,7 @@ fun LibraryAlbumsScreen(
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = album.album.title,
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
@@ -543,6 +543,7 @@ fun LibraryAlbumsScreen(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = album.artists.joinToString(", ") { it.name },
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),

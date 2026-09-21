@@ -12,11 +12,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -385,6 +387,7 @@ fun LibraryMixScreen(
                                         label = "MixPlaylistCardScale",
                                     )
 
+                                    val cardShape = RoundedCornerShape(18.dp)
                                     Column(
                                         modifier =
                                             Modifier
@@ -392,8 +395,9 @@ fun LibraryMixScreen(
                                                 .graphicsLayer {
                                                     scaleX = scale
                                                     scaleY = scale
-                                                }.clip(RoundedCornerShape(32.dp))
+                                                }.clip(cardShape)
                                                 .background(cardBgColor)
+                                                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                                                 .clickable(
                                                     interactionSource = interactionSource,
                                                     indication = null,
@@ -406,13 +410,14 @@ fun LibraryMixScreen(
                                                             navController.navigate("local_playlist/${playlist.id}")
                                                         }
                                                     },
-                                                ).padding(12.dp),
+                                                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 2.dp),
                                     ) {
                                         Box(
                                             modifier =
                                                 Modifier
-                                                    .size(126.dp)
-                                                    .clip(RoundedCornerShape(24.dp)),
+                                                    .fillMaxWidth()
+                                                    .aspectRatio(1f)
+                                                    .clip(RoundedCornerShape(14.dp)),
                                         ) {
                                             AsyncImage(
                                                 model = playlist.thumbnails.getOrNull(0),
@@ -452,33 +457,43 @@ fun LibraryMixScreen(
                                                 )
                                             }
                                         }
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = playlist.playlist.name,
-                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            color = MaterialTheme.colorScheme.onBackground,
-                                        )
-                                        Text(
-                                            text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Column(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 3.dp),
+                                        ) {
+                                            Text(
+                                                text = playlist.playlist.name,
+                                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                color = MaterialTheme.colorScheme.onBackground,
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                            )
+                                        }
                                     }
                                 }
 
                                 // Ending "More" card
                                 item {
+                                    val moreCardShape = RoundedCornerShape(18.dp)
                                     Column(
                                         modifier =
                                             Modifier
                                                 .width(150.dp)
-                                                .height(194.dp)
-                                                .clip(RoundedCornerShape(32.dp))
+                                                .height(182.dp)
+                                                .clip(moreCardShape)
                                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                                .border(1.dp, Color.White.copy(alpha = 0.12f), moreCardShape)
                                                 .clickable {
                                                     onTabSelected(LibraryFilter.PLAYLISTS)
                                                 },

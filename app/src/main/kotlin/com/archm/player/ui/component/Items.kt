@@ -448,9 +448,7 @@ fun GridItem(
         if (fillMaxWidth) {
             Modifier.fillMaxWidth()
         } else {
-            Modifier
-                .width(cardWidth)
-                .heightIn(min = (cardWidth * 168f / 130f))
+            Modifier.width(cardWidth)
         }
 
     val clickableModifier =
@@ -480,7 +478,7 @@ fun GridItem(
                 .background(cardBgColor)
                 .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .then(clickableModifier)
-                .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+                .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 2.dp.coerceAtLeast(0.dp)),
     ) {
         val artworkModifier =
             if (fillMaxWidth) {
@@ -488,9 +486,8 @@ fun GridItem(
                     .fillMaxWidth()
                     .aspectRatio(thumbnailRatio)
             } else {
-                val artworkWidth = (cardWidth - (innerPadding * 2)).coerceAtLeast(0.dp)
                 Modifier
-                    .width(artworkWidth)
+                    .fillMaxWidth()
                     .aspectRatio(thumbnailRatio)
             }
 
@@ -508,7 +505,7 @@ fun GridItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier =
@@ -517,7 +514,7 @@ fun GridItem(
                     .padding(horizontal = 3.dp),
         ) {
             title()
-
+            Spacer(modifier = Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 badges()
                 subtitle()
@@ -729,7 +726,7 @@ fun SongGridItem(
             ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.secondary,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
     },
@@ -1172,7 +1169,7 @@ fun PlaylistGridItem(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.secondary,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     },
@@ -1666,13 +1663,14 @@ fun VideoGridItem(
                 }
                 .clip(RoundedCornerShape(18.dp))
                 .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+                .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 2.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier =
@@ -1710,19 +1708,18 @@ fun VideoGridItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 3.dp)
-                .heightIn(min = 48.dp),
+                .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
@@ -2469,7 +2466,7 @@ fun GridCardPod(
         label = "GridCardPodScale",
     )
 
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(18.dp)
     Column(
         modifier =
             modifier
@@ -2487,7 +2484,7 @@ fun GridCardPod(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 2.dp),
     ) {
         AsyncImage(
             model = thumbnailUrl?.resize(544, 544),
@@ -2497,21 +2494,20 @@ fun GridCardPod(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp)
-                    .heightIn(min = 40.dp),
+                    .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

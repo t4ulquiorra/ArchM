@@ -1062,12 +1062,12 @@ fun SimpHomeShelf(
     }
 }
 
-val HomeVideoCardWidth: Dp = 245.dp
+val HomeVideoCardWidth: Dp = (150f * 16f / 9f).dp
 val HomeVideoThumbnailHeight: Dp = ((HomeVideoCardWidth - 10.dp) * 9f / 16f).coerceAtLeast(0.dp)
 val HomeVideoPodHeight: Dp = 190.dp
 
-// Square card: 144dp wide, 134dp artwork (144 - 2*5 padding), compact text = 190dp pod height.
-val HomeSquareCardThumbSize: Dp = 144.dp
+// Square card: 150dp wide matching ArtistScreen
+val HomeSquareCardThumbSize: Dp = 150.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1106,7 +1106,6 @@ fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1123,7 +1122,7 @@ fun HomeItemContentPlaylist(
                     start = innerPadding.coerceAtLeast(0.dp),
                     top = innerPadding.coerceAtLeast(0.dp),
                     end = innerPadding.coerceAtLeast(0.dp),
-                    bottom = 6.dp.coerceAtLeast(0.dp),
+                    bottom = 2.dp.coerceAtLeast(0.dp),
                 ),
     ) {
         Box(
@@ -1225,7 +1224,6 @@ fun HomeItemSong(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1242,7 +1240,7 @@ fun HomeItemSong(
                     start = innerPadding.coerceAtLeast(0.dp),
                     top = innerPadding.coerceAtLeast(0.dp),
                     end = innerPadding.coerceAtLeast(0.dp),
-                    bottom = 6.dp.coerceAtLeast(0.dp),
+                    bottom = 2.dp.coerceAtLeast(0.dp),
                 ),
     ) {
         Box(
@@ -1459,7 +1457,6 @@ fun HomeItemVideo(
         modifier =
             modifier
                 .width(cardWidth)
-                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1477,7 +1474,7 @@ fun HomeItemVideo(
                     start = innerPadding.coerceAtLeast(0.dp),
                     top = innerPadding.coerceAtLeast(0.dp),
                     end = innerPadding.coerceAtLeast(0.dp),
-                    bottom = 6.dp.coerceAtLeast(0.dp),
+                    bottom = 2.dp.coerceAtLeast(0.dp),
                 ),
     ) {
         Box(

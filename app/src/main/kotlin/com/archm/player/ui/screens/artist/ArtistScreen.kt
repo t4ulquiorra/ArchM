@@ -2613,7 +2613,6 @@ private fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
-                .heightIn(min = (thumbSize * 168f / 130f))
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -2626,12 +2625,13 @@ private fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 2.dp),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(artworkSize)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(14.dp)),
         ) {
             AsyncImage(
@@ -2662,7 +2662,7 @@ private fun HomeItemContentPlaylist(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier = Modifier
@@ -2677,7 +2677,7 @@ private fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -2739,7 +2739,7 @@ private fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 8.dp),
+                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 2.dp),
     ) {
         Box(
             modifier =
@@ -2777,19 +2777,18 @@ private fun HomeItemVideo(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 3.dp)
-                .heightIn(min = 48.dp),
+                .padding(horizontal = 3.dp),
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {

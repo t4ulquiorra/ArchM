@@ -834,7 +834,7 @@ fun PlaylistGridCard(
     )
 
     val hiddenAlpha = 1f
-    val cardShape = RoundedCornerShape(32.dp)
+    val cardShape = RoundedCornerShape(18.dp)
 
     Column(
         modifier =
@@ -852,20 +852,20 @@ fun PlaylistGridCard(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(12.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 2.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(26.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
         ) {
             ItemThumbnail(
                 thumbnailUrl = playlist.thumbnails.getOrNull(0),
                 isActive = false,
                 isPlaying = false,
-                shape = RoundedCornerShape(26.dp),
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxSize(),
             )
             // Play overlay on bottom right of grid cover
@@ -889,19 +889,29 @@ fun PlaylistGridCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Text(
-            text = playlist.playlist.name,
-            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-        )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 3.dp),
+        ) {
+            Text(
+                text = playlist.playlist.name,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
