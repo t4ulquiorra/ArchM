@@ -51,7 +51,7 @@ fun GridItemPlaceHolder(
             baseModifier
                 .clip(RoundedCornerShape(18.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(

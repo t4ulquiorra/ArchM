@@ -383,7 +383,7 @@ private fun AccountPlaylistItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+            .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 12.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier = Modifier
@@ -418,7 +418,7 @@ private fun AccountPlaylistItem(
                     .basicMarquee(),
             )
             val subtitle = joinByBullet(item.author?.name, item.songCountText) ?: stringResource(R.string.playlist)
-            Spacer(modifier = Modifier.height(1.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -466,7 +466,7 @@ private fun AccountAlbumItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 8.dp.coerceAtLeast(0.dp)),
+            .padding(start = innerPadding.coerceAtLeast(0.dp), top = innerPadding.coerceAtLeast(0.dp), end = innerPadding.coerceAtLeast(0.dp), bottom = 12.dp.coerceAtLeast(0.dp)),
     ) {
         Box(
             modifier = Modifier
@@ -507,7 +507,7 @@ private fun AccountAlbumItem(
             val releaseSubtitle = formatReleaseSubtitle(item)
             val subtitle = joinByBullet(item.artists?.joinToString { it.name }, releaseSubtitle ?: item.year?.toString())
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,

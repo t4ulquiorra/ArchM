@@ -478,7 +478,7 @@ fun GridItem(
                 .background(cardBgColor)
                 .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .then(clickableModifier)
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
     ) {
         val artworkModifier =
             if (fillMaxWidth) {
@@ -1670,7 +1670,7 @@ fun VideoGridItem(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
     ) {
         Box(
             modifier =
@@ -2484,7 +2484,7 @@ fun GridCardPod(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
     ) {
         AsyncImage(
             model = thumbnailUrl?.resize(544, 544),
