@@ -1770,7 +1770,7 @@ fun ArtistCircleItem(
     thumbnailUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    avatarSize: Dp = 150.dp,
+    avatarSize: Dp = 174.dp,
     textColor: Color = Color.Unspecified,
 ) {
     val cardBgColor = rememberArtworkCardColor(
@@ -1834,7 +1834,7 @@ fun ArtistCircleItem(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = if (textColor != Color.Unspecified) textColor else MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier

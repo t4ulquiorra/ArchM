@@ -1509,7 +1509,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctSingles,
@@ -1596,7 +1596,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctAlbums,
@@ -1679,7 +1679,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctVideos,
@@ -1763,7 +1763,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctFeatured,
@@ -1905,7 +1905,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctPlaylists,
@@ -2047,7 +2047,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctLive,
@@ -2210,7 +2210,7 @@ fun ArtistScreen(
                                         LazyRow(
                                             contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
                                             horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
+                                            verticalAlignment = Alignment.Top,
                                         ) {
                                             items(
                                                 items = topRowArtists,
@@ -2232,7 +2232,7 @@ fun ArtistScreen(
                                             LazyRow(
                                                 contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
                                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
+                                                verticalAlignment = Alignment.Top,
                                             ) {
                                                 items(
                                                     items = bottomRowArtists,
@@ -2338,7 +2338,7 @@ fun ArtistScreen(
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.Top,
                                 ) {
                                     items(
                                         items = distinctArtists,
@@ -2817,7 +2817,7 @@ private fun HomeItemArtist(
     thumbnailUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    avatarSize: Dp = 150.dp,
+    avatarSize: Dp = 174.dp,
     isSingleLine: Boolean = false,
     labelSpacing: Dp = 8.dp,
 ) {
@@ -2879,7 +2879,7 @@ private fun HomeItemArtist(
                 text = title,
                 style = if (isSingleLine) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleSmall,
                 color = Color.White,
-                maxLines = if (isSingleLine) 1 else 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier

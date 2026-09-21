@@ -1329,7 +1329,7 @@ fun HomeItemArtist(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     subscribers: String? = null,
-    avatarSize: Dp = 150.dp,
+    avatarSize: Dp = 174.dp,
     isSingleLine: Boolean = false,
     labelSpacing: Dp = 8.dp,
 ) {
@@ -1395,7 +1395,7 @@ fun HomeItemArtist(
                 text = title,
                 style = if (isSingleLine) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleSmall,
                 color = Color.White,
-                maxLines = if (isSingleLine) 1 else 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier =
@@ -1722,7 +1722,7 @@ fun KeepListeningShelf(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -1876,7 +1876,7 @@ fun AccountPlaylistsShelf(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -1929,7 +1929,7 @@ fun ForgottenFavoritesShelf(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -2021,7 +2021,7 @@ fun SimilarRecommendationsShelf(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
@@ -2287,7 +2287,7 @@ fun HomePageSectionShelf(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
