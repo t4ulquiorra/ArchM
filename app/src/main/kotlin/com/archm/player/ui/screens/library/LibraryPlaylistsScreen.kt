@@ -852,7 +852,7 @@ fun PlaylistGridCard(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -889,7 +889,7 @@ fun PlaylistGridCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -904,7 +904,7 @@ fun PlaylistGridCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
                 style = MaterialTheme.typography.bodySmall,

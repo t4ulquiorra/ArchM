@@ -478,7 +478,7 @@ fun GridItem(
                 .background(cardBgColor)
                 .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
                 .then(clickableModifier)
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         val artworkModifier =
             if (fillMaxWidth) {
@@ -505,7 +505,7 @@ fun GridItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -514,7 +514,7 @@ fun GridItem(
                     .padding(horizontal = 3.dp),
         ) {
             title()
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 badges()
                 subtitle()
@@ -1670,7 +1670,7 @@ fun VideoGridItem(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -1708,7 +1708,7 @@ fun VideoGridItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier = Modifier
@@ -1723,7 +1723,7 @@ fun VideoGridItem(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -2484,7 +2484,7 @@ fun GridCardPod(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         AsyncImage(
             model = thumbnailUrl?.resize(544, 544),
@@ -2497,7 +2497,7 @@ fun GridCardPod(
                     .clip(RoundedCornerShape(14.dp)),
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -2514,7 +2514,7 @@ fun GridCardPod(
             )
 
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,

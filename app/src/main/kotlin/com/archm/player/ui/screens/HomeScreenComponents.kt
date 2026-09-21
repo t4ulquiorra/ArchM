@@ -1118,7 +1118,7 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -1155,7 +1155,7 @@ fun HomeItemContentPlaylist(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1171,7 +1171,7 @@ fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -1231,7 +1231,7 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -1268,7 +1268,7 @@ fun HomeItemSong(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1284,7 +1284,7 @@ fun HomeItemSong(
                 overflow = TextOverflow.Ellipsis,
             )
             if (subtitle.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
@@ -1460,7 +1460,7 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -1498,7 +1498,7 @@ fun HomeItemVideo(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1514,7 +1514,7 @@ fun HomeItemVideo(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,

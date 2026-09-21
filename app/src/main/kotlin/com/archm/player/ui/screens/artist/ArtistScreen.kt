@@ -2625,7 +2625,7 @@ private fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -2662,7 +2662,7 @@ private fun HomeItemContentPlaylist(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier = Modifier
@@ -2677,7 +2677,7 @@ private fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -2739,7 +2739,7 @@ private fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
@@ -2777,7 +2777,7 @@ private fun HomeItemVideo(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier = Modifier
@@ -2792,7 +2792,7 @@ private fun HomeItemVideo(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,

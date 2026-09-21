@@ -535,7 +535,7 @@ fun LibraryAlbumsScreen(
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = album.album.title,
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
@@ -543,7 +543,7 @@ fun LibraryAlbumsScreen(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = album.artists.joinToString(", ") { it.name },
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
