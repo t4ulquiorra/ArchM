@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -77,6 +78,7 @@ import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.viewmodels.BrowseViewModel
+import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
@@ -272,6 +274,10 @@ private fun BrowseArtistItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cardBgColor = rememberArtworkCardColor(
+        thumbnailUrl = item.thumbnail,
+        fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    )
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -293,19 +299,24 @@ private fun BrowseArtistItem(
                     scaleY = scale
                 }
                 .clip(CircleShape)
+                .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ),
+                )
+                .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = item.thumbnail?.resize(480, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
             )
         }
 

@@ -1760,7 +1760,8 @@ fun VideoGridItem(
 )
 
 /**
- * Circular artist profile item matching container pod touch interaction with CircleShape bounds.
+ * Circular artist profile item — circular pod container with dynamic artwork tint background,
+ * 1dp static border, and 5dp inner padding matching standard square card pods.
  */
 @Composable
 fun ArtistCircleItem(
@@ -1772,6 +1773,10 @@ fun ArtistCircleItem(
     avatarSize: Dp = 150.dp,
     textColor: Color = Color.Unspecified,
 ) {
+    val cardBgColor = rememberArtworkCardColor(
+        thumbnailUrl = thumbnailUrl,
+        fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    )
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -1796,18 +1801,23 @@ fun ArtistCircleItem(
                     scaleY = scale
                 }
                 .clip(CircleShape)
+                .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
-                ),
+                )
+                .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(480, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
             )
         }
         Column(

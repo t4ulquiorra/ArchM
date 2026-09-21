@@ -83,6 +83,7 @@ import com.archm.player.ui.utils.resize
 import com.archm.player.utils.joinByBullet
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.reportException
+import com.archm.player.ui.screens.library.rememberArtworkCardColor
 import com.archm.player.viewmodels.AccountContentType
 import com.archm.player.viewmodels.AccountViewModel
 import com.music.innertube.YouTube
@@ -528,6 +529,10 @@ private fun AccountArtistItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cardBgColor = rememberArtworkCardColor(
+        thumbnailUrl = item.thumbnail,
+        fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    )
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -549,19 +554,24 @@ private fun AccountArtistItem(
                     scaleY = scale
                 }
                 .clip(CircleShape)
+                .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ),
+                )
+                .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = item.thumbnail?.resize(480, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
             )
         }
 

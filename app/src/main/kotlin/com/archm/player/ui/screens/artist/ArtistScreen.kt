@@ -2807,7 +2807,8 @@ private fun HomeItemVideo(
 }
 
 /**
- * Circular avatar Related Artists carousel item matching pod touch interaction with CircleShape bounds.
+ * Circular avatar Related Artists carousel item — circular pod container with dynamic artwork
+ * tint background, 1dp static border, and 5dp inner padding matching standard square card pods.
  */
 @Composable
 private fun HomeItemArtist(
@@ -2820,6 +2821,10 @@ private fun HomeItemArtist(
     isSingleLine: Boolean = false,
     labelSpacing: Dp = 8.dp,
 ) {
+    val cardBgColor = rememberArtworkCardColor(
+        thumbnailUrl = thumbnailUrl,
+        fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    )
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -2840,18 +2845,23 @@ private fun HomeItemArtist(
                     scaleY = scale
                 }
                 .clip(CircleShape)
+                .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
-                ),
+                )
+                .padding(5.dp),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(480, 480),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
             )
         }
         Spacer(modifier = Modifier.height(labelSpacing))
