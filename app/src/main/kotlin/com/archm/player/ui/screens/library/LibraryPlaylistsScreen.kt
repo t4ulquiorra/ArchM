@@ -904,7 +904,7 @@ fun PlaylistGridCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
                 style = MaterialTheme.typography.bodySmall,

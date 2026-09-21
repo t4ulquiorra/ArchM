@@ -543,7 +543,7 @@ fun LibraryAlbumsScreen(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = album.artists.joinToString(", ") { it.name },
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),

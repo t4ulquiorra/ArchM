@@ -471,7 +471,7 @@ fun LibraryMixScreen(
                                                 overflow = TextOverflow.Ellipsis,
                                                 color = MaterialTheme.colorScheme.onBackground,
                                             )
-                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Spacer(modifier = Modifier.height(3.dp))
                                             Text(
                                                 text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
                                                 style = MaterialTheme.typography.bodySmall,
