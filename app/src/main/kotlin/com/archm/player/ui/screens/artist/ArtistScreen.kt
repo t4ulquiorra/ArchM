@@ -2625,7 +2625,7 @@ private fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 2.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
     ) {
         Box(
             modifier =
@@ -2739,7 +2739,7 @@ private fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = innerPadding, top = innerPadding, end = innerPadding, bottom = 2.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
     ) {
         Box(
             modifier =

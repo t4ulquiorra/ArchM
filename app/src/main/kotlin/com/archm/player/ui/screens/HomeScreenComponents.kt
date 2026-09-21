@@ -1118,12 +1118,7 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(
-                    start = innerPadding.coerceAtLeast(0.dp),
-                    top = innerPadding.coerceAtLeast(0.dp),
-                    end = innerPadding.coerceAtLeast(0.dp),
-                    bottom = 2.dp.coerceAtLeast(0.dp),
-                ),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
     ) {
         Box(
             modifier =
@@ -1236,12 +1231,7 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(
-                    start = innerPadding.coerceAtLeast(0.dp),
-                    top = innerPadding.coerceAtLeast(0.dp),
-                    end = innerPadding.coerceAtLeast(0.dp),
-                    bottom = 2.dp.coerceAtLeast(0.dp),
-                ),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
     ) {
         Box(
             modifier =
@@ -1470,12 +1460,7 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(
-                    start = innerPadding.coerceAtLeast(0.dp),
-                    top = innerPadding.coerceAtLeast(0.dp),
-                    end = innerPadding.coerceAtLeast(0.dp),
-                    bottom = 2.dp.coerceAtLeast(0.dp),
-                ),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
     ) {
         Box(
             modifier =

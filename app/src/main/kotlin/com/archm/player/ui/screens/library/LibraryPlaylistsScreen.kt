@@ -852,7 +852,7 @@ fun PlaylistGridCard(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 2.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 5.dp),
     ) {
         Box(
             modifier =
