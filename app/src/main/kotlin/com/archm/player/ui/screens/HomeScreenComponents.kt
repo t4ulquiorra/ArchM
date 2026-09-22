@@ -1718,6 +1718,16 @@ fun KeepListeningShelf(
         title = stringResource(R.string.keep_listening),
         modifier = modifier,
     ) {
+        val distinctKeepListening = remember(keepListening) {
+            keepListening.distinctBy { item ->
+                when (item) {
+                    is Song -> "song_${item.id}"
+                    is Album -> "album_${item.id}"
+                    is Artist -> "artist_${item.id}"
+                    is Playlist -> "playlist_${item.id}"
+                }
+            }
+        }
         LazyRow(
             state = lazyListState,
             flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
@@ -1726,16 +1736,7 @@ fun KeepListeningShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = remember(keepListening) {
-                    keepListening.distinctBy { item ->
-                        when (item) {
-                            is Song -> "song_${item.id}"
-                            is Album -> "album_${item.id}"
-                            is Artist -> "artist_${item.id}"
-                            is Playlist -> "playlist_${item.id}"
-                        }
-                    }
-                },
+                items = distinctKeepListening,
                 key = { item ->
                     when (item) {
                         is Song -> "song_${item.id}"
@@ -2011,6 +2012,9 @@ fun SimilarRecommendationsShelf(
         }
     val titleItem = recommendation.title
     val database = LocalDatabase.current
+    val distinctRecommendationItems = remember(recommendation.items) {
+        recommendation.items.distinctBy { it.id }
+    }
 
     SimpHomeShelf(
         title = titleItem.title,
@@ -2034,7 +2038,7 @@ fun SimilarRecommendationsShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = remember(recommendation.items) { recommendation.items.distinctBy { it.id } },
+                items = distinctRecommendationItems,
                 key = { "${recommendation.title.id}_${it.id}" },
             ) { item ->
                 when (item) {
