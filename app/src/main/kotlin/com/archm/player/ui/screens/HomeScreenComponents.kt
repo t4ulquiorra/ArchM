@@ -1726,7 +1726,16 @@ fun KeepListeningShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = keepListening,
+                items = remember(keepListening) {
+                    keepListening.distinctBy { item ->
+                        when (item) {
+                            is Song -> "song_${item.id}"
+                            is Album -> "album_${item.id}"
+                            is Artist -> "artist_${item.id}"
+                            is Playlist -> "playlist_${item.id}"
+                        }
+                    }
+                },
                 key = { item ->
                     when (item) {
                         is Song -> "song_${item.id}"
@@ -1880,8 +1889,8 @@ fun AccountPlaylistsShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = accountPlaylists,
-                key = { it.id },
+                items = accountPlaylists.distinctBy { it.id },
+                key = { "ap_${it.id}" },
             ) { item ->
                 HomeItemContentPlaylist(
                     title = item.title,
@@ -1933,8 +1942,8 @@ fun ForgottenFavoritesShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = shelfItems,
-                key = { it.id },
+                items = shelfItems.distinctBy { it.id },
+                key = { "ff_${it.id}" },
             ) { song ->
                 val isActive = song.id == mediaMetadata?.id
                 val onPlay: () -> Unit = {
@@ -2025,8 +2034,8 @@ fun SimilarRecommendationsShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = recommendation.items,
-                key = { it.id },
+                items = remember(recommendation.items) { recommendation.items.distinctBy { it.id } },
+                key = { "${recommendation.title.id}_${it.id}" },
             ) { item ->
                 when (item) {
                     is ArtistItem -> {
@@ -2291,8 +2300,8 @@ fun HomePageSectionShelf(
             contentPadding = PaddingValues(vertical = 4.dp),
         ) {
             items(
-                items = shelfItems,
-                key = { it.id },
+                items = shelfItems.distinctBy { it.id },
+                key = { "${section.title}_${it.id}" },
             ) { item ->
                 when (item) {
                     is ArtistItem -> {
