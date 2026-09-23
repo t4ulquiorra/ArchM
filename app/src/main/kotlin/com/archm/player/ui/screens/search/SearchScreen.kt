@@ -594,12 +594,13 @@ private fun TrendingAlbumsSection(
         title = stringResource(R.string.top_albums),
         modifier = modifier,
     )
+    val distinctAlbums = remember(albums) { albums.distinctBy { it.id } }
     LazyRow(
         contentPadding = LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal).asPaddingValues(),
     ) {
         items(
-            items = albums,
-            key = { album -> album.id },
+            items = distinctAlbums,
+            key = { album -> "trending_album_${album.id}" },
             contentType = { "trending_album" },
         ) { album ->
             YouTubeGridItem(
@@ -642,12 +643,13 @@ private fun SuggestedArtistsSection(
         title = stringResource(R.string.stats_unique_artists),
         modifier = modifier,
     )
+    val distinctArtists = remember(artists) { artists.distinctBy { it.id } }
     LazyRow(
         contentPadding = LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal).asPaddingValues(),
     ) {
         items(
-            items = artists,
-            key = { artist -> artist.id },
+            items = distinctArtists,
+            key = { artist -> "trending_artist_${artist.id}" },
             contentType = { "trending_artist" },
         ) { artist ->
             YouTubeGridItem(

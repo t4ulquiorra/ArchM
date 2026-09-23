@@ -205,7 +205,7 @@ fun OnlineSearchScreen(
 
             items(
                 items = distinctResultItems,
-                key = { item -> "item_${item.id}" },
+                key = { item -> "top_result_${item.id}" },
                 contentType = { item -> item::class },
             ) { item ->
                 val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId

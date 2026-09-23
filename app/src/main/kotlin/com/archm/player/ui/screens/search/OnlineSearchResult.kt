@@ -119,7 +119,7 @@ fun OnlineSearchResult(
         }
     }
     val allModeSections =
-        buildList<SearchSummary> {
+        buildList<SearchResultSection> {
             searchSummary
                 ?.summaries
                 ?.firstOrNull()
@@ -130,7 +130,13 @@ fun OnlineSearchResult(
                     } else {
                         summary.title
                     }
-                    add(summary.copy(title = title))
+                    add(
+                        SearchResultSection(
+                            isTopResult = true,
+                            title = title,
+                            items = summary.items.distinctBy { it.id },
+                        ),
+                    )
                 }
 
             listOf(
@@ -145,7 +151,13 @@ fun OnlineSearchResult(
                     ?.items
                     ?.takeIf { it.isNotEmpty() }
                     ?.let { items ->
-                        add(SearchSummary(title = sectionTitle, items = viewModel.sortedItems(items, searchSort)))
+                        add(
+                            SearchResultSection(
+                                isTopResult = false,
+                                title = sectionTitle,
+                                items = viewModel.sortedItems(items.distinctBy { it.id }, searchSort),
+                            ),
+                        )
                     }
             }
         }
@@ -325,9 +337,9 @@ fun OnlineSearchResult(
             modifier = Modifier.weight(1f),
         ) {
             if (searchFilter == null) {
-                allModeSections.forEachIndexed { index, summary ->
-                    if (index > 0) {
-                        item(key = "divider_$index", contentType = "divider") {
+                allModeSections.forEachIndexed { shelfIndex, section ->
+                    if (shelfIndex > 0) {
+                        item(key = "divider_$shelfIndex", contentType = "divider") {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                                 thickness = 0.5.dp,
@@ -337,7 +349,7 @@ fun OnlineSearchResult(
                     }
 
                     item(
-                        key = "section_header_${summary.title}_$index",
+                        key = "section_header_${shelfIndex}_${section.title}",
                         contentType = "section_header",
                     ) {
                         Row(
@@ -354,10 +366,10 @@ fun OnlineSearchResult(
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                text = if (summary.title.equals("Top result", ignoreCase = true)) {
+                                text = if (section.title.equals("Top result", ignoreCase = true)) {
                                     stringResource(R.string.top_result)
                                 } else {
-                                    summary.title
+                                    section.title
                                 },
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
@@ -367,15 +379,21 @@ fun OnlineSearchResult(
                     }
 
                     itemsIndexed(
-                        items = viewModel.sortedItems(summary.items, searchSort),
-                        key = { itemIndex, item -> "${summary.title}/${item.id}/$itemIndex" },
+                        items = viewModel.sortedItems(section.items, searchSort),
+                        key = { itemIndex, item ->
+                            if (section.isTopResult) {
+                                "top_result_${item.id}_$itemIndex"
+                            } else {
+                                "search_shelf_${shelfIndex}_${section.title}_${item.id}_$itemIndex"
+                            }
+                        },
                         contentType = { _, _ -> "search_result" },
                     ) { _, item ->
                         ytItemContent(item)
                     }
 
                     item(
-                        key = "section_spacer_${summary.title}_$index",
+                        key = "section_spacer_${shelfIndex}_${section.title}",
                         contentType = "section_spacer",
                     ) {
                         Spacer(Modifier.height(4.dp))
@@ -391,12 +409,13 @@ fun OnlineSearchResult(
                     }
                 }
             } else {
-                items(
+                itemsIndexed(
                     items = viewModel.sortedItems(itemsPage?.items.orEmpty().distinctBy { it.id }, searchSort),
-                    key = { "filtered_${it.id}" },
-                    contentType = { "search_result" },
-                    itemContent = ytItemContent,
-                )
+                    key = { index, item -> "filtered_${item.id}_$index" },
+                    contentType = { _, _ -> "search_result" },
+                ) { _, item ->
+                    ytItemContent(item)
+                }
 
                 if (itemsPage?.continuation != null) {
                     item(key = "loading", contentType = "loading") {
@@ -430,3 +449,9 @@ fun OnlineSearchResult(
         }
     }
 }
+
+private data class SearchResultSection(
+    val isTopResult: Boolean,
+    val title: String,
+    val items: List<YTItem>,
+)
