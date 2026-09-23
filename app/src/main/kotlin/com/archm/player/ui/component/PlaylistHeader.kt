@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,13 +100,13 @@ fun PlaylistHeader(
                     .background(Color.Black.copy(alpha = 0.45f)),
             )
 
-            // Smooth vertical fade into pure black at the bottom
+            // Smooth vertical fade into background at the bottom
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black),
+                            colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
                         ),
                     ),
             )

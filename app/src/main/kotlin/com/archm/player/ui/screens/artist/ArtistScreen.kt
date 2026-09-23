@@ -556,7 +556,7 @@ fun ArtistScreen(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         val screenHeight = maxHeight
         val dominantColor = animatedAccentColor
@@ -1347,7 +1347,7 @@ fun ArtistScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.Black),
+                                .background(MaterialTheme.colorScheme.background),
                         ) {
                             Column {
                                 Spacer(modifier = Modifier.height(20.dp))
@@ -1381,7 +1381,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = stringResource(R.string.popular),
@@ -1407,65 +1407,71 @@ fun ArtistScreen(
                             items = distinctSongs.take(5),
                             key = { "popular_song_${it.id}" },
                         ) { song ->
-                            CompositionLocalProvider(
-                                LocalAccentColor provides screenAccentColor,
-                                LocalIndication provides ripple(color = screenAccentColor),
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
-                                val itemInteractionSource = remember { MutableInteractionSource() }
-                                YouTubeListItem(
-                                    item = song,
-                                    isActive = song.id == mediaMetadata?.id,
-                                    isPlaying = isPlaying,
-                                    inSelectionMode = selectionState.isActive,
-                                    isSelected = selectionState.isSelected(song.id),
-                                    showDuration = false,
-                                    accentColor = screenAccentColor,
-                                    trailingContent = {
-                                        IconButton(
-                                            onClick = {
-                                                menuState.show {
-                                                    YouTubeSongMenu(
-                                                        song = song,
-                                                        navController = navController,
-                                                        onDismiss = menuState::dismiss,
-                                                    )
-                                                }
-                                            },
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .combinedClickable(
-                                            interactionSource = itemInteractionSource,
-                                            indication = ripple(color = screenAccentColor),
-                                            onClick = {
-                                                if (selectionState.isActive) {
-                                                    selectionState.toggle(song.id)
-                                                } else if (song.id == mediaMetadata?.id) {
-                                                    playerConnection.togglePlayPause()
-                                                } else {
-                                                    playerConnection.playQueue(
-                                                        YouTubeQueue(
-                                                            WatchEndpoint(videoId = song.id),
-                                                            song.toMediaMetadata(),
-                                                        ),
-                                                    )
-                                                }
-                                            },
-                                            onLongClick = {
-                                                if (!selectionState.isActive) {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    selectionState.start(song.id)
-                                                }
-                                            },
-                                        ),
-                                )
+                                CompositionLocalProvider(
+                                    LocalAccentColor provides screenAccentColor,
+                                    LocalIndication provides ripple(color = screenAccentColor),
+                                ) {
+                                    val itemInteractionSource = remember { MutableInteractionSource() }
+                                    YouTubeListItem(
+                                        item = song,
+                                        isActive = song.id == mediaMetadata?.id,
+                                        isPlaying = isPlaying,
+                                        inSelectionMode = selectionState.isActive,
+                                        isSelected = selectionState.isSelected(song.id),
+                                        showDuration = false,
+                                        accentColor = screenAccentColor,
+                                        trailingContent = {
+                                            IconButton(
+                                                onClick = {
+                                                    menuState.show {
+                                                        YouTubeSongMenu(
+                                                            song = song,
+                                                            navController = navController,
+                                                            onDismiss = menuState::dismiss,
+                                                        )
+                                                    }
+                                                },
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.more_vert),
+                                                    contentDescription = null,
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .combinedClickable(
+                                                interactionSource = itemInteractionSource,
+                                                indication = ripple(color = screenAccentColor),
+                                                onClick = {
+                                                    if (selectionState.isActive) {
+                                                        selectionState.toggle(song.id)
+                                                    } else if (song.id == mediaMetadata?.id) {
+                                                        playerConnection.togglePlayPause()
+                                                    } else {
+                                                        playerConnection.playQueue(
+                                                            YouTubeQueue(
+                                                                WatchEndpoint(videoId = song.id),
+                                                                song.toMediaMetadata(),
+                                                            ),
+                                                        )
+                                                    }
+                                                },
+                                                onLongClick = {
+                                                    if (!selectionState.isActive) {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        selectionState.start(song.id)
+                                                    }
+                                                },
+                                            ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -1479,7 +1485,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = "Singles & EPs",
@@ -1504,7 +1510,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -1566,7 +1572,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = section.title,
@@ -1591,7 +1597,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -1650,7 +1656,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = section.title,
@@ -1674,7 +1680,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -1734,7 +1740,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = section.title,
@@ -1758,7 +1764,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -1876,7 +1882,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = playlistTitle,
@@ -1900,7 +1906,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -2018,7 +2024,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = liveTitle,
@@ -2042,7 +2048,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -2135,7 +2141,7 @@ fun ArtistScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.Black),
+                                .background(MaterialTheme.colorScheme.background),
                         ) {
                             Row(
                                 modifier = Modifier
@@ -2262,7 +2268,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = "About",
@@ -2274,7 +2280,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistAboutCard(
                                     artistName = artistName,
@@ -2309,7 +2315,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ArtistSectionHeader(
                                     title = "Related Artists",
@@ -2333,7 +2339,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 LazyRow(
                                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
@@ -2362,7 +2368,7 @@ fun ArtistScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(100.dp)
-                            .background(Color.Black),
+                            .background(MaterialTheme.colorScheme.background),
                     )
                 }
             }

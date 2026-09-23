@@ -66,8 +66,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.materialkolor.PaletteStyle
-import com.materialkolor.rememberDynamicColorScheme
 import com.archm.player.R
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.DynamicThemeKey
@@ -78,34 +76,6 @@ import com.archm.player.ui.theme.DefaultThemeColor
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
-
-data class ThemePalette(
-    val nameRes: Int,
-    val seedColor: Color
-)
-
-val PaletteColors = listOf(
-    ThemePalette(R.string.palette_dynamic, Color.Transparent), 
-    ThemePalette(R.string.palette_crimson, Color(0xFFEC5464)),
-    ThemePalette(R.string.palette_rose, Color(0xFFD81B60)),
-    ThemePalette(R.string.palette_purple, Color(0xFF8E24AA)),
-    ThemePalette(R.string.palette_deep_purple, Color(0xFF5E35B1)),
-    ThemePalette(R.string.palette_indigo, Color(0xFF3949AB)),
-    ThemePalette(R.string.palette_blue, Color(0xFF1E88E5)),
-    ThemePalette(R.string.palette_sky_blue, Color(0xFF039BE5)),
-    ThemePalette(R.string.palette_cyan, Color(0xFF00ACC1)),
-    ThemePalette(R.string.palette_teal, Color(0xFF00897B)),
-    ThemePalette(R.string.palette_green, Color(0xFF43A047)),
-    ThemePalette(R.string.palette_light_green, Color(0xFF7CB342)),
-    ThemePalette(R.string.palette_lime, Color(0xFFC0CA33)),
-    ThemePalette(R.string.palette_yellow, Color(0xFFFDD835)),
-    ThemePalette(R.string.palette_amber, Color(0xFFFFB300)),
-    ThemePalette(R.string.palette_orange, Color(0xFFFB8C00)),
-    ThemePalette(R.string.palette_deep_orange, Color(0xFFF4511E)),
-    ThemePalette(R.string.palette_brown, Color(0xFF6D4C41)),
-    ThemePalette(R.string.palette_grey, Color(0xFF757575)),
-    ThemePalette(R.string.palette_blue_grey, Color(0xFF546E7A)),
-)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -136,7 +106,7 @@ fun ThemeScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         )
     }
@@ -216,112 +186,4 @@ fun ThemeModeCard(
     }
 }
 
-@Composable
-fun PaletteItem(
-    palette: ThemePalette,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val isSystemDark = isSystemInDarkTheme()
-    
-    val colorScheme = rememberDynamicColorScheme(
-        seedColor = palette.seedColor,
-        isDark = isSystemDark,
-        style = PaletteStyle.TonalSpot
-    )
-    
-    val cornerRadius by animateDpAsState(
-        targetValue = if (isSelected) 56.dp * 0.3f else 28.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "cornerRadius"
-    )
-    
-    val borderWidth by animateDpAsState(
-        targetValue = if (isSelected) 3.dp else 0.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "borderWidth"
-    )
-    
-    val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.15f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "scale"
-    )
-    
-    val cardShape = RoundedCornerShape(cornerRadius)
-    val interactionSource = remember { MutableInteractionSource() }
-    
-    val paletteName = stringResource(palette.nameRes)
-    val contentDesc = stringResource(R.string.cd_palette_item, paletteName)
-    
-    Box(
-        modifier = Modifier
-            .size(52.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                shadowElevation = if (isSelected) 8f else 2f
-                shape = RoundedCornerShape(cornerRadius)
-                clip = true
-            }
-            .background(colorScheme.primary, cardShape)
-            .then(
-                if (borderWidth > 0.dp) {
-                    Modifier.border(
-                        width = borderWidth,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        shape = cardShape
-                    )
-                } else {
-                    Modifier
-                }
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = ripple(),
-                onClick = onClick
-            )
-            .semantics {
-                contentDescription = contentDesc
-            }
-    ) {
-        /* if (palette.seedColor == Color.Transparent) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.palette),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-        } */
-        
-        if (isSelected) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.check),
-                    contentDescription = null,
-                    tint = if (palette.seedColor == Color.Transparent) MaterialTheme.colorScheme.onSurfaceVariant else colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
+

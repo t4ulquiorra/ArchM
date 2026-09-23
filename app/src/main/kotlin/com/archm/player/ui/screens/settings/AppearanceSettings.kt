@@ -62,6 +62,8 @@ import com.archm.player.constants.CropAlbumArtKey
 import com.archm.player.constants.DefaultOpenTabKey
 import com.archm.player.constants.DensityScale
 import com.archm.player.constants.DensityScaleKey
+import com.archm.player.constants.PureBlackKey
+import com.archm.player.constants.PureBlackMiniPlayerKey
 import com.archm.player.constants.EnableDynamicIconKey
 import com.archm.player.constants.EnableHighRefreshRateKey
 import com.archm.player.constants.EnableHapticsKey
@@ -133,6 +135,19 @@ fun AppearanceSettings(
     snackbarHostState: SnackbarHostState,
 highlightKey: String? = null) {
     val scrollState = androidx.compose.foundation.rememberScrollState()
+
+    val (pureBlack, onPureBlackChangeRaw) = rememberPreference(
+        PureBlackKey,
+        defaultValue = false
+    )
+    val (_, onPureBlackMiniPlayerChange) = rememberPreference(
+        PureBlackMiniPlayerKey,
+        defaultValue = false
+    )
+    val onPureBlackChange: (Boolean) -> Unit = { enabled ->
+        onPureBlackChangeRaw(enabled)
+        onPureBlackMiniPlayerChange(enabled)
+    }
 
     val (enableLegacyIcon, onEnableLegacyIconChange) = rememberPreference(
         com.archm.player.constants.EnableLegacyIconKey,
@@ -968,31 +983,34 @@ highlightKey: String? = null) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Material3SettingsGroup(scrollState = scrollState, 
+        Material3SettingsGroup(
+            scrollState = scrollState, 
             title = stringResource(R.string.theme),
             items = buildList {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                add(
+                    Material3SettingsItem(
+                        isHighlighted = (highlightKey == stringResource(R.string.pure_black)),
+                        icon = painterResource(R.drawable.contrast),
+                        title = { Text(stringResource(R.string.pure_black)) },
+                        description = { Text(stringResource(R.string.pure_black_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = pureBlack,
+                                onCheckedChange = onPureBlackChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (pureBlack) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                        onClick = { onPureBlackChange(!pureBlack) }
+                    )
+                )
                 add(
                     Material3SettingsItem(
                         isHighlighted = (highlightKey == stringResource(R.string.legacy_icon)),

@@ -558,7 +558,7 @@ class MainActivity : ComponentActivity() {
             setSystemBarAppearance(true)
         }
 
-        val pureBlack = true
+        val (pureBlack) = rememberPreference(PureBlackKey, defaultValue = false)
         val themeColor = DefaultThemeColor
 
         val (enableHaptics) = rememberPreference(com.archm.player.constants.EnableHapticsKey, defaultValue = false)
@@ -1022,7 +1022,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 
-                val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
+                val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
                 val appBackdrop = rememberLayerBackdrop {
                     drawRect(baseBg)
                     drawContent()
