@@ -363,16 +363,8 @@ private fun HomeContent(
                         .asPaddingValues(),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                // Item 0: Ambient Hero Backdrop + Account Layout + Quick Picks
+                // Item 0: Ambient Hero Backdrop + Quick Picks
                 item(key = "home_hero_backdrop") {
-                    val isLoggedIn =
-                        uiState.accountName.isNotBlank() &&
-                            !uiState.accountName.equals("Guest", ignoreCase = true)
-                    val hasPrecedingShelf = (remoteQuickPicks?.items?.isNotEmpty() == true || uiState.quickPicks.isNotEmpty()) ||
-                        uiState.speedDialItems.isNotEmpty() ||
-                        uiState.keepListening.isNotEmpty()
-                    val isFirstShelfAccountPlaylists = uiState.accountPlaylists.isNotEmpty() && !hasPrecedingShelf
-
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Box(
                             modifier =
@@ -391,15 +383,6 @@ private fun HomeContent(
                         }
                         Column(modifier = Modifier.padding(horizontal = 15.dp)) {
                             Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp)))
-                            if (isLoggedIn && !isFirstShelfAccountPlaylists) {
-                                Spacer(Modifier.height(8.dp))
-                                AccountLayout(
-                                    accountName = uiState.accountName,
-                                    url = uiState.accountImageUrl,
-                                    onClick = { navController.navigate("account") },
-                                )
-                                Spacer(Modifier.height(8.dp))
-                            }
                             SimpQuickPicks(
                                 quickPicks = uiState.quickPicks,
                                 remoteQuickPicks = remoteQuickPicks,
@@ -597,7 +580,11 @@ private fun HomeContent(
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically(),
                 ) {
-                    HomeTopAppBar(navController = navController)
+                    HomeTopAppBar(
+                        navController = navController,
+                        accountName = uiState.accountName,
+                        accountImageUrl = uiState.accountImageUrl,
+                    )
                 }
                 AnimatedVisibility(
                     visible = !isScrollingUp,

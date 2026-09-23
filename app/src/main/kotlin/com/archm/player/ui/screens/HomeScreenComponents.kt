@@ -181,42 +181,79 @@ import kotlin.random.Random
 fun HomeTopAppBar(
     navController: NavController,
     modifier: Modifier = Modifier,
+    accountName: String = "",
+    accountImageUrl: String? = null,
 ) {
     val hour =
         remember {
             val date = java.time.LocalTime.now()
             date.hour
         }
+    val greeting =
+        when (hour) {
+            in 6..12 -> stringResource(R.string.good_morning)
+            in 13..17 -> stringResource(R.string.good_afternoon)
+            in 18..23 -> stringResource(R.string.good_evening)
+            else -> stringResource(R.string.good_night)
+        }
+    val displayName =
+        if (accountName.isNotBlank() && !accountName.equals("Guest", ignoreCase = true)) {
+            accountName
+        } else {
+            stringResource(R.string.app_name)
+        }
+
     TopAppBar(
         windowInsets =
             TopAppBarDefaults.windowInsets.exclude(
                 TopAppBarDefaults.windowInsets.only(WindowInsetsSides.Start),
             ),
         title = {
-            Column(
-                verticalArrangement = Arrangement.Center,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { navController.navigate("account") },
             ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                AsyncImage(
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(accountImageUrl)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .diskCacheKey(accountImageUrl)
+                            .crossfade(true)
+                            .build(),
+                    placeholder = painterResource(R.drawable.person),
+                    error = painterResource(R.drawable.person),
+                    contentDescription = stringResource(R.string.account),
+                    contentScale = ContentScale.Crop,
+                    modifier =
+                        Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 )
-                Text(
-                    text =
-                        when (hour) {
-                            in 6..12 -> stringResource(R.string.good_morning)
-                            in 13..17 -> stringResource(R.string.good_afternoon)
-                            in 18..23 -> stringResource(R.string.good_evening)
-                            else -> stringResource(R.string.good_night)
-                        },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = greeting,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         },
         actions = {
@@ -342,71 +379,7 @@ fun HomeCategoryChips(
 }
 
 // ==========================================
-// 2. SimpMusic Account Layout
-// ==========================================
-
-@Composable
-fun AccountLayout(
-    accountName: String,
-    url: String?,
-    onClick: () -> Unit = {},
-    modifier: Modifier = Modifier,
-) {
-    if (accountName.isBlank() || accountName.equals("Guest", ignoreCase = true)) return
-
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onClick)
-                .padding(vertical = 4.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.welcome_back),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 3.dp),
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 4.dp),
-        ) {
-            AsyncImage(
-                model =
-                    ImageRequest.Builder(LocalContext.current)
-                        .data(url)
-                        .diskCachePolicy(CachePolicy.ENABLED)
-                        .diskCacheKey(url)
-                        .crossfade(true)
-                        .build(),
-                placeholder = painterResource(R.drawable.person),
-                error = painterResource(R.drawable.person),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .clip(CircleShape),
-            )
-            Text(
-                text = accountName,
-                style =
-                    MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 10.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-// ==========================================
-// 3. SimpMusic Quick Picks Components
+// 2. SimpMusic Quick Picks Components
 // ==========================================
 
 @OptIn(ExperimentalFoundationApi::class)
