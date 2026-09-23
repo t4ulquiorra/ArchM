@@ -630,12 +630,12 @@ fun ArtistScreen(
                         .background(dominantColor),
                 )
 
-                // Bottom 30%: Complete Black
+                // Bottom 30%: Theme Background
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .background(Color.Black),
+                        .background(MaterialTheme.colorScheme.background),
                 )
             }
         }
@@ -736,19 +736,18 @@ fun ArtistScreen(
                             .height(identityZoneHeight)
                             .background(
                                 Brush.verticalGradient(
-                                    0.0f to Color.Transparent,
-                                    1.0f to Color.Black,
+                                    colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
                                 ),
                             )
                             .padding(top = 6.dp),
                     )
 
-                    // Remainder: continue as solid Color.Black down to the bottom of the sheet
+                    // Remainder: continue as solid theme background down to the bottom of the sheet
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .background(Color.Black),
+                            .background(MaterialTheme.colorScheme.background),
                     )
                 }
             }
@@ -823,8 +822,7 @@ fun ArtistScreen(
                                             .fillMaxWidth()
                                             .background(
                                                 Brush.verticalGradient(
-                                                    0.0f to Color.Transparent,
-                                                    1.0f to Color.Black,
+                                                    colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
                                                 ),
                                             )
                                             .padding(top = 6.dp)
@@ -857,7 +855,7 @@ fun ArtistScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.Black),
+                                    .background(MaterialTheme.colorScheme.background),
                             ) {
                                 ListItemPlaceHolder()
                             }
@@ -1178,8 +1176,7 @@ fun ArtistScreen(
                                 .fillMaxWidth()
                                 .background(
                                     Brush.verticalGradient(
-                                        0.0f to Color.Transparent,
-                                        1.0f to Color.Black,
+                                        colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
                                     ),
                                 )
                                 .padding(top = 6.dp)
