@@ -580,7 +580,7 @@ private fun HomeContent(
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically(),
                 ) {
-                    HomeTopAppBar(
+                    MainTopBar(
                         navController = navController,
                         accountName = uiState.accountName,
                         accountImageUrl = uiState.accountImageUrl,

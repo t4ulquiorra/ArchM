@@ -79,7 +79,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.archm.player.viewmodels.HomeViewModel
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -178,7 +181,7 @@ import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeTopAppBar(
+fun MainTopBar(
     navController: NavController,
     modifier: Modifier = Modifier,
     accountName: String = "",
@@ -196,9 +199,16 @@ fun HomeTopAppBar(
             in 18..23 -> stringResource(R.string.good_evening)
             else -> stringResource(R.string.good_night)
         }
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val vmAccountName by homeViewModel.accountName.collectAsState()
+    val vmAccountImageUrl by homeViewModel.accountImageUrl.collectAsState()
+
+    val effectiveName = accountName.ifBlank { vmAccountName }
+    val effectiveImageUrl = accountImageUrl ?: vmAccountImageUrl
+
     val displayName =
-        if (accountName.isNotBlank() && !accountName.equals("Guest", ignoreCase = true)) {
-            accountName
+        if (effectiveName.isNotBlank() && !effectiveName.equals("Guest", ignoreCase = true)) {
+            effectiveName
         } else {
             stringResource(R.string.app_name)
         }
@@ -220,9 +230,9 @@ fun HomeTopAppBar(
                 AsyncImage(
                     model =
                         ImageRequest.Builder(LocalContext.current)
-                            .data(accountImageUrl)
+                            .data(effectiveImageUrl)
                             .diskCachePolicy(CachePolicy.ENABLED)
-                            .diskCacheKey(accountImageUrl)
+                            .diskCacheKey(effectiveImageUrl)
                             .crossfade(true)
                             .build(),
                     placeholder = painterResource(R.drawable.person),
@@ -303,6 +313,19 @@ fun HomeTopAppBar(
         modifier = modifier,
     )
 }
+
+@Composable
+fun HomeTopAppBar(
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    accountName: String = "",
+    accountImageUrl: String? = null,
+) = MainTopBar(
+    navController = navController,
+    modifier = modifier,
+    accountName = accountName,
+    accountImageUrl = accountImageUrl,
+)
 
 @Composable
 fun SimpChip(
@@ -1528,8 +1551,8 @@ fun SpeedDialSection(
     val context = LocalContext.current
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val columns = if (isLandscape) 4 else 2
-    val maxRows = 3
-    val maxItems = columns * maxRows // 6 items in Portrait, 12 items in Landscape
+    val maxRows = 2
+    val maxItems = columns * maxRows // 4 items in Portrait, 8 items in Landscape
 
     val distinctSpeedDial =
         remember(speedDialItems) {
@@ -1569,7 +1592,7 @@ fun SpeedDialSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        displayItems.chunked(columns).forEach { rowItems ->
+        displayItems.chunked(columns).take(maxRows).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

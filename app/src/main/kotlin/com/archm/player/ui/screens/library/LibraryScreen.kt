@@ -60,10 +60,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.archm.player.R
-import com.archm.player.constants.AppBarHeight
 import com.archm.player.constants.ChipSortTypeKey
 import com.archm.player.constants.DisableBlurKey
 import com.archm.player.constants.LibraryFilter
+import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 
@@ -122,12 +122,12 @@ fun LibraryScreen(navController: NavController) {
         }
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(top = AppBarHeight),
+            modifier = Modifier.fillMaxSize(),
         ) {
+            MainTopBar(
+                navController = navController,
+            )
+
             val tabListState = rememberLazyListState()
             val coroutineScope = rememberCoroutineScope()
 
