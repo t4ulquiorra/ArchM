@@ -105,12 +105,14 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -1069,12 +1071,16 @@ fun SimpHomeShelf(
     }
 }
 
-val HomeVideoCardWidth: Dp = 180.dp
-val HomeVideoThumbnailHeight: Dp = ((HomeVideoCardWidth - 10.dp) * 9f / 16f).coerceAtLeast(0.dp)
+private val CardGrey = Color(0xFF9E9E9E)
+private val CardMarbleWhite = Color(0xFFE2E2E2)
+private val CardPureWhite = Color(0xFFFFFFFF)
+
+val HomeVideoCardWidth: Dp = 205.6.dp
+val HomeVideoThumbnailHeight: Dp = 110.dp
 val HomeVideoPodHeight: Dp = 190.dp
 
-// Square card: 140dp wide matching ArtistScreen
-val HomeSquareCardThumbSize: Dp = 140.dp
+// Square card: 120dp wide matching ArtistScreen
+val HomeSquareCardThumbSize: Dp = 120.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1090,6 +1096,7 @@ fun HomeItemContentPlaylist(
     onLongClick: (() -> Unit)? = null,
     thumbSize: Dp = HomeSquareCardThumbSize,
     onPlayClick: (() -> Unit)? = null,
+    typeLabel: String = "Playlist",
 ) {
     val cardBgColor =
         rememberArtworkCardColor(
@@ -1105,8 +1112,6 @@ fun HomeItemContentPlaylist(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val innerPadding = 5.dp
-    val artworkSize = (thumbSize - (innerPadding * 2)).coerceAtLeast(0.dp)
     val cardShape = RoundedCornerShape(16.dp)
 
     Column(
@@ -1125,14 +1130,14 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
@@ -1145,8 +1150,8 @@ fun HomeItemContentPlaylist(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .size(36.dp)
+                            .padding(6.dp)
+                            .size(32.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
                             .background(Color.Black.copy(alpha = 0.55f)),
@@ -1156,13 +1161,13 @@ fun HomeItemContentPlaylist(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Column(
             modifier =
@@ -1171,22 +1176,37 @@ fun HomeItemContentPlaylist(
                     .padding(horizontal = 3.dp),
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
+                text = typeLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = CardMarbleWhite,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            } else {
+                val line3Height = with(LocalDensity.current) {
+                    val lh = MaterialTheme.typography.bodySmall.lineHeight
+                    if (lh.isSpecified) lh.toDp() else 16.dp
+                }
+                Spacer(modifier = Modifier.height(line3Height))
             }
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -1203,6 +1223,7 @@ fun HomeItemSong(
     isExplicit: Boolean = false,
     thumbSize: Dp = HomeSquareCardThumbSize,
     onPlayClick: (() -> Unit)? = null,
+    typeLabel: String = "Song",
 ) {
     val cardBgColor =
         rememberArtworkCardColor(
@@ -1218,8 +1239,6 @@ fun HomeItemSong(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val innerPadding = 5.dp
-    val artworkSize = (thumbSize - (innerPadding * 2)).coerceAtLeast(0.dp)
     val cardShape = RoundedCornerShape(16.dp)
 
     Column(
@@ -1238,14 +1257,14 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
@@ -1258,8 +1277,8 @@ fun HomeItemSong(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .size(36.dp)
+                            .padding(6.dp)
+                            .size(32.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
                             .background(Color.Black.copy(alpha = 0.55f)),
@@ -1269,13 +1288,13 @@ fun HomeItemSong(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Column(
             modifier =
@@ -1284,14 +1303,22 @@ fun HomeItemSong(
                     .padding(horizontal = 3.dp),
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
+                text = typeLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = CardMarbleWhite,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             if (subtitle.isNotBlank()) {
-                Spacer(modifier = Modifier.height(3.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
@@ -1300,7 +1327,7 @@ fun HomeItemSong(
                         Text(
                             text = "E",
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            color = CardGrey,
                             modifier =
                                 Modifier
                                     .padding(end = 4.dp)
@@ -1313,12 +1340,19 @@ fun HomeItemSong(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        color = CardGrey,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+            } else {
+                val line3Height = with(LocalDensity.current) {
+                    val lh = MaterialTheme.typography.bodySmall.lineHeight
+                    if (lh.isSpecified) lh.toDp() else 16.dp
+                }
+                Spacer(modifier = Modifier.height(line3Height))
             }
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -1336,94 +1370,110 @@ fun HomeItemArtist(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     subscribers: String? = null,
-    avatarSize: Dp = 120.dp,
+    avatarSize: Dp = HomeSquareCardThumbSize,
     isSingleLine: Boolean = false,
     labelSpacing: Dp = 8.dp,
+    typeLabel: String = "Artist",
 ) {
-    val cardBgColor = rememberArtworkCardColor(
-        thumbnailUrl = thumbnailUrl,
-        fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    )
+    val cardBgColor =
+        rememberArtworkCardColor(
+            thumbnailUrl = thumbnailUrl,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
-        targetShrinkScale = 0.95f,
+        targetShrinkScale = 0.97f,
         stiffness = Spring.StiffnessMedium,
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
+    val cardShape = RoundedCornerShape(16.dp)
+
     Column(
-        modifier = modifier.width(avatarSize),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier =
+            modifier
+                .width(avatarSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(cardShape)
+                .background(cardBgColor)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                )
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(avatarSize)
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
+                    .size(110.dp)
                     .clip(CircleShape)
-                    .background(cardBgColor)
-                    .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
-                    .combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = onClick,
-                        onLongClick = onLongClick,
-                    )
-                    .padding(5.dp),
+                    .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(480, 480) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
             )
         }
-        Spacer(modifier = Modifier.height(labelSpacing.coerceAtLeast(0.dp)))
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = onClick,
-                        onLongClick = onLongClick,
-                    ),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                    .padding(horizontal = 3.dp),
         ) {
             Text(
-                text = title,
-                style = if (isSingleLine) MaterialTheme.typography.bodySmall else MaterialTheme.typography.titleSmall,
-                color = Color.White,
+                text = typeLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(align = Alignment.CenterVertically),
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = CardPureWhite,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
             if (!subscribers.isNullOrBlank()) {
                 Text(
                     text = subscribers,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xC4FFFFFF),
+                    color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(align = Alignment.CenterVertically),
                 )
+            } else {
+                val line3Height = with(LocalDensity.current) {
+                    val lh = MaterialTheme.typography.bodySmall.lineHeight
+                    if (lh.isSpecified) lh.toDp() else 16.dp
+                }
+                Spacer(modifier = Modifier.height(line3Height))
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -1442,11 +1492,12 @@ fun HomeItemVideo(
     onLongClick: (() -> Unit)? = null,
     cardWidth: Dp = HomeVideoCardWidth,
     onPlayClick: (() -> Unit)? = null,
+    typeLabel: String = "Video",
 ) {
     val cardBgColor =
         rememberArtworkCardColor(
             thumbnailUrl = thumbnailUrl,
-            fallbackColor = MaterialTheme.colorScheme.surfaceContainer,
+            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -1457,7 +1508,6 @@ fun HomeItemVideo(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val innerPadding = 5.dp
     val cardShape = RoundedCornerShape(16.dp)
 
     Column(
@@ -1477,14 +1527,14 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(12.dp)),
+                    .height(110.dp)
+                    .clip(RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
@@ -1498,8 +1548,8 @@ fun HomeItemVideo(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                            .size(36.dp)
+                            .padding(6.dp)
+                            .size(32.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
                             .background(Color.Black.copy(alpha = 0.55f)),
@@ -1509,13 +1559,13 @@ fun HomeItemVideo(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Column(
             modifier =
@@ -1524,26 +1574,46 @@ fun HomeItemVideo(
                     .padding(horizontal = 3.dp),
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
+                text = typeLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = CardMarbleWhite,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
             if (!subtitle.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.basicMarquee(),
                 )
+            } else {
+                val line3Height = with(LocalDensity.current) {
+                    val lh = MaterialTheme.typography.bodySmall.lineHeight
+                    if (lh.isSpecified) lh.toDp() else 16.dp
+                }
+                Spacer(modifier = Modifier.height(line3Height))
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
-}// ==========================================
+}
+// ==========================================
 // 5. Speed Dial Section (Spotify-style Matrix)
 // ==========================================
 
@@ -1808,8 +1878,9 @@ fun KeepListeningShelf(
                         }
                         HomeItemContentPlaylist(
                             title = item.title,
-                            subtitle = item.album.year?.toString() ?: item.artists.joinToString { it.name },
+                            subtitle = item.artists.joinToString { it.name }.ifBlank { item.album.year?.toString() },
                             thumbnailUrl = item.album.thumbnailUrl,
+                            typeLabel = "Album",
                             onClick = { navController.navigate("album/${item.id}") },
                             onLongClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -1846,8 +1917,9 @@ fun KeepListeningShelf(
                     is Playlist -> {
                         HomeItemContentPlaylist(
                             title = item.title,
-                            subtitle = stringResource(R.string.playlist),
+                            subtitle = pluralStringResource(R.plurals.n_song, item.songCount, item.songCount),
                             thumbnailUrl = item.thumbnails.firstOrNull(),
+                            typeLabel = "Playlist",
                             onClick = { navController.navigate("local_playlist/${item.id}") },
                             onLongClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -1902,8 +1974,9 @@ fun AccountPlaylistsShelf(
             ) { item ->
                 HomeItemContentPlaylist(
                     title = item.title,
-                    subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                    subtitle = item.author?.name ?: item.songCountText,
                     thumbnailUrl = item.thumbnail,
+                    typeLabel = "Playlist",
                     onClick = { navController.navigate("online_playlist/${item.id}") },
                 )
             }
@@ -2119,8 +2192,9 @@ fun SimilarRecommendationsShelf(
                     is AlbumItem -> {
                         HomeItemContentPlaylist(
                             title = item.title,
-                            subtitle = item.year?.toString() ?: item.artists?.joinToString { it.name } ?: "",
+                            subtitle = item.artists?.joinToString { it.name } ?: item.year?.toString(),
                             thumbnailUrl = item.thumbnail,
+                            typeLabel = "Album",
                             onClick = { navController.navigate("album/${item.id}") },
                             onLongClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2163,8 +2237,9 @@ fun SimilarRecommendationsShelf(
                         if (item.isLandscapeThumbnail) {
                             HomeItemVideo(
                                 title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                                subtitle = item.author?.name ?: item.songCountText,
                                 thumbnailUrl = item.thumbnail,
+                                typeLabel = "Video",
                                 onClick = { navController.navigate("online_playlist/${item.id}") },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2180,8 +2255,9 @@ fun SimilarRecommendationsShelf(
                         } else {
                             HomeItemContentPlaylist(
                                 title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                                subtitle = item.author?.name ?: item.songCountText,
                                 thumbnailUrl = item.thumbnail,
+                                typeLabel = "Playlist",
                                 onClick = { navController.navigate("online_playlist/${item.id}") },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2385,8 +2461,9 @@ fun HomePageSectionShelf(
                     is AlbumItem -> {
                         HomeItemContentPlaylist(
                             title = item.title,
-                            subtitle = item.year?.toString() ?: item.artists?.joinToString { it.name } ?: "",
+                            subtitle = item.artists?.joinToString { it.name } ?: item.year?.toString(),
                             thumbnailUrl = item.thumbnail,
+                            typeLabel = "Album",
                             onClick = { navController.navigate("album/${item.id}") },
                             onLongClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2429,8 +2506,9 @@ fun HomePageSectionShelf(
                         if (item.isLandscapeThumbnail) {
                             HomeItemVideo(
                                 title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                                subtitle = item.author?.name ?: item.songCountText,
                                 thumbnailUrl = item.thumbnail,
+                                typeLabel = "Video",
                                 onClick = { navController.navigate("online_playlist/${item.id}") },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -2446,8 +2524,9 @@ fun HomePageSectionShelf(
                         } else {
                             HomeItemContentPlaylist(
                                 title = item.title,
-                                subtitle = item.author?.name ?: item.songCountText ?: stringResource(R.string.playlist),
+                                subtitle = item.author?.name ?: item.songCountText,
                                 thumbnailUrl = item.thumbnail,
+                                typeLabel = "Playlist",
                                 onClick = { navController.navigate("online_playlist/${item.id}") },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
