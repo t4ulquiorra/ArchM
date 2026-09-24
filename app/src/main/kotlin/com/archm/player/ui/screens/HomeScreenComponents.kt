@@ -186,6 +186,7 @@ fun MainTopBar(
     modifier: Modifier = Modifier,
     accountName: String = "",
     accountImageUrl: String? = null,
+    titleContent: (@Composable () -> Unit)? = null,
 ) {
     val hour =
         remember {
@@ -245,24 +246,28 @@ fun MainTopBar(
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 )
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(
-                        text = displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = greeting,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                if (titleContent != null) {
+                    titleContent()
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            text = displayName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = greeting,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         },
@@ -320,11 +325,13 @@ fun HomeTopAppBar(
     modifier: Modifier = Modifier,
     accountName: String = "",
     accountImageUrl: String? = null,
+    titleContent: (@Composable () -> Unit)? = null,
 ) = MainTopBar(
     navController = navController,
     modifier = modifier,
     accountName = accountName,
     accountImageUrl = accountImageUrl,
+    titleContent = titleContent,
 )
 
 @Composable

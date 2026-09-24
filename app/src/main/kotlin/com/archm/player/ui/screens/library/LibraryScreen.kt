@@ -7,10 +7,17 @@
 
 package com.archm.player.ui.screens.library
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -86,6 +93,16 @@ fun LibraryScreen(navController: NavController) {
         ) { libraryFilters.size }
 
     val currentFilter = libraryFilters.getOrElse(pagerState.currentPage) { LibraryFilter.LIBRARY }
+    val tabTitle =
+        when (currentFilter) {
+            LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+            LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+            LibraryFilter.SONGS -> stringResource(R.string.songs)
+            LibraryFilter.ARTISTS -> stringResource(R.string.artists)
+            LibraryFilter.ALBUMS -> stringResource(R.string.albums)
+            else -> currentFilter.name
+        }
+    val titleText = "Your $tabTitle"
 
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
@@ -101,6 +118,28 @@ fun LibraryScreen(navController: NavController) {
         ) {
             MainTopBar(
                 navController = navController,
+                titleContent = {
+                    AnimatedContent(
+                        targetState = titleText,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                                    (slideOutVertically { height -> -height / 2 } + fadeOut())
+                            } else {
+                                (slideInVertically { height -> -height / 2 } + fadeIn()) togetherWith
+                                    (slideOutVertically { height -> height / 2 } + fadeOut())
+                            }.using(SizeTransform(clip = false))
+                        },
+                        label = "LibraryTitleAnimation",
+                    ) { targetTitle ->
+                        Text(
+                            text = targetTitle,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                        )
+                    }
+                },
             )
 
             val tabListState = rememberLazyListState()
