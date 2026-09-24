@@ -47,8 +47,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -61,11 +59,9 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.archm.player.R
 import com.archm.player.constants.ChipSortTypeKey
-import com.archm.player.constants.DisableBlurKey
 import com.archm.player.constants.LibraryFilter
 import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.utils.rememberEnumPreference
-import com.archm.player.utils.rememberPreference
 
 internal val LibraryHeaderContentPadding = 64.dp
 internal val LibraryPullToRefreshIndicatorOffset = 0.dp
@@ -73,7 +69,6 @@ internal val LibraryPullToRefreshIndicatorOffset = 0.dp
 @Composable
 fun LibraryScreen(navController: NavController) {
     val defaultFilter by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
-    val (disableBlur) = rememberPreference(DisableBlurKey, false)
     val libraryFilters = remember {
         listOf(
             LibraryFilter.LIBRARY,
@@ -93,8 +88,6 @@ fun LibraryScreen(navController: NavController) {
 
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    val tonalStart = MaterialTheme.colorScheme.primaryContainer
-    val tonalMiddle = MaterialTheme.colorScheme.secondaryContainer
 
     Box(
         modifier =
@@ -102,25 +95,6 @@ fun LibraryScreen(navController: NavController) {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
     ) {
-        if (!disableBlur) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(430.dp)
-                        .align(Alignment.TopCenter)
-                        .drawWithCache {
-                            val brush =
-                                Brush.verticalGradient(
-                                    0f to tonalStart.copy(alpha = 0.30f),
-                                    0.42f to tonalMiddle.copy(alpha = 0.14f),
-                                    1f to Color.Transparent,
-                                )
-                            onDrawBehind { drawRect(brush) }
-                        },
-            )
-        }
-
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
