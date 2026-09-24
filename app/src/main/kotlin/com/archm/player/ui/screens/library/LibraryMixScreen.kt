@@ -358,6 +358,10 @@ fun LibraryMixScreen(
                                 )
                             }
 
+                            val playlistCardWidth = 130.dp
+                            val playlistCardHeight = 176.dp
+                            val playlistCardShape = RoundedCornerShape(16.dp)
+
                             LazyRow(
                                 contentPadding = PaddingValues(horizontal = 24.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -387,17 +391,17 @@ fun LibraryMixScreen(
                                         label = "MixPlaylistCardScale",
                                     )
 
-                                    val cardShape = RoundedCornerShape(18.dp)
                                     Column(
                                         modifier =
                                             Modifier
-                                                .width(150.dp)
+                                                .width(playlistCardWidth)
+                                                .height(playlistCardHeight)
                                                 .graphicsLayer {
                                                     scaleX = scale
                                                     scaleY = scale
-                                                }.clip(cardShape)
+                                                }.clip(playlistCardShape)
                                                 .background(cardBgColor)
-                                                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                                                .border(1.dp, Color.White.copy(alpha = 0.12f), playlistCardShape)
                                                 .clickable(
                                                     interactionSource = interactionSource,
                                                     indication = null,
@@ -410,14 +414,14 @@ fun LibraryMixScreen(
                                                             navController.navigate("local_playlist/${playlist.id}")
                                                         }
                                                     },
-                                                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
+                                                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
                                     ) {
                                         Box(
                                             modifier =
                                                 Modifier
                                                     .fillMaxWidth()
                                                     .aspectRatio(1f)
-                                                    .clip(RoundedCornerShape(14.dp)),
+                                                    .clip(RoundedCornerShape(12.dp)),
                                         ) {
                                             AsyncImage(
                                                 model = playlist.thumbnails.getOrNull(0),
@@ -430,8 +434,8 @@ fun LibraryMixScreen(
                                                 modifier =
                                                     Modifier
                                                         .align(Alignment.BottomEnd)
-                                                        .padding(6.dp)
-                                                        .size(28.dp)
+                                                        .padding(5.dp)
+                                                        .size(26.dp)
                                                         .clip(CircleShape)
                                                         .background(MaterialTheme.colorScheme.primary)
                                                         .clickable {
@@ -453,11 +457,11 @@ fun LibraryMixScreen(
                                                     painter = painterResource(id = R.drawable.play),
                                                     contentDescription = null,
                                                     tint = MaterialTheme.colorScheme.onPrimary,
-                                                    modifier = Modifier.size(14.dp),
+                                                    modifier = Modifier.size(13.dp),
                                                 )
                                             }
                                         }
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Spacer(modifier = Modifier.height(5.dp))
                                         Column(
                                             modifier =
                                                 Modifier
@@ -471,7 +475,7 @@ fun LibraryMixScreen(
                                                 overflow = TextOverflow.Ellipsis,
                                                 color = MaterialTheme.colorScheme.onBackground,
                                             )
-                                            Spacer(modifier = Modifier.height(3.dp))
+                                            Spacer(modifier = Modifier.height(2.dp))
                                             Text(
                                                 text = "${playlist.songCount} ${stringResource(R.string.tracks_label)}",
                                                 style = MaterialTheme.typography.bodySmall,
@@ -485,15 +489,14 @@ fun LibraryMixScreen(
 
                                 // Ending "More" card
                                 item {
-                                    val moreCardShape = RoundedCornerShape(18.dp)
                                     Column(
                                         modifier =
                                             Modifier
-                                                .width(150.dp)
-                                                .height(182.dp)
-                                                .clip(moreCardShape)
+                                                .width(playlistCardWidth)
+                                                .height(playlistCardHeight)
+                                                .clip(playlistCardShape)
                                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-                                                .border(1.dp, Color.White.copy(alpha = 0.12f), moreCardShape)
+                                                .border(1.dp, Color.White.copy(alpha = 0.12f), playlistCardShape)
                                                 .clickable {
                                                     onTabSelected(LibraryFilter.PLAYLISTS)
                                                 },
@@ -503,7 +506,7 @@ fun LibraryMixScreen(
                                         Box(
                                             modifier =
                                                 Modifier
-                                                    .size(56.dp)
+                                                    .size(48.dp)
                                                     .clip(CircleShape)
                                                     .background(MaterialTheme.colorScheme.surfaceVariant),
                                             contentAlignment = Alignment.Center,
@@ -515,7 +518,7 @@ fun LibraryMixScreen(
                                                 modifier = Modifier.size(24.dp),
                                             )
                                         }
-                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Spacer(modifier = Modifier.height(10.dp))
                                         Text(
                                             text = stringResource(R.string.more_label),
                                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
