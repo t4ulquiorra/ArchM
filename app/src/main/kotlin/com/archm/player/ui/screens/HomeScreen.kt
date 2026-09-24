@@ -299,7 +299,15 @@ private fun HomeContent(
 
     val firstThumbnailUrl =
         remember(uiState, remoteQuickPicks) {
-            remoteQuickPicks?.items?.firstOrNull()?.thumbnail
+            uiState.speedDialItems.firstOrNull()?.let {
+                when (it) {
+                    is Song -> it.song.thumbnailUrl
+                    is Album -> it.album.thumbnailUrl
+                    is Artist -> it.artist.thumbnailUrl
+                    is Playlist -> it.thumbnails.firstOrNull()
+                }
+            }
+                ?: remoteQuickPicks?.items?.firstOrNull()?.thumbnail
                 ?: uiState.quickPicks.firstOrNull()?.song?.thumbnailUrl
                 ?: uiState.keepListening.firstOrNull()?.let {
                     when (it) {
@@ -363,7 +371,7 @@ private fun HomeContent(
                         .asPaddingValues(),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                // Item 0: Ambient Hero Backdrop + Quick Picks
+                // 1. Ambient Hero Backdrop + Speed Dial
                 item(key = "home_hero_backdrop") {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Box(
@@ -383,49 +391,41 @@ private fun HomeContent(
                         }
                         Column(modifier = Modifier.padding(horizontal = 15.dp)) {
                             Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp)))
-                            SimpQuickPicks(
-                                quickPicks = uiState.quickPicks,
-                                remoteQuickPicks = remoteQuickPicks,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                            )
+                            if (uiState.speedDialItems.isNotEmpty()) {
+                                Spacer(Modifier.height(8.dp))
+                                SpeedDialSection(
+                                    speedDialItems = uiState.speedDialItems,
+                                    mediaMetadata = mediaMetadata,
+                                    isPlaying = isPlaying,
+                                    navController = navController,
+                                    playerConnection = playerConnection,
+                                    menuState = menuState,
+                                    haptic = haptic,
+                                    scope = scope,
+                                )
+                                Spacer(Modifier.height(12.dp))
+                            }
                         }
                     }
                 }
 
-                // Speed Dial Section
-                if (uiState.speedDialItems.isNotEmpty()) {
-                    item(key = "home_speed_dial") {
-                        Column(modifier = Modifier.padding(horizontal = 15.dp, vertical = 6.dp)) {
-                            Text(
-                                text = stringResource(R.string.speed_dial),
-                                style =
-                                    MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.W800,
-                                    ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(vertical = 4.dp),
-                            )
-                            SpeedDialSection(
-                                speedDialItems = uiState.speedDialItems,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                scope = scope,
-                            )
-                        }
+                // 2. Compact SimpQuickPicks (185.dp Hero Carousel)
+                item(key = "home_quick_picks_hero") {
+                    Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                        SimpQuickPicks(
+                            quickPicks = uiState.quickPicks,
+                            remoteQuickPicks = remoteQuickPicks,
+                            mediaMetadata = mediaMetadata,
+                            isPlaying = isPlaying,
+                            navController = navController,
+                            playerConnection = playerConnection,
+                            menuState = menuState,
+                            haptic = haptic,
+                        )
                     }
                 }
 
-                // Keep Listening Section
+                // 3. Keep Listening Section
                 if (uiState.keepListening.isNotEmpty()) {
                     item(key = "home_keep_listening") {
                         Box(modifier = Modifier.padding(horizontal = 15.dp)) {
@@ -443,22 +443,7 @@ private fun HomeContent(
                     }
                 }
 
-                // Your YouTube Playlists Section
-                if (uiState.accountPlaylists.isNotEmpty()) {
-                    item(key = "home_account_playlists") {
-                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                            AccountPlaylistsShelf(
-                                accountPlaylists = uiState.accountPlaylists,
-                                accountName = uiState.accountName,
-                                accountImageUrl = uiState.accountImageUrl,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                            )
-                        }
-                    }
-                }
-
-                // Forgotten Favorites Section
+                // 4. Forgotten Favorites Section
                 if (uiState.forgottenFavorites.isNotEmpty()) {
                     item(key = "home_forgotten_favorites") {
                         Box(modifier = Modifier.padding(horizontal = 15.dp)) {
@@ -475,7 +460,22 @@ private fun HomeContent(
                     }
                 }
 
-                // Similar Recommendations
+                // 5. Account Playlists Section
+                if (uiState.accountPlaylists.isNotEmpty()) {
+                    item(key = "home_account_playlists") {
+                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
+                            AccountPlaylistsShelf(
+                                accountPlaylists = uiState.accountPlaylists,
+                                accountName = uiState.accountName,
+                                accountImageUrl = uiState.accountImageUrl,
+                                navController = navController,
+                                playerConnection = playerConnection,
+                            )
+                        }
+                    }
+                }
+
+                // 6. Similar Recommendations
                 items(
                     items = uiState.similarRecommendations,
                     key = { "similar_${it.title.id}" },
@@ -494,39 +494,23 @@ private fun HomeContent(
                     }
                 }
 
-                // Remote YouTube Music Sections
+                // 7. Remote YouTube Music Sections
                 itemsIndexed(
                     items = uiState.homePage?.sections.orEmpty(),
                     key = { index, section -> "remote_${section.endpoint?.browseId ?: section.title}_$index" },
                 ) { _, section ->
                     if (section == remoteQuickPicks) return@itemsIndexed
                     Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                        if (section.title.equals("Quick picks", ignoreCase = true) ||
-                            section.title.contains("quick pick", ignoreCase = true) ||
-                            section.title.equals("Listen again", ignoreCase = true) ||
-                            section.title.contains("listen again", ignoreCase = true)
-                        ) {
-                            QuickPicksCarouselShelf(
-                                section = section,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                            )
-                        } else {
-                            HomePageSectionShelf(
-                                section = section,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                scope = scope,
-                            )
-                        }
+                        HomePageSectionShelf(
+                            section = section,
+                            mediaMetadata = mediaMetadata,
+                            isPlaying = isPlaying,
+                            navController = navController,
+                            playerConnection = playerConnection,
+                            menuState = menuState,
+                            haptic = haptic,
+                            scope = scope,
+                        )
                     }
                 }
 

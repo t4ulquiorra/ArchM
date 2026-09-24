@@ -737,15 +737,12 @@ class HomeViewModel @Inject constructor(
     }
 
     
-    private suspend fun loadNetworkDataPhase() {
+    private suspend fun loadPrimaryFeedPhase() {
         val hideExplicit = context.dataStore.get(HideExplicitKey, false)
         val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
         val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
 
         coroutineScope {
-            launch(Dispatchers.IO) { getDailyDiscover() }
-            launch(Dispatchers.IO) { getCommunityPlaylists() }
-            launch(Dispatchers.IO) { loadSimilarRecommendations() }
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
                     val (pageWithoutQuickPicks, quickPicksSection) = page.extractQuickPicks()
@@ -767,35 +764,47 @@ class HomeViewModel @Inject constructor(
                             if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                         }
                     )
-                }.onFailure { reportException(it) }
-            }
-            launch(Dispatchers.IO) {
-                YouTube.explore().onSuccess { page ->
-                    explorePage.value = page.copy(
-                        newReleaseAlbums = page.newReleaseAlbums.filterExplicit(hideExplicit)
-                    )
-                }.onFailure { reportException(it) }
+                    isRefreshing.value = false
+                }.onFailure {
+                    reportException(it)
+                    isRefreshing.value = false
+                }
             }
             if (YouTube.cookie != null) {
                 launch(Dispatchers.IO) { loadAccountPlaylists() }
             }
         }
-
-        
-        allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
-                homePage.value?.sections?.flatMap { it.items }.orEmpty()
     }
 
     private suspend fun load() {
         isLoading.value = true
 
-        
+        // Phase 1 (Local)
         loadLocalDataPhase()
 
-        
-        loadNetworkDataPhase()
-        
+        // Phase 2 (Primary Feed)
+        loadPrimaryFeedPhase()
         isLoading.value = false
+        isRefreshing.value = false
+        allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
+            homePage.value?.sections?.flatMap { it.items }.orEmpty()
+
+        // Phase 3 (Background / Non-blocking)
+        viewModelScope.launch(Dispatchers.IO) { getDailyDiscover() }
+        viewModelScope.launch(Dispatchers.IO) { getCommunityPlaylists() }
+        viewModelScope.launch(Dispatchers.IO) {
+            loadSimilarRecommendations()
+            allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
+                homePage.value?.sections?.flatMap { it.items }.orEmpty()
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+            YouTube.explore().onSuccess { page ->
+                explorePage.value = page.copy(
+                    newReleaseAlbums = page.newReleaseAlbums.filterExplicit(hideExplicit)
+                )
+            }.onFailure { reportException(it) }
+        }
     }
 
     fun loadMoreYouTubeItems(continuation: String?) {

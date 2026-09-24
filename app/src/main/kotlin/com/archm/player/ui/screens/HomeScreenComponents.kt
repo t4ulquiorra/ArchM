@@ -696,14 +696,11 @@ fun QuickPicksCarousel(
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val heroHeight =
             when {
-                maxWidth >= 840.dp -> 380.dp
-                maxWidth >= 600.dp -> 356.dp
-                else -> 332.dp
+                maxWidth >= 840.dp -> 210.dp
+                maxWidth >= 600.dp -> 195.dp
+                else -> 185.dp
             }
-        val heroMaxWidth =
-            (maxWidth - 48.dp)
-                .coerceAtLeast(232.dp)
-                .coerceAtMost(440.dp)
+        val heroMaxWidth = (maxWidth - 32.dp).coerceAtMost(360.dp)
         val density = LocalDensity.current
         val requestWidthPx = with(density) { heroMaxWidth.roundToPx().coerceAtLeast(1) }
         val requestHeightPx = with(density) { heroHeight.roundToPx().coerceAtLeast(1) }
@@ -777,14 +774,14 @@ fun QuickPicksCarousel(
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(14.dp)
-                                .size(36.dp),
+                                .padding(12.dp)
+                                .size(32.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 painter = painterResource(R.drawable.volume_up),
                                 contentDescription = null,
-                                modifier = Modifier.size(19.dp),
+                                modifier = Modifier.size(16.dp),
                             )
                         }
                     }
@@ -795,19 +792,26 @@ fun QuickPicksCarousel(
                     modifier =
                         Modifier
                             .align(Alignment.BottomStart)
-                            .padding(20.dp),
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                 ) {
                     Text(
                         text = item.title,
-                        style = MaterialTheme.typography.titleLargeEmphasized,
+                        style =
+                            MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                            ),
                         color = Color.White,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     if (item.subtitle.isNotBlank()) {
                         Text(
                             text = item.subtitle,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style =
+                                MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
+                                ),
                             color = Color.White.copy(alpha = 0.78f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -1065,12 +1069,12 @@ fun SimpHomeShelf(
     }
 }
 
-val HomeVideoCardWidth: Dp = (150f * 16f / 9f).dp
+val HomeVideoCardWidth: Dp = 180.dp
 val HomeVideoThumbnailHeight: Dp = ((HomeVideoCardWidth - 10.dp) * 9f / 16f).coerceAtLeast(0.dp)
 val HomeVideoPodHeight: Dp = 190.dp
 
-// Square card: 150dp wide matching ArtistScreen
-val HomeSquareCardThumbSize: Dp = 150.dp
+// Square card: 140dp wide matching ArtistScreen
+val HomeSquareCardThumbSize: Dp = 140.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1103,7 +1107,7 @@ fun HomeItemContentPlaylist(
 
     val innerPadding = 5.dp
     val artworkSize = (thumbSize - (innerPadding * 2)).coerceAtLeast(0.dp)
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = RoundedCornerShape(16.dp)
 
     Column(
         modifier =
@@ -1121,14 +1125,14 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
@@ -1216,7 +1220,7 @@ fun HomeItemSong(
 
     val innerPadding = 5.dp
     val artworkSize = (thumbSize - (innerPadding * 2)).coerceAtLeast(0.dp)
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = RoundedCornerShape(16.dp)
 
     Column(
         modifier =
@@ -1234,14 +1238,14 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
+                ).padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
@@ -1332,7 +1336,7 @@ fun HomeItemArtist(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     subscribers: String? = null,
-    avatarSize: Dp = 174.dp,
+    avatarSize: Dp = 120.dp,
     isSingleLine: Boolean = false,
     labelSpacing: Dp = 8.dp,
 ) {
@@ -1454,7 +1458,7 @@ fun HomeItemVideo(
     )
 
     val innerPadding = 5.dp
-    val cardShape = RoundedCornerShape(18.dp)
+    val cardShape = RoundedCornerShape(16.dp)
 
     Column(
         modifier =
@@ -1473,14 +1477,14 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
+                .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 8.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
