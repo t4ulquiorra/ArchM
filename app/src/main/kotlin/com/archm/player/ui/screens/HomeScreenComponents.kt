@@ -1077,7 +1077,7 @@ private val CardPureWhite = Color(0xFFFFFFFF)
 
 val HomeVideoCardWidth: Dp = 216.dp
 val HomeVideoThumbnailHeight: Dp = 116.dp
-val HomeVideoPodHeight: Dp = 186.dp
+val HomeVideoPodHeight: Dp = 180.dp
 
 // Square card: 126dp wide matching ArtistScreen
 val HomeSquareCardThumbSize: Dp = 126.dp
@@ -1118,7 +1118,7 @@ fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(186.dp)
+                .height(180.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1227,7 +1227,7 @@ fun HomeItemContentPlaylist(
                 Spacer(modifier = Modifier.height(15.dp))
             }
 
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(1.dp))
         }
     }
 }
@@ -1266,7 +1266,7 @@ fun HomeItemSong(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(186.dp)
+                .height(180.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1394,7 +1394,7 @@ fun HomeItemSong(
                 Spacer(modifier = Modifier.height(15.dp))
             }
 
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(1.dp))
         }
     }
 }
@@ -1431,7 +1431,7 @@ fun HomeItemArtist(
         modifier =
             modifier
                 .width(avatarSize)
-                .height(186.dp)
+                .height(180.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1520,7 +1520,7 @@ fun HomeItemArtist(
                 Spacer(modifier = Modifier.height(15.dp))
             }
 
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(1.dp))
         }
     }
 }
@@ -1561,7 +1561,7 @@ fun HomeItemVideo(
         modifier =
             modifier
                 .width(cardWidth)
-                .height(186.dp)
+                .height(180.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1672,7 +1672,7 @@ fun HomeItemVideo(
                 Spacer(modifier = Modifier.height(15.dp))
             }
 
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(1.dp))
         }
     }
 }
