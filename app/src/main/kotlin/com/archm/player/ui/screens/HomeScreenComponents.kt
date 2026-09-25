@@ -1071,8 +1071,8 @@ fun SimpHomeShelf(
     }
 }
 
-private val CardGrey = Color(0xFF9E9E9E)
-private val CardMarbleWhite = Color(0xFFE2E2E2)
+private val CardGrey = Color(0xFFAEAEAE)
+private val CardMarbleWhite = Color(0xFFFFFFFF)
 private val CardPureWhite = Color(0xFFFFFFFF)
 
 val HomeVideoCardWidth: Dp = 205.6.dp
@@ -1394,8 +1394,8 @@ fun HomeItemSong(
 }
 
 /**
- * Circular avatar Related Artists carousel item — circular pod container with dynamic artwork
- * tint background, 1dp static border, and 5dp inner padding matching standard square card pods.
+ * Circular avatar Related Artists carousel item — circular pod container blending into screen background,
+ * no visible border, and 5dp inner padding matching standard square card pods.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1411,12 +1411,6 @@ fun HomeItemArtist(
     labelSpacing: Dp = 8.dp,
     typeLabel: String = "Artist",
 ) {
-    val cardBgColor =
-        rememberArtworkCardColor(
-            thumbnailUrl = thumbnailUrl,
-            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        )
-
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -1436,8 +1430,7 @@ fun HomeItemArtist(
                     scaleY = scale
                 }
                 .clip(cardShape)
-                .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
