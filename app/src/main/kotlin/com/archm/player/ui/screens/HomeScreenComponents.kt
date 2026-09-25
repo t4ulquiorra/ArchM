@@ -1182,7 +1182,7 @@ fun HomeItemContentPlaylist(
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 9.5.sp,
                         lineHeight = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
                 maxLines = 1,
@@ -1215,19 +1215,19 @@ fun HomeItemContentPlaylist(
                     text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.5.sp,
-                            lineHeight = 15.sp,
-                            fontWeight = FontWeight.Normal,
+                            fontSize = 9.5.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                         ),
                     color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            Spacer(modifier = Modifier.height(1.dp))
+            Spacer(modifier = Modifier.height(2.dp))
         }
     }
 }
@@ -1330,7 +1330,7 @@ fun HomeItemSong(
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 9.5.sp,
                         lineHeight = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
                 maxLines = 1,
@@ -1381,9 +1381,9 @@ fun HomeItemSong(
                         text = subtitle,
                         style =
                             MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 10.5.sp,
-                                lineHeight = 15.sp,
-                                fontWeight = FontWeight.Normal,
+                                fontSize = 9.5.sp,
+                                lineHeight = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
                             ),
                         color = CardGrey,
                         maxLines = 1,
@@ -1391,10 +1391,10 @@ fun HomeItemSong(
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            Spacer(modifier = Modifier.height(1.dp))
+            Spacer(modifier = Modifier.height(2.dp))
         }
     }
 }
@@ -1479,7 +1479,7 @@ fun HomeItemArtist(
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 9.5.sp,
                         lineHeight = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
                 maxLines = 1,
@@ -1508,19 +1508,19 @@ fun HomeItemArtist(
                     text = subscribers,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.5.sp,
-                            lineHeight = 15.sp,
-                            fontWeight = FontWeight.Normal,
+                            fontSize = 9.5.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                         ),
                     color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            Spacer(modifier = Modifier.height(1.dp))
+            Spacer(modifier = Modifier.height(2.dp))
         }
     }
 }
@@ -1627,7 +1627,7 @@ fun HomeItemVideo(
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 9.5.sp,
                         lineHeight = 14.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
                 maxLines = 1,
@@ -1660,19 +1660,19 @@ fun HomeItemVideo(
                     text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.5.sp,
-                            lineHeight = 15.sp,
-                            fontWeight = FontWeight.Normal,
+                            fontSize = 9.5.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
                         ),
                     color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            Spacer(modifier = Modifier.height(1.dp))
+            Spacer(modifier = Modifier.height(2.dp))
         }
     }
 }
