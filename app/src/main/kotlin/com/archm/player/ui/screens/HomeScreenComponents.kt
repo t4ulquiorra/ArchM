@@ -1167,7 +1167,7 @@ fun HomeItemContentPlaylist(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1177,36 +1177,52 @@ fun HomeItemContentPlaylist(
         ) {
             Text(
                 text = typeLabel,
-                style = MaterialTheme.typography.labelSmall,
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
                 color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+
+            Spacer(modifier = Modifier.height(3.dp))
+
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                style =
+                    MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = CardMarbleWhite,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+
+            Spacer(modifier = Modifier.height(3.dp))
+
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style =
+                        MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                        ),
                     color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                val line3Height = with(LocalDensity.current) {
-                    val lh = MaterialTheme.typography.bodySmall.lineHeight
-                    if (lh.isSpecified) lh.toDp() else 16.dp
-                }
-                Spacer(modifier = Modifier.height(line3Height))
+                Spacer(modifier = Modifier.height(14.dp))
             }
-            Spacer(modifier = Modifier.height(10.dp))
+
+            Spacer(modifier = Modifier.height(7.dp))
         }
     }
 }
@@ -1294,7 +1310,7 @@ fun HomeItemSong(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1304,20 +1320,34 @@ fun HomeItemSong(
         ) {
             Text(
                 text = typeLabel,
-                style = MaterialTheme.typography.labelSmall,
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
                 color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+
+            Spacer(modifier = Modifier.height(3.dp))
+
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                style =
+                    MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = CardMarbleWhite,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+
+            Spacer(modifier = Modifier.height(3.dp))
+
             if (subtitle.isNotBlank()) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1326,7 +1356,11 @@ fun HomeItemSong(
                     if (isExplicit) {
                         Text(
                             text = "E",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            style =
+                                MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                ),
                             color = CardGrey,
                             modifier =
                                 Modifier
@@ -1339,20 +1373,22 @@ fun HomeItemSong(
                     }
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
+                        style =
+                            MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 10.sp,
+                                lineHeight = 14.sp,
+                                fontWeight = FontWeight.Normal,
+                            ),
                         color = CardGrey,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             } else {
-                val line3Height = with(LocalDensity.current) {
-                    val lh = MaterialTheme.typography.bodySmall.lineHeight
-                    if (lh.isSpecified) lh.toDp() else 16.dp
-                }
-                Spacer(modifier = Modifier.height(line3Height))
+                Spacer(modifier = Modifier.height(14.dp))
             }
-            Spacer(modifier = Modifier.height(10.dp))
+
+            Spacer(modifier = Modifier.height(7.dp))
         }
     }
 }
@@ -1429,7 +1465,7 @@ fun HomeItemArtist(
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1439,41 +1475,52 @@ fun HomeItemArtist(
         ) {
             Text(
                 text = typeLabel,
-                style = MaterialTheme.typography.labelSmall,
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
                 color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                style =
+                    MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = CardPureWhite,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             if (!subscribers.isNullOrBlank()) {
                 Text(
                     text = subscribers,
-                    style = MaterialTheme.typography.bodySmall,
+                    style =
+                        MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                        ),
                     color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                val line3Height = with(LocalDensity.current) {
-                    val lh = MaterialTheme.typography.bodySmall.lineHeight
-                    if (lh.isSpecified) lh.toDp() else 16.dp
-                }
-                Spacer(modifier = Modifier.height(line3Height))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(7.dp))
         }
     }
 }
@@ -1565,7 +1612,7 @@ fun HomeItemVideo(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Column(
             modifier =
@@ -1575,41 +1622,52 @@ fun HomeItemVideo(
         ) {
             Text(
                 text = typeLabel,
-                style = MaterialTheme.typography.labelSmall,
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
                 color = CardGrey,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                style =
+                    MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = CardMarbleWhite,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style =
+                        MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                        ),
                     color = CardGrey,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                val line3Height = with(LocalDensity.current) {
-                    val lh = MaterialTheme.typography.bodySmall.lineHeight
-                    if (lh.isSpecified) lh.toDp() else 16.dp
-                }
-                Spacer(modifier = Modifier.height(line3Height))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(7.dp))
         }
     }
 }
