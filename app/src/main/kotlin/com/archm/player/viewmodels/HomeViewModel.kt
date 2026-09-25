@@ -406,25 +406,9 @@ class HomeViewModel @Inject constructor(
         val titles = sections.map { it.title }
         Log.d("HomeViewModel", "extractQuickPicks: FEmusic_home shelf titles (${sections.size}): $titles")
 
-        // 1. Primary: exact or partial "Quick picks"
-        var quickPicksIndex = sections.indexOfFirst { section ->
+        val quickPicksIndex = sections.indexOfFirst { section ->
             section.title.equals(context.getString(R.string.quick_picks), ignoreCase = true) ||
                 section.title.contains("quick pick", ignoreCase = true)
-        }
-
-        // 2. Fallback: "Listen again"
-        if (quickPicksIndex < 0) {
-            quickPicksIndex = sections.indexOfFirst { section ->
-                section.title.equals("Listen again", ignoreCase = true) ||
-                    section.title.contains("listen again", ignoreCase = true)
-            }
-        }
-
-        // 3. Fallback: Any shelf containing SongItem (track/song-based shelf)
-        if (quickPicksIndex < 0) {
-            quickPicksIndex = sections.indexOfFirst { section ->
-                section.items.isNotEmpty() && section.items.any { it is SongItem }
-            }
         }
 
         if (quickPicksIndex < 0) {

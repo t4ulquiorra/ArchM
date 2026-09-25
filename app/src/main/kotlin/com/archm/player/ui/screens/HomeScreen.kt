@@ -283,15 +283,11 @@ private fun HomeContent(
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Always surface remote Quick picks (fallback to Listen again or any track shelf if not extracted)
     val remoteQuickPicks =
         uiState.remoteQuickPicks
             ?: uiState.homePage?.sections?.firstOrNull { section ->
                 section.title.equals("Quick picks", ignoreCase = true) ||
-                    section.title.contains("quick pick", ignoreCase = true) ||
-                    section.title.equals("Listen again", ignoreCase = true) ||
-                    section.title.contains("listen again", ignoreCase = true) ||
-                    section.items.any { it is SongItem }
+                    section.title.contains("quick pick", ignoreCase = true)
             }
 
     val isScrollingUp by lazyListState.isScrollingUp()

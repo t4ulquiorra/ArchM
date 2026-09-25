@@ -2354,9 +2354,7 @@ fun HomePageSectionShelf(
     modifier: Modifier = Modifier,
 ) {
     if (section.title.equals("Quick picks", ignoreCase = true) ||
-        section.title.contains("quick pick", ignoreCase = true) ||
-        section.title.equals("Listen again", ignoreCase = true) ||
-        section.title.contains("listen again", ignoreCase = true)
+        section.title.contains("quick pick", ignoreCase = true)
     ) {
         QuickPicksCarouselShelf(
             section = section,
