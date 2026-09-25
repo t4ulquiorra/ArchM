@@ -1075,12 +1075,12 @@ private val CardGrey = Color(0xFFAEAEAE)
 private val CardMarbleWhite = Color(0xFFFFFFFF)
 private val CardPureWhite = Color(0xFFFFFFFF)
 
-val HomeVideoCardWidth: Dp = 205.6.dp
-val HomeVideoThumbnailHeight: Dp = 110.dp
-val HomeVideoPodHeight: Dp = 190.dp
+val HomeVideoCardWidth: Dp = 216.dp
+val HomeVideoThumbnailHeight: Dp = 116.dp
+val HomeVideoPodHeight: Dp = 186.dp
 
-// Square card: 120dp wide matching ArtistScreen
-val HomeSquareCardThumbSize: Dp = 120.dp
+// Square card: 126dp wide matching ArtistScreen
+val HomeSquareCardThumbSize: Dp = 126.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1118,6 +1118,7 @@ fun HomeItemContentPlaylist(
         modifier =
             modifier
                 .width(thumbSize)
+                .height(186.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1179,8 +1180,8 @@ fun HomeItemContentPlaylist(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
-                        lineHeight = 13.sp,
+                        fontSize = 9.5.sp,
+                        lineHeight = 14.sp,
                         fontWeight = FontWeight.Medium,
                     ),
                 color = CardGrey,
@@ -1194,8 +1195,8 @@ fun HomeItemContentPlaylist(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 11.sp,
-                        lineHeight = 16.sp,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1214,8 +1215,8 @@ fun HomeItemContentPlaylist(
                     text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.sp,
-                            lineHeight = 14.sp,
+                            fontSize = 10.5.sp,
+                            lineHeight = 15.sp,
                             fontWeight = FontWeight.Normal,
                         ),
                     color = CardGrey,
@@ -1223,7 +1224,7 @@ fun HomeItemContentPlaylist(
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
 
             Spacer(modifier = Modifier.height(7.dp))
@@ -1265,6 +1266,7 @@ fun HomeItemSong(
         modifier =
             modifier
                 .width(thumbSize)
+                .height(186.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1326,8 +1328,8 @@ fun HomeItemSong(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
-                        lineHeight = 13.sp,
+                        fontSize = 9.5.sp,
+                        lineHeight = 14.sp,
                         fontWeight = FontWeight.Medium,
                     ),
                 color = CardGrey,
@@ -1341,8 +1343,8 @@ fun HomeItemSong(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 11.sp,
-                        lineHeight = 16.sp,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1362,7 +1364,7 @@ fun HomeItemSong(
                             text = "E",
                             style =
                                 MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 9.sp,
+                                    fontSize = 9.5.sp,
                                     fontWeight = FontWeight.Bold,
                                 ),
                             color = CardGrey,
@@ -1379,8 +1381,8 @@ fun HomeItemSong(
                         text = subtitle,
                         style =
                             MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 10.sp,
-                                lineHeight = 14.sp,
+                                fontSize = 10.5.sp,
+                                lineHeight = 15.sp,
                                 fontWeight = FontWeight.Normal,
                             ),
                         color = CardGrey,
@@ -1389,7 +1391,7 @@ fun HomeItemSong(
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
 
             Spacer(modifier = Modifier.height(7.dp))
@@ -1429,6 +1431,7 @@ fun HomeItemArtist(
         modifier =
             modifier
                 .width(avatarSize)
+                .height(186.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1446,7 +1449,7 @@ fun HomeItemArtist(
         Box(
             modifier =
                 Modifier
-                    .size(110.dp)
+                    .size(116.dp)
                     .clip(CircleShape)
                     .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center,
@@ -1474,8 +1477,8 @@ fun HomeItemArtist(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
-                        lineHeight = 13.sp,
+                        fontSize = 9.5.sp,
+                        lineHeight = 14.sp,
                         fontWeight = FontWeight.Medium,
                     ),
                 color = CardGrey,
@@ -1489,8 +1492,8 @@ fun HomeItemArtist(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 11.sp,
-                        lineHeight = 16.sp,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardPureWhite,
@@ -1505,8 +1508,8 @@ fun HomeItemArtist(
                     text = subscribers,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.sp,
-                            lineHeight = 14.sp,
+                            fontSize = 10.5.sp,
+                            lineHeight = 15.sp,
                             fontWeight = FontWeight.Normal,
                         ),
                     color = CardGrey,
@@ -1514,7 +1517,7 @@ fun HomeItemArtist(
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
 
             Spacer(modifier = Modifier.height(7.dp))
@@ -1558,6 +1561,7 @@ fun HomeItemVideo(
         modifier =
             modifier
                 .width(cardWidth)
+                .height(186.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1577,7 +1581,7 @@ fun HomeItemVideo(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(110.dp)
+                    .height(116.dp)
                     .clip(RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
@@ -1621,8 +1625,8 @@ fun HomeItemVideo(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
-                        lineHeight = 13.sp,
+                        fontSize = 9.5.sp,
+                        lineHeight = 14.sp,
                         fontWeight = FontWeight.Medium,
                     ),
                 color = CardGrey,
@@ -1636,8 +1640,8 @@ fun HomeItemVideo(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 11.sp,
-                        lineHeight = 16.sp,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1656,8 +1660,8 @@ fun HomeItemVideo(
                     text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.sp,
-                            lineHeight = 14.sp,
+                            fontSize = 10.5.sp,
+                            lineHeight = 15.sp,
                             fontWeight = FontWeight.Normal,
                         ),
                     color = CardGrey,
@@ -1665,7 +1669,7 @@ fun HomeItemVideo(
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
 
             Spacer(modifier = Modifier.height(7.dp))
