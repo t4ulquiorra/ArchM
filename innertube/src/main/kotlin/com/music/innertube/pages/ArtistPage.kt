@@ -17,6 +17,8 @@ import com.music.innertube.models.YTItem
 import com.music.innertube.models.getItems
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.splitBySeparator
+import com.music.innertube.models.extractPlaylistAuthor
+import com.music.innertube.models.extractPlaylistSongCount
 
 data class ArtistSection(
     val title: String,
@@ -193,11 +195,8 @@ data class ArtistPage(
                     PlaylistItem(
                         id = renderer.navigationEndpoint.browseEndpoint?.browseId?.removePrefix("VL") ?: return null,
                         title = renderer.title.runs?.firstOrNull()?.text ?: return null,
-                        author = Artist(
-                            name = renderer.subtitle?.runs?.firstOrNull()?.text ?: return null,
-                            id = null
-                        ),
-                        songCountText = null,
+                        author = renderer.subtitle.extractPlaylistAuthor(),
+                        songCountText = renderer.subtitle.extractPlaylistSongCount(),
                         thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         playEndpoint = renderer.thumbnailOverlay
                             ?.musicItemThumbnailOverlayRenderer?.content

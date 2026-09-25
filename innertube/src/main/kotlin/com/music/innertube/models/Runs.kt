@@ -123,3 +123,38 @@ fun List<List<Run>>.viewCountText(): String? =
     }
 
 fun List<List<Run>>.viewCount(): Long? = viewCountText()?.let(::parseViewCount)
+
+fun List<Run>.extractPlaylistAuthor(): Artist? {
+    val authorRun = firstOrNull {
+        it.navigationEndpoint?.browseEndpoint?.browseId?.startsWith("UC") == true
+    } ?: firstOrNull {
+        val t = it.text.trim()
+        t.isNotBlank() &&
+            !t.equals("Playlist", ignoreCase = true) &&
+            !t.equals("Album", ignoreCase = true) &&
+            !t.equals("EP", ignoreCase = true) &&
+            !t.equals("Single", ignoreCase = true) &&
+            !t.equals("Station", ignoreCase = true) &&
+            t != "•" &&
+            t != " • "
+    }
+    return authorRun?.let {
+        Artist(
+            name = it.text.trim(),
+            id = it.navigationEndpoint?.browseEndpoint?.browseId,
+        )
+    }
+}
+
+fun List<Run>.extractPlaylistSongCount(): String? =
+    firstOrNull {
+        val t = it.text.trim()
+        (t.contains("song", ignoreCase = true) || t.contains("track", ignoreCase = true)) &&
+            t.any { c -> c.isDigit() }
+    }?.text?.trim() ?: firstOrNull {
+        val t = it.text.trim()
+        t.contains("song", ignoreCase = true) || t.contains("track", ignoreCase = true)
+    }?.text?.trim()
+
+fun Runs?.extractPlaylistAuthor(): Artist? = this?.runs?.extractPlaylistAuthor()
+fun Runs?.extractPlaylistSongCount(): String? = this?.runs?.extractPlaylistSongCount()

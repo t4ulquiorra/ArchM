@@ -1205,9 +1205,13 @@ fun HomeItemContentPlaylist(
 
             Spacer(modifier = Modifier.height(3.dp))
 
-            if (!subtitle.isNullOrBlank()) {
+            val sanitizedSubtitle = subtitle?.takeUnless {
+                it.isBlank() || it.equals(typeLabel, ignoreCase = true) || it.equals("Playlist", ignoreCase = true)
+            }
+
+            if (sanitizedSubtitle != null) {
                 Text(
-                    text = subtitle,
+                    text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
                             fontSize = 10.sp,
@@ -1643,9 +1647,13 @@ fun HomeItemVideo(
 
             Spacer(modifier = Modifier.height(3.dp))
 
-            if (!subtitle.isNullOrBlank()) {
+            val sanitizedSubtitle = subtitle?.takeUnless {
+                it.isBlank() || it.equals(typeLabel, ignoreCase = true) || it.equals("Video", ignoreCase = true)
+            }
+
+            if (sanitizedSubtitle != null) {
                 Text(
-                    text = subtitle,
+                    text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
                             fontSize = 10.sp,

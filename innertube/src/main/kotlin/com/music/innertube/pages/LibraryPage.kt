@@ -11,6 +11,8 @@ import com.music.innertube.models.Run
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import com.music.innertube.models.oddElements
+import com.music.innertube.models.extractPlaylistAuthor
+import com.music.innertube.models.extractPlaylistSongCount
 import com.music.innertube.utils.parseTime
 
 data class LibraryPage(
@@ -38,13 +40,8 @@ data class LibraryPage(
                 renderer.isPlaylist -> PlaylistItem(
                     id = renderer.navigationEndpoint.browseEndpoint?.browseId?.removePrefix("VL") ?: return null,
                     title = renderer.title.runs?.firstOrNull()?.text ?: return null,
-                    author = renderer.subtitle?.runs?.firstOrNull()?.let {
-                        Artist(
-                            name = it.text,
-                            id = it.navigationEndpoint?.browseEndpoint?.browseId
-                        )
-                    },
-                    songCountText = renderer.subtitle?.runs?.lastOrNull()?.text,
+                    author = renderer.subtitle.extractPlaylistAuthor(),
+                    songCountText = renderer.subtitle.extractPlaylistSongCount() ?: renderer.subtitle?.runs?.lastOrNull()?.text,
                     thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                     playEndpoint = renderer.thumbnailOverlay
                         ?.musicItemThumbnailOverlayRenderer?.content

@@ -14,6 +14,8 @@ import com.music.innertube.models.YTItem
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.filterExplicit
 import com.music.innertube.models.filterVideoSongs
+import com.music.innertube.models.extractPlaylistAuthor
+import com.music.innertube.models.extractPlaylistSongCount
 
 data class HomePage(
     val chips: List<Chip>?,
@@ -147,11 +149,8 @@ data class HomePage(
                         PlaylistItem(
                             id = renderer.navigationEndpoint.browseEndpoint?.browseId?.removePrefix("VL") ?: return null,
                             title = renderer.title.runs?.firstOrNull()?.text ?: return null,
-                            author = Artist(
-                                name = renderer.subtitle?.runs?.firstOrNull()?.text ?: return null,
-                                id = null
-                            ),
-                            songCountText = null,
+                            author = renderer.subtitle.extractPlaylistAuthor(),
+                            songCountText = renderer.subtitle.extractPlaylistSongCount(),
                             thumbnail = bestThumb?.normalizedUrl
                                 ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                             playEndpoint = renderer.thumbnailOverlay

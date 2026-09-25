@@ -11,6 +11,8 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import com.music.innertube.models.oddElements
 import com.music.innertube.models.splitBySeparator
+import com.music.innertube.models.extractPlaylistAuthor
+import com.music.innertube.models.extractPlaylistSongCount
 
 data class RelatedPage(
     val songs: List<SongItem>,
@@ -121,13 +123,11 @@ data class RelatedPage(
                             renderer.title.runs
                                 ?.firstOrNull()
                                 ?.text ?: return null,
-                        author = Artist(
-                            name = renderer.subtitle?.runs?.lastOrNull()?.text ?: return null,
-                            id = null
-                        ),
-                        songCountText = renderer.subtitle?.runs?.findLast {
-                            it.text.any { c -> c.isDigit() } && !it.text.contains("view", ignoreCase = true)
-                        }?.text,
+                        author = renderer.subtitle.extractPlaylistAuthor(),
+                        songCountText = renderer.subtitle.extractPlaylistSongCount()
+                            ?: renderer.subtitle?.runs?.findLast {
+                                it.text.any { c -> c.isDigit() } && !it.text.contains("view", ignoreCase = true)
+                            }?.text,
                         thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                         playEndpoint =
                             renderer.thumbnailOverlay
