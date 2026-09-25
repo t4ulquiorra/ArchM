@@ -1071,7 +1071,7 @@ fun SimpHomeShelf(
     }
 }
 
-private val CardGrey = Color(0xFFAEAEAE)
+private val CardGrey = Color(0xFF9D9D9D)
 private val CardMarbleWhite = Color(0xFFFFFFFF)
 private val CardPureWhite = Color(0xFFFFFFFF)
 
