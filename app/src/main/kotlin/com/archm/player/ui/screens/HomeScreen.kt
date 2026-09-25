@@ -82,6 +82,8 @@ import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
 import com.archm.player.constants.QuickPicks
+import com.archm.player.constants.ShowHomeFilterChipsKey
+import com.archm.player.utils.rememberPreference
 import com.archm.player.db.entities.Album
 import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.Playlist
@@ -132,6 +134,7 @@ fun HomeScreen(
         }
     }
 
+    val (showHomeFilterChips) = rememberPreference(ShowHomeFilterChipsKey, true)
     val successState = screenState as? HomeScreenState.Success
     val uiState = successState?.uiState
     val selectedChip = uiState?.selectedChip
@@ -155,8 +158,8 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(uiState?.showCategoryChips, selectedChip) {
-        if (uiState?.showCategoryChips == false && selectedChip != null) {
+    LaunchedEffect(showHomeFilterChips, uiState?.showCategoryChips, selectedChip) {
+        if ((!showHomeFilterChips || uiState?.showCategoryChips == false) && selectedChip != null) {
             viewModel.onAction(HomeAction.SelectChip(selectedChip))
         }
     }
@@ -203,6 +206,7 @@ fun HomeScreen(
             is HomeScreenState.Success -> {
                 HomeContent(
                     uiState = state.uiState,
+                    showHomeFilterChips = showHomeFilterChips,
                     mediaMetadata = mediaMetadata,
                     isPlaying = isPlaying,
                     navController = navController,
@@ -272,6 +276,7 @@ private fun HomeStatePane(
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
+    showHomeFilterChips: Boolean,
     mediaMetadata: MediaMetadata?,
     isPlaying: Boolean,
     navController: NavController,
@@ -579,7 +584,7 @@ private fun HomeContent(
                     )
                 }
                 val chipsList = uiState.homePage?.chips
-                if (uiState.showCategoryChips && !chipsList.isNullOrEmpty()) {
+                if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
                     HomeCategoryChips(
                         chips = chipsList,
                         selectedChip = uiState.selectedChip,

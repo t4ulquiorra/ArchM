@@ -80,6 +80,7 @@ enum class QuickPicksDisplayMode {
 
 val QuickPicksDisplayModeKey = stringPreferencesKey("quickPicksDisplayMode")
 val ShowHomeCategoryChipsKey = booleanPreferencesKey("showHomeCategoryChips")
+val ShowHomeFilterChipsKey = booleanPreferencesKey("show_home_filter_chips")
 val DisableBlurKey = booleanPreferencesKey("disableBlur")
 
 const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"

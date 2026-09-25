@@ -11,6 +11,7 @@ import com.archm.player.constants.QuickPicksKey
 import com.archm.player.constants.QuickPicksDisplayMode
 import com.archm.player.constants.QuickPicksDisplayModeKey
 import com.archm.player.constants.ShowHomeCategoryChipsKey
+import com.archm.player.constants.ShowHomeFilterChipsKey
 import com.archm.player.extensions.toEnum
 import com.archm.player.utils.dataStore
 import javax.inject.Inject
@@ -22,7 +23,9 @@ class HomeRepository
     ) {
         val showCategoryChips: Flow<Boolean> =
             context.dataStore.data
-                .map { preferences -> preferences[ShowHomeCategoryChipsKey] ?: true }
+                .map { preferences ->
+                    preferences[ShowHomeFilterChipsKey] ?: preferences[ShowHomeCategoryChipsKey] ?: true
+                }
                 .distinctUntilChanged()
 
         val quickPicksDisplayMode: Flow<QuickPicksDisplayMode> =

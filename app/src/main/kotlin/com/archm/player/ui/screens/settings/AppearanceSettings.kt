@@ -82,7 +82,7 @@ import com.archm.player.constants.PlayerBackgroundStyle
 import com.archm.player.constants.PlayerBackgroundStyleKey
 import com.archm.player.constants.PlayerButtonsStyle
 import com.archm.player.constants.PlayerButtonsStyleKey
-
+import com.archm.player.constants.ShowHomeFilterChipsKey
 import com.archm.player.constants.RotatingThumbnailKey
 import com.archm.player.constants.ShowCachedPlaylistKey
 import com.archm.player.constants.ShowExportedPlaylistKey
@@ -217,6 +217,10 @@ highlightKey: String? = null) {
     val (defaultOpenTab, onDefaultOpenTabChange) = rememberEnumPreference(
         DefaultOpenTabKey,
         defaultValue = NavigationTab.HOME
+    )
+    val (showHomeFilterChips, onShowHomeFilterChipsChange) = rememberPreference(
+        ShowHomeFilterChipsKey,
+        defaultValue = true
     )
     val (playerButtonsStyle, onPlayerButtonsStyleChange) = rememberEnumPreference(
         PlayerButtonsStyleKey,
@@ -1746,6 +1750,28 @@ highlightKey: String? = null) {
                         )
                     },
                     onClick = { showDefaultOpenTabDialog = true }
+                ),
+                Material3SettingsItem(
+                    isHighlighted = (highlightKey == stringResource(R.string.show_home_filter_chips)),
+                    icon = painterResource(R.drawable.tab),
+                    title = { Text(stringResource(R.string.show_home_filter_chips)) },
+                    description = { Text(stringResource(R.string.show_home_filter_chips_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = showHomeFilterChips,
+                            onCheckedChange = onShowHomeFilterChipsChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (showHomeFilterChips) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onShowHomeFilterChipsChange(!showHomeFilterChips) }
                 ),
                 Material3SettingsItem(
     isHighlighted = (highlightKey == stringResource(R.string.default_lib_chips)),
