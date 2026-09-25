@@ -738,7 +738,7 @@ fun QuickPicksCarousel(
                         .maskBorder(
                             BorderStroke(
                                 1.dp,
-                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
+                                Color.White.copy(alpha = 0.12f),
                             ),
                             MaterialTheme.shapes.extraLarge,
                         ).focusable()
@@ -1053,17 +1053,21 @@ fun SimpHomeShelf(
                 )
             }
             if (onMoreClick != null) {
-                TextButton(
-                    onClick = onMoreClick,
-                    colors =
-                        ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                ) {
-                    Text(
-                        text = stringResource(R.string.more),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    TextButton(
+                        onClick = onMoreClick,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.heightIn(max = 24.dp),
+                        colors =
+                            ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.more),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
         }
@@ -1124,8 +1128,7 @@ fun HomeItemContentPlaylist(
                     scaleY = scale
                 }
                 .clip(cardShape)
-                .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -1272,8 +1275,7 @@ fun HomeItemSong(
                     scaleY = scale
                 }
                 .clip(cardShape)
-                .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -1567,8 +1569,7 @@ fun HomeItemVideo(
                     scaleY = scale
                 }
                 .clip(cardShape)
-                .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -2432,8 +2433,19 @@ fun HomePageSectionShelf(
             }
         }
 
+    val displayTitle =
+        remember(section.title) {
+            if (section.title.startsWith("Similar to ", ignoreCase = true)) {
+                section.title.replaceFirst("Similar to ", "More like ", ignoreCase = true)
+            } else if (section.title.contains("Similar to ", ignoreCase = true)) {
+                section.title.replace("Similar to ", "More like ", ignoreCase = true)
+            } else {
+                section.title
+            }
+        }
+
     SimpHomeShelf(
-        title = section.title,
+        title = displayTitle,
         subtitle = section.label,
         avatarUrl = if (section.endpoint?.isArtistEndpoint == true) section.thumbnail else null,
         onHeaderClick = onMoreClick,

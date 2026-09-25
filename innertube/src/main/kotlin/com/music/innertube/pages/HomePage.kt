@@ -47,7 +47,14 @@ data class HomePage(
     ) {
         companion object {
             fun fromMusicCarouselShelfRenderer(renderer: MusicCarouselShelfRenderer): Section? {
-                val title = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
+                val rawTitle = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
+                val title = if (rawTitle.startsWith("Similar to ", ignoreCase = true)) {
+                    rawTitle.replaceFirst("Similar to ", "More like ", ignoreCase = true)
+                } else if (rawTitle.contains("Similar to ", ignoreCase = true)) {
+                    rawTitle.replace("Similar to ", "More like ", ignoreCase = true)
+                } else {
+                    rawTitle
+                }
                 val label = renderer.header.musicCarouselShelfBasicHeaderRenderer.strapline?.runs?.firstOrNull()?.text
                 val thumbnail = renderer.header.musicCarouselShelfBasicHeaderRenderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
                 val endpoint = renderer.header.musicCarouselShelfBasicHeaderRenderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
