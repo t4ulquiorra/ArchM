@@ -690,7 +690,7 @@ fun QuickPicksCarousel(
     mediaMetadata: MediaMetadata?,
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
 ) {
     val distinctItems = remember(items) { items.distinctBy { it.id } }
     if (distinctItems.isEmpty()) return
@@ -1079,12 +1079,13 @@ private val CardGrey = Color(0xFF9D9D9D)
 private val CardMarbleWhite = Color(0xFFFFFFFF)
 private val CardPureWhite = Color(0xFFFFFFFF)
 
-val HomeVideoCardWidth: Dp = 216.dp
-val HomeVideoThumbnailHeight: Dp = 116.dp
-val HomeVideoPodHeight: Dp = 180.dp
+val HomeVideoCardWidth: Dp = 324.dp
+val HomeVideoThumbnailHeight: Dp = 174.dp
+val HomeVideoPodHeight: Dp = 270.dp
 
-// Square card: 126dp wide matching ArtistScreen
-val HomeSquareCardThumbSize: Dp = 126.dp
+// Square card: 189dp wide (126dp * 1.5)
+val HomeSquareCardThumbSize: Dp = 189.dp
+val HomeSquareCardPodHeight: Dp = 270.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1116,13 +1117,13 @@ fun HomeItemContentPlaylist(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(24.dp)
 
     Column(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(180.dp)
+                .height(HomeSquareCardPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1134,17 +1135,17 @@ fun HomeItemContentPlaylist(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp),
+                ).padding(start = 7.5.dp, top = 7.5.dp, end = 7.5.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(21.dp)),
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(800, 800) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -1154,8 +1155,8 @@ fun HomeItemContentPlaylist(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .size(32.dp)
+                            .padding(9.dp)
+                            .size(48.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
                             .background(Color.Black.copy(alpha = 0.55f)),
@@ -1165,26 +1166,26 @@ fun HomeItemContentPlaylist(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(27.dp),
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(9.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp),
+                    .padding(horizontal = 4.5.dp),
         ) {
             Text(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.5.sp,
-                        lineHeight = 14.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
@@ -1192,14 +1193,14 @@ fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             Text(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
+                        fontSize = 18.sp,
+                        lineHeight = 25.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1207,7 +1208,7 @@ fun HomeItemContentPlaylist(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             val sanitizedSubtitle = subtitle?.takeUnless {
                 it.isBlank() || it.equals(typeLabel, ignoreCase = true) || it.equals("Playlist", ignoreCase = true)
@@ -1218,8 +1219,8 @@ fun HomeItemContentPlaylist(
                     text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 9.5.sp,
-                            lineHeight = 14.sp,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                         ),
                     color = CardGrey,
@@ -1227,10 +1228,10 @@ fun HomeItemContentPlaylist(
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(21.dp))
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
         }
     }
 }
@@ -1263,13 +1264,13 @@ fun HomeItemSong(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(24.dp)
 
     Column(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(180.dp)
+                .height(HomeSquareCardPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1281,17 +1282,17 @@ fun HomeItemSong(
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 5.dp, top = 5.dp, end = 5.dp),
+                ).padding(start = 7.5.dp, top = 7.5.dp, end = 7.5.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(21.dp)),
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(800, 800) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -1301,8 +1302,8 @@ fun HomeItemSong(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .size(32.dp)
+                            .padding(9.dp)
+                            .size(48.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
                             .background(Color.Black.copy(alpha = 0.55f)),
@@ -1312,26 +1313,26 @@ fun HomeItemSong(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(27.dp),
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(9.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp),
+                    .padding(horizontal = 4.5.dp),
         ) {
             Text(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.5.sp,
-                        lineHeight = 14.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
@@ -1339,14 +1340,14 @@ fun HomeItemSong(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             Text(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
+                        fontSize = 18.sp,
+                        lineHeight = 25.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1354,7 +1355,7 @@ fun HomeItemSong(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             if (subtitle.isNotBlank()) {
                 Row(
@@ -1366,25 +1367,25 @@ fun HomeItemSong(
                             text = "E",
                             style =
                                 MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 9.5.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                 ),
                             color = CardGrey,
                             modifier =
                                 Modifier
-                                    .padding(end = 4.dp)
+                                    .padding(end = 6.dp)
                                     .background(
                                         Color.White.copy(alpha = 0.12f),
-                                        RoundedCornerShape(2.dp),
-                                    ).padding(horizontal = 4.dp, vertical = 1.dp),
+                                        RoundedCornerShape(3.dp),
+                                    ).padding(horizontal = 6.dp, vertical = 1.5.dp),
                         )
                     }
                     Text(
                         text = subtitle,
                         style =
                             MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 9.5.sp,
-                                lineHeight = 14.sp,
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
                             ),
                         color = CardGrey,
@@ -1393,10 +1394,10 @@ fun HomeItemSong(
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(21.dp))
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
         }
     }
 }
@@ -1416,7 +1417,7 @@ fun HomeItemArtist(
     subscribers: String? = null,
     avatarSize: Dp = HomeSquareCardThumbSize,
     isSingleLine: Boolean = false,
-    labelSpacing: Dp = 8.dp,
+    labelSpacing: Dp = 12.dp,
     typeLabel: String = "Artist",
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1427,13 +1428,13 @@ fun HomeItemArtist(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(24.dp)
 
     Column(
         modifier =
             modifier
                 .width(avatarSize)
-                .height(180.dp)
+                .height(HomeSquareCardPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1446,18 +1447,18 @@ fun HomeItemArtist(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp),
+                .padding(start = 7.5.dp, top = 7.5.dp, end = 7.5.dp),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(116.dp)
+                    .size(174.dp)
                     .clip(CircleShape)
                     .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(480, 480) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(720, 720) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier =
@@ -1467,20 +1468,20 @@ fun HomeItemArtist(
             )
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(9.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp),
+                    .padding(horizontal = 4.5.dp),
         ) {
             Text(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.5.sp,
-                        lineHeight = 14.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
@@ -1488,14 +1489,14 @@ fun HomeItemArtist(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             Text(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
+                        fontSize = 18.sp,
+                        lineHeight = 25.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardPureWhite,
@@ -1503,15 +1504,15 @@ fun HomeItemArtist(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             if (!subscribers.isNullOrBlank()) {
                 Text(
                     text = subscribers,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 9.5.sp,
-                            lineHeight = 14.sp,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                         ),
                     color = CardGrey,
@@ -1519,10 +1520,10 @@ fun HomeItemArtist(
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(21.dp))
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
         }
     }
 }
@@ -1557,13 +1558,13 @@ fun HomeItemVideo(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(24.dp)
 
     Column(
         modifier =
             modifier
                 .width(cardWidth)
-                .height(180.dp)
+                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -1576,18 +1577,18 @@ fun HomeItemVideo(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .padding(start = 5.dp, top = 5.dp, end = 5.dp),
+                .padding(start = 7.5.dp, top = 7.5.dp, end = 7.5.dp),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(116.dp)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .height(HomeVideoThumbnailHeight)
+                    .clip(RoundedCornerShape(21.dp)),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(854, 480) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(1280, 720) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -1597,8 +1598,8 @@ fun HomeItemVideo(
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .size(32.dp)
+                            .padding(9.dp)
+                            .size(48.dp)
                             .bouncyClickable(onClick = onPlayClick)
                             .clip(CircleShape)
                             .background(Color.Black.copy(alpha = 0.55f)),
@@ -1608,26 +1609,26 @@ fun HomeItemVideo(
                         painter = painterResource(id = R.drawable.play),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(27.dp),
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(9.dp))
 
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 3.dp),
+                    .padding(horizontal = 4.5.dp),
         ) {
             Text(
                 text = typeLabel,
                 style =
                     MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.5.sp,
-                        lineHeight = 14.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
                 color = CardGrey,
@@ -1635,14 +1636,14 @@ fun HomeItemVideo(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             Text(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
+                        fontSize = 18.sp,
+                        lineHeight = 25.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1650,7 +1651,7 @@ fun HomeItemVideo(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(4.5.dp))
 
             val sanitizedSubtitle = subtitle?.takeUnless {
                 it.isBlank() || it.equals(typeLabel, ignoreCase = true) || it.equals("Video", ignoreCase = true)
@@ -1661,8 +1662,8 @@ fun HomeItemVideo(
                     text = sanitizedSubtitle,
                     style =
                         MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 9.5.sp,
-                            lineHeight = 14.sp,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                         ),
                     color = CardGrey,
@@ -1670,10 +1671,10 @@ fun HomeItemVideo(
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(21.dp))
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
         }
     }
 }

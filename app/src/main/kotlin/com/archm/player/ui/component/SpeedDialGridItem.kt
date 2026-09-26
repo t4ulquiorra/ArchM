@@ -74,7 +74,7 @@ private fun SpeedDialPodLayout(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(50.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -92,7 +92,7 @@ private fun SpeedDialPodLayout(
         Box(
             modifier =
                 Modifier
-                    .size(56.dp)
+                    .size(50.dp)
                     .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
             contentAlignment = Alignment.Center,
         ) {
@@ -110,7 +110,7 @@ private fun SpeedDialPodLayout(
             style =
                 MaterialTheme.typography.titleSmall.copy(
                     fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                 ),
             color = if (isActive) MaterialTheme.colorScheme.primary else Color.White,
             maxLines = 2,
