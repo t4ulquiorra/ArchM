@@ -23,7 +23,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -152,7 +152,6 @@ import com.archm.player.ui.menu.YouTubeAlbumMenu
 import com.archm.player.ui.menu.YouTubeArtistMenu
 import com.archm.player.ui.menu.YouTubePlaylistMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
-import com.archm.player.ui.utils.SnapLayoutInfoProvider as buildSnapLayoutInfoProvider
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
@@ -1010,7 +1009,7 @@ fun SimpHomeShelf(
                 Modifier
                     .fillMaxWidth()
                     .then(if (onHeaderClick != null) Modifier.clickable(onClick = onHeaderClick) else Modifier)
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
         ) {
             if (avatarUrl != null) {
                 AsyncImage(
@@ -1841,10 +1840,11 @@ fun KeepListeningShelf(
 ) {
     val database = LocalDatabase.current
     val lazyListState = rememberLazyListState()
-    val snapLayoutInfoProvider =
-        remember(lazyListState) {
-            SnapLayoutInfoProvider(lazyListState = lazyListState)
-        }
+    val snapFlingBehavior =
+        rememberSnapFlingBehavior(
+            lazyListState = lazyListState,
+            snapPosition = SnapPosition.Start,
+        )
 
     SimpHomeShelf(
         title = stringResource(R.string.keep_listening),
@@ -1862,10 +1862,11 @@ fun KeepListeningShelf(
         }
         LazyRow(
             state = lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
+            flingBehavior = snapFlingBehavior,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.Top,
-            contentPadding = PaddingValues(vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ) {
             items(
                 items = distinctKeepListening,
@@ -2004,10 +2005,11 @@ fun AccountPlaylistsShelf(
     playerConnection: PlayerConnection? = LocalPlayerConnection.current,
 ) {
     val lazyListState = rememberLazyListState()
-    val snapLayoutInfoProvider =
-        remember(lazyListState) {
-            SnapLayoutInfoProvider(lazyListState = lazyListState)
-        }
+    val snapFlingBehavior =
+        rememberSnapFlingBehavior(
+            lazyListState = lazyListState,
+            snapPosition = SnapPosition.Start,
+        )
 
     SimpHomeShelf(
         title = accountName.ifBlank { stringResource(R.string.your_youtube_playlists) },
@@ -2018,10 +2020,11 @@ fun AccountPlaylistsShelf(
     ) {
         LazyRow(
             state = lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
+            flingBehavior = snapFlingBehavior,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.Top,
-            contentPadding = PaddingValues(vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ) {
             items(
                 items = accountPlaylists.distinctBy { it.id },
@@ -2061,10 +2064,11 @@ fun ForgottenFavoritesShelf(
     if (shelfItems.isEmpty()) return
 
     val lazyListState = rememberLazyListState()
-    val snapLayoutInfoProvider =
-        remember(lazyListState) {
-            SnapLayoutInfoProvider(lazyListState = lazyListState)
-        }
+    val snapFlingBehavior =
+        rememberSnapFlingBehavior(
+            lazyListState = lazyListState,
+            snapPosition = SnapPosition.Start,
+        )
 
     SimpHomeShelf(
         title = stringResource(R.string.forgotten_favorites),
@@ -2072,10 +2076,11 @@ fun ForgottenFavoritesShelf(
     ) {
         LazyRow(
             state = lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
+            flingBehavior = snapFlingBehavior,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.Top,
-            contentPadding = PaddingValues(vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ) {
             items(
                 items = shelfItems.distinctBy { it.id },
@@ -2141,10 +2146,11 @@ fun SimilarRecommendationsShelf(
     modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
-    val snapLayoutInfoProvider =
-        remember(lazyListState) {
-            SnapLayoutInfoProvider(lazyListState = lazyListState)
-        }
+    val snapFlingBehavior =
+        rememberSnapFlingBehavior(
+            lazyListState = lazyListState,
+            snapPosition = SnapPosition.Start,
+        )
     val titleItem = recommendation.title
     val database = LocalDatabase.current
     val distinctRecommendationItems = remember(recommendation.items) {
@@ -2167,10 +2173,11 @@ fun SimilarRecommendationsShelf(
     ) {
         LazyRow(
             state = lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
+            flingBehavior = snapFlingBehavior,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.Top,
-            contentPadding = PaddingValues(vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ) {
             items(
                 items = distinctRecommendationItems,
@@ -2363,10 +2370,11 @@ fun HomePageSectionShelf(
 
     val lazyListState = rememberLazyListState()
     val database = LocalDatabase.current
-    val snapLayoutInfoProvider =
-        remember(lazyListState) {
-            SnapLayoutInfoProvider(lazyListState = lazyListState)
-        }
+    val snapFlingBehavior =
+        rememberSnapFlingBehavior(
+            lazyListState = lazyListState,
+            snapPosition = SnapPosition.Start,
+        )
 
     val isTargetShelf =
         section.title.equals("Forgotten favorites", ignoreCase = true) ||
@@ -2445,10 +2453,11 @@ fun HomePageSectionShelf(
     ) {
         LazyRow(
             state = lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider),
+            flingBehavior = snapFlingBehavior,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.Top,
-            contentPadding = PaddingValues(vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ) {
             items(
                 items = shelfItems.distinctBy { it.id },

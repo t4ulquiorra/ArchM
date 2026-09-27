@@ -390,7 +390,7 @@ private fun HomeContent(
                                         .background(artworkScrimBrush(defaultBg)),
                             )
                         }
-                        Column(modifier = Modifier.padding(horizontal = 15.dp)) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp)))
                             if (uiState.speedDialItems.isNotEmpty()) {
                                 Spacer(Modifier.height(8.dp))
@@ -412,10 +412,39 @@ private fun HomeContent(
 
                 // 2. Compact SimpQuickPicks (185.dp Hero Carousel)
                 item(key = "home_quick_picks_hero") {
-                    Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                        SimpQuickPicks(
-                            quickPicks = uiState.quickPicks,
-                            remoteQuickPicks = remoteQuickPicks,
+                    SimpQuickPicks(
+                        quickPicks = uiState.quickPicks,
+                        remoteQuickPicks = remoteQuickPicks,
+                        mediaMetadata = mediaMetadata,
+                        isPlaying = isPlaying,
+                        navController = navController,
+                        playerConnection = playerConnection,
+                        menuState = menuState,
+                        haptic = haptic,
+                    )
+                }
+
+                // 3. Keep Listening Section
+                if (uiState.keepListening.isNotEmpty()) {
+                    item(key = "home_keep_listening") {
+                        KeepListeningShelf(
+                            keepListening = uiState.keepListening,
+                            mediaMetadata = mediaMetadata,
+                            isPlaying = isPlaying,
+                            navController = navController,
+                            playerConnection = playerConnection,
+                            menuState = menuState,
+                            haptic = haptic,
+                            scope = scope,
+                        )
+                    }
+                }
+
+                // 4. Forgotten Favorites Section
+                if (uiState.forgottenFavorites.isNotEmpty()) {
+                    item(key = "home_forgotten_favorites") {
+                        ForgottenFavoritesShelf(
+                            forgottenFavorites = uiState.forgottenFavorites,
                             mediaMetadata = mediaMetadata,
                             isPlaying = isPlaying,
                             navController = navController,
@@ -426,53 +455,16 @@ private fun HomeContent(
                     }
                 }
 
-                // 3. Keep Listening Section
-                if (uiState.keepListening.isNotEmpty()) {
-                    item(key = "home_keep_listening") {
-                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                            KeepListeningShelf(
-                                keepListening = uiState.keepListening,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                                scope = scope,
-                            )
-                        }
-                    }
-                }
-
-                // 4. Forgotten Favorites Section
-                if (uiState.forgottenFavorites.isNotEmpty()) {
-                    item(key = "home_forgotten_favorites") {
-                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                            ForgottenFavoritesShelf(
-                                forgottenFavorites = uiState.forgottenFavorites,
-                                mediaMetadata = mediaMetadata,
-                                isPlaying = isPlaying,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                                menuState = menuState,
-                                haptic = haptic,
-                            )
-                        }
-                    }
-                }
-
                 // 5. Account Playlists Section
                 if (uiState.accountPlaylists.isNotEmpty()) {
                     item(key = "home_account_playlists") {
-                        Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                            AccountPlaylistsShelf(
-                                accountPlaylists = uiState.accountPlaylists,
-                                accountName = uiState.accountName,
-                                accountImageUrl = uiState.accountImageUrl,
-                                navController = navController,
-                                playerConnection = playerConnection,
-                            )
-                        }
+                        AccountPlaylistsShelf(
+                            accountPlaylists = uiState.accountPlaylists,
+                            accountName = uiState.accountName,
+                            accountImageUrl = uiState.accountImageUrl,
+                            navController = navController,
+                            playerConnection = playerConnection,
+                        )
                     }
                 }
 
@@ -481,18 +473,16 @@ private fun HomeContent(
                     items = uiState.similarRecommendations,
                     key = { "similar_${it.title.id}" },
                 ) { recommendation ->
-                    Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                        SimilarRecommendationsShelf(
-                            recommendation = recommendation,
-                            mediaMetadata = mediaMetadata,
-                            isPlaying = isPlaying,
-                            navController = navController,
-                            playerConnection = playerConnection,
-                            menuState = menuState,
-                            haptic = haptic,
-                            scope = scope,
-                        )
-                    }
+                    SimilarRecommendationsShelf(
+                        recommendation = recommendation,
+                        mediaMetadata = mediaMetadata,
+                        isPlaying = isPlaying,
+                        navController = navController,
+                        playerConnection = playerConnection,
+                        menuState = menuState,
+                        haptic = haptic,
+                        scope = scope,
+                    )
                 }
 
                 // 7. Remote YouTube Music Sections
@@ -501,18 +491,16 @@ private fun HomeContent(
                     key = { index, section -> "remote_${section.endpoint?.browseId ?: section.title}_$index" },
                 ) { _, section ->
                     if (section == remoteQuickPicks) return@itemsIndexed
-                    Box(modifier = Modifier.padding(horizontal = 15.dp)) {
-                        HomePageSectionShelf(
-                            section = section,
-                            mediaMetadata = mediaMetadata,
-                            isPlaying = isPlaying,
-                            navController = navController,
-                            playerConnection = playerConnection,
-                            menuState = menuState,
-                            haptic = haptic,
-                            scope = scope,
-                        )
-                    }
+                    HomePageSectionShelf(
+                        section = section,
+                        mediaMetadata = mediaMetadata,
+                        isPlaying = isPlaying,
+                        navController = navController,
+                        playerConnection = playerConnection,
+                        menuState = menuState,
+                        haptic = haptic,
+                        scope = scope,
+                    )
                 }
 
                 // Loading More
