@@ -108,7 +108,7 @@ private fun SpeedDialPodLayout(
             style =
                 MaterialTheme.typography.titleSmall.copy(
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                 ),
             color = if (isActive) MaterialTheme.colorScheme.primary else Color.White,
             maxLines = 2,
