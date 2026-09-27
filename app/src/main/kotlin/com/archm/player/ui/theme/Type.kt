@@ -139,7 +139,18 @@ private fun buildTypography(fontFamily: FontFamily) =
             ),
     )
 
-val AppFontFamily = FontFamily(Font(R.font.poppins))
+val AppFontFamily =
+    FontFamily(
+        Font(R.font.nunito_light, FontWeight.Light),
+        Font(R.font.nunito_regular, FontWeight.Normal),
+        Font(R.font.nunito_medium, FontWeight.Medium),
+        Font(R.font.nunito_semibold, FontWeight.SemiBold),
+        Font(R.font.nunito_bold, FontWeight.Bold),
+        Font(R.font.nunito_extrabold, FontWeight.ExtraBold),
+        Font(R.font.nunito_extrabold, FontWeight.W800),
+        Font(R.font.nunito_black, FontWeight.Black),
+        Font(R.font.nunito_black, FontWeight.W900),
+    )
 val LyricsFontFamily = FontFamily(Font(R.font.sfprodisplaybold))
 val AppTypography = buildTypography(AppFontFamily)
 val SystemTypography = buildTypography(FontFamily.Default)
