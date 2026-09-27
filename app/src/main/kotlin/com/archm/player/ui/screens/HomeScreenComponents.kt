@@ -65,7 +65,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -700,138 +700,129 @@ fun QuickPicksCarousel(
                 maxWidth >= 600.dp -> 195.dp
                 else -> 185.dp
             }
-        val cardWidth = if (maxWidth >= 600.dp) 360.dp else (maxWidth - 48.dp).coerceAtLeast(280.dp)
+        val preferredItemWidth =
+            when {
+                maxWidth >= 840.dp -> 380.dp
+                maxWidth >= 600.dp -> 340.dp
+                else -> (maxWidth - 56.dp).coerceIn(260.dp, 320.dp)
+            }
         val density = LocalDensity.current
-        val requestWidthPx = with(density) { cardWidth.roundToPx().coerceAtLeast(1) }
+        val requestWidthPx = with(density) { preferredItemWidth.roundToPx().coerceAtLeast(1) }
         val requestHeightPx = with(density) { heroHeight.roundToPx().coerceAtLeast(1) }
 
-        val lazyListState = rememberLazyListState()
-        val snapFlingBehavior =
-            rememberSnapFlingBehavior(
-                lazyListState = lazyListState,
-                snapPosition = SnapPosition.Start,
-            )
-
-        LazyRow(
-            state = lazyListState,
-            flingBehavior = snapFlingBehavior,
+        HorizontalMultiBrowseCarousel(
+            state = rememberCarouselState { distinctItems.size },
+            preferredItemWidth = preferredItemWidth,
+            itemSpacing = 10.dp,
             contentPadding = contentPadding,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .height(heroHeight),
-        ) {
-            items(
-                count = distinctItems.size,
-                key = { index -> distinctItems[index].id },
-            ) { index ->
-                val item = distinctItems[index]
-                val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
-                val context = LocalContext.current
-                val imageRequest =
-                    remember(item.thumbnailUrl, requestWidthPx, requestHeightPx) {
-                        ImageRequest
-                            .Builder(context)
-                            .data(item.thumbnailUrl)
-                            .size(Size(requestWidthPx, requestHeightPx))
-                            .crossfade(true)
-                            .build()
-                    }
+        ) { index ->
+            val item = distinctItems[index]
+            val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
+            val context = LocalContext.current
+            val imageRequest =
+                remember(item.thumbnailUrl, requestWidthPx, requestHeightPx) {
+                    ImageRequest
+                        .Builder(context)
+                        .data(item.thumbnailUrl)
+                        .size(Size(requestWidthPx, requestHeightPx))
+                        .crossfade(true)
+                        .build()
+                }
 
-                val cardShape = RoundedCornerShape(20.dp)
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge)
+                        .maskBorder(
+                            BorderStroke(
+                                1.dp,
+                                Color.White.copy(alpha = 0.12f),
+                            ),
+                            MaterialTheme.shapes.extraLarge,
+                        )
+                        .focusable()
+                        .combinedClickable(
+                            onClick = item.onClick,
+                            onLongClick = item.onLongClick,
+                        ),
+            ) {
+                AsyncImage(
+                    model = imageRequest,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
 
                 Box(
                     modifier =
                         Modifier
-                            .width(cardWidth)
-                            .height(heroHeight)
-                            .clip(cardShape)
-                            .border(
-                                BorderStroke(
-                                    1.dp,
-                                    Color.White.copy(alpha = 0.12f),
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to Color.Transparent,
+                                    0.48f to Color.Black.copy(alpha = 0.08f),
+                                    1f to Color.Black.copy(alpha = 0.84f),
                                 ),
-                                cardShape,
-                            ).focusable()
-                            .combinedClickable(
-                                onClick = item.onClick,
-                                onLongClick = item.onLongClick,
                             ),
-                ) {
-                    AsyncImage(
-                        model = imageRequest,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                )
 
-                    Box(
+                if (isActive && isPlaying) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape,
+                        tonalElevation = 2.dp,
                         modifier =
                             Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        0f to Color.Transparent,
-                                        0.48f to Color.Black.copy(alpha = 0.08f),
-                                        1f to Color.Black.copy(alpha = 0.84f),
-                                    ),
-                                ),
-                    )
-
-                    if (isActive && isPlaying) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            shape = CircleShape,
-                            tonalElevation = 2.dp,
-                            modifier =
-                                Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(12.dp)
-                                    .size(32.dp),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(R.drawable.volume_up),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                            }
+                                .align(Alignment.TopEnd)
+                                .padding(12.dp)
+                                .size(32.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.volume_up),
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
                         }
                     }
+                }
 
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                    ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                ) {
+                    Text(
+                        text = item.title,
+                        style =
+                            MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                            ),
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (item.subtitle.isNotBlank()) {
                         Text(
-                            text = item.title,
+                            text = item.subtitle,
                             style =
-                                MaterialTheme.typography.titleMedium.copy(
-                                    fontSize = 13.5.sp,
-                                    fontWeight = FontWeight.ExtraBold,
+                                MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Normal,
                                 ),
-                            color = Color.White,
+                            color = Color.White.copy(alpha = 0.78f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (item.subtitle.isNotBlank()) {
-                            Text(
-                                text = item.subtitle,
-                                style =
-                                    MaterialTheme.typography.bodySmall.copy(
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Normal,
-                                    ),
-                                color = Color.White.copy(alpha = 0.78f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
                     }
                 }
             }
