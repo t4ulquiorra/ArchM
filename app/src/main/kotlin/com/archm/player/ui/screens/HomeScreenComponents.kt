@@ -682,14 +682,13 @@ fun YTItem.toQuickPicksCarouselItem(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun QuickPicksCarousel(
     items: List<QuickPicksCarouselItem>,
     mediaMetadata: MediaMetadata?,
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
+    contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
 ) {
     val distinctItems = remember(items) { items.distinctBy { it.id } }
     if (distinctItems.isEmpty()) return
@@ -701,123 +700,138 @@ fun QuickPicksCarousel(
                 maxWidth >= 600.dp -> 195.dp
                 else -> 185.dp
             }
-        val heroMaxWidth = (maxWidth - 32.dp).coerceAtMost(360.dp)
+        val cardWidth = if (maxWidth >= 600.dp) 360.dp else (maxWidth - 48.dp).coerceAtLeast(280.dp)
         val density = LocalDensity.current
-        val requestWidthPx = with(density) { heroMaxWidth.roundToPx().coerceAtLeast(1) }
+        val requestWidthPx = with(density) { cardWidth.roundToPx().coerceAtLeast(1) }
         val requestHeightPx = with(density) { heroHeight.roundToPx().coerceAtLeast(1) }
 
-        HorizontalCenteredHeroCarousel(
-            state = rememberCarouselState { distinctItems.size },
-            maxItemWidth = heroMaxWidth,
-            itemSpacing = 10.dp,
+        val lazyListState = rememberLazyListState()
+        val snapFlingBehavior =
+            rememberSnapFlingBehavior(
+                lazyListState = lazyListState,
+                snapPosition = SnapPosition.Start,
+            )
+
+        LazyRow(
+            state = lazyListState,
+            flingBehavior = snapFlingBehavior,
             contentPadding = contentPadding,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .height(heroHeight),
-        ) { index ->
-            val item = distinctItems[index]
-            val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
-            val context = LocalContext.current
-            val imageRequest =
-                remember(item.thumbnailUrl, requestWidthPx, requestHeightPx) {
-                    ImageRequest
-                        .Builder(context)
-                        .data(item.thumbnailUrl)
-                        .size(Size(requestWidthPx, requestHeightPx))
-                        .crossfade(true)
-                        .build()
-                }
+        ) {
+            items(
+                count = distinctItems.size,
+                key = { index -> distinctItems[index].id },
+            ) { index ->
+                val item = distinctItems[index]
+                val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
+                val context = LocalContext.current
+                val imageRequest =
+                    remember(item.thumbnailUrl, requestWidthPx, requestHeightPx) {
+                        ImageRequest
+                            .Builder(context)
+                            .data(item.thumbnailUrl)
+                            .size(Size(requestWidthPx, requestHeightPx))
+                            .crossfade(true)
+                            .build()
+                    }
 
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .maskClip(MaterialTheme.shapes.extraLarge)
-                        .maskBorder(
-                            BorderStroke(
-                                1.dp,
-                                Color.White.copy(alpha = 0.12f),
-                            ),
-                            MaterialTheme.shapes.extraLarge,
-                        ).focusable()
-                        .combinedClickable(
-                            onClick = item.onClick,
-                            onLongClick = item.onLongClick,
-                        ),
-            ) {
-                AsyncImage(
-                    model = imageRequest,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                val cardShape = RoundedCornerShape(20.dp)
 
                 Box(
                     modifier =
                         Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    0f to Color.Transparent,
-                                    0.48f to Color.Black.copy(alpha = 0.08f),
-                                    1f to Color.Black.copy(alpha = 0.84f),
+                            .width(cardWidth)
+                            .height(heroHeight)
+                            .clip(cardShape)
+                            .border(
+                                BorderStroke(
+                                    1.dp,
+                                    Color.White.copy(alpha = 0.12f),
                                 ),
+                                cardShape,
+                            ).focusable()
+                            .combinedClickable(
+                                onClick = item.onClick,
+                                onLongClick = item.onLongClick,
                             ),
-                )
+                ) {
+                    AsyncImage(
+                        model = imageRequest,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
 
-                if (isActive && isPlaying) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = CircleShape,
-                        tonalElevation = 2.dp,
+                    Box(
                         modifier =
                             Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(12.dp)
-                                .size(32.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(R.drawable.volume_up),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                            )
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        0f to Color.Transparent,
+                                        0.48f to Color.Black.copy(alpha = 0.08f),
+                                        1f to Color.Black.copy(alpha = 0.84f),
+                                    ),
+                                ),
+                    )
+
+                    if (isActive && isPlaying) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            shape = CircleShape,
+                            tonalElevation = 2.dp,
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(12.dp)
+                                    .size(32.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(R.drawable.volume_up),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
                         }
                     }
-                }
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                ) {
-                    Text(
-                        text = item.title,
-                        style =
-                            MaterialTheme.typography.titleMedium.copy(
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                            ),
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (item.subtitle.isNotBlank()) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                    ) {
                         Text(
-                            text = item.subtitle,
+                            text = item.title,
                             style =
-                                MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Normal,
+                                MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
                                 ),
-                            color = Color.White.copy(alpha = 0.78f),
+                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (item.subtitle.isNotBlank()) {
+                            Text(
+                                text = item.subtitle,
+                                style =
+                                    MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Normal,
+                                    ),
+                                color = Color.White.copy(alpha = 0.78f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }
@@ -1102,12 +1116,6 @@ fun HomeItemContentPlaylist(
     onPlayClick: (() -> Unit)? = null,
     typeLabel: String = "Playlist",
 ) {
-    val cardBgColor =
-        rememberArtworkCardColor(
-            thumbnailUrl = thumbnailUrl,
-            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        )
-
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -1116,32 +1124,27 @@ fun HomeItemContentPlaylist(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(21.dp)
-
     Column(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(HomeSquareCardPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(cardShape)
-                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 6.5.dp, top = 6.5.dp, end = 6.5.dp),
+                ),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(18.dp)),
+                    .clip(RoundedCornerShape(16.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(800, 800) ?: thumbnailUrl,
@@ -1174,10 +1177,7 @@ fun HomeItemContentPlaylist(
         Spacer(modifier = Modifier.height(8.dp))
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 text = typeLabel,
@@ -1246,12 +1246,6 @@ fun HomeItemSong(
     onPlayClick: (() -> Unit)? = null,
     typeLabel: String = "Song",
 ) {
-    val cardBgColor =
-        rememberArtworkCardColor(
-            thumbnailUrl = thumbnailUrl,
-            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        )
-
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -1260,32 +1254,27 @@ fun HomeItemSong(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(21.dp)
-
     Column(
         modifier =
             modifier
                 .width(thumbSize)
-                .height(HomeSquareCardPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(cardShape)
-                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                ).padding(start = 6.5.dp, top = 6.5.dp, end = 6.5.dp),
+                ),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(18.dp)),
+                    .clip(RoundedCornerShape(16.dp)),
         ) {
             AsyncImage(
                 model = thumbnailUrl?.resize(800, 800) ?: thumbnailUrl,
@@ -1318,10 +1307,7 @@ fun HomeItemSong(
         Spacer(modifier = Modifier.height(8.dp))
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 text = typeLabel,
@@ -1421,26 +1407,20 @@ fun HomeItemArtist(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(21.dp)
-
     Column(
         modifier =
             modifier
                 .width(avatarSize)
-                .height(HomeSquareCardPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(cardShape)
-                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                )
-                .padding(start = 6.5.dp, top = 6.5.dp, end = 6.5.dp),
+                ),
     ) {
         Box(
             modifier =
@@ -1464,10 +1444,7 @@ fun HomeItemArtist(
         Spacer(modifier = Modifier.height(8.dp))
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 text = typeLabel,
@@ -1534,12 +1511,6 @@ fun HomeItemVideo(
     onPlayClick: (() -> Unit)? = null,
     typeLabel: String = "Video",
 ) {
-    val cardBgColor =
-        rememberArtworkCardColor(
-            thumbnailUrl = thumbnailUrl,
-            fallbackColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        )
-
     val interactionSource = remember { MutableInteractionSource() }
     val scale by rememberBouncyScale(
         interactionSource = interactionSource,
@@ -1548,33 +1519,27 @@ fun HomeItemVideo(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val cardShape = RoundedCornerShape(21.dp)
-
     Column(
         modifier =
             modifier
                 .width(cardWidth)
-                .height(HomeVideoPodHeight)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 }
-                .clip(cardShape)
-                .background(MaterialTheme.colorScheme.background)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onClick,
                     onLongClick = onLongClick,
-                )
-                .padding(start = 6.5.dp, top = 6.5.dp, end = 6.5.dp),
+                ),
     ) {
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .height(HomeVideoThumbnailHeight)
-                    .clip(RoundedCornerShape(18.dp)),
+                    .clip(RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
@@ -1608,10 +1573,7 @@ fun HomeItemVideo(
         Spacer(modifier = Modifier.height(8.dp))
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 text = typeLabel,
