@@ -1094,11 +1094,11 @@ private val CardPureWhite = Color(0xFFFFFFFF)
 
 val HomeVideoCardWidth: Dp = 282.dp
 val HomeVideoThumbnailHeight: Dp = 151.dp
-val HomeVideoPodHeight: Dp = 235.dp
+val HomeVideoPodHeight: Dp = 222.dp
 
-// Square card: 164.5dp wide (189dp * 0.87)
-val HomeSquareCardThumbSize: Dp = 164.5.dp
-val HomeSquareCardPodHeight: Dp = 235.dp
+// Square card: 151dp wide and tall (matching 151dp height baseline of video and artist circle)
+val HomeSquareCardThumbSize: Dp = 151.dp
+val HomeSquareCardPodHeight: Dp = 222.dp
 
 /**
  * Exact container pod implementation matching ArtistScreen's / LibraryScreen's horizontal carousels.
@@ -1425,7 +1425,7 @@ fun HomeItemArtist(
         Box(
             modifier =
                 Modifier
-                    .size(151.dp)
+                    .size(avatarSize)
                     .clip(CircleShape)
                     .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center,
