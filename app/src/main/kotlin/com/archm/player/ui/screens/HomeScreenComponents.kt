@@ -57,6 +57,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -65,9 +67,18 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -682,6 +693,74 @@ fun YTItem.toQuickPicksCarouselItem(
     )
 }
 
+private fun calculateMaskRect(
+    index: Int,
+    currentPage: Int,
+    offsetFraction: Float,
+    preferredItemWidthPx: Float,
+    containerWidthPx: Float,
+    spacingPx: Float,
+    startInsetPx: Float,
+    itemWidth: Float,
+    itemHeight: Float,
+): Rect {
+    val distance = (index - currentPage) - offsetFraction
+    val itemLeft = startInsetPx + distance * (preferredItemWidthPx + spacingPx)
+    val itemRight = itemLeft + preferredItemWidthPx
+
+    val left = if (itemLeft < 0f) (itemWidth - itemRight.coerceIn(0f, itemWidth)) else 0f
+    val right = if (itemRight > containerWidthPx) (containerWidthPx - itemLeft).coerceIn(0f, itemWidth) else itemWidth
+    val safeRight = maxOf(left, right)
+
+    return Rect(left, 0f, safeRight, itemHeight)
+}
+
+private fun createMaskOutline(
+    maskRect: Rect,
+    baseShape: Shape,
+    size: Size,
+    layoutDirection: LayoutDirection,
+    density: Density,
+): Outline {
+    val rect = maskRect.intersect(size.toRect())
+    if (rect.width <= 0f || rect.height <= 0f) {
+        return Outline.Rectangle(Rect.Zero)
+    }
+    val baseOutline = baseShape.createOutline(rect.size, layoutDirection, density)
+    return when (baseOutline) {
+        is Outline.Rounded -> {
+            val rr = baseOutline.roundRect
+            Outline.Rounded(
+                RoundRect(
+                    left = rect.left,
+                    top = rect.top,
+                    right = rect.right,
+                    bottom = rect.bottom,
+                    topLeftCornerRadius = rr.topLeftCornerRadius,
+                    topRightCornerRadius = rr.topRightCornerRadius,
+                    bottomRightCornerRadius = rr.bottomRightCornerRadius,
+                    bottomLeftCornerRadius = rr.bottomLeftCornerRadius,
+                ),
+            )
+        }
+        is Outline.Rectangle -> Outline.Rectangle(rect)
+        is Outline.Generic -> {
+            val path = Path().apply {
+                addPath(baseOutline.path, Offset(rect.left, rect.top))
+            }
+            Outline.Generic(path)
+        }
+    }
+}
+
+private class ExpressiveMaskShape : Shape {
+    var outline: Outline = Outline.Rectangle(Rect.Zero)
+
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        return outline
+    }
+}
+
 @Composable
 fun QuickPicksCarousel(
     items: List<QuickPicksCarouselItem>,
@@ -710,11 +789,33 @@ fun QuickPicksCarousel(
         val requestWidthPx = with(density) { preferredItemWidth.roundToPx().coerceAtLeast(1) }
         val requestHeightPx = with(density) { heroHeight.roundToPx().coerceAtLeast(1) }
 
-        HorizontalMultiBrowseCarousel(
-            state = rememberCarouselState { distinctItems.size },
-            preferredItemWidth = preferredItemWidth,
-            itemSpacing = 10.dp,
-            contentPadding = contentPadding,
+        val preferredItemWidthPx = with(density) { preferredItemWidth.toPx() }
+        val containerWidthPx = with(density) { maxWidth.toPx() }
+        val spacingPx = with(density) { 10.dp.toPx() }
+        val startInsetPx = with(density) { 16.dp.toPx() }
+        val endPadding = (maxWidth - 16.dp - preferredItemWidth).coerceAtLeast(16.dp)
+
+        val pagerState = rememberPagerState { distinctItems.size }
+        val flingBehavior =
+            PagerDefaults.flingBehavior(
+                state = pagerState,
+                pagerSnapDistance = PagerSnapDistance.atMost(1),
+            )
+
+        HorizontalPager(
+            state = pagerState,
+            pageSize = PageSize.Fixed(preferredItemWidth),
+            pageSpacing = 10.dp,
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    end = endPadding,
+                    top = 4.dp,
+                    bottom = 4.dp,
+                ),
+            snapPosition = SnapPosition.Start,
+            beyondViewportPageCount = 2,
+            flingBehavior = flingBehavior,
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -733,18 +834,66 @@ fun QuickPicksCarousel(
                         .build()
                 }
 
+            val cardShape = MaterialTheme.shapes.extraLarge
+            val maskShape = remember { ExpressiveMaskShape() }
+
             Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .maskClip(MaterialTheme.shapes.extraLarge)
-                        .maskBorder(
-                            BorderStroke(
-                                1.dp,
-                                Color.White.copy(alpha = 0.12f),
-                            ),
-                            MaterialTheme.shapes.extraLarge,
-                        )
+                        .graphicsLayer {
+                            val maskRect =
+                                calculateMaskRect(
+                                    index = index,
+                                    currentPage = pagerState.currentPage,
+                                    offsetFraction = pagerState.currentPageOffsetFraction,
+                                    preferredItemWidthPx = preferredItemWidthPx,
+                                    containerWidthPx = containerWidthPx,
+                                    spacingPx = spacingPx,
+                                    startInsetPx = startInsetPx,
+                                    itemWidth = size.width,
+                                    itemHeight = size.height,
+                                )
+                            val outline =
+                                createMaskOutline(
+                                    maskRect = maskRect,
+                                    baseShape = cardShape,
+                                    size = size,
+                                    layoutDirection = layoutDirection,
+                                    density = this,
+                                )
+                            maskShape.outline = outline
+                            shape = maskShape
+                            clip = true
+                        }
+                        .drawWithContent {
+                            drawContent()
+                            val maskRect =
+                                calculateMaskRect(
+                                    index = index,
+                                    currentPage = pagerState.currentPage,
+                                    offsetFraction = pagerState.currentPageOffsetFraction,
+                                    preferredItemWidthPx = preferredItemWidthPx,
+                                    containerWidthPx = containerWidthPx,
+                                    spacingPx = spacingPx,
+                                    startInsetPx = startInsetPx,
+                                    itemWidth = size.width,
+                                    itemHeight = size.height,
+                                )
+                            val outline =
+                                createMaskOutline(
+                                    maskRect = maskRect,
+                                    baseShape = cardShape,
+                                    size = size,
+                                    layoutDirection = layoutDirection,
+                                    density = this,
+                                )
+                            drawOutline(
+                                outline = outline,
+                                color = Color.White.copy(alpha = 0.12f),
+                                style = Stroke(width = 1.dp.toPx()),
+                            )
+                        }
                         .focusable()
                         .combinedClickable(
                             onClick = item.onClick,
