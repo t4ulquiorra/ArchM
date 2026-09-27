@@ -69,14 +69,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.material3.Icon
@@ -130,7 +133,6 @@ import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import coil3.size.Size
 import com.archm.player.R
 import com.archm.player.constants.QuickPicksDisplayMode
 import com.archm.player.db.entities.Album
@@ -718,11 +720,11 @@ private fun calculateMaskRect(
 private fun createMaskOutline(
     maskRect: Rect,
     baseShape: Shape,
-    size: Size,
+    size: androidx.compose.ui.geometry.Size,
     layoutDirection: LayoutDirection,
     density: Density,
 ): Outline {
-    val rect = maskRect.intersect(size.toRect())
+    val rect = maskRect.intersect(Rect(Offset.Zero, size))
     if (rect.width <= 0f || rect.height <= 0f) {
         return Outline.Rectangle(Rect.Zero)
     }
@@ -756,7 +758,11 @@ private fun createMaskOutline(
 private class ExpressiveMaskShape : Shape {
     var outline: Outline = Outline.Rectangle(Rect.Zero)
 
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+    override fun createOutline(
+        size: androidx.compose.ui.geometry.Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
         return outline
     }
 }
@@ -773,6 +779,7 @@ fun QuickPicksCarousel(
     if (distinctItems.isEmpty()) return
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val layoutDirection = LocalLayoutDirection.current
         val heroHeight =
             when {
                 maxWidth >= 840.dp -> 210.dp
@@ -829,7 +836,7 @@ fun QuickPicksCarousel(
                     ImageRequest
                         .Builder(context)
                         .data(item.thumbnailUrl)
-                        .size(Size(requestWidthPx, requestHeightPx))
+                        .size(coil3.size.Size(requestWidthPx, requestHeightPx))
                         .crossfade(true)
                         .build()
                 }
