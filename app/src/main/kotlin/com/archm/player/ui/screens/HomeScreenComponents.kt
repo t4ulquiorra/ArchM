@@ -91,6 +91,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -685,7 +686,7 @@ fun QuickPicksCarousel(
     mediaMetadata: MediaMetadata?,
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
 ) {
     val distinctItems = remember(items) { items.distinctBy { it.id } }
     if (distinctItems.isEmpty()) return
@@ -900,11 +901,20 @@ fun QuickPicksCarouselShelf(
         onMoreClick = onMoreClick,
         modifier = modifier,
     ) {
-        QuickPicksCarousel(
-            items = carouselItems,
-            mediaMetadata = mediaMetadata,
-            isPlaying = isPlaying,
-        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clipToBounds(),
+        ) {
+            QuickPicksCarousel(
+                items = carouselItems,
+                mediaMetadata = mediaMetadata,
+                isPlaying = isPlaying,
+                contentPadding = PaddingValues(vertical = 4.dp),
+            )
+        }
     }
 }
 
@@ -952,11 +962,20 @@ fun SimpQuickPicks(
         subtitle = stringResource(R.string.let_s_start_with_a_radio),
         modifier = modifier,
     ) {
-        QuickPicksCarousel(
-            items = carouselItems,
-            mediaMetadata = mediaMetadata,
-            isPlaying = isPlaying,
-        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clipToBounds(),
+        ) {
+            QuickPicksCarousel(
+                items = carouselItems,
+                mediaMetadata = mediaMetadata,
+                isPlaying = isPlaying,
+                contentPadding = PaddingValues(vertical = 4.dp),
+            )
+        }
     }
 }
 
