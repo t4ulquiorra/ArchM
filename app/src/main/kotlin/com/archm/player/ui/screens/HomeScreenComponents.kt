@@ -800,7 +800,7 @@ fun QuickPicksCarousel(
                         text = item.title,
                         style =
                             MaterialTheme.typography.titleMedium.copy(
-                                fontSize = 16.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                             ),
                         color = Color.White,
@@ -813,6 +813,7 @@ fun QuickPicksCarousel(
                             style =
                                 MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 12.sp,
+                                    fontWeight = FontWeight.Normal,
                                 ),
                             color = Color.White.copy(alpha = 0.78f),
                             maxLines = 1,
@@ -1075,7 +1076,6 @@ fun SimpHomeShelf(
     }
 }
 
-private val CardGrey = Color(0xFF9D9D9D)
 private val CardMarbleWhite = Color(0xFFFFFFFF)
 private val CardPureWhite = Color(0xFFFFFFFF)
 
@@ -1185,10 +1185,9 @@ fun HomeItemContentPlaylist(
                 style =
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 12.sp,
-                        lineHeight = 17.5.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Normal,
                     ),
-                color = CardGrey,
+                color = Color.White.copy(alpha = 0.78f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1199,8 +1198,7 @@ fun HomeItemContentPlaylist(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 15.5.sp,
-                        lineHeight = 22.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1220,10 +1218,9 @@ fun HomeItemContentPlaylist(
                     style =
                         MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
-                            lineHeight = 17.5.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Normal,
                         ),
-                    color = CardGrey,
+                    color = Color.White.copy(alpha = 0.78f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1332,10 +1329,9 @@ fun HomeItemSong(
                 style =
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 12.sp,
-                        lineHeight = 17.5.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Normal,
                     ),
-                color = CardGrey,
+                color = Color.White.copy(alpha = 0.78f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1346,8 +1342,7 @@ fun HomeItemSong(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 15.5.sp,
-                        lineHeight = 22.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1370,7 +1365,7 @@ fun HomeItemSong(
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                 ),
-                            color = CardGrey,
+                            color = Color.White.copy(alpha = 0.78f),
                             modifier =
                                 Modifier
                                     .padding(end = 5.dp)
@@ -1385,10 +1380,9 @@ fun HomeItemSong(
                         style =
                             MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 12.sp,
-                                lineHeight = 17.5.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Normal,
                             ),
-                        color = CardGrey,
+                        color = Color.White.copy(alpha = 0.78f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1481,10 +1475,9 @@ fun HomeItemArtist(
                 style =
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 12.sp,
-                        lineHeight = 17.5.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Normal,
                     ),
-                color = CardGrey,
+                color = Color.White.copy(alpha = 0.78f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1495,8 +1488,7 @@ fun HomeItemArtist(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 15.5.sp,
-                        lineHeight = 22.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardPureWhite,
@@ -1512,10 +1504,9 @@ fun HomeItemArtist(
                     style =
                         MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
-                            lineHeight = 17.5.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Normal,
                         ),
-                    color = CardGrey,
+                    color = Color.White.copy(alpha = 0.78f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1628,10 +1619,9 @@ fun HomeItemVideo(
                 style =
                     MaterialTheme.typography.labelSmall.copy(
                         fontSize = 12.sp,
-                        lineHeight = 17.5.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Normal,
                     ),
-                color = CardGrey,
+                color = Color.White.copy(alpha = 0.78f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1642,8 +1632,7 @@ fun HomeItemVideo(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 15.5.sp,
-                        lineHeight = 22.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 color = CardMarbleWhite,
@@ -1663,10 +1652,9 @@ fun HomeItemVideo(
                     style =
                         MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
-                            lineHeight = 17.5.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Normal,
                         ),
-                    color = CardGrey,
+                    color = Color.White.copy(alpha = 0.78f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1695,10 +1683,12 @@ fun SpeedDialSection(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val columns = if (isLandscape) 4 else 2
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val columns = if (isLandscape || screenWidthDp >= 600.dp) 3 else 2
     val maxRows = 2
-    val maxItems = columns * maxRows // 4 items in Portrait, 8 items in Landscape
+    val maxItems = columns * maxRows // 4 in Portrait, 6 in Landscape/Wide
 
     val distinctSpeedDial =
         remember(speedDialItems) {
