@@ -800,7 +800,7 @@ fun QuickPicksCarousel(
                         text = item.title,
                         style =
                             MaterialTheme.typography.titleMedium.copy(
-                                fontSize = 12.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.ExtraBold,
                             ),
                         color = Color.White,
@@ -1198,7 +1198,7 @@ fun HomeItemContentPlaylist(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.ExtraBold,
                     ),
                 color = CardMarbleWhite,
@@ -1342,7 +1342,7 @@ fun HomeItemSong(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.ExtraBold,
                     ),
                 color = CardMarbleWhite,
@@ -1488,7 +1488,7 @@ fun HomeItemArtist(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.ExtraBold,
                     ),
                 color = CardPureWhite,
@@ -1632,7 +1632,7 @@ fun HomeItemVideo(
                 text = title,
                 style =
                     MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 12.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.ExtraBold,
                     ),
                 color = CardMarbleWhite,
