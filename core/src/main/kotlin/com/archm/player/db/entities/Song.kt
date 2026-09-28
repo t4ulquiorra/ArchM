@@ -57,7 +57,9 @@ constructor(
                     return "content://media/external/audio/albumart/$mediaStoreAlbumId"
                 }
             }
-            return song.thumbnailUrl
+            return song.thumbnailUrl?.takeIf { it.isNotBlank() }
+                ?: album?.thumbnailUrl?.takeIf { it.isNotBlank() }
+                ?: if (!song.isLocal) "https://i.ytimg.com/vi/${song.id}/hqdefault.jpg" else null
         }
     val romanizeLyrics: Boolean
         get() = song.romanizeLyrics

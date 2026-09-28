@@ -572,23 +572,31 @@ fun Song.toQuickPicksCarouselItem(
     mediaMetadata: MediaMetadata?,
 ): QuickPicksCarouselItem {
     val isActive = id == mediaMetadata?.id
-    val thumbUrl = thumbnailUrl?.takeIf { it.isNotBlank() }
+    val resolvedThumbnail = thumbnailUrl?.takeIf { it.isNotBlank() }
         ?: song.thumbnailUrl?.takeIf { it.isNotBlank() }
         ?: album?.thumbnailUrl?.takeIf { it.isNotBlank() }
+        ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg"
     return QuickPicksCarouselItem(
         id = id,
         title = song.title,
         subtitle = artists.joinToString { it.name },
-        thumbnailUrl = thumbUrl,
+        thumbnailUrl = resolvedThumbnail,
         onClick = {
             if (isActive) {
                 playerConnection.player.togglePlayPause()
             } else {
+                val metadata = toMediaMetadata().let { base ->
+                    if (base.thumbnailUrl.isNullOrBlank()) {
+                        base.copy(thumbnailUrl = resolvedThumbnail)
+                    } else {
+                        base
+                    }
+                }
                 playerConnection.playQueue(
                     if (song.isLocal) {
                         ListQueue(items = listOf(toMediaItem()))
                     } else {
-                        YouTubeQueue.radio(toMediaMetadata())
+                        YouTubeQueue.radio(metadata)
                     },
                 )
             }
@@ -628,27 +636,35 @@ fun YTItem.toQuickPicksCarouselItem(
             is ArtistItem -> ""
             is PlaylistItem -> author?.name.orEmpty()
         }
-    val thumbUrl = thumbnail?.takeIf { it.isNotBlank() }
+    val resolvedThumbnail = thumbnail?.takeIf { it.isNotBlank() }
         ?: when (this) {
             is SongItem -> endpoint?.videoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" } ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg"
             is PlaylistItem -> playEndpoint?.videoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" }
             else -> null
         }
+        ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg"
     return QuickPicksCarouselItem(
         id = id,
         title = itemTitle,
         subtitle = itemSubtitle,
-        thumbnailUrl = thumbUrl,
+        thumbnailUrl = resolvedThumbnail,
         onClick = {
             when (this) {
                 is SongItem -> {
                     if (isActive) {
                         playerConnection.player.togglePlayPause()
                     } else {
+                        val meta = toMediaMetadata().let { base ->
+                            if (base.thumbnailUrl.isNullOrBlank()) {
+                                base.copy(thumbnailUrl = resolvedThumbnail)
+                            } else {
+                                base
+                            }
+                        }
                         playerConnection.playQueue(
                             YouTubeQueue(
                                 endpoint ?: WatchEndpoint(videoId = id),
-                                toMediaMetadata(),
+                                meta,
                             ),
                         )
                     }
@@ -732,11 +748,13 @@ fun QuickPicksCarousel(
             val item = distinctItems[index]
             val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
             val context = LocalContext.current
+            val resolvedThumbnail = item.thumbnailUrl?.takeIf { it.isNotBlank() }
+                ?: "https://i.ytimg.com/vi/${item.id}/hqdefault.jpg"
             val imageRequest =
-                remember(item.thumbnailUrl) {
+                remember(resolvedThumbnail) {
                     ImageRequest
                         .Builder(context)
-                        .data(item.thumbnailUrl?.resize(800, 800) ?: item.thumbnailUrl)
+                        .data(resolvedThumbnail.resize(800, 800))
                         .crossfade(true)
                         .build()
                 }
@@ -761,6 +779,8 @@ fun QuickPicksCarousel(
             ) {
                 AsyncImage(
                     model = imageRequest,
+                    placeholder = painterResource(R.drawable.music_note),
+                    error = painterResource(R.drawable.music_note),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),

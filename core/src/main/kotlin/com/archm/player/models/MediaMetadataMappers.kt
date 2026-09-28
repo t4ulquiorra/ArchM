@@ -28,7 +28,10 @@ fun Song.toMediaMetadata() =
         title = song.title,
         artists = artists.map { MediaMetadata.Artist(id = it.id, name = it.name) },
         duration = song.duration,
-        thumbnailUrl = song.thumbnailUrl,
+        thumbnailUrl = thumbnailUrl?.takeIf { it.isNotBlank() }
+            ?: song.thumbnailUrl?.takeIf { it.isNotBlank() }
+            ?: album?.thumbnailUrl?.takeIf { it.isNotBlank() }
+            ?: if (!song.isLocal) "https://i.ytimg.com/vi/${song.id}/hqdefault.jpg" else null,
         album = album?.let { MediaMetadata.Album(id = it.id, title = it.title) } 
             ?: song.albumId?.let { albumId -> MediaMetadata.Album(id = albumId, title = song.albumName.orEmpty()) },
         explicit = song.explicit,
@@ -46,7 +49,8 @@ fun SongItem.toMediaMetadata() =
         title = title,
         artists = artists.map { MediaMetadata.Artist(id = it.id, name = it.name) },
         duration = duration ?: -1,
-        thumbnailUrl = thumbnail.resize(1200, 1200),
+        thumbnailUrl = thumbnail.takeIf { it.isNotBlank() }?.resize(1200, 1200)
+            ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg",
         album = album?.let { MediaMetadata.Album(id = it.id, title = it.name) },
         explicit = explicit,
         setVideoId = setVideoId,
