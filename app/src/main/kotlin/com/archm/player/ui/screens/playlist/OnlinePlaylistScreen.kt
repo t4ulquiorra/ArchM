@@ -364,7 +364,7 @@ fun OnlinePlaylistScreen(
                             EmptyPlaceholder(
                                 icon = R.drawable.music_note,
                                 text = if (error != null) {
-                                    error ?: stringResource(R.string.error_occurred)
+                                    error ?: stringResource(R.string.error_unknown)
                                 } else {
                                     "This playlist has no available tracks"
                                 },

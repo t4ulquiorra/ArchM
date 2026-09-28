@@ -813,9 +813,11 @@ fun CachePlaylistScreen(
             )
         }
 
+        val currentCachedSongs = cachedSongs
+
         // Sticky TopAppBar (shown on scroll when not selecting or searching, or fallback when empty)
         AnimatedVisibility(
-            visible = (songs.isEmpty() || shouldHideTopBar) && !isSearching && !inSelectMode,
+            visible = (currentCachedSongs.isEmpty() || shouldHideTopBar) && !isSearching && !inSelectMode,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
         ) {

@@ -85,6 +85,7 @@ import com.archm.player.R
 import com.archm.player.constants.QuickPicks
 import com.archm.player.constants.ShowHomeFilterChipsKey
 import com.archm.player.utils.rememberPreference
+import com.archm.player.db.entities.ActivityLogEntity
 import com.archm.player.db.entities.Album
 import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.Playlist
@@ -218,6 +219,7 @@ fun HomeScreen(
                     haptic = haptic,
                     scope = scope,
                     lazyListState = lazyListState,
+                    recentVisits = recentVisits,
                     onAction = viewModel::onAction,
                 )
             }
@@ -288,6 +290,7 @@ private fun HomeContent(
     haptic: HapticFeedback,
     scope: CoroutineScope,
     lazyListState: androidx.compose.foundation.lazy.LazyListState,
+    recentVisits: List<ActivityLogEntity> = emptyList(),
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {

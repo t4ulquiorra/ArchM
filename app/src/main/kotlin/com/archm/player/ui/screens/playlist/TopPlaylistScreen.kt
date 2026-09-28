@@ -861,9 +861,12 @@ fun TopPlaylistScreen(
             )
         }
 
+        val currentSongs = songs
+        val isSongsEmpty = currentSongs == null || currentSongs.isEmpty()
+
         // Sticky TopAppBar (shown on scroll when not selecting or searching, or fallback when empty)
         AnimatedVisibility(
-            visible = (songs == null || songs.isEmpty() || shouldHideTopBar) && !isSearching && !inSelectMode,
+            visible = (isSongsEmpty || shouldHideTopBar) && !isSearching && !inSelectMode,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
         ) {
