@@ -491,7 +491,8 @@ private fun RecentActivityItemRow(
             modifier = Modifier
                 .size(52.dp)
                 .clip(shape)
-                .background(Color(0xFF1E1E1E)),
+                .background(Color(30, 30, 30)),
+            contentAlignment = Alignment.Center,
         ) {
             val context = LocalContext.current
             val imageRequest = remember(item.thumbnailUrl) {
@@ -502,24 +503,21 @@ private fun RecentActivityItemRow(
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .build()
             }
+            Icon(
+                painter = painterResource(
+                    when (item.entityType) {
+                        "ARTIST" -> R.drawable.person
+                        "ALBUM" -> R.drawable.album
+                        "PLAYLIST" -> R.drawable.queue_music
+                        else -> R.drawable.music_note
+                    }
+                ),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(24.dp),
+            )
             AsyncImage(
                 model = imageRequest,
-                placeholder = painterResource(
-                    when (item.entityType) {
-                        "ARTIST" -> R.drawable.person
-                        "ALBUM" -> R.drawable.album
-                        "PLAYLIST" -> R.drawable.queue_music
-                        else -> R.drawable.music_note
-                    }
-                ),
-                error = painterResource(
-                    when (item.entityType) {
-                        "ARTIST" -> R.drawable.person
-                        "ALBUM" -> R.drawable.album
-                        "PLAYLIST" -> R.drawable.queue_music
-                        else -> R.drawable.music_note
-                    }
-                ),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -729,7 +727,8 @@ private fun AccordionPlayGroupItem(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(parentShape)
-                        .background(Color(0xFF222222)),
+                        .background(Color(30, 30, 30)),
+                    contentAlignment = Alignment.Center,
                 ) {
                     val context = LocalContext.current
                     val imageRequest = remember(group.thumbnailUrl) {
@@ -740,10 +739,14 @@ private fun AccordionPlayGroupItem(
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .build()
                     }
+                    Icon(
+                        painter = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.2f),
+                        modifier = Modifier.size(24.dp),
+                    )
                     AsyncImage(
                         model = imageRequest,
-                        placeholder = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
-                        error = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
@@ -855,7 +858,8 @@ private fun AccordionPlayGroupItem(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF222222)),
+                                .background(Color(30, 30, 30)),
+                            contentAlignment = Alignment.Center,
                         ) {
                             val context = LocalContext.current
                             val trackImageRequest = remember(song.thumbnailUrl) {
@@ -866,10 +870,14 @@ private fun AccordionPlayGroupItem(
                                     .diskCachePolicy(CachePolicy.ENABLED)
                                     .build()
                             }
+                            Icon(
+                                painter = painterResource(R.drawable.music_note),
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.2f),
+                                modifier = Modifier.size(20.dp),
+                            )
                             AsyncImage(
                                 model = trackImageRequest,
-                                placeholder = painterResource(R.drawable.music_note),
-                                error = painterResource(R.drawable.music_note),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),

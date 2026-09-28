@@ -55,7 +55,9 @@ data class HomePage(
 
         companion object {
             fun fromMusicCarouselShelfRenderer(renderer: MusicCarouselShelfRenderer): Section? {
-                val rawTitle = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
+                val rawTitle = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text
+                    ?: renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.joinToString("") { it.text }
+                    ?: return null
                 val title = if (rawTitle.startsWith("Similar to ", ignoreCase = true)) {
                     rawTitle.replaceFirst("Similar to ", "More like ", ignoreCase = true)
                 } else if (rawTitle.contains("Similar to ", ignoreCase = true)) {
@@ -63,16 +65,14 @@ data class HomePage(
                 } else {
                     rawTitle
                 }
-                val label = renderer.header.musicCarouselShelfBasicHeaderRenderer.strapline?.runs?.firstOrNull()?.text
+                val label = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.strapline?.runs?.firstOrNull()?.text
                 if (title.equals("Listen together", ignoreCase = true) ||
-                    title.contains("listen together", ignoreCase = true) ||
-                    label?.equals("STATION", ignoreCase = true) == true ||
-                    label?.contains("STATION", ignoreCase = true) == true
+                    title.contains("listen together", ignoreCase = true)
                 ) {
                     return null
                 }
-                val thumbnail = renderer.header.musicCarouselShelfBasicHeaderRenderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
-                val endpoint = renderer.header.musicCarouselShelfBasicHeaderRenderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
+                val thumbnail = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
+                val endpoint = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
                 var items = renderer.contents.mapNotNull { content ->
                     content.musicTwoRowItemRenderer?.let { fromMusicTwoRowItemRenderer(it) }
                         ?: content.musicResponsiveListItemRenderer?.let { SearchSummaryPage.fromMusicResponsiveListItemRenderer(it) }
@@ -186,11 +186,15 @@ data class HomePage(
                     }
                     renderer.isAlbum -> {
                         val bestThumb = renderer.thumbnailRenderer.musicThumbnailRenderer?.getBestThumbnail()
+                        val browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null
+                        val playlistId = renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content
+                            ?.musicPlayButtonRenderer?.playNavigationEndpoint
+                            ?.watchPlaylistEndpoint?.playlistId
+                            ?: renderer.navigationEndpoint.watchPlaylistEndpoint?.playlistId
+                            ?: browseId.removePrefix("MPREb_")
                         AlbumItem(
-                            browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
-                            playlistId = renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content
-                                ?.musicPlayButtonRenderer?.playNavigationEndpoint
-                                ?.watchPlaylistEndpoint?.playlistId ?: return null,
+                            browseId = browseId,
+                            playlistId = playlistId,
                             title = renderer.title.runs?.firstOrNull()?.text ?: return null,
                             artists = renderer.subtitle?.runs?.oddElements()?.drop(1)?.map {
                                 Artist(
@@ -209,25 +213,37 @@ data class HomePage(
                         )
                     }
 
-                    renderer.isPlaylist -> {
+                    renderer.isPlaylist || renderer.navigationEndpoint.watchPlaylistEndpoint != null -> {
                         val bestThumb = renderer.thumbnailRenderer.musicThumbnailRenderer?.getBestThumbnail()
+                        val browseId = renderer.navigationEndpoint.browseEndpoint?.browseId
+                            ?: renderer.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content
+                                ?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchPlaylistEndpoint?.playlistId
+                            ?: renderer.navigationEndpoint.watchPlaylistEndpoint?.playlistId
+                            ?: return null
+                        val playlistId = browseId.removePrefix("VL")
+                        val playEndpoint = renderer.thumbnailOverlay
+                            ?.musicItemThumbnailOverlayRenderer?.content
+                            ?.musicPlayButtonRenderer?.playNavigationEndpoint
+                            ?.watchPlaylistEndpoint
+                            ?: renderer.navigationEndpoint.watchPlaylistEndpoint
+                            ?: WatchEndpoint(playlistId = playlistId)
+                        val shuffleEndpoint = renderer.menu?.menuRenderer?.items?.find {
+                            it.menuNavigationItemRenderer?.icon?.iconType == "MUSIC_SHUFFLE"
+                        }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint
+                        val radioEndpoint = renderer.menu?.menuRenderer?.items?.find {
+                            it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
+                        }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint
+
                         PlaylistItem(
-                            id = renderer.navigationEndpoint.browseEndpoint?.browseId?.removePrefix("VL") ?: return null,
+                            id = playlistId,
                             title = renderer.title.runs?.firstOrNull()?.text ?: return null,
                             author = renderer.subtitle.extractPlaylistAuthor(),
                             songCountText = renderer.subtitle.extractPlaylistSongCount(),
                             thumbnail = bestThumb?.normalizedUrl
                                 ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
-                            playEndpoint = renderer.thumbnailOverlay
-                                ?.musicItemThumbnailOverlayRenderer?.content
-                                ?.musicPlayButtonRenderer?.playNavigationEndpoint
-                                ?.watchPlaylistEndpoint ?: return null,
-                            shuffleEndpoint = renderer.menu?.menuRenderer?.items?.find {
-                                it.menuNavigationItemRenderer?.icon?.iconType == "MUSIC_SHUFFLE"
-                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
-                            radioEndpoint = renderer.menu.menuRenderer.items.find {
-                                it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
-                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint,
+                            playEndpoint = playEndpoint,
+                            shuffleEndpoint = shuffleEndpoint,
+                            radioEndpoint = radioEndpoint,
                             thumbnailWidth = bestThumb?.width,
                             thumbnailHeight = bestThumb?.height,
                         )
@@ -242,10 +258,10 @@ data class HomePage(
                                 ?: renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
                             shuffleEndpoint = renderer.menu?.menuRenderer?.items?.find {
                                 it.menuNavigationItemRenderer?.icon?.iconType == "MUSIC_SHUFFLE"
-                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
-                            radioEndpoint = renderer.menu.menuRenderer.items.find {
+                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint,
+                            radioEndpoint = renderer.menu?.menuRenderer?.items?.find {
                                 it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
-                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint ?: return null,
+                            }?.menuNavigationItemRenderer?.navigationEndpoint?.watchPlaylistEndpoint,
                             thumbnailWidth = bestThumb?.width,
                             thumbnailHeight = bestThumb?.height,
                         )

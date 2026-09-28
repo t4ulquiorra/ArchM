@@ -337,6 +337,9 @@ class HomeViewModel @Inject constructor(
             )
         }
 
+    private var hasLoadedOnce = false
+    private var lastSuccessUiState: HomeUiState? = null
+
     val screenState: StateFlow<HomeScreenState> =
         combine(
             homeContent,
@@ -344,34 +347,36 @@ class HomeViewModel @Inject constructor(
             isLoading,
             loadError,
         ) { content, prefs, loading, err ->
-            if (loading && !content.hasContent) {
-                HomeScreenState.Loading
-            } else if (content.hasContent) {
-                HomeScreenState.Success(
-                    HomeUiState(
-                        quickPicks = ImmutableList.copyOf(content.local.quickPicks),
-                        speedDialItems = ImmutableList.copyOf(content.local.speedDialItems),
-                        forgottenFavorites = ImmutableList.copyOf(content.local.forgottenFavorites),
-                        keepListening = ImmutableList.copyOf(content.local.keepListening),
-                        similarRecommendations = ImmutableList.copyOf(content.remote.similarRecommendations),
-                        accountPlaylists = ImmutableList.copyOf(content.remote.accountPlaylists),
-                        homePage = content.remote.homePage,
-                        remoteQuickPicks = content.remote.remoteQuickPicks,
-                        selectedChip = content.selectedChip,
-                        accountName = content.remote.accountName,
-                        accountImageUrl = content.remote.accountImageUrl,
-                        quickPicksDisplayMode = prefs.quickPicksDisplayMode,
-                        quickPicksMode = prefs.quickPicksMode,
-                        showCategoryChips = prefs.showCategoryChips,
-                        showTonalBackdrop = prefs.showTonalBackdrop,
-                        isRefreshing = false,
-                        isLoadingMore = false,
-                    )
+            if (content.hasContent) {
+                hasLoadedOnce = true
+                val uiState = HomeUiState(
+                    quickPicks = ImmutableList.copyOf(content.local.quickPicks),
+                    speedDialItems = ImmutableList.copyOf(content.local.speedDialItems),
+                    forgottenFavorites = ImmutableList.copyOf(content.local.forgottenFavorites),
+                    keepListening = ImmutableList.copyOf(content.local.keepListening),
+                    similarRecommendations = ImmutableList.copyOf(content.remote.similarRecommendations),
+                    accountPlaylists = ImmutableList.copyOf(content.remote.accountPlaylists),
+                    homePage = content.remote.homePage,
+                    remoteQuickPicks = content.remote.remoteQuickPicks,
+                    selectedChip = content.selectedChip,
+                    accountName = content.remote.accountName,
+                    accountImageUrl = content.remote.accountImageUrl,
+                    quickPicksDisplayMode = prefs.quickPicksDisplayMode,
+                    quickPicksMode = prefs.quickPicksMode,
+                    showCategoryChips = prefs.showCategoryChips,
+                    showTonalBackdrop = prefs.showTonalBackdrop,
+                    isRefreshing = false,
+                    isLoadingMore = false,
                 )
-            } else if (err != null) {
-                err
+                lastSuccessUiState = uiState
+                HomeScreenState.Success(uiState)
+            } else if (hasLoadedOnce && lastSuccessUiState != null) {
+                // Retain existing success items in memory during refresh or loading
+                HomeScreenState.Success(lastSuccessUiState!!)
             } else if (loading) {
                 HomeScreenState.Loading
+            } else if (err != null) {
+                err
             } else {
                 HomeScreenState.Empty
             }

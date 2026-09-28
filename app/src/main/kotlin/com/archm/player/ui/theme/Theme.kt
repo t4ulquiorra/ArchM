@@ -47,8 +47,9 @@ import kotlin.math.abs
 import kotlin.math.min
 
 val Marble = Color(0xFFF2F8FC)
-val SurfaceContainerColor = Color(0xFF141414)
-val BaseDarkBackground = Color(0xFF0D0D0E) // RGB 13, 13, 14
+val SurfaceContainerColor = Color(40, 40, 40)
+val BaseDarkBackground = Color(20, 20, 20)
+val CardImagePlaceholderColor = Color(30, 30, 30)
 val DefaultThemeColor = Marble
 val LocalAccentColor = compositionLocalOf { Marble }
 
@@ -68,11 +69,11 @@ fun getDarkColorScheme(pureBlack: Boolean): ColorScheme {
         surfaceContainerLowest = bg,
         surfaceContainerLow = SurfaceContainerColor,
         surfaceContainer = SurfaceContainerColor,
-        surfaceContainerHigh = Color(0xFF1A1A1A),
-        surfaceContainerHighest = Color(0xFF222222),
+        surfaceContainerHigh = Color(0xFF2E2E2E),
+        surfaceContainerHighest = Color(0xFF383838),
         onBackground = Color.White,
         onSurface = Color.White,
-        outlineVariant = Color.White.copy(alpha = 0.12f),
+        outlineVariant = Color.White.copy(alpha = 0.08f),
     )
 }
 

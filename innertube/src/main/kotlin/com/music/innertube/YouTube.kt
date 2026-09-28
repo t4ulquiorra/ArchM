@@ -725,13 +725,10 @@ object YouTube {
             return@runCatching homeContinuation(continuation).getOrThrow()
         }
 
-        val currentLocale = innerTube.locale
-        if (currentLocale.gl.isBlank() || currentLocale.hl.isBlank()) {
-            val defLocale = java.util.Locale.getDefault()
-            val gl = defLocale.country.takeIf { it.isNotBlank() } ?: "US"
-            val hl = defLocale.toLanguageTag().takeIf { it.isNotBlank() } ?: "en"
-            innerTube.locale = YouTubeLocale(gl = gl, hl = hl)
-        }
+        val defLocale = java.util.Locale.getDefault()
+        val gl = defLocale.country.ifEmpty { "IN" }
+        val hl = defLocale.toLanguageTag().ifEmpty { "en" }
+        innerTube.locale = YouTubeLocale(gl = gl, hl = hl)
 
         val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_home", params = params).body<BrowseResponse>()
         response.responseContext.visitorData?.let {

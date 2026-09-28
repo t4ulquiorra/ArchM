@@ -38,8 +38,8 @@ class InnerTube {
     private var httpClient = createClient()
 
     var locale = YouTubeLocale(
-        gl = Locale.getDefault().country,
-        hl = Locale.getDefault().toLanguageTag()
+        gl = Locale.getDefault().country.ifEmpty { "IN" },
+        hl = Locale.getDefault().toLanguageTag().ifEmpty { "en" }
     )
     var visitorData: String? = null
     var dataSyncId: String? = null
@@ -151,6 +151,7 @@ class InnerTube {
             append("X-YouTube-Client-Version", client.clientVersion)
             append("X-Origin", YouTubeClient.ORIGIN_YOUTUBE_MUSIC)
             append("Referer", YouTubeClient.REFERER_YOUTUBE_MUSIC)
+            append("Accept-Language", "${locale.hl},${locale.gl};q=0.9,en-US;q=0.8,en;q=0.7")
             // Sent to EVERY client, including `loginSupported = false` ones. Withholding it from
             // those (on the theory that an account-bound visitor id without credentials looks like
             // a hijacked session) was tried and measured to be backwards: VISIONOS and
@@ -295,6 +296,8 @@ class InnerTube {
         val effectiveLogin = (setLogin || useLoginForBrowse) && !cookie.isNullOrEmpty()
         httpClient.post("browse") {
             ytClient(client, setLogin = effectiveLogin)
+            parameter("gl", locale.gl)
+            parameter("hl", locale.hl)
             if (continuation != null) {
                 parameter("continuation", continuation)
                 parameter("ctoken", continuation)

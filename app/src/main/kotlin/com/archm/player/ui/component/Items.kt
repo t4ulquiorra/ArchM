@@ -208,7 +208,7 @@ inline fun ListItem(
             .background(animatedBackgroundColor)
             .then(
                 if (resolvedColor != Color.Transparent) {
-                    Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), itemShape)
+                    Modifier.border(1.dp, Color.White.copy(alpha = 0.08f), itemShape)
                 } else {
                     Modifier
                 }
@@ -476,7 +476,7 @@ fun GridItem(
                 }
                 .clip(cardShape)
                 .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .border(1.dp, Color.White.copy(alpha = 0.08f), cardShape)
                 .then(clickableModifier)
                 .padding(start = 5.dp, top = 5.dp, end = 5.dp, bottom = 12.dp),
     ) {
@@ -1663,7 +1663,7 @@ fun VideoGridItem(
                 }
                 .clip(RoundedCornerShape(18.dp))
                 .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -1802,7 +1802,7 @@ fun ArtistCircleItem(
                 }
                 .clip(CircleShape)
                 .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -1968,7 +1968,15 @@ fun ItemThumbnail(
         modifier = modifier
             .aspectRatio(thumbnailRatio)
             .clip(shape)
+            .background(Color(30, 30, 30))
     ) {
+        Icon(
+            painter = painterResource(if (isArtist) R.drawable.person else R.drawable.music_note),
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.2f),
+            modifier = Modifier.size(24.dp),
+        )
+
         if (albumIndex == null) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -2036,7 +2044,15 @@ fun LocalThumbnail(
         modifier = modifier
             .aspectRatio(thumbnailRatio)
             .clip(shape)
+            .background(Color(30, 30, 30))
     ) {
+        Icon(
+            painter = painterResource(if (isArtist) R.drawable.person else R.drawable.music_note),
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.2f),
+            modifier = Modifier.size(24.dp),
+        )
+
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(thumbnailUrl)
@@ -2487,7 +2503,7 @@ fun GridCardPod(
                 }
                 .clip(cardShape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .border(1.dp, Color.White.copy(alpha = 0.08f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,

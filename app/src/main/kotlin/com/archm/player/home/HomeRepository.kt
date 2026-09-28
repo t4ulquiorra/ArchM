@@ -24,7 +24,7 @@ class HomeRepository
         val showCategoryChips: Flow<Boolean> =
             context.dataStore.data
                 .map { preferences ->
-                    preferences[ShowHomeFilterChipsKey] ?: preferences[ShowHomeCategoryChipsKey] ?: true
+                    preferences[ShowHomeFilterChipsKey] ?: preferences[ShowHomeCategoryChipsKey] ?: false
                 }
                 .distinctUntilChanged()
 

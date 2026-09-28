@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -79,7 +80,8 @@ private fun SpeedDialPodLayout(
                     scaleY = scale
                 }
                 .clip(cardShape)
-                .background(Color(0xFF1C1C1C))
+                .background(Color(40, 40, 40))
+                .border(1.dp, Color.White.copy(alpha = 0.08f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -91,7 +93,8 @@ private fun SpeedDialPodLayout(
             modifier =
                 Modifier
                     .size(50.dp)
-                    .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
+                    .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
+                    .background(Color(30, 30, 30)),
             contentAlignment = Alignment.Center,
         ) {
             ItemThumbnail(

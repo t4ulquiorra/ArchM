@@ -22,14 +22,18 @@ data class MusicTwoRowItemRenderer(
     val thumbnailOverlay: MusicResponsiveListItemRenderer.Overlay?,
 ) {
     val isSong: Boolean
-        get() = navigationEndpoint.endpoint is WatchEndpoint
+        get() = navigationEndpoint.endpoint is WatchEndpoint || navigationEndpoint.watchEndpoint != null
     val isPlaylist: Boolean
         get() =
             navigationEndpoint.browseEndpoint
                 ?.browseEndpointContextSupportedConfigs
                 ?.browseEndpointContextMusicConfig
                 ?.pageType ==
-                MUSIC_PAGE_TYPE_PLAYLIST
+                MUSIC_PAGE_TYPE_PLAYLIST ||
+            navigationEndpoint.browseEndpoint?.browseId?.startsWith("VL") == true ||
+            navigationEndpoint.browseEndpoint?.browseId?.startsWith("PL") == true ||
+            navigationEndpoint.browseEndpoint?.browseId?.startsWith("RD") == true ||
+            navigationEndpoint.watchPlaylistEndpoint != null
     val isAlbum: Boolean
         get() =
             navigationEndpoint.browseEndpoint
@@ -37,18 +41,21 @@ data class MusicTwoRowItemRenderer(
                 ?.browseEndpointContextMusicConfig
                 ?.pageType ==
                 MUSIC_PAGE_TYPE_ALBUM ||
-                navigationEndpoint.browseEndpoint
-                    ?.browseEndpointContextSupportedConfigs
-                    ?.browseEndpointContextMusicConfig
-                    ?.pageType ==
-                MUSIC_PAGE_TYPE_AUDIOBOOK
+            navigationEndpoint.browseEndpoint
+                ?.browseEndpointContextSupportedConfigs
+                ?.browseEndpointContextMusicConfig
+                ?.pageType ==
+                MUSIC_PAGE_TYPE_AUDIOBOOK ||
+            navigationEndpoint.browseEndpoint?.browseId?.startsWith("MPRE") == true ||
+            navigationEndpoint.browseEndpoint?.browseId?.startsWith("OLAK") == true
     val isArtist: Boolean
         get() =
             navigationEndpoint.browseEndpoint
                 ?.browseEndpointContextSupportedConfigs
                 ?.browseEndpointContextMusicConfig
                 ?.pageType ==
-                MUSIC_PAGE_TYPE_ARTIST
+                MUSIC_PAGE_TYPE_ARTIST ||
+            navigationEndpoint.browseEndpoint?.browseId?.startsWith("UC") == true
 
     val musicVideoType: String?
         get() =

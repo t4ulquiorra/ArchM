@@ -220,7 +220,7 @@ highlightKey: String? = null) {
     )
     val (showHomeFilterChips, onShowHomeFilterChipsChange) = rememberPreference(
         ShowHomeFilterChipsKey,
-        defaultValue = true
+        defaultValue = false
     )
     val (playerButtonsStyle, onPlayerButtonsStyleChange) = rememberEnumPreference(
         PlayerButtonsStyleKey,

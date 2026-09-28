@@ -148,7 +148,7 @@ fun HomeScreen(
         }
     }
 
-    val (showHomeFilterChips) = rememberPreference(ShowHomeFilterChipsKey, true)
+    val (showHomeFilterChips) = rememberPreference(ShowHomeFilterChipsKey, false)
     val successState = screenState as? HomeScreenState.Success
     val uiState = successState?.uiState
     val selectedChip = uiState?.selectedChip

@@ -434,8 +434,8 @@ fun QuickPicksItem(
                 .wrapContentHeight()
                 .width(itemWidth)
                 .clip(cardShape)
-                .background(Color(0xFF141414))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), cardShape)
+                .background(Color(40, 40, 40))
+                .border(1.dp, Color.White.copy(alpha = 0.08f), cardShape)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -452,8 +452,16 @@ fun QuickPicksItem(
                 modifier =
                     Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(30, 30, 30)),
+                contentAlignment = Alignment.Center,
             ) {
+                Icon(
+                    painter = painterResource(R.drawable.music_note),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.2f),
+                    modifier = Modifier.size(20.dp),
+                )
                 AsyncImage(
                     model =
                         ImageRequest.Builder(LocalContext.current)
@@ -461,8 +469,6 @@ fun QuickPicksItem(
                             .crossfade(true)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .build(),
-                    placeholder = painterResource(R.drawable.music_note),
-                    error = painterResource(R.drawable.music_note),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -767,20 +773,25 @@ fun QuickPicksCarousel(
                         .maskBorder(
                             BorderStroke(
                                 1.dp,
-                                Color.White.copy(alpha = 0.12f),
+                                Color.White.copy(alpha = 0.08f),
                             ),
                             MaterialTheme.shapes.extraLarge,
                         )
+                        .background(Color(30, 30, 30))
                         .focusable()
                         .combinedClickable(
                             onClick = item.onClick,
                             onLongClick = item.onLongClick,
                         ),
             ) {
+                Icon(
+                    painter = painterResource(R.drawable.music_note),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.2f),
+                    modifier = Modifier.size(32.dp).align(Alignment.Center),
+                )
                 AsyncImage(
                     model = imageRequest,
-                    placeholder = painterResource(R.drawable.music_note),
-                    error = painterResource(R.drawable.music_note),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -2091,7 +2102,8 @@ fun RecentlyVisitedCard(
             modifier = Modifier
                 .size(RecentlyVisitedThumbSize)
                 .clip(cardShape)
-                .background(Color(0xFF1E1E1E)),
+                .background(Color(30, 30, 30)),
+            contentAlignment = Alignment.Center,
         ) {
             val context = LocalContext.current
             val imageRequest = remember(item.thumbnailUrl) {
@@ -2102,24 +2114,21 @@ fun RecentlyVisitedCard(
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .build()
             }
+            Icon(
+                painter = painterResource(
+                    when (item.entityType) {
+                        "ARTIST" -> R.drawable.person
+                        "ALBUM" -> R.drawable.album
+                        "PLAYLIST" -> R.drawable.queue_music
+                        else -> R.drawable.music_note
+                    }
+                ),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(24.dp),
+            )
             AsyncImage(
                 model = imageRequest,
-                placeholder = painterResource(
-                    when (item.entityType) {
-                        "ARTIST" -> R.drawable.person
-                        "ALBUM" -> R.drawable.album
-                        "PLAYLIST" -> R.drawable.queue_music
-                        else -> R.drawable.music_note
-                    }
-                ),
-                error = painterResource(
-                    when (item.entityType) {
-                        "ARTIST" -> R.drawable.person
-                        "ALBUM" -> R.drawable.album
-                        "PLAYLIST" -> R.drawable.queue_music
-                        else -> R.drawable.music_note
-                    }
-                ),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
