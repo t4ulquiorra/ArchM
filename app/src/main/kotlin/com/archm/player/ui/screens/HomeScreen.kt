@@ -295,6 +295,18 @@ private fun HomeContent(
                     section.title.contains("quick pick", ignoreCase = true)
             }
 
+    val remoteSections =
+        remember(uiState.homePage?.sections, remoteQuickPicks) {
+            uiState.homePage?.sections.orEmpty().filterNot { section ->
+                section == remoteQuickPicks ||
+                    section.isUnplayableStation ||
+                    section.title.equals("Listen together", ignoreCase = true) ||
+                    section.title.contains("listen together", ignoreCase = true) ||
+                    section.label?.equals("STATION", ignoreCase = true) == true ||
+                    section.label?.contains("STATION", ignoreCase = true) == true
+            }
+        }
+
     val isScrollingUp by lazyListState.isScrollingUp()
     var topAppBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
 
@@ -487,10 +499,9 @@ private fun HomeContent(
 
                 // 7. Remote YouTube Music Sections
                 itemsIndexed(
-                    items = uiState.homePage?.sections.orEmpty(),
+                    items = remoteSections,
                     key = { index, section -> "remote_${section.endpoint?.browseId ?: section.title}_$index" },
                 ) { _, section ->
-                    if (section == remoteQuickPicks) return@itemsIndexed
                     HomePageSectionShelf(
                         section = section,
                         mediaMetadata = mediaMetadata,

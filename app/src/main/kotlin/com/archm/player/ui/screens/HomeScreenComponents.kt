@@ -2321,6 +2321,15 @@ fun HomePageSectionShelf(
     scope: CoroutineScope,
     modifier: Modifier = Modifier,
 ) {
+    if (section.isUnplayableStation ||
+        section.title.equals("Listen together", ignoreCase = true) ||
+        section.title.contains("listen together", ignoreCase = true) ||
+        section.label?.equals("STATION", ignoreCase = true) == true ||
+        section.label?.contains("STATION", ignoreCase = true) == true
+    ) {
+        return
+    }
+
     if (section.title.equals("Quick picks", ignoreCase = true) ||
         section.title.contains("quick pick", ignoreCase = true)
     ) {

@@ -740,7 +740,7 @@ class HomeViewModel @Inject constructor(
                     remoteQuickPicks.value = filteredQuickPicks
                     homePage.value = pageWithoutQuickPicks.copy(
                         chips = filterHomeChips(pageWithoutQuickPicks.chips),
-                        sections = pageWithoutQuickPicks.sections.mapNotNull { section ->
+                        sections = pageWithoutQuickPicks.sections.filterNot { it.isUnplayableStation }.mapNotNull { section ->
                             val filteredItems = section.items
                                 .filterExplicit(hideExplicit)
                                 .filterVideoSongs(hideVideoSongs)
@@ -806,7 +806,7 @@ class HomeViewModel @Inject constructor(
                 val nextSections = YouTube.home(currentContinuation).getOrNull() ?: break
                 currentContinuation = nextSections.continuation
 
-                val newSections = nextSections.sections.mapNotNull { section ->
+                val newSections = nextSections.sections.filterNot { it.isUnplayableStation }.mapNotNull { section ->
                     val filteredItems = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts)
                     if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                 }
@@ -850,8 +850,9 @@ class HomeViewModel @Inject constructor(
 
             val filteredPage = nextSections.copy(
                 chips = homePage.value?.chips,
-                sections = nextSections.sections.map { section ->
-                    section.copy(items = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts))
+                sections = nextSections.sections.filterNot { it.isUnplayableStation }.mapNotNull { section ->
+                    val filteredItems = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts)
+                    if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                 }
             )
             val (pageWithoutQuickPicks, quickPicksSection) = filteredPage.extractQuickPicks()

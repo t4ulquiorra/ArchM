@@ -45,6 +45,12 @@ data class HomePage(
         val endpoint: BrowseEndpoint?,
         val items: List<YTItem>,
     ) {
+        val isUnplayableStation: Boolean
+            get() = title.equals("Listen together", ignoreCase = true) ||
+                title.contains("listen together", ignoreCase = true) ||
+                label?.equals("STATION", ignoreCase = true) == true ||
+                label?.contains("STATION", ignoreCase = true) == true
+
         companion object {
             fun fromMusicCarouselShelfRenderer(renderer: MusicCarouselShelfRenderer): Section? {
                 val rawTitle = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
@@ -56,6 +62,13 @@ data class HomePage(
                     rawTitle
                 }
                 val label = renderer.header.musicCarouselShelfBasicHeaderRenderer.strapline?.runs?.firstOrNull()?.text
+                if (title.equals("Listen together", ignoreCase = true) ||
+                    title.contains("listen together", ignoreCase = true) ||
+                    label?.equals("STATION", ignoreCase = true) == true ||
+                    label?.contains("STATION", ignoreCase = true) == true
+                ) {
+                    return null
+                }
                 val thumbnail = renderer.header.musicCarouselShelfBasicHeaderRenderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
                 val endpoint = renderer.header.musicCarouselShelfBasicHeaderRenderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
                 var items = renderer.contents.mapNotNull {
