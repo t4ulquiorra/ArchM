@@ -1001,7 +1001,7 @@ val MIGRATION_44_45 =
                 """.trimIndent(),
             )
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_activity_log_entityId_entityType` ON `activity_log` (`entityId`, `entityType`)")
-            db.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_log_timestamp` ON `activity_log` (`timestamp`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_log_timestamp` ON `activity_log` (`timestamp` DESC)")
         }
     }
 

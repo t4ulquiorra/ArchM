@@ -120,7 +120,7 @@ fun HomeScreen(
     val screenState by viewModel.screenState.collectAsStateWithLifecycle()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
-    val recentVisits by database.activityLogDao.getRecent(15).collectAsStateWithLifecycle(emptyList())
+    val recentVisits by viewModel.recentVisits.collectAsStateWithLifecycle()
 
     val lazyListState = rememberLazyListState()
     val scope = rememberCoroutineScope()

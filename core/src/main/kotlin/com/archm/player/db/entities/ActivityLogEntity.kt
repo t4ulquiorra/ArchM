@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey
     tableName = "activity_log",
     indices = [
         Index(value = ["entityId", "entityType"], unique = true),
-        Index(value = ["timestamp"]),
+        Index(value = ["timestamp"], orders = [Index.Order.DESC]),
     ],
 )
 data class ActivityLogEntity(

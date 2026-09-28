@@ -32,6 +32,7 @@ import com.archm.player.constants.InnerTubeCookieKey
 import com.archm.player.constants.QuickPicks
 import com.archm.player.constants.QuickPicksKey
 import com.archm.player.db.MusicDatabase
+import com.archm.player.db.entities.ActivityLogEntity
 import com.archm.player.db.entities.Album
 import com.archm.player.db.entities.LocalItem
 import com.archm.player.db.entities.Song
@@ -152,6 +153,11 @@ class HomeViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val recentVisits: StateFlow<List<ActivityLogEntity>> =
+        database.activityLogDao.getRecent(15)
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val allLocalItems = MutableStateFlow<List<LocalItem>>(emptyList())
     val allYtItems = MutableStateFlow<List<YTItem>>(emptyList())

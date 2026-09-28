@@ -160,7 +160,7 @@ fun AlbumScreen(
     val descriptionRuns by viewModel.descriptionRuns.collectAsState()
     val releaseType by viewModel.releaseType.collectAsState()
 
-    LaunchedEffect(viewModel.albumId, albumWithSongs) {
+    LaunchedEffect(viewModel.albumId, albumWithSongs?.album?.id) {
         albumWithSongs?.let { album ->
             withContext(Dispatchers.IO) {
                 database.activityLogDao.logVisit(

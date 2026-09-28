@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.archm.player.R
@@ -79,25 +80,28 @@ fun PlayingIndicator(
         }
     }
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(barSpacing),
-        verticalAlignment = Alignment.Bottom,
-        modifier = modifier,
+    val totalWidth = barWidth * bars + barSpacing * (bars - 1)
+    Canvas(
+        modifier = modifier
+            .width(totalWidth)
+            .fillMaxHeight(),
     ) {
-        animatables.forEach { animatable ->
-            Canvas(
-                modifier =
-                Modifier
-                    .fillMaxHeight()
-                    .width(barWidth),
-            ) {
-                drawRoundRect(
-                    color = color,
-                    topLeft = Offset(x = 0f, y = size.height * (1 - animatable.value)),
-                    size = size.copy(height = animatable.value * size.height),
-                    cornerRadius = CornerRadius(cornerRadius.toPx()),
-                )
-            }
+        val barWidthPx = barWidth.toPx()
+        val spacingPx = barSpacing.toPx()
+        val cornerRadiusPx = cornerRadius.toPx()
+
+        for (i in 0 until bars) {
+            val fraction = animatables[i].value
+            val barHeight = size.height * fraction
+            val left = i * (barWidthPx + spacingPx)
+            val top = size.height - barHeight
+
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(x = left, y = top),
+                size = Size(width = barWidthPx, height = barHeight),
+                cornerRadius = CornerRadius(cornerRadiusPx),
+            )
         }
     }
 }

@@ -254,7 +254,7 @@ fun ArtistScreen(
     val artistName = artistPage?.artist?.title ?: libraryArtist?.artist?.name
     val thumbnail = artistPage?.artist?.thumbnail ?: libraryArtist?.artist?.thumbnailUrl
 
-    LaunchedEffect(viewModel.artistId, artistName, thumbnail) {
+    LaunchedEffect(viewModel.artistId, artistName != null) {
         if (!artistName.isNullOrBlank()) {
             withContext(Dispatchers.IO) {
                 database.activityLogDao.logVisit(

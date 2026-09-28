@@ -2093,12 +2093,17 @@ fun RecentlyVisitedCard(
                 .clip(cardShape)
                 .background(Color(0xFF1E1E1E)),
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(item.thumbnailUrl)
+            val context = LocalContext.current
+            val imageRequest = remember(item.thumbnailUrl) {
+                ImageRequest.Builder(context)
+                    .data(item.thumbnailUrl?.resize(240, 240) ?: item.thumbnailUrl)
+                    .size(240, 240)
                     .crossfade(true)
                     .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
+                    .build()
+            }
+            AsyncImage(
+                model = imageRequest,
                 placeholder = painterResource(
                     when (item.entityType) {
                         "ARTIST" -> R.drawable.person

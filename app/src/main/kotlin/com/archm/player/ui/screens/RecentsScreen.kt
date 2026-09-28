@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -492,12 +493,17 @@ private fun RecentActivityItemRow(
                 .clip(shape)
                 .background(Color(0xFF1E1E1E)),
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
+            val context = LocalContext.current
+            val imageRequest = remember(item.thumbnailUrl) {
+                ImageRequest.Builder(context)
                     .data(item.thumbnailUrl)
+                    .size(160, 160)
                     .crossfade(true)
                     .diskCachePolicy(CachePolicy.ENABLED)
-                    .build(),
+                    .build()
+            }
+            AsyncImage(
+                model = imageRequest,
                 placeholder = painterResource(
                     when (item.entityType) {
                         "ARTIST" -> R.drawable.person
@@ -725,12 +731,17 @@ private fun AccordionPlayGroupItem(
                         .clip(parentShape)
                         .background(Color(0xFF222222)),
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
+                    val context = LocalContext.current
+                    val imageRequest = remember(group.thumbnailUrl) {
+                        ImageRequest.Builder(context)
                             .data(group.thumbnailUrl)
+                            .size(150, 150)
                             .crossfade(true)
                             .diskCachePolicy(CachePolicy.ENABLED)
-                            .build(),
+                            .build()
+                    }
+                    AsyncImage(
+                        model = imageRequest,
                         placeholder = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
                         error = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
                         contentDescription = null,
@@ -794,7 +805,7 @@ private fun AccordionPlayGroupItem(
                     painter = painterResource(R.drawable.expand_more),
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
                     tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.rotate(rotationAngle),
+                    modifier = Modifier.graphicsLayer { rotationZ = rotationAngle },
                 )
             }
         }
@@ -846,12 +857,17 @@ private fun AccordionPlayGroupItem(
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(Color(0xFF222222)),
                         ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
+                            val context = LocalContext.current
+                            val trackImageRequest = remember(song.thumbnailUrl) {
+                                ImageRequest.Builder(context)
                                     .data(song.thumbnailUrl)
+                                    .size(120, 120)
                                     .crossfade(true)
                                     .diskCachePolicy(CachePolicy.ENABLED)
-                                    .build(),
+                                    .build()
+                            }
+                            AsyncImage(
+                                model = trackImageRequest,
                                 placeholder = painterResource(R.drawable.music_note),
                                 error = painterResource(R.drawable.music_note),
                                 contentDescription = null,

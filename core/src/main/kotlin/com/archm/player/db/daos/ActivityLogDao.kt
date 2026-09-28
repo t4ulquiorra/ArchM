@@ -14,13 +14,16 @@ interface ActivityLogDao {
     fun getAll(): Flow<List<ActivityLogEntity>>
 
     @Query("SELECT * FROM activity_log ORDER BY timestamp DESC LIMIT :limit")
-    fun getRecent(limit: Int = 20): Flow<List<ActivityLogEntity>>
+    fun getRecent(limit: Int = 15): Flow<List<ActivityLogEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: ActivityLogEntity): Long
 
     @Query("SELECT id FROM activity_log WHERE entityId = :entityId AND entityType = :entityType LIMIT 1")
     suspend fun findId(entityId: String, entityType: String): Long?
+
+    @Query("SELECT * FROM activity_log WHERE entityId = :entityId AND entityType = :entityType LIMIT 1")
+    suspend fun findEntity(entityId: String, entityType: String): ActivityLogEntity?
 
     @Transaction
     suspend fun logVisit(
@@ -31,7 +34,11 @@ interface ActivityLogDao {
         thumbnailUrl: String? = null,
         timestamp: Long = System.currentTimeMillis(),
     ) {
-        val existingId = findId(entityId, entityType) ?: 0L
+        val existing = findEntity(entityId, entityType)
+        if (existing != null && (timestamp - existing.timestamp) < 5000L && existing.title == title) {
+            return
+        }
+        val existingId = existing?.id ?: 0L
         insert(
             ActivityLogEntity(
                 id = existingId,

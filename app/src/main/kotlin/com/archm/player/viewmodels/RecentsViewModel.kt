@@ -45,6 +45,7 @@ class RecentsViewModel @Inject constructor(
 
     val recentActivity: StateFlow<List<ActivityLogEntity>> =
         database.activityLogDao.getAll()
+            .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val today = LocalDate.now()

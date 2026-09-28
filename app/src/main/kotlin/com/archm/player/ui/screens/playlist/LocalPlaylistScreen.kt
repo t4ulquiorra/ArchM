@@ -204,7 +204,7 @@ fun LocalPlaylistScreen(
     val playlist by viewModel.playlist.collectAsState()
     val songs by viewModel.playlistSongs.collectAsState()
 
-    LaunchedEffect(playlist) {
+    LaunchedEffect(playlist?.id) {
         playlist?.let { pl ->
             withContext(Dispatchers.IO) {
                 database.activityLogDao.logVisit(
