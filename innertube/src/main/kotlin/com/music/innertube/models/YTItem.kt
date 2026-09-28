@@ -164,7 +164,7 @@ fun <T : YTItem> List<T>.filterYoutubeShorts(enabled: Boolean = false) =
 
 val PlaylistItem.isDeadPlaylist: Boolean
     get() {
-        if (id.isBlank() || thumbnail.isBlank()) return true
+        if (id.isBlank() || thumbnail.isNullOrBlank()) return true
         val count = songCountText?.let { text ->
             Regex("""\d+""").find(text)?.value?.toIntOrNull()
         }
