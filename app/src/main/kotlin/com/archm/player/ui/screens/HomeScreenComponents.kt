@@ -1022,7 +1022,7 @@ fun SimpHomeShelf(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 13.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
