@@ -42,7 +42,6 @@
     <string name="show_home_filter_chips_desc">Display mood and genre filter chips below the home header</string>
     <string name="recents">Recents</string>
     <string name="recently_visited">Recently Visited</string>
-    <string name="recently_played">Recently Played</string>
     <string name="recent_activity">Recent Activity</string>
     <string name="show_all">Show all</string>
     <string name="clear_recents">Clear recents</string>
