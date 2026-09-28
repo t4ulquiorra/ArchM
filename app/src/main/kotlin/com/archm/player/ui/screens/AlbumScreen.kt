@@ -129,6 +129,8 @@ import com.archm.player.ui.utils.backToMain
 import com.archm.player.ui.utils.resize
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.AlbumViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -157,6 +159,20 @@ fun AlbumScreen(
     val description by viewModel.description.collectAsState()
     val descriptionRuns by viewModel.descriptionRuns.collectAsState()
     val releaseType by viewModel.releaseType.collectAsState()
+
+    LaunchedEffect(viewModel.albumId, albumWithSongs) {
+        albumWithSongs?.let { album ->
+            withContext(Dispatchers.IO) {
+                database.activityLogDao.logVisit(
+                    entityId = viewModel.albumId,
+                    entityType = "ALBUM",
+                    title = album.album.title,
+                    subtitle = album.artists.joinToString(", ") { it.name }.ifBlank { "Album" },
+                    thumbnailUrl = album.album.thumbnailUrl,
+                )
+            }
+        }
+    }
 
     val currentAlbumId = viewModel.albumId
     val moreByArtistAlbums = remember(moreByArtist, currentAlbumId) {

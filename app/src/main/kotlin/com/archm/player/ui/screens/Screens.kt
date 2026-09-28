@@ -49,6 +49,13 @@ sealed class Screens(
         route = "mood_and_genres",
     )
 
+    object Recents : Screens(
+        titleId = R.string.recents,
+        iconIdInactive = R.drawable.history,
+        iconIdActive = R.drawable.history,
+        route = NavRoutes.recents,
+    )
+
     companion object {
         val MainScreens = listOf(Home, Search, Library)
         val TvMainScreens = listOf(Home, Search, Library)

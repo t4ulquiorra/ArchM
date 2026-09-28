@@ -25,6 +25,7 @@ import com.archm.player.playback.MusicService.MusicBinder
 import com.archm.player.playback.queues.Queue
 import com.archm.player.utils.reportException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -439,10 +440,27 @@ class PlayerConnection(
         mediaItem: MediaItem?,
         reason: Int,
     ) {
-        mediaMetadata.value = mediaItem?.metadata
+        val metadata = mediaItem?.metadata
+        mediaMetadata.value = metadata
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+
+        metadata?.let { meta ->
+            val songId = meta.id
+            val title = meta.title
+            val artist = meta.artists.joinToString(", ") { it.name }.ifBlank { null }
+            val thumb = meta.thumbnailUrl
+            scope.launch(Dispatchers.IO) {
+                database.activityLogDao.logVisit(
+                    entityId = songId,
+                    entityType = "SONG",
+                    title = title,
+                    subtitle = artist,
+                    thumbnailUrl = thumb,
+                )
+            }
+        }
     }
 
     override fun onTimelineChanged(

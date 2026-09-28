@@ -204,6 +204,20 @@ fun LocalPlaylistScreen(
     val playlist by viewModel.playlist.collectAsState()
     val songs by viewModel.playlistSongs.collectAsState()
 
+    LaunchedEffect(playlist) {
+        playlist?.let { pl ->
+            withContext(Dispatchers.IO) {
+                database.activityLogDao.logVisit(
+                    entityId = pl.id,
+                    entityType = "PLAYLIST",
+                    title = pl.title,
+                    subtitle = "Playlist",
+                    thumbnailUrl = pl.thumbnailUrl,
+                )
+            }
+        }
+    }
+
     val mutableSongs = remember { mutableStateListOf<PlaylistSong>() }
     val playlistLength = remember(songs) {
         songs.fastSumBy { it.song.song.duration }

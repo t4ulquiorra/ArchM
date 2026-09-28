@@ -137,6 +137,10 @@ fun NavGraphBuilder.navigationBuilder(
         HistoryScreen(navController)
     }
 
+    composable(NavRoutes.recents) {
+        RecentsScreen(navController)
+    }
+
     composable("ambient_mode") {
         AmbientModeScreen(navController)
     }

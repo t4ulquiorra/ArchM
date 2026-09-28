@@ -119,6 +119,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.archm.player.R
 import com.archm.player.constants.QuickPicksDisplayMode
+import com.archm.player.db.entities.ActivityLogEntity
 import com.archm.player.db.entities.Album
 import com.archm.player.db.entities.Artist
 import com.archm.player.db.entities.LocalItem
@@ -1025,6 +1026,7 @@ fun SimpHomeShelf(
     avatarUrl: String? = null,
     onHeaderClick: (() -> Unit)? = null,
     onMoreClick: (() -> Unit)? = null,
+    moreText: String = stringResource(R.string.more),
     content: @Composable () -> Unit,
 ) {
     Column(
@@ -1094,7 +1096,7 @@ fun SimpHomeShelf(
                             ),
                     ) {
                         Text(
-                            text = stringResource(R.string.more),
+                            text = moreText,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -1971,6 +1973,167 @@ fun KeepListeningShelf(
                 }
             }
         }
+    }
+}
+
+val RecentlyVisitedCardWidth: Dp = 108.dp
+val RecentlyVisitedThumbSize: Dp = 108.dp
+
+@Composable
+fun RecentlyVisitedShelf(
+    recentItems: List<ActivityLogEntity>,
+    navController: NavController,
+    playerConnection: PlayerConnection,
+    modifier: Modifier = Modifier,
+) {
+    if (recentItems.isEmpty()) return
+
+    val lazyListState = rememberLazyListState()
+    val snapFlingBehavior =
+        rememberSnapFlingBehavior(
+            lazyListState = lazyListState,
+            snapPosition = SnapPosition.Start,
+        )
+
+    SimpHomeShelf(
+        title = stringResource(R.string.recently_visited),
+        onMoreClick = { navController.navigate(NavRoutes.recents) },
+        moreText = stringResource(R.string.show_all),
+        modifier = modifier,
+    ) {
+        LazyRow(
+            state = lazyListState,
+            flingBehavior = snapFlingBehavior,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Top,
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        ) {
+            items(
+                items = recentItems,
+                key = { "${it.entityType}_${it.entityId}" },
+            ) { item ->
+                RecentlyVisitedCard(
+                    item = item,
+                    onClick = {
+                        when (item.entityType) {
+                            "ARTIST" -> navController.navigate("artist/${item.entityId}")
+                            "ALBUM" -> navController.navigate("album/${item.entityId}")
+                            "PLAYLIST" -> {
+                                if (item.entityId.startsWith("LP")) {
+                                    navController.navigate("local_playlist/${item.entityId}")
+                                } else {
+                                    navController.navigate("online_playlist/${item.entityId}")
+                                }
+                            }
+                            "SONG" -> {
+                                if (playerConnection.mediaMetadata.value?.id == item.entityId) {
+                                    playerConnection.player.togglePlayPause()
+                                } else {
+                                    playerConnection.playQueue(
+                                        YouTubeQueue(
+                                            com.music.innertube.models.WatchEndpoint(videoId = item.entityId),
+                                            MediaMetadata(
+                                                id = item.entityId,
+                                                title = item.title,
+                                                artists = item.subtitle?.split(", ")?.map { MediaMetadata.Artist(id = null, name = it) } ?: emptyList(),
+                                                duration = 0,
+                                                thumbnailUrl = item.thumbnailUrl,
+                                            ),
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RecentlyVisitedCard(
+    item: ActivityLogEntity,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isArtist = item.entityType == "ARTIST"
+    val cardShape = if (isArtist) CircleShape else RoundedCornerShape(12.dp)
+
+    Column(
+        modifier = modifier
+            .width(RecentlyVisitedCardWidth)
+            .bouncyClickable(onClick = onClick),
+        horizontalAlignment = if (isArtist) Alignment.CenterHorizontally else Alignment.Start,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(RecentlyVisitedThumbSize)
+                .clip(cardShape)
+                .background(Color(0xFF1E1E1E)),
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(item.thumbnailUrl)
+                    .crossfade(true)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+                placeholder = painterResource(
+                    when (item.entityType) {
+                        "ARTIST" -> R.drawable.person
+                        "ALBUM" -> R.drawable.album
+                        "PLAYLIST" -> R.drawable.queue_music
+                        else -> R.drawable.music_note
+                    }
+                ),
+                error = painterResource(
+                    when (item.entityType) {
+                        "ARTIST" -> R.drawable.person
+                        "ALBUM" -> R.drawable.album
+                        "PLAYLIST" -> R.drawable.queue_music
+                        else -> R.drawable.music_note
+                    }
+                ),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = if (isArtist) TextAlign.Center else TextAlign.Start,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        val typeLabel = item.subtitle ?: when (item.entityType) {
+            "ARTIST" -> "Artist"
+            "ALBUM" -> "Album"
+            "PLAYLIST" -> "Playlist"
+            else -> "Song"
+        }
+
+        Text(
+            text = typeLabel,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 11.5.sp,
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = if (isArtist) TextAlign.Center else TextAlign.Start,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

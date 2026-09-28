@@ -140,6 +140,7 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -161,6 +162,20 @@ fun OnlinePlaylistScreen(
 
     val playlist by viewModel.playlist.collectAsState()
     val songs by viewModel.playlistSongs.collectAsState()
+
+    LaunchedEffect(playlist) {
+        playlist?.let { pl ->
+            withContext(Dispatchers.IO) {
+                database.activityLogDao.logVisit(
+                    entityId = pl.id,
+                    entityType = "PLAYLIST",
+                    title = pl.title,
+                    subtitle = pl.author?.name ?: "Playlist",
+                    thumbnailUrl = pl.thumbnail,
+                )
+            }
+        }
+    }
     val dbPlaylist by viewModel.dbPlaylist.collectAsState()
     val relatedItems by viewModel.relatedItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()

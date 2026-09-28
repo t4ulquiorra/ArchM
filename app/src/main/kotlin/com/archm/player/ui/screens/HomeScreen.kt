@@ -78,6 +78,7 @@ import androidx.palette.graphics.Palette
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.toBitmap
+import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
@@ -111,12 +112,14 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
+    val database = LocalDatabase.current
     val menuState = LocalMenuState.current
     val haptic = LocalHapticFeedback.current
 
     val screenState by viewModel.screenState.collectAsStateWithLifecycle()
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
+    val recentVisits by database.activityLogDao.getRecent(15).collectAsStateWithLifecycle(emptyList())
 
     val lazyListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -448,6 +451,17 @@ private fun HomeContent(
                             menuState = menuState,
                             haptic = haptic,
                             scope = scope,
+                        )
+                    }
+                }
+
+                // Recently Visited Section
+                if (recentVisits.isNotEmpty()) {
+                    item(key = "home_recently_visited") {
+                        RecentlyVisitedShelf(
+                            recentItems = recentVisits,
+                            navController = navController,
+                            playerConnection = playerConnection,
                         )
                     }
                 }

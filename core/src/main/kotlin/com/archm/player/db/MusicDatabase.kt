@@ -18,7 +18,9 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
+import com.archm.player.db.daos.ActivityLogDao
 import com.archm.player.db.daos.SpeedDialDao
+import com.archm.player.db.entities.ActivityLogEntity
 import com.archm.player.db.entities.AlbumArtistMap
 import com.archm.player.db.entities.AlbumEntity
 import com.archm.player.db.entities.ArtistEntity
@@ -52,6 +54,9 @@ class MusicDatabase(
 ) : DatabaseDao by delegate.dao {
     val speedDialDao: SpeedDialDao
         get() = delegate.speedDialDao
+
+    val activityLogDao: ActivityLogDao
+        get() = delegate.activityLogDao
 
     val openHelper: SupportSQLiteOpenHelper
         get() = delegate.openHelper
@@ -105,14 +110,15 @@ class MusicDatabase(
         PlayCountEntity::class,
         RecognitionHistory::class,
         SpeedDialItem::class,
-        BeatInfoEntity::class
+        BeatInfoEntity::class,
+        ActivityLogEntity::class,
     ],
     views = [
         SortedSongArtistMap::class,
         SortedSongAlbumMap::class,
         PlaylistSongMapPreview::class,
     ],
-    version = 44,
+    version = 45,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
@@ -154,6 +160,7 @@ class MusicDatabase(
 abstract class InternalDatabase : RoomDatabase() {
     abstract val dao: DatabaseDao
     abstract val speedDialDao: SpeedDialDao
+    abstract val activityLogDao: ActivityLogDao
 
     companion object {
         const val DB_NAME = "song.db"
@@ -180,6 +187,7 @@ abstract class InternalDatabase : RoomDatabase() {
                             MIGRATION_41_42,
                             MIGRATION_42_43,
                             MIGRATION_43_44,
+                            MIGRATION_44_45,
                         )
                         .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                         .setTransactionExecutor(java.util.concurrent.Executors.newFixedThreadPool(4))
@@ -974,3 +982,25 @@ val MIGRATION_43_44 =
             db.execSQL("ALTER TABLE beat_info ADD COLUMN keyIsMinor INTEGER DEFAULT NULL")
         }
     }
+
+val MIGRATION_44_45 =
+    object : Migration(44, 45) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `activity_log` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `entityId` TEXT NOT NULL,
+                    `entityType` TEXT NOT NULL,
+                    `title` TEXT NOT NULL,
+                    `subtitle` TEXT,
+                    `thumbnailUrl` TEXT,
+                    `timestamp` INTEGER NOT NULL
+                )
+                """.trimIndent(),
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_activity_log_entityId_entityType` ON `activity_log` (`entityId`, `entityType`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_activity_log_timestamp` ON `activity_log` (`timestamp`)")
+        }
+    }
+
