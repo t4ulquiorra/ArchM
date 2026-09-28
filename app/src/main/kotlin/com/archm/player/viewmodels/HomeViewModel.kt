@@ -738,9 +738,29 @@ class HomeViewModel @Inject constructor(
 
         coroutineScope {
             launch(Dispatchers.IO) {
-                YouTube.home().onSuccess { page ->
+                YouTube.home().onSuccess { initialPage ->
                     loadError.value = null
-                    val (pageWithoutQuickPicks, quickPicksSection) = page.extractQuickPicks()
+
+                    val combinedSections = initialPage.sections.toMutableList()
+                    var nextContinuation = initialPage.continuation
+
+                    // Prefetch first continuation batch so initial load delivers a full feed (6-9 discovery shelves)
+                    if (combinedSections.size <= 4 && nextContinuation != null) {
+                        val continuationPage = YouTube.home(nextContinuation).getOrNull()
+                        if (continuationPage != null) {
+                            val existingTitles = combinedSections.map { it.title }.toSet()
+                            val newSections = continuationPage.sections.filterNot { it.title in existingTitles }
+                            combinedSections.addAll(newSections)
+                            nextContinuation = continuationPage.continuation
+                        }
+                    }
+
+                    val fullPage = initialPage.copy(
+                        sections = combinedSections,
+                        continuation = nextContinuation
+                    )
+
+                    val (pageWithoutQuickPicks, quickPicksSection) = fullPage.extractQuickPicks()
                     val filteredQuickPicks = quickPicksSection?.let { section ->
                         val filteredItems = section.items
                             .filterExplicit(hideExplicit)
@@ -782,27 +802,24 @@ class HomeViewModel @Inject constructor(
         isLoading.value = true
         loadError.value = null
 
-        coroutineScope {
-            launch(Dispatchers.IO) {
-                try {
-                    loadPrimaryFeedPhase()
-                } finally {
-                    isLoading.value = false
-                    isRefreshing.value = false
-                }
-            }
-            launch(Dispatchers.IO) {
-                try {
-                    loadLocalDataPhase()
-                } catch (e: Exception) {
-                    reportException(e)
-                }
-            }
+        try {
+            loadPrimaryFeedPhase()
+        } finally {
+            isLoading.value = false
+            isRefreshing.value = false
         }
+
         allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
             homePage.value?.sections?.flatMap { it.items }.orEmpty()
 
-        // Phase 3 (Background / Non-blocking)
+        // Background local and secondary recommendations
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                loadLocalDataPhase()
+            } catch (e: Exception) {
+                reportException(e)
+            }
+        }
         viewModelScope.launch(Dispatchers.IO) { getDailyDiscover() }
         viewModelScope.launch(Dispatchers.IO) { getCommunityPlaylists() }
         viewModelScope.launch(Dispatchers.IO) {
@@ -832,7 +849,11 @@ class HomeViewModel @Inject constructor(
             var hasNewItems = false
 
             while (currentContinuation != null && !hasNewItems) {
-                val nextSections = YouTube.home(currentContinuation).getOrNull() ?: break
+                val nextSections = YouTube.home(currentContinuation).getOrNull()
+                if (nextSections == null) {
+                    homePage.value = homePage.value?.copy(continuation = null)
+                    break
+                }
                 currentContinuation = nextSections.continuation
 
                 val newSections = nextSections.sections.filterNot { it.isUnplayableStation }.mapNotNull { section ->
@@ -840,14 +861,16 @@ class HomeViewModel @Inject constructor(
                     if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                 }
 
-                if (newSections.isNotEmpty()) {
+                val existingTitles = homePage.value?.sections.orEmpty().map { it.title }.toSet()
+                val deduplicatedNewSections = newSections.filterNot { it.title in existingTitles }
+
+                if (deduplicatedNewSections.isNotEmpty()) {
                     hasNewItems = true
                 }
 
-                homePage.value = nextSections.copy(
-                    chips = homePage.value?.chips,
+                homePage.value = homePage.value?.copy(
                     continuation = currentContinuation,
-                    sections = homePage.value?.sections.orEmpty() + newSections
+                    sections = homePage.value?.sections.orEmpty() + deduplicatedNewSections
                 )
             }
             _isLoadingMore.value = false

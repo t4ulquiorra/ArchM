@@ -733,10 +733,6 @@ object YouTube {
             innerTube.locale = YouTubeLocale(gl = gl, hl = hl)
         }
 
-        if (innerTube.visitorData == null) {
-            refreshVisitorData().getOrNull()
-        }
-
         val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_home", params = params).body<BrowseResponse>()
         response.responseContext.visitorData?.let {
             if (innerTube.visitorData == null) {
@@ -764,9 +760,18 @@ object YouTube {
     private suspend fun homeContinuation(continuation: String): Result<HomePage> = runCatching {
         val response =
             innerTube.browse(WEB_REMIX, continuation = continuation).body<BrowseResponse>()
+        response.responseContext.visitorData?.let {
+            if (innerTube.visitorData == null) {
+                innerTube.visitorData = it
+            }
+        }
         val nextContinuation =
             response.continuationContents?.sectionListContinuation?.continuations?.getContinuation()
                 ?: response.continuationContents?.musicShelfContinuation?.continuations?.getContinuation()
+                ?: response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull {
+                    it?.tabRenderer?.content?.sectionListRenderer != null
+                }?.tabRenderer?.content?.sectionListRenderer?.continuations?.getContinuation()
+                ?: response.contents?.sectionListRenderer?.continuations?.getContinuation()
 
         val sections = mutableListOf<HomePage.Section>()
         response.continuationContents?.sectionListContinuation?.contents.orEmpty().forEach { content ->
@@ -776,6 +781,17 @@ object YouTube {
         }
         response.continuationContents?.musicShelfContinuation?.let { shelf ->
             HomePage.Section.fromMusicShelfRenderer(shelf)?.let { sections.add(it) }
+        }
+
+        val altSectionListRender = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull {
+            it?.tabRenderer?.content?.sectionListRenderer != null
+        }?.tabRenderer?.content?.sectionListRenderer
+            ?: response.contents?.sectionListRenderer
+
+        altSectionListRender?.contents.orEmpty().forEach { content ->
+            content.musicCarouselShelfRenderer?.let { HomePage.Section.fromMusicCarouselShelfRenderer(it) }?.let { sections.add(it) }
+            content.musicShelfRenderer?.let { HomePage.Section.fromMusicShelfRenderer(it) }?.let { sections.add(it) }
+            content.gridRenderer?.let { HomePage.Section.fromGridRenderer(it) }?.let { sections.add(it) }
         }
 
         HomePage(

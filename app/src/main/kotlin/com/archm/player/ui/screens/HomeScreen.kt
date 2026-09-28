@@ -111,6 +111,7 @@ import com.archm.player.ui.component.MenuState
 import com.archm.player.viewmodels.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -158,11 +159,13 @@ fun HomeScreen(
             val layoutInfo = lazyListState.layoutInfo
             val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index
             lastVisibleIndex != null && lastVisibleIndex >= layoutInfo.totalItemsCount - 3
-        }.collect { shouldLoadMore ->
-            if (shouldLoadMore) {
-                viewModel.onAction(HomeAction.LoadMore(continuation))
-            }
         }
+            .distinctUntilChanged()
+            .collect { shouldLoadMore ->
+                if (shouldLoadMore) {
+                    viewModel.onAction(HomeAction.LoadMore(continuation))
+                }
+            }
     }
 
     if (selectedChip != null) {

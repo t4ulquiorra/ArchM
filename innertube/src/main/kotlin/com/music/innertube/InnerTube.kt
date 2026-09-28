@@ -295,6 +295,10 @@ class InnerTube {
         val effectiveLogin = (setLogin || useLoginForBrowse) && !cookie.isNullOrEmpty()
         httpClient.post("browse") {
             ytClient(client, setLogin = effectiveLogin)
+            if (continuation != null) {
+                parameter("continuation", continuation)
+                parameter("ctoken", continuation)
+            }
             setBody(
                 BrowseBody(
                     context = client.toContext(
