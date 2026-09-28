@@ -161,3 +161,15 @@ fun <T : YTItem> List<T>.filterYoutubeShorts(enabled: Boolean = false) =
     } else {
         this
     }
+
+val PlaylistItem.isDeadPlaylist: Boolean
+    get() {
+        if (thumbnail.isNullOrBlank()) return true
+        val count = songCountText?.let { text ->
+            Regex("""\d+""").find(text)?.value?.toIntOrNull()
+        }
+        return count == null || count <= 1
+    }
+
+fun <T : YTItem> List<T>.filterDeadPlaylists(): List<T> =
+    filterNot { it is PlaylistItem && it.isDeadPlaylist }

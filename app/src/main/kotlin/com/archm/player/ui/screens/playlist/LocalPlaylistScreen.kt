@@ -1483,9 +1483,9 @@ fun LocalPlaylistScreen(
             )
         }
 
-        // Sticky TopAppBar (shown on scroll when not selecting or searching)
+        // Sticky TopAppBar (shown on scroll when not selecting or searching, or fallback when empty)
         AnimatedVisibility(
-            visible = (playlist == null) || (shouldHideTopBar && !isSearching && !inSelectMode),
+            visible = (playlist == null || songs.isEmpty() || shouldHideTopBar) && !isSearching && !inSelectMode,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
         ) {

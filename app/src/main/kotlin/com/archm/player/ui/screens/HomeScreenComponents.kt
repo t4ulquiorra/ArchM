@@ -155,6 +155,7 @@ import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.models.YTItem
+import com.music.innertube.models.filterDeadPlaylists
 import com.music.innertube.pages.HomePage
 import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -2133,8 +2134,10 @@ fun SimilarRecommendationsShelf(
     val titleItem = recommendation.title
     val database = LocalDatabase.current
     val distinctRecommendationItems = remember(recommendation.items) {
-        recommendation.items.distinctBy { it.id }
+        recommendation.items.distinctBy { it.id }.filterDeadPlaylists()
     }
+
+    if (distinctRecommendationItems.isEmpty()) return
 
     SimpHomeShelf(
         title = titleItem.title,
@@ -2373,7 +2376,7 @@ fun HomePageSectionShelf(
 
     val shelfItems =
         remember(section.items, isTargetShelf) {
-            if (isTargetShelf) {
+            val baseItems = if (isTargetShelf) {
                 section.items.filterNot { item ->
                     item.id == "LM" || item.id == "VLLM" ||
                         (item is PlaylistItem && item.title.equals("Liked Music", ignoreCase = true))
@@ -2381,6 +2384,7 @@ fun HomePageSectionShelf(
             } else {
                 section.items
             }
+            baseItems.filterDeadPlaylists()
         }
 
     if (shelfItems.isEmpty()) return

@@ -56,6 +56,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.CompositionLocalProvider
+import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.screens.library.rememberArtworkGradient
 import com.archm.player.ui.theme.LocalAccentColor
 import com.archm.player.ui.theme.Marble
@@ -335,6 +336,24 @@ fun OnlinePlaylistScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             ContainedLoadingIndicator()
+                        }
+                    }
+                } else {
+                    item(key = "empty_placeholder") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EmptyPlaceholder(
+                                icon = R.drawable.music_note,
+                                text = if (error != null) {
+                                    error ?: stringResource(R.string.error_occurred)
+                                } else {
+                                    "This playlist has no available tracks"
+                                },
+                            )
                         }
                     }
                 }
@@ -964,9 +983,9 @@ fun OnlinePlaylistScreen(
             )
         }
 
-        // Sticky TopAppBar (shown on scroll when not selecting or searching, or fallback while loading)
+        // Sticky TopAppBar (shown on scroll when not selecting or searching, or fallback while loading/empty/error)
         AnimatedVisibility(
-            visible = (playlist == null) || (shouldHideTopBar && !isSearching && !inSelectMode),
+            visible = (playlist == null || songs.isEmpty() || shouldHideTopBar) && !isSearching && !inSelectMode,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
         ) {

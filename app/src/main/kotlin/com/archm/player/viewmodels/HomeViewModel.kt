@@ -21,6 +21,7 @@ import com.music.innertube.models.YTItem
 import com.music.innertube.models.filterExplicit
 import com.music.innertube.models.filterVideoSongs
 import com.music.innertube.models.filterYoutubeShorts
+import com.music.innertube.models.filterDeadPlaylists
 import com.music.innertube.pages.ExplorePage
 import com.music.innertube.pages.HomePage
 import com.music.innertube.utils.completed
@@ -658,6 +659,7 @@ class HomeViewModel @Inject constructor(
                                 .distinctBy { item -> item.id }
                                 .filterExplicit(hideExplicit)
                                 .filterVideoSongs(hideVideoSongs)
+                                .filterDeadPlaylists()
                                 .shuffled()
                                 .take(12)
                                 .ifEmpty { return@async null }
@@ -682,6 +684,7 @@ class HomeViewModel @Inject constructor(
                                 .distinctBy { it.id }
                                 .filterExplicit(hideExplicit)
                                 .filterVideoSongs(hideVideoSongs)
+                                .filterDeadPlaylists()
                                 .shuffled()
                                 .ifEmpty { return@async null }
                         )
@@ -708,6 +711,7 @@ class HomeViewModel @Inject constructor(
                                 .distinctBy { it.id }
                                 .filterExplicit(hideExplicit)
                                 .filterVideoSongs(hideVideoSongs)
+                                .filterDeadPlaylists()
                                 .shuffled()
                                 .take(10)
                                 .ifEmpty { return@async null }
@@ -745,6 +749,7 @@ class HomeViewModel @Inject constructor(
                                 .filterExplicit(hideExplicit)
                                 .filterVideoSongs(hideVideoSongs)
                                 .filterYoutubeShorts(hideYoutubeShorts)
+                                .filterDeadPlaylists()
                             if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                         }
                     )
@@ -807,7 +812,7 @@ class HomeViewModel @Inject constructor(
                 currentContinuation = nextSections.continuation
 
                 val newSections = nextSections.sections.filterNot { it.isUnplayableStation }.mapNotNull { section ->
-                    val filteredItems = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts)
+                    val filteredItems = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts).filterDeadPlaylists()
                     if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                 }
 
@@ -851,7 +856,7 @@ class HomeViewModel @Inject constructor(
             val filteredPage = nextSections.copy(
                 chips = homePage.value?.chips,
                 sections = nextSections.sections.filterNot { it.isUnplayableStation }.mapNotNull { section ->
-                    val filteredItems = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts)
+                    val filteredItems = section.items.filterExplicit(hideExplicit).filterVideoSongs(hideVideoSongs).filterYoutubeShorts(hideYoutubeShorts).filterDeadPlaylists()
                     if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
                 }
             )

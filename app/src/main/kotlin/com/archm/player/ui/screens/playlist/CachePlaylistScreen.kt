@@ -813,9 +813,9 @@ fun CachePlaylistScreen(
             )
         }
 
-        // Sticky TopAppBar (shown on scroll when not selecting or searching)
+        // Sticky TopAppBar (shown on scroll when not selecting or searching, or fallback when empty)
         AnimatedVisibility(
-            visible = shouldHideTopBar && !isSearching && !inSelectMode,
+            visible = (songs.isEmpty() || shouldHideTopBar) && !isSearching && !inSelectMode,
             enter = fadeIn() + slideInVertically(),
             exit = fadeOut() + slideOutVertically(),
         ) {
