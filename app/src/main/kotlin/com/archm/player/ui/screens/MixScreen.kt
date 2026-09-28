@@ -40,7 +40,6 @@ fun MixScreen(
     val haptic = LocalHapticFeedback.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsState()
-    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
 
     val mixPlaylists by viewModel.mixPlaylists.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -77,7 +76,7 @@ fun MixScreen(
                 ) { playlist ->
                     YouTubeGridItem(
                         item = playlist,
-                        isActive = mediaMetadata?.playlist?.id == playlist.id,
+                        isActive = false,
                         isPlaying = isPlaying,
                         fillMaxWidth = true,
                         coroutineScope = coroutineScope,
@@ -89,7 +88,6 @@ fun MixScreen(
                             menuState.show {
                                 YouTubePlaylistMenu(
                                     playlist = playlist,
-                                    navController = navController,
                                     onDismiss = menuState::dismiss,
                                 )
                             }

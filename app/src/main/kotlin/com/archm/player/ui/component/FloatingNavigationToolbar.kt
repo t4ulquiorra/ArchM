@@ -119,7 +119,7 @@ fun DockedNavigationBar(
                     }
 
                     Column(
-                        horizontalAlignment = Alignment.CenterVertically,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .weight(1f)
