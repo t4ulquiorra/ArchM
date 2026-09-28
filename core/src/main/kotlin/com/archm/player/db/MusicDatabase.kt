@@ -189,6 +189,7 @@ abstract class InternalDatabase : RoomDatabase() {
                             MIGRATION_43_44,
                             MIGRATION_44_45,
                         )
+                        .fallbackToDestructiveMigrationOnDowngrade()
                         .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                         .setTransactionExecutor(java.util.concurrent.Executors.newFixedThreadPool(4))
                         .setQueryExecutor(java.util.concurrent.Executors.newFixedThreadPool(4))

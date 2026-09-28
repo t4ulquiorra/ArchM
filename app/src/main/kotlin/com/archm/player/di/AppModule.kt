@@ -73,7 +73,9 @@ object AppModule {
             com.archm.player.db.MIGRATION_41_42,
             com.archm.player.db.MIGRATION_42_43,
             com.archm.player.db.MIGRATION_43_44,
+            com.archm.player.db.MIGRATION_44_45,
         )
+        .fallbackToDestructiveMigrationOnDowngrade()
         .setJournalMode(androidx.room.RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
         .setTransactionExecutor(java.util.concurrent.Executors.newFixedThreadPool(4))
         .setQueryExecutor(java.util.concurrent.Executors.newFixedThreadPool(4))
