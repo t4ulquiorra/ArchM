@@ -2649,8 +2649,17 @@ private fun HomeItemContentPlaylist(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(30, 30, 30))
+                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.album),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(24.dp),
+            )
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540),
                 contentDescription = null,
@@ -2763,9 +2772,17 @@ private fun HomeItemVideo(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(30, 30, 30))
+                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.music_note),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(24.dp),
+            )
             AsyncImage(
                 model = thumbnailUrl?.resize(854, 480),
                 contentDescription = null,

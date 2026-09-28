@@ -494,9 +494,17 @@ fun GridItem(
         Box(
             modifier =
                 artworkModifier
-                    .clip(RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(30, 30, 30))
+                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(R.drawable.music_note),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(24.dp),
+            )
             BoxWithConstraints(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
@@ -1969,6 +1977,7 @@ fun ItemThumbnail(
             .aspectRatio(thumbnailRatio)
             .clip(shape)
             .background(Color(30, 30, 30))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), shape)
     ) {
         Icon(
             painter = painterResource(if (isArtist) R.drawable.person else R.drawable.music_note),
@@ -2045,6 +2054,7 @@ fun LocalThumbnail(
             .aspectRatio(thumbnailRatio)
             .clip(shape)
             .background(Color(30, 30, 30))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), shape)
     ) {
         Icon(
             painter = painterResource(if (isArtist) R.drawable.person else R.drawable.music_note),

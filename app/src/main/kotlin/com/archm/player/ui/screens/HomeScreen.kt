@@ -24,11 +24,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,6 +43,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import com.archm.player.ui.component.shimmer.GridItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
@@ -453,43 +457,52 @@ private fun HomeContent(
         }
     }
 
+    val density = LocalDensity.current
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val chipsExtra = if (showHomeFilterChips && !uiState.homePage?.chips.isNullOrEmpty()) 48.dp else 0.dp
+    val measuredTopBarDp = if (topAppBarHeightPx > 0) with(density) { topAppBarHeightPx.toDp() } else 0.dp
+    val topBarHeightDp = maxOf(measuredTopBarDp, statusBarTop + 64.dp + chipsExtra)
+    val feedTopPadding = topBarHeightDp + 12.dp
+
     Box(modifier = modifier.fillMaxSize()) {
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp),
+            indicatorOffset = topBarHeightDp,
             modifier = Modifier.fillMaxSize(),
         ) {
+            val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+            val layoutDirection = LocalLayoutDirection.current
             LazyColumn(
                 state = lazyListState,
-                contentPadding =
-                    LocalPlayerAwareWindowInsets.current
-                        .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                        .asPaddingValues(),
+                contentPadding = PaddingValues(
+                    start = playerAwarePadding.calculateStartPadding(layoutDirection),
+                    end = playerAwarePadding.calculateEndPadding(layoutDirection),
+                    top = feedTopPadding,
+                    bottom = playerAwarePadding.calculateBottomPadding(),
+                ),
                 modifier = Modifier.fillMaxSize(),
             ) {
                 // 1. Ambient Hero Backdrop + Speed Dial
-                item(key = "home_hero_backdrop") {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .matchParentSize()
-                                    .angledGradientBackground(listOf(animatedColor, defaultBg), 25f),
-                        ) {
+                if (uiState.speedDialItems.isNotEmpty()) {
+                    item(key = "home_hero_backdrop") {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             Box(
                                 modifier =
                                     Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp)
-                                        .align(Alignment.BottomCenter)
-                                        .background(artworkScrimBrush(defaultBg)),
-                            )
-                        }
-                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            Spacer(Modifier.height(with(LocalDensity.current) { topAppBarHeightPx.toDp() }.coerceAtLeast(0.dp)))
-                            if (uiState.speedDialItems.isNotEmpty()) {
-                                Spacer(Modifier.height(8.dp))
+                                        .matchParentSize()
+                                        .angledGradientBackground(listOf(animatedColor, defaultBg), 25f),
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(180.dp)
+                                            .align(Alignment.BottomCenter)
+                                            .background(artworkScrimBrush(defaultBg)),
+                                )
+                            }
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 SpeedDialSection(
                                     speedDialItems = uiState.speedDialItems,
                                     mediaMetadata = mediaMetadata,

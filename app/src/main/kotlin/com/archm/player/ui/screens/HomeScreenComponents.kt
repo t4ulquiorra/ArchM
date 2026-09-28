@@ -228,24 +228,39 @@ fun MainTopBar(
                         .clip(RoundedCornerShape(8.dp))
                         .clickable { navController.navigate("account") },
             ) {
-                AsyncImage(
-                    model =
-                        ImageRequest.Builder(LocalContext.current)
-                            .data(effectiveImageUrl)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .diskCacheKey(effectiveImageUrl)
-                            .crossfade(true)
-                            .build(),
-                    placeholder = painterResource(R.drawable.person),
-                    error = painterResource(R.drawable.person),
-                    contentDescription = stringResource(R.string.account),
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier =
                         Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                )
+                            .background(Color(30, 30, 30))
+                            .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.person),
+                        contentDescription = stringResource(R.string.account),
+                        tint = Color.White.copy(alpha = 0.4f),
+                        modifier = Modifier.size(20.dp),
+                    )
+                    if (!effectiveImageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model =
+                                ImageRequest.Builder(LocalContext.current)
+                                    .data(effectiveImageUrl)
+                                    .diskCachePolicy(CachePolicy.ENABLED)
+                                    .diskCacheKey(effectiveImageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                            contentDescription = stringResource(R.string.account),
+                            contentScale = ContentScale.Crop,
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                        )
+                    }
+                }
                 if (titleContent != null) {
                     titleContent()
                 } else {
@@ -1193,8 +1208,17 @@ fun HomeItemContentPlaylist(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(30, 30, 30))
+                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(id = if (typeLabel.equals("Album", ignoreCase = true)) R.drawable.album else R.drawable.queue_music),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(28.dp),
+            )
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
                 contentDescription = null,
@@ -1323,8 +1347,17 @@ fun HomeItemSong(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(30, 30, 30))
+                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.music_note),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(28.dp),
+            )
             AsyncImage(
                 model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
                 contentDescription = null,
@@ -1476,9 +1509,17 @@ fun HomeItemArtist(
                 Modifier
                     .size(avatarSize)
                     .clip(CircleShape)
+                    .background(Color(30, 30, 30))
+                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), CircleShape)
                     .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.person),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(28.dp),
+            )
             AsyncImage(
                 model = thumbnailUrl?.resize(720, 720) ?: thumbnailUrl,
                 contentDescription = null,
@@ -1588,9 +1629,17 @@ fun HomeItemVideo(
                 Modifier
                     .fillMaxWidth()
                     .height(HomeVideoThumbnailHeight)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(30, 30, 30))
+                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
+            Icon(
+                painter = painterResource(id = R.drawable.music_note),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.2f),
+                modifier = Modifier.size(28.dp),
+            )
             AsyncImage(
                 model = thumbnailUrl?.resize(854, 480) ?: thumbnailUrl,
                 contentDescription = null,
