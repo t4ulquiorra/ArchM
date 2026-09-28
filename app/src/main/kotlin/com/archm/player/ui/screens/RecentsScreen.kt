@@ -674,6 +674,29 @@ private fun AccordionPlayGroupItem(
     val currentMediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsState()
 
+    val onHeaderClick: () -> Unit = {
+        if (isArtist) {
+            val targetArtistId = group.parentId?.takeIf { it.isNotBlank() }
+                ?: group.events.firstOrNull()?.song?.artists?.firstOrNull { it.name.equals(group.parentName, ignoreCase = true) }?.id
+                ?: group.events.firstOrNull()?.song?.artists?.firstOrNull()?.id
+            if (!targetArtistId.isNullOrBlank()) {
+                navController.navigate("artist/$targetArtistId")
+            } else {
+                onToggleExpand()
+            }
+        } else if (group.parentType == "Album") {
+            val albumId = group.parentId?.takeIf { it.isNotBlank() }
+                ?: group.events.firstOrNull()?.song?.album?.id
+            if (!albumId.isNullOrBlank()) {
+                navController.navigate("album/$albumId")
+            } else {
+                onToggleExpand()
+            }
+        } else {
+            onToggleExpand()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -685,55 +708,63 @@ private fun AccordionPlayGroupItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onToggleExpand)
-                .padding(12.dp),
+                .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(parentShape)
-                    .background(Color(0xFF222222)),
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onHeaderClick)
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(group.thumbnailUrl)
-                        .crossfade(true)
-                        .diskCachePolicy(CachePolicy.ENABLED)
-                        .build(),
-                    placeholder = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
-                    error = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(parentShape)
+                        .background(Color(0xFF222222)),
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(group.thumbnailUrl)
+                            .crossfade(true)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                        placeholder = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
+                        error = painterResource(if (isArtist) R.drawable.person else R.drawable.album),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
-            Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(12.dp))
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = group.parentName,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                    ),
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(2.dp))
-                val countText = if (group.events.size == 1) "1 song played" else "${group.events.size} songs played"
-                Text(
-                    text = "$countText • ${group.parentType}",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = Color.White.copy(alpha = 0.6f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = group.parentName,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                        ),
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    val countText = if (group.events.size == 1) "1 song played" else "${group.events.size} songs played"
+                    Text(
+                        text = "$countText • ${group.parentType}",
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = Color.White.copy(alpha = 0.6f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
 
             // Play group button
