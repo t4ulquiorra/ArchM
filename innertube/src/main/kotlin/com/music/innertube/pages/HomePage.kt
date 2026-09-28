@@ -50,14 +50,13 @@ data class HomePage(
     ) {
         val isUnplayableStation: Boolean
             get() = title.equals("Listen together", ignoreCase = true) ||
-                title.contains("listen together", ignoreCase = true) ||
-                label?.equals("STATION", ignoreCase = true) == true ||
-                label?.contains("STATION", ignoreCase = true) == true
+                title.contains("listen together", ignoreCase = true)
 
         companion object {
             fun fromMusicCarouselShelfRenderer(renderer: MusicCarouselShelfRenderer): Section? {
-                val rawTitle = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text
-                    ?: renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.joinToString("") { it.text }
+                val rawTitle = renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs
+                    ?.joinToString("") { it.text }?.takeIf { it.isNotBlank() }
+                    ?: renderer.header?.musicCarouselShelfBasicHeaderRenderer?.title?.runs?.firstOrNull()?.text
                     ?: return null
                 val title = if (rawTitle.startsWith("Similar to ", ignoreCase = true)) {
                     rawTitle.replaceFirst("Similar to ", "More like ", ignoreCase = true)
@@ -99,7 +98,10 @@ data class HomePage(
             }
 
             fun fromMusicShelfRenderer(renderer: MusicShelfRenderer): Section? {
-                val rawTitle = renderer.title?.runs?.firstOrNull()?.text ?: return null
+                val rawTitle = renderer.title?.runs
+                    ?.joinToString("") { it.text }?.takeIf { it.isNotBlank() }
+                    ?: renderer.title?.runs?.firstOrNull()?.text
+                    ?: return null
                 val title = if (rawTitle.startsWith("Similar to ", ignoreCase = true)) {
                     rawTitle.replaceFirst("Similar to ", "More like ", ignoreCase = true)
                 } else if (rawTitle.contains("Similar to ", ignoreCase = true)) {
@@ -130,7 +132,10 @@ data class HomePage(
             }
 
             fun fromGridRenderer(renderer: GridRenderer): Section? {
-                val title = renderer.header?.gridHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
+                val title = renderer.header?.gridHeaderRenderer?.title?.runs
+                    ?.joinToString("") { it.text }?.takeIf { it.isNotBlank() }
+                    ?: renderer.header?.gridHeaderRenderer?.title?.runs?.firstOrNull()?.text
+                    ?: return null
                 val items = renderer.items.mapNotNull { it.musicTwoRowItemRenderer }.mapNotNull { fromMusicTwoRowItemRenderer(it) }
                 if (items.isEmpty()) return null
                 return Section(

@@ -301,6 +301,7 @@ class InnerTube {
             if (continuation != null) {
                 parameter("continuation", continuation)
                 parameter("ctoken", continuation)
+                parameter("type", "next")
             }
             setBody(
                 BrowseBody(
