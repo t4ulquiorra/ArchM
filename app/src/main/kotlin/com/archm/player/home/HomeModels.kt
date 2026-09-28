@@ -24,6 +24,7 @@ sealed interface HomeScreenState {
     @Immutable
     data class Error(
         @StringRes val messageResId: Int,
+        val throwable: Throwable? = null,
     ) : HomeScreenState
 }
 

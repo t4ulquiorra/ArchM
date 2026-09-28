@@ -122,7 +122,7 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
     private val _isLoadingMore = MutableStateFlow(false)
-    val isLoading = MutableStateFlow(false)
+    val isLoading = MutableStateFlow(true)
     val isRandomizing = MutableStateFlow(false)
 
     private val quickPicksEnum = context.dataStore.data.map {
@@ -286,7 +286,7 @@ class HomeViewModel @Inject constructor(
     val accountName = MutableStateFlow("Guest")
     val accountImageUrl = MutableStateFlow<String?>(null)
     val remoteQuickPicks = MutableStateFlow<HomePage.Section?>(null)
-    private val loadError = MutableStateFlow<Int?>(null)
+    private val loadError = MutableStateFlow<HomeScreenState.Error?>(null)
 
     private val presentationPreferences = ObserveHomePresentationPreferencesUseCase(HomeRepository(context))()
 
@@ -344,15 +344,9 @@ class HomeViewModel @Inject constructor(
             isLoading,
             loadError,
         ) { content, prefs, loading, err ->
-            if (!content.hasContent) {
-                if (err != null) {
-                    HomeScreenState.Error(err)
-                } else if (loading) {
-                    HomeScreenState.Loading
-                } else {
-                    HomeScreenState.Empty
-                }
-            } else {
+            if (loading && !content.hasContent) {
+                HomeScreenState.Loading
+            } else if (content.hasContent) {
                 HomeScreenState.Success(
                     HomeUiState(
                         quickPicks = ImmutableList.copyOf(content.local.quickPicks),
@@ -374,6 +368,12 @@ class HomeViewModel @Inject constructor(
                         isLoadingMore = false,
                     )
                 )
+            } else if (err != null) {
+                err
+            } else if (loading) {
+                HomeScreenState.Loading
+            } else {
+                HomeScreenState.Empty
             }
         }.combine(
             combine(isRefreshing, _isLoadingMore) { refreshing, loadingMore ->
@@ -739,6 +739,7 @@ class HomeViewModel @Inject constructor(
         coroutineScope {
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
+                    loadError.value = null
                     val (pageWithoutQuickPicks, quickPicksSection) = page.extractQuickPicks()
                     val filteredQuickPicks = quickPicksSection?.let { section ->
                         val filteredItems = section.items
@@ -762,6 +763,12 @@ class HomeViewModel @Inject constructor(
                     isRefreshing.value = false
                 }.onFailure {
                     reportException(it)
+                    val messageResId = if (it is java.net.UnknownHostException || it is java.io.IOException) {
+                        R.string.error_no_internet
+                    } else {
+                        R.string.error_unknown
+                    }
+                    loadError.value = HomeScreenState.Error(messageResId = messageResId, throwable = it)
                     isRefreshing.value = false
                 }
             }
@@ -773,14 +780,25 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun load() {
         isLoading.value = true
+        loadError.value = null
 
-        // Phase 1 (Local)
-        loadLocalDataPhase()
-
-        // Phase 2 (Primary Feed)
-        loadPrimaryFeedPhase()
-        isLoading.value = false
-        isRefreshing.value = false
+        coroutineScope {
+            launch(Dispatchers.IO) {
+                try {
+                    loadPrimaryFeedPhase()
+                } finally {
+                    isLoading.value = false
+                    isRefreshing.value = false
+                }
+            }
+            launch(Dispatchers.IO) {
+                try {
+                    loadLocalDataPhase()
+                } catch (e: Exception) {
+                    reportException(e)
+                }
+            }
+        }
         allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
             homePage.value?.sections?.flatMap { it.items }.orEmpty()
 
@@ -901,14 +919,8 @@ class HomeViewModel @Inject constructor(
     }
 
     init {
-
-        
+        // Trigger Public Remote Browse Immediately
         viewModelScope.launch(Dispatchers.IO) {
-            context.dataStore.data
-                .map { (try { it[InnerTubeCookieKey] } catch(e: Exception) { null }) }
-                .distinctUntilChanged()
-                .first()
-
             load()
         }
 
@@ -942,6 +954,7 @@ class HomeViewModel @Inject constructor(
                             }.onFailure {
                                 reportException(it)
                             }
+                            loadAccountPlaylists()
                         } else {
                             accountName.value = "Guest"
                             accountImageUrl.value = null

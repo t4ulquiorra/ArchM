@@ -5,7 +5,9 @@ import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.BrowseEndpoint
+import com.music.innertube.models.GridRenderer
 import com.music.innertube.models.MusicCarouselShelfRenderer
+import com.music.innertube.models.MusicShelfRenderer
 import com.music.innertube.models.MusicTwoRowItemRenderer
 import com.music.innertube.models.PlaylistItem
 import com.music.innertube.models.SectionListRenderer
@@ -71,10 +73,9 @@ data class HomePage(
                 }
                 val thumbnail = renderer.header.musicCarouselShelfBasicHeaderRenderer.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
                 val endpoint = renderer.header.musicCarouselShelfBasicHeaderRenderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
-                var items = renderer.contents.mapNotNull {
-                    it.musicTwoRowItemRenderer
-                }.mapNotNull {
-                    fromMusicTwoRowItemRenderer(it)
+                var items = renderer.contents.mapNotNull { content ->
+                    content.musicTwoRowItemRenderer?.let { fromMusicTwoRowItemRenderer(it) }
+                        ?: content.musicResponsiveListItemRenderer?.let { SearchSummaryPage.fromMusicResponsiveListItemRenderer(it) }
                 }
                 if (title.equals("Forgotten favorites", ignoreCase = true) ||
                     title.equals("Fresh finds, old favorites", ignoreCase = true)
@@ -92,6 +93,50 @@ data class HomePage(
                     label = label,
                     thumbnail = thumbnail,
                     endpoint = endpoint,
+                    items = items,
+                )
+            }
+
+            fun fromMusicShelfRenderer(renderer: MusicShelfRenderer): Section? {
+                val rawTitle = renderer.title?.runs?.firstOrNull()?.text ?: return null
+                val title = if (rawTitle.startsWith("Similar to ", ignoreCase = true)) {
+                    rawTitle.replaceFirst("Similar to ", "More like ", ignoreCase = true)
+                } else if (rawTitle.contains("Similar to ", ignoreCase = true)) {
+                    rawTitle.replace("Similar to ", "More like ", ignoreCase = true)
+                } else {
+                    rawTitle
+                }
+                if (title.equals("Listen together", ignoreCase = true) ||
+                    title.contains("listen together", ignoreCase = true)
+                ) {
+                    return null
+                }
+                val endpoint = renderer.bottomEndpoint?.browseEndpoint
+                    ?: renderer.moreContentButton?.buttonRenderer?.navigationEndpoint?.browseEndpoint
+                val items = renderer.contents.orEmpty().mapNotNull { content ->
+                    content.musicResponsiveListItemRenderer?.let {
+                        SearchSummaryPage.fromMusicResponsiveListItemRenderer(it)
+                    }
+                }
+                if (items.isEmpty()) return null
+                return Section(
+                    title = title,
+                    label = null,
+                    thumbnail = null,
+                    endpoint = endpoint,
+                    items = items,
+                )
+            }
+
+            fun fromGridRenderer(renderer: GridRenderer): Section? {
+                val title = renderer.header?.gridHeaderRenderer?.title?.runs?.firstOrNull()?.text ?: return null
+                val items = renderer.items.mapNotNull { it.musicTwoRowItemRenderer }.mapNotNull { fromMusicTwoRowItemRenderer(it) }
+                if (items.isEmpty()) return null
+                return Section(
+                    title = title,
+                    label = null,
+                    thumbnail = null,
+                    endpoint = null,
                     items = items,
                 )
             }

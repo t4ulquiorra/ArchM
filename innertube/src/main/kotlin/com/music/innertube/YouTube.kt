@@ -725,32 +725,63 @@ object YouTube {
             return@runCatching homeContinuation(continuation).getOrThrow()
         }
 
+        val currentLocale = innerTube.locale
+        if (currentLocale.gl.isBlank() || currentLocale.hl.isBlank()) {
+            val defLocale = java.util.Locale.getDefault()
+            val gl = defLocale.country.takeIf { it.isNotBlank() } ?: "US"
+            val hl = defLocale.toLanguageTag().takeIf { it.isNotBlank() } ?: "en"
+            innerTube.locale = YouTubeLocale(gl = gl, hl = hl)
+        }
+
+        if (innerTube.visitorData == null) {
+            refreshVisitorData().getOrNull()
+        }
+
         val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_home", params = params).body<BrowseResponse>()
-        val continuation = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
-            ?.tabRenderer?.content?.sectionListRenderer?.continuations?.getContinuation()
-        val sectionListRender = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
-            ?.tabRenderer?.content?.sectionListRenderer
+        response.responseContext.visitorData?.let {
+            if (innerTube.visitorData == null) {
+                innerTube.visitorData = it
+            }
+        }
+
+        val sectionListRender = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull {
+            it?.tabRenderer?.content?.sectionListRenderer != null
+        }?.tabRenderer?.content?.sectionListRenderer
+            ?: response.contents?.sectionListRenderer
+            ?: response.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer
+
+        val nextContinuation = sectionListRender?.continuations?.getContinuation()
         val sections = sectionListRender?.contents.orEmpty()
-            .mapNotNull { it.musicCarouselShelfRenderer }
-            .mapNotNull {
-                HomePage.Section.fromMusicCarouselShelfRenderer(it)
+            .mapNotNull { content ->
+                content.musicCarouselShelfRenderer?.let { HomePage.Section.fromMusicCarouselShelfRenderer(it) }
+                    ?: content.musicShelfRenderer?.let { HomePage.Section.fromMusicShelfRenderer(it) }
+                    ?: content.gridRenderer?.let { HomePage.Section.fromGridRenderer(it) }
             }.toMutableList()
         val chips = sectionListRender?.header?.chipCloudRenderer?.chips?.mapNotNull { HomePage.Chip.fromChipCloudChipRenderer(it) }
-        HomePage(chips, sections, continuation)
+        HomePage(chips, sections, nextContinuation)
     }
 
     private suspend fun homeContinuation(continuation: String): Result<HomePage> = runCatching {
         val response =
             innerTube.browse(WEB_REMIX, continuation = continuation).body<BrowseResponse>()
-        val continuation =
+        val nextContinuation =
             response.continuationContents?.sectionListContinuation?.continuations?.getContinuation()
+                ?: response.continuationContents?.musicShelfContinuation?.continuations?.getContinuation()
+
+        val sections = mutableListOf<HomePage.Section>()
+        response.continuationContents?.sectionListContinuation?.contents.orEmpty().forEach { content ->
+            content.musicCarouselShelfRenderer?.let { HomePage.Section.fromMusicCarouselShelfRenderer(it) }?.let { sections.add(it) }
+            content.musicShelfRenderer?.let { HomePage.Section.fromMusicShelfRenderer(it) }?.let { sections.add(it) }
+            content.gridRenderer?.let { HomePage.Section.fromGridRenderer(it) }?.let { sections.add(it) }
+        }
+        response.continuationContents?.musicShelfContinuation?.let { shelf ->
+            HomePage.Section.fromMusicShelfRenderer(shelf)?.let { sections.add(it) }
+        }
+
         HomePage(
             null,
-            response.continuationContents?.sectionListContinuation?.contents
-            ?.mapNotNull { it.musicCarouselShelfRenderer }
-            ?.mapNotNull {
-                HomePage.Section.fromMusicCarouselShelfRenderer(it)
-            }.orEmpty(), continuation
+            sections,
+            nextContinuation
         )
     }
 

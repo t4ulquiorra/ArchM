@@ -21,8 +21,10 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -34,7 +36,14 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.archm.player.ui.component.shimmer.GridItemPlaceHolder
+import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
+import com.archm.player.ui.component.shimmer.ShimmerHost
+import com.archm.player.ui.component.shimmer.TextPlaceholder
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -182,11 +191,7 @@ fun HomeScreen(
     ) {
         when (val state = screenState) {
             HomeScreenState.Loading -> {
-                HomeStatePane(
-                    iconResId = null,
-                    messageResId = null,
-                    showLoadingIndicator = true,
-                )
+                HomeLoadingSkeleton()
             }
 
             HomeScreenState.Empty -> {
@@ -223,6 +228,76 @@ fun HomeScreen(
                     onAction = viewModel::onAction,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeLoadingSkeleton(
+    modifier: Modifier = Modifier,
+) {
+    ShimmerHost(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
+    ) {
+        Spacer(
+            modifier =
+                Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+        )
+
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+        ) {
+            TextPlaceholder(
+                modifier =
+                    Modifier
+                        .width(160.dp)
+                        .height(24.dp),
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+        ) {
+            repeat(4) {
+                GridItemPlaceHolder()
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+        ) {
+            TextPlaceholder(
+                modifier =
+                    Modifier
+                        .width(140.dp)
+                        .height(24.dp),
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+
+        repeat(3) {
+            ListItemPlaceHolder()
         }
     }
 }
