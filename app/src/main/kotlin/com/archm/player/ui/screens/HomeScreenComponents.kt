@@ -1065,7 +1065,7 @@ fun SimpHomeShelf(
                     text = title,
                     style =
                         MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.W800,
                         ),
                     color = MaterialTheme.colorScheme.onSurface,
@@ -2403,7 +2403,9 @@ fun HomePageSectionShelf(
 
     val displayTitle =
         remember(section.title) {
-            if (section.title.startsWith("Similar to ", ignoreCase = true)) {
+            if (section.title.equals("Similar to", ignoreCase = true)) {
+                "More like"
+            } else if (section.title.startsWith("Similar to ", ignoreCase = true)) {
                 section.title.replaceFirst("Similar to ", "More like ", ignoreCase = true)
             } else if (section.title.contains("Similar to ", ignoreCase = true)) {
                 section.title.replace("Similar to ", "More like ", ignoreCase = true)
@@ -2412,9 +2414,24 @@ fun HomePageSectionShelf(
             }
         }
 
+    val displaySubtitle =
+        remember(section.label) {
+            section.label?.let { label ->
+                if (label.equals("Similar to", ignoreCase = true)) {
+                    "More like"
+                } else if (label.startsWith("Similar to ", ignoreCase = true)) {
+                    label.replaceFirst("Similar to ", "More like ", ignoreCase = true)
+                } else if (label.contains("Similar to ", ignoreCase = true)) {
+                    label.replace("Similar to ", "More like ", ignoreCase = true)
+                } else {
+                    label
+                }
+            }
+        }
+
     SimpHomeShelf(
         title = displayTitle,
-        subtitle = section.label,
+        subtitle = displaySubtitle,
         avatarUrl = if (section.endpoint?.isArtistEndpoint == true) section.thumbnail else null,
         onHeaderClick = onMoreClick,
         onMoreClick = onMoreClick,
