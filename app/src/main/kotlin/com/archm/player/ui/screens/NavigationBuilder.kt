@@ -188,12 +188,17 @@ fun NavGraphBuilder.navigationBuilder(
             },
         ),
     ) {
-        BrowseScreen(
-            navController = navController,
-            scrollBehavior = scrollBehavior,
-            browseId = it.arguments?.getString("browseId"),
-            initialTitle = it.arguments?.getString("title"),
-        )
+        val browseId = it.arguments?.getString("browseId")
+        if (browseId != null && (browseId.startsWith("UC") || browseId.startsWith("FEmusic_library_privately_owned_artist_detail"))) {
+            ArtistScreen(navController, scrollBehavior)
+        } else {
+            BrowseScreen(
+                navController = navController,
+                scrollBehavior = scrollBehavior,
+                browseId = browseId,
+                initialTitle = it.arguments?.getString("title"),
+            )
+        }
     }
 
     composable(

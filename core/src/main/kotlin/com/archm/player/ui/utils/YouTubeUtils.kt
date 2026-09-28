@@ -13,11 +13,7 @@ fun String.resize(
     
     
     if (this.contains("i.ytimg.com")) {
-        val targetQuality = if (width != null && width >= 1200) "maxresdefault.jpg" else "hqdefault.jpg"
-        return this.replace(
-            Regex("(default|mqdefault|hqdefault|sddefault|maxresdefault)\\.jpg"),
-            targetQuality
-        )
+        return this
     }
 
     

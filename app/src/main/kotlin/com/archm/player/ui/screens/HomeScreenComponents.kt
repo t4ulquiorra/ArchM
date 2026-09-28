@@ -570,11 +570,14 @@ fun Song.toQuickPicksCarouselItem(
     mediaMetadata: MediaMetadata?,
 ): QuickPicksCarouselItem {
     val isActive = id == mediaMetadata?.id
+    val thumbUrl = thumbnailUrl?.takeIf { it.isNotBlank() }
+        ?: song.thumbnailUrl?.takeIf { it.isNotBlank() }
+        ?: album?.thumbnailUrl?.takeIf { it.isNotBlank() }
     return QuickPicksCarouselItem(
         id = id,
         title = song.title,
         subtitle = artists.joinToString { it.name },
-        thumbnailUrl = song.thumbnailUrl,
+        thumbnailUrl = thumbUrl,
         onClick = {
             if (isActive) {
                 playerConnection.player.togglePlayPause()
@@ -623,11 +626,17 @@ fun YTItem.toQuickPicksCarouselItem(
             is ArtistItem -> ""
             is PlaylistItem -> author?.name.orEmpty()
         }
+    val thumbUrl = thumbnail?.takeIf { it.isNotBlank() }
+        ?: when (this) {
+            is SongItem -> endpoint?.videoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" } ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg"
+            is PlaylistItem -> playEndpoint?.videoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" }
+            else -> null
+        }
     return QuickPicksCarouselItem(
         id = id,
         title = itemTitle,
         subtitle = itemSubtitle,
-        thumbnailUrl = thumbnail,
+        thumbnailUrl = thumbUrl,
         onClick = {
             when (this) {
                 is SongItem -> {
@@ -722,11 +731,10 @@ fun QuickPicksCarousel(
             val isActive = item.id == mediaMetadata?.id || item.id == mediaMetadata?.album?.id
             val context = LocalContext.current
             val imageRequest =
-                remember(item.thumbnailUrl, requestWidthPx, requestHeightPx) {
+                remember(item.thumbnailUrl) {
                     ImageRequest
                         .Builder(context)
-                        .data(item.thumbnailUrl)
-                        .size(coil3.size.Size(requestWidthPx, requestHeightPx))
+                        .data(item.thumbnailUrl?.resize(800, 800) ?: item.thumbnailUrl)
                         .crossfade(true)
                         .build()
                 }
@@ -861,7 +869,7 @@ fun QuickPicksCarouselShelf(
                     endpoint.browseId == "FEmusic_moods_and_genres" -> {
                         navController.navigate(Screens.MoodAndGenres.route)
                     }
-                    endpoint.isArtistEndpoint -> {
+                    endpoint.isArtistEndpoint || endpoint.browseId.startsWith("UC") -> {
                         navController.navigate("artist/${endpoint.browseId}")
                     }
                     endpoint.isAlbumEndpoint -> {
@@ -1154,7 +1162,7 @@ fun HomeItemContentPlaylist(
                     .clip(RoundedCornerShape(16.dp)),
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(800, 800) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -1284,7 +1292,7 @@ fun HomeItemSong(
                     .clip(RoundedCornerShape(16.dp)),
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(800, 800) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(540, 540) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -1550,7 +1558,7 @@ fun HomeItemVideo(
             contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
-                model = thumbnailUrl?.resize(1280, 720) ?: thumbnailUrl,
+                model = thumbnailUrl?.resize(854, 480) ?: thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -1868,11 +1876,12 @@ fun KeepListeningShelf(
                                 )
                             }
                         }
+                        val songThumbUrl = item.thumbnailUrl ?: item.song.thumbnailUrl ?: item.album?.thumbnailUrl
                         if (item.song.isVideo) {
                             HomeItemVideo(
                                 title = item.title,
                                 subtitle = item.artists.joinToString { it.name },
-                                thumbnailUrl = item.song.thumbnailUrl,
+                                thumbnailUrl = songThumbUrl,
                                 onClick = onPlay,
                                 onLongClick = onLongClickAction,
                             )
@@ -1880,7 +1889,7 @@ fun KeepListeningShelf(
                             HomeItemSong(
                                 title = item.title,
                                 subtitle = item.artists.joinToString { it.name },
-                                thumbnailUrl = item.song.thumbnailUrl,
+                                thumbnailUrl = songThumbUrl,
                                 isExplicit = item.song.explicit,
                                 onClick = onPlay,
                                 onLongClick = onLongClickAction,
@@ -1943,7 +1952,7 @@ fun KeepListeningShelf(
                         HomeItemContentPlaylist(
                             title = item.title,
                             subtitle = pluralStringResource(R.plurals.n_song, item.songCount, item.songCount),
-                            thumbnailUrl = item.thumbnails.firstOrNull(),
+                            thumbnailUrl = item.thumbnailUrl ?: item.thumbnails.firstOrNull(),
                             typeLabel = "Playlist",
                             onClick = { navController.navigate("local_playlist/${item.id}") },
                             onLongClick = {
@@ -2079,11 +2088,12 @@ fun ForgottenFavoritesShelf(
                         )
                     }
                 }
+                val songThumbUrl = song.thumbnailUrl ?: song.song.thumbnailUrl ?: song.album?.thumbnailUrl
                 if (song.song.isVideo) {
                     HomeItemVideo(
                         title = song.song.title,
                         subtitle = song.artists.joinToString { it.name },
-                        thumbnailUrl = song.song.thumbnailUrl,
+                        thumbnailUrl = songThumbUrl,
                         onClick = onPlay,
                         onLongClick = onLongClickAction,
                     )
@@ -2091,7 +2101,7 @@ fun ForgottenFavoritesShelf(
                     HomeItemSong(
                         title = song.song.title,
                         subtitle = song.artists.joinToString { it.name },
-                        thumbnailUrl = song.song.thumbnailUrl,
+                        thumbnailUrl = songThumbUrl,
                         isExplicit = song.song.explicit,
                         onClick = onPlay,
                         onLongClick = onLongClickAction,
@@ -2199,12 +2209,15 @@ fun SimilarRecommendationsShelf(
                             item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
                             item.durationText,
                         ).joinToString(" • ").ifBlank { item.artists.joinToString { it.name } }
+                        val thumbUrl = item.thumbnail.takeIf { it.isNotBlank() }
+                            ?: item.endpoint?.videoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" }
+                            ?: "https://i.ytimg.com/vi/${item.id}/hqdefault.jpg"
 
                         if (isVideo) {
                             HomeItemVideo(
                                 title = item.title,
                                 subtitle = subtitle,
-                                thumbnailUrl = item.thumbnail,
+                                thumbnailUrl = thumbUrl,
                                 onClick = onPlay,
                                 onLongClick = onLongClickAction,
                             )
@@ -2212,7 +2225,7 @@ fun SimilarRecommendationsShelf(
                             HomeItemSong(
                                 title = item.title,
                                 subtitle = subtitle,
-                                thumbnailUrl = item.thumbnail,
+                                thumbnailUrl = thumbUrl,
                                 isExplicit = item.explicit,
                                 onClick = onPlay,
                                 onLongClick = onLongClickAction,
@@ -2379,7 +2392,7 @@ fun HomePageSectionShelf(
                     endpoint.browseId == "FEmusic_moods_and_genres" -> {
                         navController.navigate(Screens.MoodAndGenres.route)
                     }
-                    endpoint.isArtistEndpoint -> {
+                    endpoint.isArtistEndpoint || endpoint.browseId.startsWith("UC") -> {
                         navController.navigate("artist/${endpoint.browseId}")
                     }
                     endpoint.isAlbumEndpoint -> {
@@ -2441,7 +2454,7 @@ fun HomePageSectionShelf(
     SimpHomeShelf(
         title = displayTitle,
         subtitle = displaySubtitle,
-        avatarUrl = if (section.endpoint?.isArtistEndpoint == true) section.thumbnail else null,
+        avatarUrl = if (section.endpoint?.isArtistEndpoint == true || section.endpoint?.browseId?.startsWith("UC") == true) section.thumbnail else null,
         onHeaderClick = onMoreClick,
         onMoreClick = onMoreClick,
         modifier = modifier,
@@ -2505,12 +2518,15 @@ fun HomePageSectionShelf(
                             item.artists.joinToString(", ") { it.name }.takeIf { it.isNotBlank() },
                             item.durationText,
                         ).joinToString(" • ").ifBlank { item.artists.joinToString { it.name } }
+                        val thumbUrl = item.thumbnail.takeIf { it.isNotBlank() }
+                            ?: item.endpoint?.videoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" }
+                            ?: "https://i.ytimg.com/vi/${item.id}/hqdefault.jpg"
 
                         if (isVideo) {
                             HomeItemVideo(
                                 title = item.title,
                                 subtitle = subtitle,
-                                thumbnailUrl = item.thumbnail,
+                                thumbnailUrl = thumbUrl,
                                 onClick = onPlay,
                                 onLongClick = onLongClickAction,
                             )
@@ -2518,7 +2534,7 @@ fun HomePageSectionShelf(
                             HomeItemSong(
                                 title = item.title,
                                 subtitle = subtitle,
-                                thumbnailUrl = item.thumbnail,
+                                thumbnailUrl = thumbUrl,
                                 isExplicit = item.explicit,
                                 onClick = onPlay,
                                 onLongClick = onLongClickAction,

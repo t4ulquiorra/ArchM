@@ -446,10 +446,16 @@ object YouTube {
                 id = browseId,
                 title = response.header?.musicImmersiveHeaderRenderer?.title?.runs?.firstOrNull()?.text
                     ?: response.header?.musicVisualHeaderRenderer?.title?.runs?.firstOrNull()?.text
-                    ?: response.header?.musicHeaderRenderer?.title?.runs?.firstOrNull()?.text!!,
+                    ?: response.header?.musicHeaderRenderer?.title?.runs?.firstOrNull()?.text
+                    ?: response.header?.musicDetailHeaderRenderer?.title?.runs?.firstOrNull()?.text
+                    ?: response.header?.musicEditablePlaylistDetailHeaderRenderer?.header?.musicDetailHeaderRenderer?.title?.runs?.firstOrNull()?.text
+                    ?: response.contents?.twoColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicShelfRenderer?.title?.runs?.firstOrNull()?.text
+                    ?: "",
                 thumbnail = response.header?.musicImmersiveHeaderRenderer?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
                     ?: response.header?.musicVisualHeaderRenderer?.foregroundThumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
-                    ?: response.header?.musicDetailHeaderRenderer?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl(),
+                    ?: response.header?.musicDetailHeaderRenderer?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
+                    ?: response.header?.musicHeaderRenderer?.thumbnail?.thumbnail?.thumbnails?.lastOrNull()?.url
+                    ?: response.background?.musicThumbnailRenderer?.getThumbnailUrl(),
                 channelId = response.header?.musicImmersiveHeaderRenderer?.subscriptionButton?.subscribeButtonRenderer?.channelId,
                 playEndpoint = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
                     ?.tabRenderer?.content?.sectionListRenderer?.contents?.firstOrNull()?.musicShelfRenderer
@@ -461,16 +467,21 @@ object YouTube {
                 radioEndpoint = response.header?.musicImmersiveHeaderRenderer?.startRadioButton?.buttonRenderer?.navigationEndpoint?.watchEndpoint,
                 isVerified = isVerified,
             ),
-            sections = response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
+            sections = (response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()
                 ?.tabRenderer?.content?.sectionListRenderer?.contents
-                ?.mapNotNull(ArtistPage::fromSectionListRendererContent)!!,
+                ?: response.contents?.sectionListRenderer?.contents
+                ?: response.contents?.twoColumnBrowseResultsRenderer?.secondaryContents?.sectionListRenderer?.contents
+                ?: response.contents?.twoColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents)
+                ?.mapNotNull(ArtistPage::fromSectionListRendererContent).orEmpty(),
             description = descriptionRuns?.joinToString(separator = "") { it.text },
             subscriberCountText = response.header?.musicImmersiveHeaderRenderer?.subscriptionButton2
                 ?.subscribeButtonRenderer?.subscriberCountWithSubscribeText.extractCountText()
                 ?: response.header?.musicImmersiveHeaderRenderer?.subscriptionButton?.subscribeButtonRenderer
                     ?.longSubscriberCountText.extractCountText()
                 ?: response.header?.musicImmersiveHeaderRenderer?.subscriptionButton?.subscribeButtonRenderer
-                    ?.shortSubscriberCountText.extractCountText(),
+                    ?.shortSubscriberCountText.extractCountText()
+                ?: response.header?.musicHeaderRenderer?.subtitle.extractCountText()
+                ?: response.header?.musicDetailHeaderRenderer?.subtitle.extractCountText(),
             monthlyListenerCount = response.header?.musicImmersiveHeaderRenderer?.monthlyListenerCount.extractCountText(),
             descriptionRuns = descriptionRuns,
             isVerified = isVerified,
