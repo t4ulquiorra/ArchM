@@ -39,29 +39,48 @@ fun PlayingIndicator(
     modifier: Modifier = Modifier,
     bars: Int = 3,
     barWidth: Dp = 4.dp,
+    barSpacing: Dp = 4.dp,
     cornerRadius: Dp = ThumbnailCornerRadius,
+    isPlaying: Boolean = true,
 ) {
     val animatables =
-        remember {
+        remember(bars) {
             List(bars) {
-                Animatable(0.1f)
+                Animatable(0.2f)
             }
         }
 
-    LaunchedEffect(Unit) {
-        delay(300)
-        animatables.forEach { animatable ->
-            launch {
-                while (true) {
-                    animatable.animateTo(Random.nextFloat() * 0.9f + 0.1f)
-                    delay(50)
+    val staticHeights = remember(bars) {
+        listOf(0.35f, 0.75f, 0.5f, 0.7f, 0.4f)
+    }
+
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            animatables.forEach { animatable ->
+                launch {
+                    while (true) {
+                        animatable.animateTo(
+                            targetValue = Random.nextFloat() * 0.85f + 0.15f,
+                            animationSpec = tween(durationMillis = 200),
+                        )
+                        delay(50)
+                    }
+                }
+            }
+        } else {
+            animatables.forEachIndexed { index, animatable ->
+                launch {
+                    animatable.animateTo(
+                        targetValue = staticHeights.getOrElse(index) { 0.5f },
+                        animationSpec = tween(durationMillis = 200),
+                    )
                 }
             }
         }
     }
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(barSpacing),
         verticalAlignment = Alignment.Bottom,
         modifier = modifier,
     ) {

@@ -1996,7 +1996,7 @@ fun RecentlyVisitedShelf(
         )
 
     SimpHomeShelf(
-        title = stringResource(R.string.recently_visited),
+        title = stringResource(R.string.recents),
         onMoreClick = { navController.navigate(NavRoutes.recents) },
         moreText = stringResource(R.string.show_all),
         modifier = modifier,

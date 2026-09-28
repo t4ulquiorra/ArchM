@@ -90,6 +90,7 @@ import com.archm.player.playback.queues.ListQueue
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.DefaultDialog
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.PlayingIndicator
 import com.archm.player.ui.component.bouncyClickable
 import com.archm.player.ui.menu.SongMenu
 import com.archm.player.viewmodels.DateGroup
@@ -517,18 +518,19 @@ private fun RecentActivityItemRow(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            if (isActive && isPlaying) {
+            if (isActive) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.5f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.volume_up),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
+                    PlayingIndicator(
+                        color = Color.White,
+                        modifier = Modifier.height(18.dp),
+                        barWidth = 3.dp,
+                        barSpacing = 3.dp,
+                        isPlaying = isPlaying,
                     )
                 }
             }
@@ -825,18 +827,19 @@ private fun AccordionPlayGroupItem(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),
                             )
-                            if (isTrackActive && isPlaying) {
+                            if (isTrackActive) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(Color.Black.copy(alpha = 0.5f)),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.volume_up),
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(16.dp),
+                                    PlayingIndicator(
+                                        color = Color.White,
+                                        modifier = Modifier.height(14.dp),
+                                        barWidth = 2.5.dp,
+                                        barSpacing = 2.5.dp,
+                                        isPlaying = isPlaying,
                                     )
                                 }
                             }
