@@ -46,13 +46,11 @@ import com.archm.player.constants.LiquidGlassGlobalEnabledKey
 import com.archm.player.constants.LiquidGlassLensAmountKey
 import com.archm.player.constants.LiquidGlassLensHeightKey
 import com.archm.player.constants.LiquidGlassMiniPlayerEnabledKey
-import com.archm.player.constants.LiquidGlassNavBarEnabledKey
 import com.archm.player.constants.LiquidGlassPlayerEnabledKey
 import com.archm.player.constants.LiquidGlassSurfaceOpacityKey
 import com.archm.player.constants.LiquidGlassSurfaceTintColorKey
 import com.archm.player.constants.LiquidGlassTextColorKey
 import com.archm.player.constants.LiquidGlassVibrancyKey
-import com.archm.player.constants.UseFloatingNavBarKey
 import com.archm.player.ui.component.ColorPickerDialog
 import com.archm.player.ui.component.DefaultDialog
 import com.archm.player.ui.component.LongClickIconButton
@@ -123,12 +121,6 @@ fun GlassEffectSettings(
     val (miniPlayerEnabled, onMiniPlayerEnabledChange) = rememberPreference(
         LiquidGlassMiniPlayerEnabledKey, defaultValue = true
     )
-    val (navBarEnabled, onNavBarEnabledChange) = rememberPreference(
-        LiquidGlassNavBarEnabledKey, defaultValue = true
-    )
-    val (useFloatingNavBar, onUseFloatingNavBarChange) = rememberPreference(
-        UseFloatingNavBarKey, defaultValue = false
-    )
 
     var showVibrancyDialog by rememberSaveable { mutableStateOf(false) }
     var showBlurRadiusDialog by rememberSaveable { mutableStateOf(false) }
@@ -155,64 +147,22 @@ fun GlassEffectSettings(
         Spacer(modifier = Modifier.height(16.dp))
 
         Material3SettingsGroup(
-            title = stringResource(R.string.nav_bar_style),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.nav_bar),
-                    title = { Text(stringResource(R.string.floating_nav_bar)) },
-                    description = { Text(stringResource(R.string.floating_nav_bar_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = useFloatingNavBar,
-                            onCheckedChange = onUseFloatingNavBarChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (useFloatingNavBar) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onUseFloatingNavBarChange(!useFloatingNavBar) }
-                ),
-            )
-        )
-
-        
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Material3SettingsGroup(
             title = stringResource(R.string.liquid_glass),
             items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.check),
                     title = { Text(stringResource(R.string.liquid_glass_global_enabled)) },
                     description = {
-                        Text(
-                            stringResource(
-                                // Glass is part of the floating nav bar experience and only
-                                // takes effect while that bar is enabled.
-                                if (useFloatingNavBar) {
-                                    R.string.liquid_glass_performance_warning
-                                } else {
-                                    R.string.liquid_glass_requires_floating_nav_bar
-                                }
-                            )
-                        )
+                        Text(stringResource(R.string.liquid_glass_performance_warning))
                     },
                     trailingContent = {
                         Switch(
-                            checked = globalEnabled && useFloatingNavBar,
+                            checked = globalEnabled,
                             onCheckedChange = onGlobalEnabledChange,
-                            enabled = useFloatingNavBar,
                             thumbContent = {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (globalEnabled && useFloatingNavBar) R.drawable.check else R.drawable.close
+                                        id = if (globalEnabled) R.drawable.check else R.drawable.close
                                     ),
                                     contentDescription = null,
                                     modifier = Modifier.size(SwitchDefaults.IconSize)
@@ -220,7 +170,7 @@ fun GlassEffectSettings(
                             }
                         )
                     },
-                    onClick = { if (useFloatingNavBar) onGlobalEnabledChange(!globalEnabled) }
+                    onClick = { onGlobalEnabledChange(!globalEnabled) }
                 )
             )
         )
@@ -377,27 +327,6 @@ fun GlassEffectSettings(
                         )
                     },
                     onClick = { onMiniPlayerEnabledChange(!miniPlayerEnabled) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.nav_bar),
-                    title = { Text(stringResource(R.string.liquid_glass_nav_bar)) },
-                    description = { Text(stringResource(R.string.liquid_glass_nav_bar_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = navBarEnabled,
-                            onCheckedChange = onNavBarEnabledChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (navBarEnabled) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onNavBarEnabledChange(!navBarEnabled) }
                 ),
             )
         )

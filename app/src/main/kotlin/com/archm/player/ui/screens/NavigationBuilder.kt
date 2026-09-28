@@ -89,8 +89,12 @@ fun NavGraphBuilder.navigationBuilder(
         )
     }
 
-    composable("explore") {
+    composable(Screens.New.route) {
         ExploreScreen(navController = navController)
+    }
+
+    composable(Screens.Mix.route) {
+        MixScreen(navController = navController)
     }
 
     composable(Screens.Search.route) {

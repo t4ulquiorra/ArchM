@@ -8,9 +8,6 @@ import com.archm.player.BuildConfig
 import com.archm.player.ui.screens.settings.RingtoneViewModel
 import com.archm.player.ui.component.RingtoneTrimmerDialog
 import com.archm.player.ui.component.RingtoneProgressDialog
-import com.archm.player.ui.component.AppFloatingNavBar
-import com.archm.player.ui.component.floatingtabbar.rememberFloatingTabBarScrollConnection
-import com.archm.player.constants.UseFloatingNavBarKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
@@ -186,13 +183,10 @@ import com.archm.player.constants.AppLanguageKey
 import com.archm.player.constants.DefaultOpenTabKey
 import com.archm.player.constants.DisableScreenshotKey
 import com.archm.player.constants.EnableHighRefreshRateKey
-import com.archm.player.constants.FloatingToolbarBottomPadding
-import com.archm.player.constants.FloatingToolbarHorizontalPadding
 import com.archm.player.constants.ListenTogetherUsernameKey
 import com.archm.player.constants.MiniPlayerBottomSpacing
 import com.archm.player.constants.MiniPlayerHeight
 import com.archm.player.constants.NavigationBarAnimationSpec
-import com.archm.player.constants.NavigationBarHeight
 import com.archm.player.echomusic.updater.checkForUpdate
 import com.archm.player.echomusic.updater.getAutoUpdateCheckSetting
 import com.archm.player.echomusic.updater.isNewerVersion
@@ -621,15 +615,19 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
-                val navigationItems = remember { Screens.MainScreens }
+                val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, defaultValue = "")
+                val isLoggedIn = remember(innerTubeCookie) { innerTubeCookie.isNotEmpty() }
+                val navigationItems = remember(isLoggedIn) {
+                    if (isLoggedIn) Screens.MainScreens else Screens.SignedOutMainScreens
+                }
                 val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
                 val defaultOpenTab = remember {
                     dataStore[DefaultOpenTabKey].toEnum(defaultValue = NavigationTab.HOME)
                 }
                 val tabOpenedFromShortcut = remember {
                     when (intent?.action) {
-                        ACTION_SEARCH -> NavigationTab.LIBRARY
-                        ACTION_LIBRARY -> NavigationTab.SEARCH
+                        ACTION_SEARCH -> NavigationTab.SEARCH
+                        ACTION_LIBRARY -> NavigationTab.LIBRARY
                         else -> null
                     }
                 }
@@ -717,8 +715,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val shouldShowNavigationBar =
-                    remember(currentRoute, navigationItemRoutes, active) {
-                        (currentRoute == null || navigationItemRoutes.contains(currentRoute)) && !active
+                    remember(currentRoute, active) {
+                        !active && currentRoute != "ambient_mode" && currentRoute != "uptime" && currentRoute != "update" && currentRoute != "listen_together/chat"
                     }
 
                 val shouldShowSearchBar =
@@ -757,8 +755,7 @@ class MainActivity : ComponentActivity() {
 
                 val showRail = isLandscape && !inSearchScreen && currentRoute != "ambient_mode"
 
-                val floatingBarsBottomPadding = NavigationBarBottomPadding
-                val navVisibleHeight = NavigationBarHeight
+                val navVisibleHeight = DockedNavBarContentHeight
 
                 val navigationBarHeight by animateDpAsState(
                     targetValue = if (shouldShowNavigationBar && !showRail) navVisibleHeight else 0.dp,
@@ -770,8 +767,7 @@ class MainActivity : ComponentActivity() {
                     dismissedBound = 0.dp,
                     collapsedBound =
                         bottomInset +
-                            (if (shouldShowNavigationBar && !showRail) floatingBarsBottomPadding + navVisibleHeight else 0.dp) +
-                            MiniPlayerBottomSpacing +
+                            (if (shouldShowNavigationBar && !showRail) navVisibleHeight else 0.dp) +
                             MiniPlayerHeight,
                     expandedBound = maxHeight,
                 )
@@ -796,7 +792,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     var bottom = bottomInset
                     if (shouldShowNavigationBar && !showRail) {
-                        bottom += NavigationBarHeight
+                        bottom += DockedNavBarContentHeight
                     }
                     if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
                     windowsInsets
@@ -1469,8 +1465,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
 
-                            if (!showRail && currentRoute != "update" && currentRoute != "listen_together/chat" && currentRoute != "ambient_mode" && currentRoute != "uptime" && currentRoute?.startsWith("settings") != true) {
-                                Box {
+                            if (!showRail && currentRoute != "update" && currentRoute != "listen_together/chat" && currentRoute != "ambient_mode" && currentRoute != "uptime") {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                                ) {
                                     val areBottomBarsPaired =
                                         shouldShowNavigationBar &&
                                             !showRail &&
@@ -1484,15 +1482,16 @@ class MainActivity : ComponentActivity() {
                                     )
 
                                     val navSlideDistance =
-                                        bottomInset + floatingBarsBottomPadding + navVisibleHeight
+                                        bottomInset + navVisibleHeight
 
                                     Box(
                                         modifier =
                                             Modifier
                                                 .align(Alignment.BottomCenter)
+                                                .fillMaxWidth()
                                                 .height(navSlideDistance)
                                                 .offset {
-                                                    if (navigationBarHeight == 0.dp) {
+                                                    if (!shouldShowNavigationBar) {
                                                         IntOffset(
                                                             x = 0,
                                                             y = navSlideDistance.roundToPx(),
@@ -1518,18 +1517,10 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                 },
                                     ) {
-                                        FloatingNavigationToolbar(
+                                        DockedNavigationBar(
                                             items = navigationItems,
                                             pureBlack = pureBlack,
-                                            isPairedWithMiniPlayer = areBottomBarsPaired,
-                                            modifier =
-                                                Modifier
-                                                    .align(Alignment.BottomCenter)
-                                                    .padding(
-                                                        start = NavigationBarHorizontalPadding,
-                                                        end = NavigationBarHorizontalPadding,
-                                                        bottom = bottomInset + floatingBarsBottomPadding,
-                                                    ).height(navVisibleHeight),
+                                            modifier = Modifier.align(Alignment.BottomCenter),
                                             isSelected = { screen ->
                                                 currentRoute == screen.route || currentRoute?.startsWith("${screen.route}/") == true
                                             },
@@ -1543,11 +1534,10 @@ class MainActivity : ComponentActivity() {
 
                                     val homeOverflowFabBottomPadding =
                                         bottomInset +
-                                            floatingBarsBottomPadding +
                                             navVisibleHeight +
                                             HomeOverflowFabSpacing +
                                             if (playerBottomSheetState.isCollapsed) {
-                                                MiniPlayerHeight + MiniPlayerBottomSpacing
+                                                MiniPlayerHeight
                                             } else {
                                                 0.dp
                                             }
@@ -1557,7 +1547,7 @@ class MainActivity : ComponentActivity() {
                                             Modifier
                                                 .align(Alignment.BottomEnd)
                                                 .padding(
-                                                    end = NavigationBarHorizontalPadding,
+                                                    end = 16.dp,
                                                     bottom = homeOverflowFabBottomPadding,
                                                 ),
                                     ) {
@@ -1724,6 +1714,9 @@ class MainActivity : ComponentActivity() {
                                     navController = navController,
                                     startDestination = when (tabOpenedFromShortcut ?: defaultOpenTab) {
                                         NavigationTab.HOME -> Screens.Home
+                                        NavigationTab.NEW -> Screens.New
+                                        NavigationTab.SEARCH -> Screens.Search
+                                        NavigationTab.MIX -> Screens.Mix
                                         NavigationTab.LIBRARY -> Screens.Library
                                         else -> Screens.Home
                                     }.route,

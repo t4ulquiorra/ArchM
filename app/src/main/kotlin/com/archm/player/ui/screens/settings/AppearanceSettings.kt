@@ -646,7 +646,9 @@ highlightKey: String? = null) {
             valueText = {
                 when (it) {
                     NavigationTab.HOME -> stringResource(R.string.home)
+                    NavigationTab.NEW -> stringResource(R.string.nav_new)
                     NavigationTab.SEARCH -> stringResource(R.string.search)
+                    NavigationTab.MIX -> stringResource(R.string.nav_mix)
                     NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
                 }
             }
@@ -1744,7 +1746,9 @@ highlightKey: String? = null) {
                         Text(
                             when (defaultOpenTab) {
                                 NavigationTab.HOME -> stringResource(R.string.home)
+                                NavigationTab.NEW -> stringResource(R.string.nav_new)
                                 NavigationTab.SEARCH -> stringResource(R.string.search)
+                                NavigationTab.MIX -> stringResource(R.string.nav_mix)
                                 NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
                             }
                         )
@@ -2053,7 +2057,9 @@ enum class DarkMode {
 
 enum class NavigationTab {
     HOME,
+    NEW,
     SEARCH,
+    MIX,
     LIBRARY,
 }
 

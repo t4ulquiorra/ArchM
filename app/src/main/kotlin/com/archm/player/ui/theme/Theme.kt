@@ -48,7 +48,10 @@ import kotlin.math.min
 
 val Marble = Color(0xFFF2F8FC)
 val SurfaceContainerColor = Color(40, 40, 40)
-val BaseDarkBackground = Color(20, 20, 20)
+val BaseDarkBackground = Color(18, 18, 18)
+val DockedDockBackground = Color(26, 26, 26)
+val NavTabUnselectedColor = Color(152, 152, 159)
+val NavTabSelectedColor = Color(245, 245, 247)
 val CardImagePlaceholderColor = Color(30, 30, 30)
 val DefaultThemeColor = Marble
 val LocalAccentColor = compositionLocalOf { Marble }
