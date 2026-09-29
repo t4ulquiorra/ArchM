@@ -62,9 +62,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.isSystemInDarkTheme
-import com.archm.player.constants.DarkMode
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.PureBlackKey
+import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.LocalPlayerAwareWindowInsets
@@ -113,7 +113,7 @@ fun OnlineSearchResult(
     viewModel: OnlineSearchViewModel = hiltViewModel(),
 ) {
     val pureBlackPref by rememberPreference(PureBlackKey, defaultValue = false)
-    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val darkTheme by rememberEnumPreference<DarkMode>(DarkModeKey, defaultValue = DarkMode.AUTO)
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.music.innertube.models.BrowseEndpoint
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkModel
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkUrl
@@ -119,9 +121,9 @@ import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.screens.MoodAndGenresButton
 import com.archm.player.ui.screens.MoodAndGenresButtonHeight
 import androidx.compose.foundation.isSystemInDarkTheme
-import com.archm.player.constants.DarkMode
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.PureBlackKey
+import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.SearchDiscoveryScreenState
@@ -144,7 +146,7 @@ fun SearchScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val pureBlackPref by rememberPreference(PureBlackKey, defaultValue = false)
-    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val darkTheme by rememberEnumPreference<DarkMode>(DarkModeKey, defaultValue = DarkMode.AUTO)
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
         if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
