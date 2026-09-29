@@ -8,13 +8,18 @@
 package com.archm.player.ui.screens.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
@@ -22,10 +27,20 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import coil3.compose.AsyncImage
+import com.music.innertube.models.BrowseEndpoint
+import com.archm.player.ui.screens.rememberMoodAndGenresArtworkModel
+import com.archm.player.ui.screens.rememberMoodAndGenresArtworkUrl
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -178,24 +193,15 @@ fun SearchScreen(
             ) {
                 SearchEntryField(
                     onClick = onSearchClick,
+                    onRecognitionClick = {
+                        navController.navigate("recognition") {
+                            launchSingleTop = true
+                        }
+                    },
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .animateItem(),
-                )
-            }
-
-            item(
-                key = "search_tabs",
-                contentType = "search_tabs",
-            ) {
-                SearchDiscoveryTabs(
-                    selectedTab = selectedTab,
-                    onTabSelected = viewModel::selectTab,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
                             .animateItem(),
                 )
             }
@@ -240,61 +246,92 @@ fun SearchScreen(
                 }
 
                 is SearchDiscoveryScreenState.Success -> {
-                    when (selectedTab) {
-                        SearchDiscoveryTab.EXPLORE -> {
-                            item(
-                                key = "search_explore_moods_title",
-                                contentType = "section_title",
+                    val moodAndMomentsItems = if (currentState.data.moodAndMoments.isNotEmpty()) {
+                        currentState.data.moodAndMoments
+                    } else {
+                        currentState.data.moodAndGenres
+                    }
+                    val genresItems = currentState.data.genres
+
+                    if (moodAndMomentsItems.isNotEmpty()) {
+                        item(
+                            key = "search_moods_title",
+                            contentType = "section_title",
+                        ) {
+                            NavigationTitle(
+                                title = "Moods & moments",
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
+                        items(
+                            items = moodAndMomentsItems.chunked(2),
+                            key = { chunk -> "mood_chunk_" + chunk.joinToString { it.title } },
+                            contentType = { "mood_genre_row" },
+                        ) { rowItems ->
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                                        .animateItem(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
-                                NavigationTitle(
-                                    title = stringResource(R.string.mood_and_genres),
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-                            item(
-                                key = "search_explore_moods",
-                                contentType = "mood_genres_grid",
-                            ) {
-                                SearchMoodAndGenresGrid(
-                                    data = currentState.data,
-                                    navController = navController,
-                                    modifier = Modifier.animateItem(),
-                                )
+                                for (item in rowItems) {
+                                    MoodCategoryCard(
+                                        title = item.title,
+                                        endpoint = item.endpoint,
+                                        onClick = {
+                                            navController.navigate("youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}")
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                if (rowItems.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
+                    }
 
-                        SearchDiscoveryTab.SUGGESTIONS -> {
-                            item(
-                                key = "search_suggestions_songs",
-                                contentType = "suggestion_songs",
+                    if (genresItems.isNotEmpty()) {
+                        item(
+                            key = "search_genres_title",
+                            contentType = "section_title",
+                        ) {
+                            NavigationTitle(
+                                title = "Genres",
+                                modifier =
+                                    Modifier
+                                        .padding(top = 12.dp)
+                                        .animateItem(),
+                            )
+                        }
+                        items(
+                            items = genresItems.chunked(2),
+                            key = { chunk -> "genre_chunk_" + chunk.joinToString { it.title } },
+                            contentType = { "mood_genre_row" },
+                        ) { rowItems ->
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                                        .animateItem(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
-                                SuggestedSongsSection(
-                                    songs = currentState.data.suggestedSongs,
-                                    navController = navController,
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-
-                            item(
-                                key = "search_suggestions_artists",
-                                contentType = "suggestion_artists",
-                            ) {
-                                SuggestedArtistsSection(
-                                    artists = currentState.data.suggestedArtists,
-                                    navController = navController,
-                                    modifier = Modifier.animateItem(),
-                                )
-                            }
-
-                            item(
-                                key = "search_suggestions_albums",
-                                contentType = "suggestion_albums",
-                            ) {
-                                TrendingAlbumsSection(
-                                    albums = currentState.data.trendingAlbums,
-                                    navController = navController,
-                                    modifier = Modifier.animateItem(),
-                                )
+                                for (item in rowItems) {
+                                    MoodCategoryCard(
+                                        title = item.title,
+                                        endpoint = item.endpoint,
+                                        onClick = {
+                                            navController.navigate("youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}")
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                                if (rowItems.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
                     }
@@ -308,6 +345,7 @@ fun SearchScreen(
 @Composable
 private fun SearchEntryField(
     onClick: () -> Unit,
+    onRecognitionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SearchBar(
@@ -322,7 +360,7 @@ private fun SearchEntryField(
                 },
                 placeholder = {
                     Text(
-                        text = stringResource(R.string.search_yt_music),
+                        text = "Search for songs...",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -334,10 +372,12 @@ private fun SearchEntryField(
                     )
                 },
                 trailingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.language),
-                        contentDescription = null,
-                    )
+                    IconButton(onClick = onRecognitionClick) {
+                        Icon(
+                            painter = painterResource(R.drawable.mic),
+                            contentDescription = stringResource(R.string.music_recognition),
+                        )
+                    }
                 },
             )
         },
@@ -348,6 +388,54 @@ private fun SearchEntryField(
         windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
         modifier = modifier.fillMaxWidth(),
     ) {}
+}
+
+@Composable
+fun MoodCategoryCard(
+    title: String,
+    endpoint: BrowseEndpoint,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val artworkUrl = rememberMoodAndGenresArtworkUrl(endpoint)
+    val artworkModel = rememberMoodAndGenresArtworkModel(endpoint, artworkUrl)
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(84.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(30, 30, 30))
+                .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                .clickable(onClick = onClick),
+    ) {
+        if (artworkModel != null) {
+            AsyncImage(
+                model = artworkModel,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 8.dp, y = 12.dp)
+                        .size(64.dp)
+                        .rotate(25f)
+                        .clip(RoundedCornerShape(4.dp)),
+            )
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 12.dp, top = 12.dp, end = 68.dp, bottom = 12.dp),
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

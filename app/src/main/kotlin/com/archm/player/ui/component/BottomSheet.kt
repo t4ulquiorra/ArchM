@@ -102,7 +102,7 @@ fun BottomSheet(
             .graphicsLayer {
                 val cornerRadius = (16.dp.toPx() * state.progress).coerceAtLeast(0f)
                 shape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius)
-                clip = true
+                clip = state.progress > 0f
             }
     ) {
         if (!state.isCollapsed && !state.isDismissed) {

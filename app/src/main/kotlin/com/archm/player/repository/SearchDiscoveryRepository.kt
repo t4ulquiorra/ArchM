@@ -28,6 +28,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class SearchDiscoveryData(
+    val moodAndMoments: List<MoodAndGenres.Item> = emptyList(),
+    val genres: List<MoodAndGenres.Item> = emptyList(),
     val moodAndGenres: List<MoodAndGenres.Item>,
     val newReleaseAlbums: List<AlbumItem>,
     val chartSections: List<ChartsPage.ChartSection>,
@@ -46,8 +48,9 @@ class SearchDiscoveryRepository
             withContext(Dispatchers.IO) {
                 try {
                     coroutineScope {
-                        val explorePageDeferred = async { YouTube.explore().getOrThrow() }
-                        val chartsPageDeferred = async { YouTube.getChartsPage().getOrThrow() }
+                        val moodAndGenresDeferred = async { YouTube.moodAndGenres().getOrNull() }
+                        val explorePageDeferred = async { YouTube.explore().getOrNull() }
+                        val chartsPageDeferred = async { YouTube.getChartsPage().getOrNull() }
                         val suggestedSongsDeferred = async { loadSuggestedSongs() }
                         val searchedAlbumsDeferred =
                             async {
@@ -58,14 +61,25 @@ class SearchDiscoveryRepository
                             }
                         val suggestedArtistsDeferred = async { loadSuggestedArtists() }
 
+                        val moodAndGenresResult = moodAndGenresDeferred.await()
                         val explorePage = explorePageDeferred.await()
                         val chartsPage = chartsPageDeferred.await()
 
+                        val moodAndMomentsList = moodAndGenresResult?.find {
+                            it.title.contains("Mood", ignoreCase = true) || it.title.contains("moment", ignoreCase = true)
+                        }?.items ?: moodAndGenresResult?.getOrNull(0)?.items ?: explorePage?.moodAndGenres.orEmpty()
+
+                        val genresList = moodAndGenresResult?.find {
+                            it.title.contains("Genre", ignoreCase = true)
+                        }?.items ?: moodAndGenresResult?.getOrNull(1)?.items.orEmpty()
+
                         Result.success(
                             SearchDiscoveryData(
-                                moodAndGenres = explorePage.moodAndGenres,
-                                newReleaseAlbums = explorePage.newReleaseAlbums,
-                                chartSections = chartsPage.sections,
+                                moodAndMoments = moodAndMomentsList,
+                                genres = genresList,
+                                moodAndGenres = explorePage?.moodAndGenres ?: (moodAndMomentsList + genresList),
+                                newReleaseAlbums = explorePage?.newReleaseAlbums.orEmpty(),
+                                chartSections = chartsPage?.sections.orEmpty(),
                                 suggestedSongs = suggestedSongsDeferred.await(),
                                 searchedAlbums = searchedAlbumsDeferred.await(),
                                 suggestedArtists = suggestedArtistsDeferred.await(),

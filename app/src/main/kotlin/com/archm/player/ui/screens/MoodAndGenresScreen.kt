@@ -257,7 +257,7 @@ fun MoodAndGenresButton(
 }
 
 @Composable
-private fun rememberMoodAndGenresArtworkUrl(endpoint: BrowseEndpoint?): String? {
+internal fun rememberMoodAndGenresArtworkUrl(endpoint: BrowseEndpoint?): String? {
     endpoint ?: return null
     val context = LocalContext.current
 
@@ -340,7 +340,7 @@ private fun rememberMoodAndGenresArtworkUrl(endpoint: BrowseEndpoint?): String? 
 }
 
 @Composable
-private fun rememberMoodAndGenresArtworkModel(
+internal fun rememberMoodAndGenresArtworkModel(
     endpoint: BrowseEndpoint?,
     artworkUrl: String?,
 ): ImageRequest? {

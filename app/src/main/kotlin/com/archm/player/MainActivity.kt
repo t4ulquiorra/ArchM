@@ -772,18 +772,6 @@ class MainActivity : ComponentActivity() {
                     expandedBound = maxHeight,
                 )
 
-                var homeOverflowMenuExpanded by rememberSaveable { mutableStateOf(false) }
-                val showHomeOverflowFab =
-                    currentRoute == Screens.Home.route &&
-                        !showRail &&
-                        (playerBottomSheetState.isDismissed || playerBottomSheetState.isCollapsed)
-
-                LaunchedEffect(showHomeOverflowFab) {
-                    if (!showHomeOverflowFab) {
-                        homeOverflowMenuExpanded = false
-                    }
-                }
-
                 val playerAwareWindowInsets = remember(
                     bottomInset,
                     shouldShowNavigationBar,
@@ -1266,13 +1254,7 @@ class MainActivity : ComponentActivity() {
                                     onActiveChange = onActiveChange,
                                     placeholder = {
                                         Text(
-                                            text =
-                                                stringResource(
-                                                    when (searchSource) {
-                                                        SearchSource.LOCAL -> R.string.search_library
-                                                        SearchSource.ONLINE -> R.string.search_yt_music
-                                                    },
-                                                ),
+                                            text = "Search for songs...",
                                         )
                                     },
                                     leadingIcon = {
@@ -1325,7 +1307,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     trailingIcon = {
-                                        Row {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                             if (active) {
                                                 if (query.text.isNotEmpty()) {
                                                     IconButton(
@@ -1345,23 +1327,15 @@ class MainActivity : ComponentActivity() {
                                                 }
                                                 IconButton(
                                                     onClick = {
-                                                        searchSource =
-                                                            if (searchSource == SearchSource.ONLINE) {
-                                                                SearchSource.LOCAL
-                                                            } else {
-                                                                SearchSource.ONLINE
-                                                            }
+                                                        onActiveChange(false)
+                                                        navController.navigate("recognition") {
+                                                            launchSingleTop = true
+                                                        }
                                                     },
                                                 ) {
                                                     Icon(
-                                                        painter =
-                                                            painterResource(
-                                                                when (searchSource) {
-                                                                    SearchSource.LOCAL -> R.drawable.library_music
-                                                                    SearchSource.ONLINE -> R.drawable.language
-                                                                },
-                                                            ),
-                                                        contentDescription = null,
+                                                        painter = painterResource(R.drawable.mic),
+                                                        contentDescription = stringResource(R.string.music_recognition),
                                                     )
                                                 }
                                             } else if (currentRoute?.startsWith(OnlineSearchResultRoutePrefix) == true) {
@@ -1528,119 +1502,6 @@ class MainActivity : ComponentActivity() {
                                             onSearchItemDoubleClick = {
                                                 searchSource = SearchSource.ONLINE
                                                 openSearch()
-                                            },
-                                        )
-                                    }
-
-                                    val homeOverflowFabBottomPadding =
-                                        bottomInset +
-                                            navVisibleHeight +
-                                            HomeOverflowFabSpacing +
-                                            if (playerBottomSheetState.isCollapsed) {
-                                                MiniPlayerHeight
-                                            } else {
-                                                0.dp
-                                            }
-                                    HomeOverflowFabVisibility(
-                                        visible = showHomeOverflowFab,
-                                        modifier =
-                                            Modifier
-                                                .align(Alignment.BottomEnd)
-                                                .padding(
-                                                    end = 16.dp,
-                                                    bottom = homeOverflowFabBottomPadding,
-                                                ),
-                                    ) {
-                                        HomeOverflowFab(
-                                            expanded = homeOverflowMenuExpanded,
-                                            pureBlack = pureBlack,
-                                            onExpandedChange = { homeOverflowMenuExpanded = it },
-                                            onShuffleClick = {
-                                                val useLocalSource =
-                                                    when {
-                                                        allLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> {
-                                                            Random.nextFloat() < 0.5f
-                                                        }
-
-                                                        allLocalItems.isNotEmpty() -> {
-                                                            true
-                                                        }
-
-                                                        else -> {
-                                                            false
-                                                        }
-                                                    }
-
-                                                coroutineScope.launch(Dispatchers.Main) {
-                                                    if (useLocalSource && allLocalItems.isNotEmpty()) {
-                                                        when (val luckyItem = allLocalItems.random()) {
-                                                            is Song -> {
-                                                                playerConnection?.playQueue(
-                                                                    if (luckyItem.song.isLocal) {
-                                                                        ListQueue(items = listOf(luckyItem.toMediaItem()))
-                                                                    } else {
-                                                                        YouTubeQueue.radio(luckyItem.toMediaMetadata())
-                                                                    },
-                                                                )
-                                                            }
-
-                                                            is Album -> {
-                                                                val albumWithSongs =
-                                                                    withContext(Dispatchers.IO) {
-                                                                        database.albumWithSongs(luckyItem.id).first()
-                                                                    }
-
-                                                                albumWithSongs?.let {
-                                                                    playerConnection?.playQueue(LocalAlbumRadio(it))
-                                                                }
-                                                            }
-
-                                                            is Artist -> {
-                                                                Unit
-                                                            }
-
-                                                            is Playlist -> {
-                                                                Unit
-                                                            }
-                                                        }
-                                                    } else if (allYtItems.isNotEmpty()) {
-                                                        when (val luckyItem = allYtItems.random()) {
-                                                            is SongItem -> {
-                                                                playerConnection?.playQueue(
-                                                                    YouTubeQueue.radio(luckyItem.toMediaMetadata()),
-                                                                )
-                                                            }
-
-                                                            is AlbumItem -> {
-                                                                playerConnection?.playQueue(
-                                                                    YouTubeAlbumRadio(luckyItem.playlistId),
-                                                                )
-                                                            }
-
-                                                            is ArtistItem -> {
-                                                                luckyItem.radioEndpoint?.let {
-                                                                    playerConnection?.playQueue(YouTubeQueue(it))
-                                                                }
-                                                            }
-
-                                                            is PlaylistItem -> {
-                                                                luckyItem.playEndpoint?.let {
-                                                                    playerConnection?.playQueue(YouTubeQueue(it))
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            onMusicRecognitionClick = {
-                                                navController.navigate("recognition") {
-                                                    launchSingleTop = true
-                                                }
-                                            },
-                                            onMusicTogetherClick = {
-                                                navController.navigate("listen_together") {
-                                                    launchSingleTop = true
-                                                }
                                             },
                                         )
                                     }
@@ -2063,154 +1924,6 @@ private fun TranslucentTopAppBarIconButton(
             ),
         content = content,
     )
-}
-
-private val HomeOverflowFabSize = 56.dp
-private val HomeOverflowFabSpacing = 12.dp
-private val HomeOverflowMenuIconSize = 40.dp
-
-@Composable
-private fun HomeOverflowFabVisibility(
-    visible: Boolean,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val motionScheme = MaterialTheme.motionScheme
-
-    AnimatedVisibility(
-        visible = visible,
-        modifier = modifier,
-        enter =
-            fadeIn(animationSpec = motionScheme.fastEffectsSpec()) +
-                scaleIn(
-                    initialScale = 0.8f,
-                    animationSpec = motionScheme.defaultSpatialSpec(),
-                ),
-        exit =
-            fadeOut(animationSpec = motionScheme.fastEffectsSpec()) +
-                scaleOut(
-                    targetScale = 0.8f,
-                    animationSpec = motionScheme.fastSpatialSpec(),
-                ),
-        label = "homeOverflowFabVisibility",
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun HomeOverflowFab(
-    expanded: Boolean,
-    pureBlack: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    onShuffleClick: () -> Unit,
-    onMusicRecognitionClick: () -> Unit,
-    onMusicTogetherClick: () -> Unit,
-) {
-    val menuItemColors =
-        MenuDefaults.itemColors(
-            textColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
-            leadingIconColor =
-                if (pureBlack) {
-                    Color.White.copy(alpha = 0.82f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-        )
-
-    Box {
-        FloatingActionButton(
-            onClick = { onExpandedChange(!expanded) },
-            modifier = Modifier.size(HomeOverflowFabSize),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.more_horiz),
-                contentDescription = stringResource(R.string.more),
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { onExpandedChange(false) },
-            shape = RoundedCornerShape(24.dp),
-            containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
-        ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.music_recognition)) },
-                onClick = {
-                    onExpandedChange(false)
-                    onMusicRecognitionClick()
-                },
-                leadingIcon = {
-                    HomeOverflowMenuIcon(
-                        iconRes = R.drawable.mic,
-                        contentDescription = stringResource(R.string.music_recognition),
-                        pureBlack = pureBlack,
-                    )
-                },
-                colors = menuItemColors,
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.music_together)) },
-                onClick = {
-                    onExpandedChange(false)
-                    onMusicTogetherClick()
-                },
-                leadingIcon = {
-                    HomeOverflowMenuIcon(
-                        iconRes = R.drawable.multi_user,
-                        contentDescription = null,
-                        pureBlack = pureBlack,
-                    )
-                },
-                colors = menuItemColors,
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.shuffle)) },
-                onClick = {
-                    onExpandedChange(false)
-                    onShuffleClick()
-                },
-                leadingIcon = {
-                    HomeOverflowMenuIcon(
-                        iconRes = R.drawable.shuffle,
-                        contentDescription = stringResource(R.string.shuffle),
-                        pureBlack = pureBlack,
-                    )
-                },
-                colors = menuItemColors,
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeOverflowMenuIcon(
-    @DrawableRes iconRes: Int,
-    contentDescription: String?,
-    pureBlack: Boolean,
-) {
-    Surface(
-        modifier = Modifier.size(HomeOverflowMenuIconSize),
-        shape = CircleShape,
-        color =
-            if (pureBlack) {
-                Color.White.copy(alpha = 0.12f)
-            } else {
-                MaterialTheme.colorScheme.secondaryContainer
-            },
-        contentColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = contentDescription,
-            )
-        }
-    }
 }
 
 @Composable

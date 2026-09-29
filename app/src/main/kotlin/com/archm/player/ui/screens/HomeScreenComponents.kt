@@ -299,6 +299,21 @@ fun MainTopBar(
                         modifier = Modifier.size(20.dp),
                     )
                 }
+                IconButton(
+                    onClick = {
+                        navController.navigate("listen_together/rooms") {
+                            launchSingleTop = true
+                        }
+                    },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.multi_user),
+                        contentDescription = stringResource(R.string.music_together),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
                 Spacer(Modifier.width(6.dp))
                 IconButton(
                     onClick = { navController.navigate("news") },

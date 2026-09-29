@@ -47,6 +47,12 @@ class OnlineSearchSuggestionViewModel @Inject constructor(
         }
     }
 
+    fun clearHistory() {
+        database.query {
+            clearSearchHistory()
+        }
+    }
+
     init {
         viewModelScope.launch {
             query

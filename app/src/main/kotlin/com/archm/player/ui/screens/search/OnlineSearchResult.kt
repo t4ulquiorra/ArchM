@@ -220,63 +220,78 @@ fun OnlineSearchResult(
             }
         }
         val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId
-        YouTubeListItem(
-            item = item,
-            viewCountText = (item as? SongItem)?.viewCountText,
-            containerColor = Color.Transparent,
-            color = Color.Transparent,
-            showActiveContainer = true,
-            isActive =
-                when (item) {
-                    is SongItem -> item.id == currentMediaId
-                    is AlbumItem -> mediaMetadata?.album?.id == item.id
-                    else -> false
-                },
-            isPlaying = isPlaying,
-            trailingContent = {
-                IconButton(
-                    onClick = longClick,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null,
-                    )
-                }
-            },
+        Column(
             modifier =
                 Modifier
-                    .combinedClickable(
-                        onClick = {
-                            when (item) {
-                                is SongItem -> {
-                                    if (item.id == mediaMetadata?.id) {
-                                        playerConnection.player.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                WatchEndpoint(videoId = item.id),
-                                                item.toMediaMetadata(),
-                                            ),
-                                        )
+                    .fillMaxWidth()
+                    .animateItem(),
+        ) {
+            YouTubeListItem(
+                item = item,
+                viewCountText = (item as? SongItem)?.viewCountText,
+                containerColor = Color.Transparent,
+                color = Color.Transparent,
+                showActiveContainer = true,
+                isActive =
+                    when (item) {
+                        is SongItem -> item.id == currentMediaId
+                        is AlbumItem -> mediaMetadata?.album?.id == item.id
+                        else -> false
+                    },
+                isPlaying = isPlaying,
+                trailingContent = {
+                    IconButton(
+                        onClick = longClick,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            contentDescription = null,
+                        )
+                    }
+                },
+                modifier =
+                    Modifier
+                        .combinedClickable(
+                            onClick = {
+                                when (item) {
+                                    is SongItem -> {
+                                        if (item.id == mediaMetadata?.id) {
+                                            playerConnection.player.togglePlayPause()
+                                        } else {
+                                            playerConnection.playQueue(
+                                                YouTubeQueue(
+                                                    WatchEndpoint(videoId = item.id),
+                                                    item.toMediaMetadata(),
+                                                ),
+                                            )
+                                        }
+                                    }
+
+                                    is AlbumItem -> {
+                                        navController.navigate("album/${item.id}")
+                                    }
+
+                                    is ArtistItem -> {
+                                        navController.navigate("artist/${item.id}")
+                                    }
+
+                                    is PlaylistItem -> {
+                                        navController.navigate("online_playlist/${item.id}")
                                     }
                                 }
-
-                                is AlbumItem -> {
-                                    navController.navigate("album/${item.id}")
-                                }
-
-                                is ArtistItem -> {
-                                    navController.navigate("artist/${item.id}")
-                                }
-
-                                is PlaylistItem -> {
-                                    navController.navigate("online_playlist/${item.id}")
-                                }
-                            }
-                        },
-                        onLongClick = longClick,
-                    ).animateItem(),
-        )
+                            },
+                            onLongClick = longClick,
+                        ),
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp)
+                        .height(0.5.dp)
+                        .background(Color.White.copy(alpha = 0.08f)),
+            )
+        }
     }
 
     Column(

@@ -26,6 +26,8 @@ class LoadSearchDiscoveryUseCase
                 val chartItems = data.chartSections.flatMap { section -> section.items }
 
                 SearchDiscoveryUiModel(
+                    moodAndMoments = ImmutableList.copyOf(data.moodAndMoments),
+                    genres = ImmutableList.copyOf(data.genres),
                     moodAndGenres = ImmutableList.copyOf(data.moodAndGenres),
                     suggestedSongs =
                         ImmutableList.copyOf(
@@ -59,11 +61,13 @@ class LoadSearchDiscoveryUseCase
 
 @Immutable
 data class SearchDiscoveryUiModel(
+    val moodAndMoments: ImmutableList<MoodAndGenres.Item> = ImmutableList.of(),
+    val genres: ImmutableList<MoodAndGenres.Item> = ImmutableList.of(),
     val moodAndGenres: ImmutableList<MoodAndGenres.Item>,
     val suggestedSongs: ImmutableList<SongItem>,
     val trendingAlbums: ImmutableList<AlbumItem>,
     val suggestedArtists: ImmutableList<ArtistItem>,
 ) {
     val isEmpty: Boolean
-        get() = moodAndGenres.isEmpty() && suggestedSongs.isEmpty() && trendingAlbums.isEmpty() && suggestedArtists.isEmpty()
+        get() = moodAndMoments.isEmpty() && genres.isEmpty() && moodAndGenres.isEmpty() && suggestedSongs.isEmpty() && trendingAlbums.isEmpty() && suggestedArtists.isEmpty()
 }

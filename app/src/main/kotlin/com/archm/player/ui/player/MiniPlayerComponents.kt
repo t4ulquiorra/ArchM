@@ -148,8 +148,7 @@ fun SwipeableMiniPlayerBox(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(MiniPlayerHeight)
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)),
+                .height(MiniPlayerHeight),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -174,7 +173,7 @@ fun SwipeableMiniPlayerBox(
                                 },
                             )
                         } else {
-                            baseModifier.padding(horizontal = NavigationBarHorizontalPadding)
+                            baseModifier
                         }
                     }.let { baseModifier ->
                         if (swipeThumbnail) {
