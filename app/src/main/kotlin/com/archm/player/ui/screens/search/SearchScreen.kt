@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
@@ -206,7 +207,7 @@ fun SearchScreen(
                         Modifier
                             .windowInsetsPadding(WindowInsets.statusBars)
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, top = 8.dp, bottom = 0.dp),
+                            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 0.dp),
                 ) {
                     Box(
                         modifier =
