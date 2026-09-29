@@ -249,6 +249,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.archm.player.constants.SearchSource
 import com.archm.player.constants.SearchSourceKey
 import com.archm.player.ui.component.TopSearch
+import com.archm.player.ui.component.CyclingSearchPlaceholder
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.archm.player.ui.screens.search.LocalSearchScreen
 import com.archm.player.ui.screens.search.OnlineSearchScreen
 import com.archm.player.ui.screens.search.OnlineSearchResultArgument
@@ -1242,10 +1244,16 @@ class MainActivity : ComponentActivity() {
                             AnimatedVisibility(
                                 visible =
                                     active ||
+                                        navBackStackEntry?.destination?.route == Screens.Search.route ||
                                         navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) == true,
                                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),
                                 exit = fadeOut(animationSpec = tween(durationMillis = 200)),
                             ) {
+                                val isSearchResultRoute =
+                                    navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) == true
+                                val isLanding = !active && !isSearchResultRoute
+                                val keyboardController = LocalSoftwareKeyboardController.current
+
                                 TopSearch(
                                     query = query,
                                     onQueryChange = onQueryChange,
@@ -1253,81 +1261,70 @@ class MainActivity : ComponentActivity() {
                                     active = active,
                                     onActiveChange = onActiveChange,
                                     placeholder = {
-                                        Text(
-                                            text = "Search for songs...",
-                                        )
+                                        if (isLanding) {
+                                            CyclingSearchPlaceholder()
+                                        } else {
+                                            Text(
+                                                text = "Search for songs...",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = Color.White.copy(alpha = 0.5f),
+                                            )
+                                        }
                                     },
                                     leadingIcon = {
-                                        LongClickIconButton(
-                                            onClick = {
-                                                when {
-                                                    active -> {
+                                        if (isLanding) {
+                                            IconButton(
+                                                onClick = {
+                                                    onActiveChange(true)
+                                                    searchBarFocusRequester.requestFocus()
+                                                    keyboardController?.show()
+                                                },
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.search),
+                                                    contentDescription = stringResource(R.string.search),
+                                                )
+                                            }
+                                        } else {
+                                            IconButton(
+                                                onClick = {
+                                                    if (active) {
                                                         onActiveChange(false)
-                                                    }
-
-                                                    !navigationItems.fastAny {
-                                                        it.route == navBackStackEntry?.destination?.route
-                                                    } -> {
+                                                    } else if (isSearchResultRoute) {
+                                                        navController.navigateUp()
+                                                    } else {
                                                         navController.navigateUp()
                                                     }
-
-                                                    else -> {
-                                                        onActiveChange(true)
-                                                    }
-                                                }
-                                            },
-                                            onLongClick = {
-                                                when {
-                                                    active -> {}
-
-                                                    !navigationItems.fastAny {
-                                                        it.route == navBackStackEntry?.destination?.route
-                                                    } -> {
-                                                        navController.backToMain()
-                                                    }
-
-                                                    else -> {}
-                                                }
-                                            },
-                                        ) {
-                                            Icon(
-                                                painterResource(
-                                                    if (active ||
-                                                        !navigationItems.fastAny {
-                                                            it.route == navBackStackEntry?.destination?.route
-                                                        }
-                                                    ) {
-                                                        R.drawable.arrow_back
-                                                    } else {
-                                                        R.drawable.search
-                                                    },
-                                                ),
-                                                contentDescription = null,
-                                            )
+                                                },
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.arrow_back),
+                                                    contentDescription = null,
+                                                )
+                                            }
                                         }
                                     },
                                     trailingIcon = {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            if (active) {
-                                                if (query.text.isNotEmpty()) {
-                                                    IconButton(
-                                                        onClick = {
-                                                            onQueryChange(
-                                                                TextFieldValue(
-                                                                    "",
-                                                                ),
-                                                            )
-                                                        },
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.close),
-                                                            contentDescription = null,
-                                                        )
-                                                    }
-                                                }
+                                            if (query.text.isNotEmpty()) {
                                                 IconButton(
                                                     onClick = {
-                                                        onActiveChange(false)
+                                                        onQueryChange(TextFieldValue(""))
+                                                        searchBarFocusRequester.requestFocus()
+                                                        keyboardController?.show()
+                                                    },
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.close),
+                                                        contentDescription = stringResource(R.string.clear),
+                                                    )
+                                                }
+                                            } else {
+                                                IconButton(
+                                                    onClick = {
+                                                        if (active) {
+                                                            onActiveChange(false)
+                                                        }
                                                         navController.navigate("recognition") {
                                                             launchSingleTop = true
                                                         }
@@ -1338,37 +1335,15 @@ class MainActivity : ComponentActivity() {
                                                         contentDescription = stringResource(R.string.music_recognition),
                                                     )
                                                 }
-                                            } else if (currentRoute?.startsWith(OnlineSearchResultRoutePrefix) == true) {
-                                                OnlineSearchSortMenu(
-                                                    selectedSort = onlineSearchSort,
-                                                    onSortSelected = { onlineSearchSort = it },
-                                                )
                                             }
                                         }
                                     },
                                     modifier = Modifier.focusRequester(searchBarFocusRequester),
                                     focusRequester = searchBarFocusRequester,
                                     colors =
-                                        if (pureBlack && active) {
-                                            SearchBarDefaults.colors(
-                                                containerColor = Color.Black,
-                                                dividerColor = Color.DarkGray,
-                                                inputFieldColors =
-                                                    TextFieldDefaults.colors(
-                                                        focusedTextColor = Color.White,
-                                                        unfocusedTextColor = Color.Gray,
-                                                        focusedContainerColor = Color.Transparent,
-                                                        unfocusedContainerColor = Color.Transparent,
-                                                        cursorColor = Color.White,
-                                                        focusedIndicatorColor = Color.Transparent,
-                                                        unfocusedIndicatorColor = Color.Transparent,
-                                                    ),
-                                            )
-                                        } else {
-                                            SearchBarDefaults.colors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                            )
-                                        },
+                                        SearchBarDefaults.colors(
+                                            containerColor = Color(35, 35, 38),
+                                        ),
                                 ) {
                                     Crossfade(
                                         targetState = searchSource,
@@ -1926,62 +1901,4 @@ private fun TranslucentTopAppBarIconButton(
     )
 }
 
-@Composable
-private fun OnlineSearchSortMenu(
-    selectedSort: OnlineSearchSort,
-    onSortSelected: (OnlineSearchSort) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options =
-        remember {
-            listOf(
-                OnlineSearchSort.DEFAULT,
-                OnlineSearchSort.VIEWS,
-            )
-        }
-
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                painter = painterResource(R.drawable.filter_alt),
-                contentDescription = null,
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            options.forEach { sort ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text =
-                                stringResource(
-                                    when (sort) {
-                                        OnlineSearchSort.DEFAULT -> R.string.default_style
-                                        OnlineSearchSort.VIEWS -> R.string.views
-                                    },
-                                ),
-                        )
-                    },
-                    onClick = {
-                        expanded = false
-                        onSortSelected(sort)
-                    },
-                    leadingIcon = {
-                        if (sort == selectedSort) {
-                            Icon(
-                                painter = painterResource(R.drawable.done),
-                                contentDescription = null,
-                            )
-                        } else {
-                            Spacer(Modifier.size(24.dp))
-                        }
-                    },
-                )
-            }
-        }
-    }
-}
 

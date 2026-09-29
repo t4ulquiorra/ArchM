@@ -184,27 +184,10 @@ fun SearchScreen(
                 LocalPlayerAwareWindowInsets.current
                     .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
                     .add(WindowInsets.statusBars)
+                    .add(WindowInsets(top = 64.dp))
                     .asPaddingValues(),
             modifier = Modifier.fillMaxSize(),
         ) {
-            item(
-                key = "search_field",
-                contentType = "search_field",
-            ) {
-                SearchEntryField(
-                    onClick = onSearchClick,
-                    onRecognitionClick = {
-                        navController.navigate("recognition") {
-                            launchSingleTop = true
-                        }
-                    },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .animateItem(),
-                )
-            }
 
             when (val currentState = state) {
                 SearchDiscoveryScreenState.Loading -> {
@@ -279,6 +262,7 @@ fun SearchScreen(
                                 for (item in rowItems) {
                                     MoodCategoryCard(
                                         title = item.title,
+                                        stripeColor = item.stripeColor,
                                         endpoint = item.endpoint,
                                         onClick = {
                                             navController.navigate("youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}")
@@ -322,6 +306,7 @@ fun SearchScreen(
                                 for (item in rowItems) {
                                     MoodCategoryCard(
                                         title = item.title,
+                                        stripeColor = item.stripeColor,
                                         endpoint = item.endpoint,
                                         onClick = {
                                             navController.navigate("youtube_browse/${item.endpoint.browseId}?params=${item.endpoint.params}")
@@ -341,64 +326,65 @@ fun SearchScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchEntryField(
-    onClick: () -> Unit,
-    onRecognitionClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    SearchBar(
-        inputField = {
-            SearchBarDefaults.InputField(
-                query = "",
-                onQueryChange = { onClick() },
-                onSearch = { onClick() },
-                expanded = false,
-                onExpandedChange = { expanded ->
-                    if (expanded) onClick()
-                },
-                placeholder = {
-                    Text(
-                        text = "Search for songs...",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.search),
-                        contentDescription = null,
-                    )
-                },
-                trailingIcon = {
-                    IconButton(onClick = onRecognitionClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.mic),
-                            contentDescription = stringResource(R.string.music_recognition),
-                        )
-                    }
-                },
+fun getMoodCategoryColor(title: String, stripeColor: Long): Color {
+    if (stripeColor != 0L) {
+        val color = Color(stripeColor)
+        if (color != Color.Transparent && color != Color.Black && color != Color(30, 30, 30)) {
+            return color
+        }
+    }
+    val cleanTitle = title.trim().lowercase()
+    return when {
+        cleanTitle.contains("chill") -> Color(0xFF287884)
+        cleanTitle.contains("commute") -> Color(0xFF4C5D73)
+        cleanTitle.contains("energize") -> Color(0xFFBA5D00)
+        cleanTitle.contains("sad") || cleanTitle.contains("heartbreak") -> Color(0xFF4A5568)
+        cleanTitle.contains("feel good") -> Color(0xFF9E6500)
+        cleanTitle.contains("romance") || cleanTitle.contains("love") -> Color(0xFF8F2D56)
+        cleanTitle.contains("focus") -> Color(0xFF2E4057)
+        cleanTitle.contains("workout") -> Color(0xFFB33E2B)
+        cleanTitle.contains("party") -> Color(0xFF7A2062)
+        cleanTitle.contains("sleep") -> Color(0xFF1E3A5F)
+        cleanTitle.contains("rock") -> Color(0xFF7F2626)
+        cleanTitle.contains("pop") -> Color(0xFF8C3060)
+        cleanTitle.contains("hip-hop") || cleanTitle.contains("rap") -> Color(0xFF6A3D18)
+        cleanTitle.contains("indie") || cleanTitle.contains("alternative") -> Color(0xFF2D5A47)
+        cleanTitle.contains("dance") || cleanTitle.contains("electronic") -> Color(0xFF1D5A6E)
+        cleanTitle.contains("r&b") || cleanTitle.contains("soul") -> Color(0xFF5C2B4E)
+        cleanTitle.contains("country") -> Color(0xFF7D4E2D)
+        cleanTitle.contains("jazz") -> Color(0xFF4A3E56)
+        cleanTitle.contains("classical") -> Color(0xFF3D4E5B)
+        cleanTitle.contains("metal") -> Color(0xFF36393F)
+        cleanTitle.contains("k-pop") -> Color(0xFF852D68)
+        cleanTitle.contains("latin") -> Color(0xFF8A4018)
+        cleanTitle.contains("bollywood") || cleanTitle.contains("hindi") -> Color(0xFF8A3040)
+        cleanTitle.contains("punjabi") -> Color(0xFF854B10)
+        cleanTitle.contains("90s") -> Color(0xFF3D5A80)
+        cleanTitle.contains("80s") -> Color(0xFF5C4D7D)
+        cleanTitle.contains("70s") -> Color(0xFF6E4D2B)
+        else -> {
+            val palette = listOf(
+                Color(0xFF287884), Color(0xFF4C5D73), Color(0xFFBA5D00),
+                Color(0xFF4A5568), Color(0xFF9E6500), Color(0xFF8F2D56),
+                Color(0xFF2E4057), Color(0xFFB33E2B), Color(0xFF7A2062),
+                Color(0xFF1E3A5F), Color(0xFF2D5A47), Color(0xFF5C2B4E),
             )
-        },
-        expanded = false,
-        onExpandedChange = { expanded ->
-            if (expanded) onClick()
-        },
-        windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
-        modifier = modifier.fillMaxWidth(),
-    ) {}
+            palette[kotlin.math.abs(title.hashCode()) % palette.size]
+        }
+    }
 }
 
 @Composable
 fun MoodCategoryCard(
     title: String,
+    stripeColor: Long,
     endpoint: BrowseEndpoint,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val artworkUrl = rememberMoodAndGenresArtworkUrl(endpoint)
     val artworkModel = rememberMoodAndGenresArtworkModel(endpoint, artworkUrl)
+    val cardBg = remember(title, stripeColor) { getMoodCategoryColor(title, stripeColor) }
 
     Box(
         modifier =
@@ -406,8 +392,8 @@ fun MoodCategoryCard(
                 .fillMaxWidth()
                 .height(84.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color(30, 30, 30))
-                .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                .background(cardBg)
+                .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(10.dp))
                 .clickable(onClick = onClick),
     ) {
         if (artworkModel != null) {
@@ -418,15 +404,15 @@ fun MoodCategoryCard(
                 modifier =
                     Modifier
                         .align(Alignment.BottomEnd)
-                        .offset(x = 8.dp, y = 12.dp)
+                        .offset(x = 10.dp, y = 14.dp)
                         .size(64.dp)
                         .rotate(25f)
-                        .clip(RoundedCornerShape(4.dp)),
+                        .clip(RoundedCornerShape(6.dp)),
             )
         }
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
             color = Color.White,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

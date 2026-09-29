@@ -133,6 +133,10 @@ fun NavGraphBuilder.navigationBuilder(
         ListenTogetherScreen(navController, showTopBar = true)
     }
 
+    composable("listen_together/rooms") {
+        ListenTogetherScreen(navController, showTopBar = true)
+    }
+
     composable("listen_together/chat") {
         CommentTogetherScreen(navController)
     }

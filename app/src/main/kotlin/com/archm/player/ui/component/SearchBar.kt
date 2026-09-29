@@ -89,6 +89,56 @@ import androidx.compose.ui.util.lerp
 import com.archm.player.constants.AppBarHeight
 import kotlin.math.max
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+
+@Composable
+fun CyclingSearchPlaceholder(
+    modifier: Modifier = Modifier,
+) {
+    val placeholders = remember {
+        listOf(
+            "Search for songs...",
+            "Search for artists...",
+            "Search for albums...",
+            "Search for podcasts...",
+        )
+    }
+    var currentIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            delay(2800)
+            currentIndex = (currentIndex + 1) % placeholders.size
+        }
+    }
+
+    AnimatedContent(
+        targetState = placeholders[currentIndex],
+        transitionSpec = {
+            (slideInVertically { height -> height / 2 } + fadeIn(tween(400)))
+                .togetherWith(slideOutVertically { height -> -height / 2 } + fadeOut(tween(400)))
+        },
+        label = "cyclingSearchPlaceholder",
+        modifier = modifier,
+    ) { targetText ->
+        Text(
+            text = targetText,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = 0.5f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
 @ExperimentalMaterial3Api
 @Composable
 fun TopSearch(
@@ -102,151 +152,75 @@ fun TopSearch(
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    shape: Shape = SearchBarDefaults.inputFieldShape,
+    shape: Shape = RoundedCornerShape(10.dp),
     colors: SearchBarColors =
         SearchBarDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = Color(35, 35, 38),
         ),
-    tonalElevation: Dp = SearchBarDefaults.TonalElevation,
-    windowInsets: WindowInsets = WindowInsets.systemBars,
+    tonalElevation: Dp = 0.dp,
+    windowInsets: WindowInsets = WindowInsets.statusBars,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     focusRequester: FocusRequester = remember { FocusRequester() },
     leftFocusRequester: FocusRequester? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val animationProgress: Float by animateFloatAsState(
-        targetValue = if (active) 1f else 0f,
-        animationSpec = tween(durationMillis = AnimationDurationMillis),
-        label = "SearchBarAnimation",
-    )
-
-    val defaultInputFieldShape = SearchBarDefaults.inputFieldShape
-    val defaultFullScreenShape = SearchBarDefaults.fullScreenShape
-    val animatedShape by remember {
-        derivedStateOf {
-            when {
-                shape == defaultInputFieldShape -> {
-                    val animatedRadius = SearchBarCornerRadius * (1 - animationProgress)
-                    RoundedCornerShape(CornerSize(animatedRadius))
-                }
-
-                animationProgress == 1f -> {
-                    defaultFullScreenShape
-                }
-
-                else -> {
-                    shape
-                }
-            }
-        }
-    }
-
-    val topInset = windowInsets.asPaddingValues().calculateTopPadding()
-    val startInset = windowInsets.asPaddingValues().calculateStartPadding(LocalLayoutDirection.current)
-    val endInset = windowInsets.asPaddingValues().calculateEndPadding(LocalLayoutDirection.current)
-
-    val topPadding = SearchBarVerticalPadding + topInset
-    val animatedSurfaceTopPadding = lerp(topPadding, 0.dp, animationProgress)
-    val animatedInputFieldPadding by remember {
-        derivedStateOf {
-            PaddingValues(
-                start = startInset * animationProgress,
-                top = topPadding * animationProgress,
-                end = endInset * animationProgress,
-                bottom = SearchBarVerticalPadding * animationProgress,
-            )
-        }
-    }
-
-    BoxWithConstraints(
-        modifier = modifier.offset { IntOffset(x = 0, y = 0) },
-        propagateMinConstraints = true,
+    Column(
+        modifier =
+            if (active) {
+                modifier.fillMaxSize()
+            } else {
+                modifier.fillMaxWidth()
+            },
     ) {
-        val height: Dp
-        val width: Dp
-        val startPadding: Dp
-        val endPadding: Dp
-        with(LocalDensity.current) {
-            val startWidth = constraints.maxWidth.toFloat()
-            val startHeight =
-                max(constraints.minHeight, InputFieldHeight.roundToPx())
-                    .coerceAtMost(constraints.maxHeight)
-                    .toFloat()
-            val endWidth = constraints.maxWidth.toFloat()
-            val endHeight = constraints.maxHeight.toFloat()
-
-            height = lerp(startHeight, endHeight, animationProgress).toDp()
-            width = lerp(startWidth, endWidth, animationProgress).toDp()
-            startPadding =
-                lerp(
-                    (SearchBarHorizontalPadding + startInset).roundToPx().toFloat(),
-                    0f,
-                    animationProgress,
-                ).toDp()
-            endPadding =
-                lerp(
-                    (SearchBarHorizontalPadding + endInset).roundToPx().toFloat(),
-                    0f,
-                    animationProgress,
-                ).toDp()
-        }
-
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(topInset + AppBarHeight)
-                    .background(color = MaterialTheme.colorScheme.surface),
-        )
-
         Surface(
-            shape = animatedShape,
-            color = colors.containerColor,
-            contentColor = contentColorFor(colors.containerColor),
+            shape = RoundedCornerShape(10.dp),
+            color = Color(35, 35, 38),
+            contentColor = Color.White,
+            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
             tonalElevation = tonalElevation,
             modifier =
                 Modifier
-                    .padding(
-                        top = animatedSurfaceTopPadding,
-                        start = startPadding,
-                        end = endPadding,
-                    ).size(width = width, height = height),
+                    .windowInsetsPadding(windowInsets)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .height(InputFieldHeight),
         ) {
-            Column {
-                SearchBarInputField(
-                    query = query,
-                    onQueryChange = onQueryChange,
-                    onSearch = onSearch,
-                    active = active,
-                    onActiveChange = onActiveChange,
-                    modifier = Modifier.padding(animatedInputFieldPadding),
-                    enabled = enabled,
-                    placeholder = placeholder,
-                    leadingIcon = leadingIcon,
-                    trailingIcon = trailingIcon,
-                    colors =
-                        TextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.primary,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    interactionSource = interactionSource,
-                    focusRequester = focusRequester,
-                    leftFocusRequester = leftFocusRequester,
-                )
+            SearchBarInputField(
+                query = query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                active = active,
+                onActiveChange = onActiveChange,
+                modifier = Modifier.fillMaxWidth().height(InputFieldHeight),
+                enabled = enabled,
+                placeholder = placeholder,
+                leadingIcon = leadingIcon,
+                trailingIcon = trailingIcon,
+                colors =
+                    TextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White.copy(alpha = 0.7f),
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        cursorColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                interactionSource = interactionSource,
+                focusRequester = focusRequester,
+                leftFocusRequester = leftFocusRequester,
+            )
+        }
 
-                if (animationProgress > 0) {
-                    Column(Modifier.alpha(animationProgress)) {
-                        HorizontalDivider(color = colors.dividerColor)
-                        content()
-                    }
-                }
-            }
+        if (active) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                content = content,
+            )
         }
     }
 

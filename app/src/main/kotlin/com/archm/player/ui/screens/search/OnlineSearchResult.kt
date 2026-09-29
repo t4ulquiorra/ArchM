@@ -80,7 +80,11 @@ import com.music.innertube.models.YTItem
 import com.music.innertube.pages.SearchSummary
 import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.YouTubeQueue
-import com.archm.player.ui.component.ChipsRow
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.ui.unit.sp
 import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeListItem
@@ -181,7 +185,7 @@ fun OnlineSearchResult(
         }
     }
 
-    val ytItemContent: @Composable LazyItemScope.(YTItem) -> Unit = { item: YTItem ->
+    val ytItemContent: @Composable LazyItemScope.(YTItem, Boolean) -> Unit = { item: YTItem, showDivider: Boolean ->
         val longClick = {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             menuState.show {
@@ -283,14 +287,16 @@ fun OnlineSearchResult(
                             onLongClick = longClick,
                         ),
             )
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp)
-                        .height(0.5.dp)
-                        .background(Color.White.copy(alpha = 0.08f)),
-            )
+            if (showDivider) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp)
+                            .height(0.5.dp)
+                            .background(Color.White.copy(alpha = 0.28f)),
+                )
+            }
         }
     }
 
@@ -300,46 +306,69 @@ fun OnlineSearchResult(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
     ) {
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 0.dp,
-            shadowElevation = 1.dp,
+        val tabs = remember {
+            listOf(
+                null to "ALL",
+                FILTER_SONG to "SONGS",
+                FILTER_ALBUM to "ALBUMS",
+                FILTER_VIDEO to "VIDEOS",
+                FILTER_ARTIST to "ARTISTS",
+                FILTER_FEATURED_PLAYLIST to "PLAYLISTS",
+            )
+        }
+        val selectedTabIndex = tabs.indexOfFirst {
+            it.first == searchFilter || (it.first == FILTER_FEATURED_PLAYLIST && searchFilter == FILTER_COMMUNITY_PLAYLIST)
+        }.coerceAtLeast(0)
+
+        ScrollableTabRow(
+            selectedTabIndex = selectedTabIndex,
+            containerColor = MaterialTheme.colorScheme.background,
+            contentColor = Color.White,
+            edgePadding = 16.dp,
+            indicator = { tabPositions ->
+                if (selectedTabIndex < tabPositions.size) {
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                        color = Color(0xFFFA2D48),
+                        height = 2.5.dp,
+                    )
+                }
+            },
+            divider = {
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = Color.White.copy(alpha = 0.12f),
+                )
+            },
             modifier =
                 Modifier
                     .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top).add(WindowInsets(top = AppBarHeight)))
                     .fillMaxWidth(),
         ) {
-            ChipsRow(
-                chips =
-                    listOf(
-                        null to stringResource(R.string.filter_all),
-                        FILTER_SONG to stringResource(R.string.filter_songs),
-                        FILTER_VIDEO to stringResource(R.string.filter_videos),
-                        FILTER_ALBUM to stringResource(R.string.filter_albums),
-                        FILTER_ARTIST to stringResource(R.string.filter_artists),
-                        FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_community_playlists),
-                        FILTER_FEATURED_PLAYLIST to stringResource(R.string.filter_featured_playlists),
-                    ),
-                currentValue = searchFilter,
-                onValueUpdate = {
-                    if (viewModel.filter.value != it) {
-                        viewModel.filter.value = it
-                    }
-                    coroutineScope.launch {
-                        lazyListState.animateScrollToItem(0)
-                    }
-                },
-                icons =
-                    mapOf(
-                        null to R.drawable.search,
-                        FILTER_SONG to R.drawable.music_note,
-                        FILTER_VIDEO to R.drawable.video,
-                        FILTER_ALBUM to R.drawable.album,
-                        FILTER_ARTIST to R.drawable.artist,
-                        FILTER_COMMUNITY_PLAYLIST to R.drawable.queue_music,
-                        FILTER_FEATURED_PLAYLIST to R.drawable.playlist_play,
-                    ),
-            )
+            tabs.forEachIndexed { index, (filter, label) ->
+                val selected = selectedTabIndex == index
+                Tab(
+                    selected = selected,
+                    onClick = {
+                        if (viewModel.filter.value != filter) {
+                            viewModel.filter.value = filter
+                        }
+                        coroutineScope.launch {
+                            lazyListState.animateScrollToItem(0)
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                                letterSpacing = 0.5.sp,
+                            ),
+                            color = if (selected) Color(0xFFFA2D48) else Color.White.copy(alpha = 0.6f),
+                        )
+                    },
+                )
+            }
         }
 
         LazyColumn(
@@ -358,7 +387,7 @@ fun OnlineSearchResult(
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                                 thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                color = Color.White.copy(alpha = 0.28f),
                             )
                         }
                     }
@@ -393,8 +422,9 @@ fun OnlineSearchResult(
                         }
                     }
 
+                    val sortedItems = viewModel.sortedItems(section.items, searchSort)
                     itemsIndexed(
-                        items = viewModel.sortedItems(section.items, searchSort),
+                        items = sortedItems,
                         key = { itemIndex, item ->
                             if (section.isTopResult) {
                                 "top_result_${item.id}_$itemIndex"
@@ -403,8 +433,8 @@ fun OnlineSearchResult(
                             }
                         },
                         contentType = { _, _ -> "search_result" },
-                    ) { _, item ->
-                        ytItemContent(item)
+                    ) { itemIndex, item ->
+                        ytItemContent(item, itemIndex < sortedItems.lastIndex)
                     }
 
                     item(
@@ -424,12 +454,13 @@ fun OnlineSearchResult(
                     }
                 }
             } else {
+                val sortedFilteredItems = viewModel.sortedItems(itemsPage?.items.orEmpty().distinctBy { it.id }, searchSort)
                 itemsIndexed(
-                    items = viewModel.sortedItems(itemsPage?.items.orEmpty().distinctBy { it.id }, searchSort),
+                    items = sortedFilteredItems,
                     key = { index, item -> "filtered_${item.id}_$index" },
                     contentType = { _, _ -> "search_result" },
-                ) { _, item ->
-                    ytItemContent(item)
+                ) { index, item ->
+                    ytItemContent(item, index < sortedFilteredItems.lastIndex)
                 }
 
                 if (itemsPage?.continuation != null) {

@@ -301,7 +301,7 @@ fun MainTopBar(
                 }
                 IconButton(
                     onClick = {
-                        navController.navigate("listen_together/rooms") {
+                        navController.navigate("listen_together_from_topbar") {
                             launchSingleTop = true
                         }
                     },

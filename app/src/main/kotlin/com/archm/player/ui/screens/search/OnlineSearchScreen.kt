@@ -127,28 +127,14 @@ fun OnlineSearchScreen(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
+                                .padding(start = 16.dp, end = 12.dp, top = 2.dp, bottom = 2.dp)
                                 .animateItem(),
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = onDismiss,
-                                modifier = Modifier.size(36.dp),
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.arrow_back),
-                                    contentDescription = null,
-                                    tint = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = "Recently Searched",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
+                        Text(
+                            text = "Recently Searched",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
+                        )
 
                         if (viewState.history.isNotEmpty()) {
                             TextButton(onClick = { viewModel.clearHistory() }) {
@@ -166,7 +152,7 @@ fun OnlineSearchScreen(
                     items = viewState.history,
                     key = { _, history -> "history_${history.query}" },
                     contentType = { _, _ -> "history" },
-                ) { _, history ->
+                ) { index, history ->
                     Column(
                         modifier =
                             Modifier
@@ -250,23 +236,26 @@ fun OnlineSearchScreen(
                             }
                         }
 
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 16.dp)
-                                    .height(0.5.dp)
-                                    .background(Color.White.copy(alpha = 0.08f)),
-                        )
+                        if (index < viewState.history.lastIndex) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 16.dp)
+                                        .height(0.5.dp)
+                                        .background(Color.White.copy(alpha = 0.28f)),
+                            )
+                        }
                     }
                 }
             } else {
                 if (viewState.suggestions.isNotEmpty()) {
+                    val top5Suggestions = remember(viewState.suggestions) { viewState.suggestions.take(5) }
                     itemsIndexed(
-                        items = viewState.suggestions.take(5),
+                        items = top5Suggestions,
                         key = { _, suggestion -> "suggestion_$suggestion" },
                         contentType = { _, _ -> "suggestion" },
-                    ) { _, suggestion ->
+                    ) { index, suggestion ->
                         Column(
                             modifier =
                                 Modifier
@@ -321,14 +310,16 @@ fun OnlineSearchScreen(
                                 }
                             }
 
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 16.dp)
-                                        .height(0.5.dp)
-                                        .background(Color.White.copy(alpha = 0.08f)),
-                            )
+                            if (index < top5Suggestions.lastIndex) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 16.dp)
+                                            .height(0.5.dp)
+                                            .background(Color.White.copy(alpha = 0.28f)),
+                                )
+                            }
                         }
                     }
                 }
@@ -345,11 +336,11 @@ fun OnlineSearchScreen(
                         )
                     }
 
-                    items(
+                    itemsIndexed(
                         items = distinctResultItems,
-                        key = { item -> "top_result_${item.id}" },
-                        contentType = { item -> item::class },
-                    ) { item ->
+                        key = { _, item -> "top_result_${item.id}" },
+                        contentType = { _, item -> item::class },
+                    ) { index, item ->
                         val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId
                         Column(
                             modifier =
@@ -509,14 +500,16 @@ fun OnlineSearchScreen(
                                             },
                                         ),
                             )
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 16.dp)
-                                        .height(0.5.dp)
-                                        .background(Color.White.copy(alpha = 0.08f)),
-                            )
+                            if (index < distinctResultItems.lastIndex) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 16.dp)
+                                            .height(0.5.dp)
+                                            .background(Color.White.copy(alpha = 0.28f)),
+                                )
+                            }
                         }
                     }
                 }
