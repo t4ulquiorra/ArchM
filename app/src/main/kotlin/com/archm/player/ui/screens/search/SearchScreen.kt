@@ -94,7 +94,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
-import com.archm.player.constants.DisableBlurKey
 import com.archm.player.extensions.togglePlayPause
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
@@ -114,6 +113,11 @@ import com.archm.player.ui.menu.YouTubeArtistMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.screens.MoodAndGenresButton
 import com.archm.player.ui.screens.MoodAndGenresButtonHeight
+import androidx.compose.foundation.isSystemInDarkTheme
+import com.archm.player.constants.DarkMode
+import com.archm.player.constants.DarkModeKey
+import com.archm.player.constants.PureBlackKey
+import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.viewmodels.SearchDiscoveryScreenState
 import com.archm.player.viewmodels.SearchDiscoveryTab
@@ -134,9 +138,14 @@ fun SearchScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
-    val (disableBlur) = rememberPreference(DisableBlurKey, false)
-    val tonalStart = MaterialTheme.colorScheme.primaryContainer
-    val tonalMiddle = MaterialTheme.colorScheme.secondaryContainer
+    val pureBlackPref by rememberPreference(PureBlackKey, defaultValue = false)
+    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
+        if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+    }
+    val effectivePureBlack = pureBlack || (pureBlackPref && useDarkTheme)
+    val backgroundColor = if (effectivePureBlack) Color.Black else MaterialTheme.colorScheme.background
     val lazyListState = rememberLazyListState()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val scrollToTop =
@@ -159,6 +168,7 @@ fun SearchScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .background(backgroundColor)
                 .then(
                     // Step 2b: attach the shell's floating-header connection here so Search's
                     // scroll/fling writes Search's own header state and can't leak elsewhere.
@@ -169,25 +179,6 @@ fun SearchScreen(
                     },
                 ),
     ) {
-        if (!disableBlur) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(430.dp)
-                        .align(Alignment.TopCenter)
-                        .drawWithCache {
-                            val brush =
-                                Brush.verticalGradient(
-                                    0f to tonalStart.copy(alpha = 0.30f),
-                                    0.42f to tonalMiddle.copy(alpha = 0.14f),
-                                    1f to Color.Transparent,
-                                )
-                            onDrawBehind { drawRect(brush) }
-                        },
-            )
-        }
-
         LazyColumn(
             state = lazyListState,
             contentPadding =
@@ -238,7 +229,7 @@ fun SearchScreen(
                     Text(
                         text = stringResource(R.string.search),
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
                     )
                 }
             }
@@ -248,7 +239,7 @@ fun SearchScreen(
                 contentType = "landing_sticky_bar",
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.background,
+                    color = backgroundColor,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Surface(

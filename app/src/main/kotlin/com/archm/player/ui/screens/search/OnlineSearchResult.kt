@@ -61,6 +61,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.isSystemInDarkTheme
+import com.archm.player.constants.DarkMode
+import com.archm.player.constants.DarkModeKey
+import com.archm.player.constants.PureBlackKey
+import com.archm.player.utils.rememberEnumPreference
+import com.archm.player.utils.rememberPreference
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
@@ -103,8 +109,18 @@ import com.archm.player.viewmodels.OnlineSearchViewModel
 fun OnlineSearchResult(
     navController: NavController,
     searchSort: OnlineSearchSort = OnlineSearchSort.DEFAULT,
+    pureBlack: Boolean = false,
     viewModel: OnlineSearchViewModel = hiltViewModel(),
 ) {
+    val pureBlackPref by rememberPreference(PureBlackKey, defaultValue = false)
+    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
+        if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+    }
+    val effectivePureBlack = pureBlack || (pureBlackPref && useDarkTheme)
+    val backgroundColor = if (effectivePureBlack) Color.Black else MaterialTheme.colorScheme.background
+
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val haptic = LocalHapticFeedback.current
@@ -306,7 +322,7 @@ fun OnlineSearchResult(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(backgroundColor),
     ) {
         val tabs = listOf(
             null to stringResource(R.string.filter_all),
@@ -323,7 +339,7 @@ fun OnlineSearchResult(
 
         ScrollableTabRow(
             selectedTabIndex = selectedTabIndex,
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = backgroundColor,
             contentColor = Color.White,
             edgePadding = 16.dp,
             indicator = { tabPositions ->

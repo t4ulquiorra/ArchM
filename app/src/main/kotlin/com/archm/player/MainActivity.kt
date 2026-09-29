@@ -1259,6 +1259,7 @@ class MainActivity : ComponentActivity() {
                                     onSearch = onSearch,
                                     active = active,
                                     onActiveChange = onActiveChange,
+                                    pureBlack = pureBlack,
                                     placeholder = {
                                         if (isLanding) {
                                             CyclingSearchPlaceholder()

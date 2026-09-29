@@ -156,6 +156,7 @@ fun TopSearch(
     onActiveChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    pureBlack: Boolean = false,
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
@@ -171,16 +172,18 @@ fun TopSearch(
     leftFocusRequester: FocusRequester? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+
     Column(
         modifier =
             if (active) {
-                modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+                modifier.fillMaxSize().background(backgroundColor)
             } else {
                 modifier.fillMaxWidth()
             },
     ) {
         Surface(
-            color = MaterialTheme.colorScheme.background,
+            color = backgroundColor,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Surface(
