@@ -1244,7 +1244,6 @@ class MainActivity : ComponentActivity() {
                             AnimatedVisibility(
                                 visible =
                                     active ||
-                                        navBackStackEntry?.destination?.route == Screens.Search.route ||
                                         navBackStackEntry?.destination?.route?.startsWith(OnlineSearchResultRoutePrefix) == true,
                                 enter = fadeIn(animationSpec = tween(durationMillis = 300)),
                                 exit = fadeOut(animationSpec = tween(durationMillis = 200)),

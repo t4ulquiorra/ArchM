@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -185,7 +186,7 @@ fun OnlineSearchResult(
         }
     }
 
-    val ytItemContent: @Composable LazyItemScope.(YTItem, Boolean) -> Unit = { item: YTItem, showDivider: Boolean ->
+    val ytItemContent: @Composable LazyItemScope.(YTItem, Boolean, Boolean) -> Unit = { item: YTItem, showDivider: Boolean, isVideo: Boolean ->
         val longClick = {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             menuState.show {
@@ -232,6 +233,7 @@ fun OnlineSearchResult(
         ) {
             YouTubeListItem(
                 item = item,
+                isVideo = isVideo,
                 viewCountText = (item as? SongItem)?.viewCountText,
                 containerColor = Color.Transparent,
                 color = Color.Transparent,
@@ -306,18 +308,17 @@ fun OnlineSearchResult(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
     ) {
-        val tabs = remember {
-            listOf(
-                null to "ALL",
-                FILTER_SONG to "SONGS",
-                FILTER_ALBUM to "ALBUMS",
-                FILTER_VIDEO to "VIDEOS",
-                FILTER_ARTIST to "ARTISTS",
-                FILTER_FEATURED_PLAYLIST to "PLAYLISTS",
-            )
-        }
+        val tabs = listOf(
+            null to stringResource(R.string.filter_all),
+            FILTER_SONG to stringResource(R.string.filter_songs),
+            FILTER_VIDEO to stringResource(R.string.filter_videos),
+            FILTER_ARTIST to stringResource(R.string.filter_artists),
+            FILTER_ALBUM to stringResource(R.string.filter_albums),
+            FILTER_FEATURED_PLAYLIST to stringResource(R.string.filter_featured_playlists),
+            FILTER_COMMUNITY_PLAYLIST to stringResource(R.string.filter_community_playlists),
+        )
         val selectedTabIndex = tabs.indexOfFirst {
-            it.first == searchFilter || (it.first == FILTER_FEATURED_PLAYLIST && searchFilter == FILTER_COMMUNITY_PLAYLIST)
+            it.first == searchFilter
         }.coerceAtLeast(0)
 
         ScrollableTabRow(
@@ -329,7 +330,7 @@ fun OnlineSearchResult(
                 if (selectedTabIndex < tabPositions.size) {
                     TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                        color = Color(0xFFFA2D48),
+                        color = MaterialTheme.colorScheme.primary,
                         height = 2.5.dp,
                     )
                 }
@@ -342,7 +343,7 @@ fun OnlineSearchResult(
             },
             modifier =
                 Modifier
-                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top).add(WindowInsets(top = AppBarHeight)))
+                    .windowInsetsPadding(WindowInsets.statusBars.add(WindowInsets(top = 58.dp)))
                     .fillMaxWidth(),
         ) {
             tabs.forEachIndexed { index, (filter, label) ->
@@ -364,7 +365,7 @@ fun OnlineSearchResult(
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                                 letterSpacing = 0.5.sp,
                             ),
-                            color = if (selected) Color(0xFFFA2D48) else Color.White.copy(alpha = 0.6f),
+                            color = if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.6f),
                         )
                     },
                 )
@@ -423,6 +424,7 @@ fun OnlineSearchResult(
                     }
 
                     val sortedItems = viewModel.sortedItems(section.items, searchSort)
+                    val isSectionVideo = section.title.contains("video", ignoreCase = true)
                     itemsIndexed(
                         items = sortedItems,
                         key = { itemIndex, item ->
@@ -434,7 +436,7 @@ fun OnlineSearchResult(
                         },
                         contentType = { _, _ -> "search_result" },
                     ) { itemIndex, item ->
-                        ytItemContent(item, itemIndex < sortedItems.lastIndex)
+                        ytItemContent(item, itemIndex < sortedItems.lastIndex, isSectionVideo)
                     }
 
                     item(
@@ -455,12 +457,13 @@ fun OnlineSearchResult(
                 }
             } else {
                 val sortedFilteredItems = viewModel.sortedItems(itemsPage?.items.orEmpty().distinctBy { it.id }, searchSort)
+                val isFilterVideo = searchFilter == FILTER_VIDEO
                 itemsIndexed(
                     items = sortedFilteredItems,
                     key = { index, item -> "filtered_${item.id}_$index" },
                     contentType = { _, _ -> "search_result" },
                 ) { index, item ->
-                    ytItemContent(item, index < sortedFilteredItems.lastIndex)
+                    ytItemContent(item, index < sortedFilteredItems.lastIndex, isFilterVideo)
                 }
 
                 if (itemsPage?.continuation != null) {

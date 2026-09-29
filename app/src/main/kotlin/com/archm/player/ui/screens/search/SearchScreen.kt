@@ -48,6 +48,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -59,8 +61,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import com.archm.player.ui.component.CyclingSearchPlaceholder
+import com.archm.player.ui.component.InputFieldHeight
+import com.archm.player.viewmodels.HomeViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -145,6 +151,9 @@ fun SearchScreen(
         }
     }
 
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val vmAccountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
+
     Box(
         modifier =
             Modifier
@@ -183,11 +192,97 @@ fun SearchScreen(
             contentPadding =
                 LocalPlayerAwareWindowInsets.current
                     .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                    .add(WindowInsets.statusBars)
-                    .add(WindowInsets(top = 64.dp))
                     .asPaddingValues(),
             modifier = Modifier.fillMaxSize(),
         ) {
+            item(
+                key = "landing_header",
+                contentType = "landing_header",
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier =
+                        Modifier
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, top = 8.dp, bottom = 0.dp),
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(30, 30, 30))
+                                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), CircleShape)
+                                .clickable { navController.navigate("account") },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.person),
+                            contentDescription = stringResource(R.string.account),
+                            tint = Color.White.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp),
+                        )
+                        if (!vmAccountImageUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = vmAccountImageUrl,
+                                contentDescription = stringResource(R.string.account),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = stringResource(R.string.search),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            }
+
+            stickyHeader(
+                key = "landing_sticky_bar",
+                contentType = "landing_sticky_bar",
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(35, 35, 38),
+                        contentColor = Color.White,
+                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
+                        modifier =
+                            Modifier
+                                .windowInsetsPadding(WindowInsets.statusBars)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .fillMaxWidth()
+                                .height(InputFieldHeight)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable {
+                                    onSearchClick()
+                                },
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.search),
+                                contentDescription = stringResource(R.string.search),
+                                tint = Color.White.copy(alpha = 0.7f),
+                            )
+                            CyclingSearchPlaceholder(
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+            }
 
             when (val currentState = state) {
                 SearchDiscoveryScreenState.Loading -> {

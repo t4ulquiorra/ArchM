@@ -1360,6 +1360,7 @@ fun formatReleaseSubtitle(
 fun YouTubeListItem(
     item: YTItem,
     modifier: Modifier = Modifier,
+    isVideo: Boolean = false,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
     albumIndex: Int? = null,
@@ -1401,6 +1402,7 @@ fun YouTubeListItem(
         }
     }
     val isLiked = item is SongItem && dbSong?.song?.liked == true
+    val isVideoItem = isVideo || (item as? SongItem)?.isVideoSong == true
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (isLiked && item is SongItem) {
@@ -1452,6 +1454,11 @@ fun YouTubeListItem(
             },
             badges = badges,
             thumbnailContent = {
+                val thumbModifier = if (isVideoItem) {
+                    Modifier.height(ListThumbnailSize).aspectRatio(16f / 9f)
+                } else {
+                    Modifier.size(ListThumbnailSize)
+                }
                 ItemThumbnail(
                     thumbnailUrl = item.thumbnail,
                     albumIndex = albumIndex,
@@ -1459,7 +1466,8 @@ fun YouTubeListItem(
                     isActive = isActive,
                     isPlaying = isPlaying,
                     shape = if (isArtist) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
-                    modifier = Modifier.size(ListThumbnailSize),
+                    modifier = thumbModifier,
+                    thumbnailRatio = if (isVideoItem) 16f / 9f else 1f,
                     accentColor = accentColor,
                 )
             },

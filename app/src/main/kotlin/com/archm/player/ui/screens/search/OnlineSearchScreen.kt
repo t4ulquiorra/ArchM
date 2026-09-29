@@ -118,26 +118,26 @@ fun OnlineSearchScreen(
                     .fillMaxSize(),
         ) {
             if (query.isEmpty()) {
-                item(
-                    key = "recently_searched_header",
-                    contentType = "section_header",
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 12.dp, top = 2.dp, bottom = 2.dp)
-                                .animateItem(),
+                if (viewState.history.isNotEmpty()) {
+                    item(
+                        key = "recently_searched_header",
+                        contentType = "section_header",
                     ) {
-                        Text(
-                            text = "Recently Searched",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 12.dp, top = 2.dp, bottom = 2.dp)
+                                    .animateItem(),
+                        ) {
+                            Text(
+                                text = "Recently Searched",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
+                            )
 
-                        if (viewState.history.isNotEmpty()) {
                             TextButton(onClick = { viewModel.clearHistory() }) {
                                 Text(
                                     text = "Clear",
@@ -147,9 +147,8 @@ fun OnlineSearchScreen(
                             }
                         }
                     }
-                }
 
-                itemsIndexed(
+                    itemsIndexed(
                     items = viewState.history,
                     key = { _, history -> "history_${history.query}" },
                     contentType = { _, _ -> "history" },
@@ -249,7 +248,8 @@ fun OnlineSearchScreen(
                         }
                     }
                 }
-            } else {
+            }
+        } else {
                 if (viewState.suggestions.isNotEmpty()) {
                     itemsIndexed(
                         items = top5Suggestions,

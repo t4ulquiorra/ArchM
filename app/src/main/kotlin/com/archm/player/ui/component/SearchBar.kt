@@ -174,50 +174,55 @@ fun TopSearch(
     Column(
         modifier =
             if (active) {
-                modifier.fillMaxSize()
+                modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
             } else {
                 modifier.fillMaxWidth()
             },
     ) {
         Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = Color(35, 35, 38),
-            contentColor = Color.White,
-            border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
-            tonalElevation = tonalElevation,
-            modifier =
-                Modifier
-                    .windowInsetsPadding(windowInsets)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .fillMaxWidth()
-                    .height(InputFieldHeight),
+            color = MaterialTheme.colorScheme.background,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            SearchBarInputField(
-                query = query,
-                onQueryChange = onQueryChange,
-                onSearch = onSearch,
-                active = active,
-                onActiveChange = onActiveChange,
-                modifier = Modifier.fillMaxWidth().height(InputFieldHeight),
-                enabled = enabled,
-                placeholder = placeholder,
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-                colors =
-                    TextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White.copy(alpha = 0.7f),
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        cursorColor = Color.White,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                interactionSource = interactionSource,
-                focusRequester = focusRequester,
-                leftFocusRequester = leftFocusRequester,
-            )
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(35, 35, 38),
+                contentColor = Color.White,
+                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
+                tonalElevation = tonalElevation,
+                modifier =
+                    Modifier
+                        .windowInsetsPadding(windowInsets)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .fillMaxWidth()
+                        .height(InputFieldHeight),
+            ) {
+                SearchBarInputField(
+                    query = query,
+                    onQueryChange = onQueryChange,
+                    onSearch = onSearch,
+                    active = active,
+                    onActiveChange = onActiveChange,
+                    modifier = Modifier.fillMaxWidth().height(InputFieldHeight),
+                    enabled = enabled,
+                    placeholder = placeholder,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    colors =
+                        TextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White.copy(alpha = 0.7f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            cursorColor = Color.White,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                    interactionSource = interactionSource,
+                    focusRequester = focusRequester,
+                    leftFocusRequester = leftFocusRequester,
+                )
+            }
         }
 
         if (active) {
