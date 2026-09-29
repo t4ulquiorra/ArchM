@@ -74,7 +74,6 @@ private data class HomeLocalContent(
     val quickPicks: List<Song>,
     val speedDialItems: List<LocalItem>,
     val forgottenFavorites: List<Song>,
-    val keepListening: List<LocalItem>,
 )
 
 private data class HomeRemoteContent(
@@ -96,7 +95,6 @@ private data class HomeContent(
             local.quickPicks.isNotEmpty() ||
                 local.speedDialItems.isNotEmpty() ||
                 local.forgottenFavorites.isNotEmpty() ||
-                local.keepListening.isNotEmpty() ||
                 remote.remoteQuickPicks?.items?.isNotEmpty() == true ||
                 remote.similarRecommendations.isNotEmpty() ||
                 remote.accountPlaylists.isNotEmpty() ||
@@ -300,7 +298,6 @@ class HomeViewModel @Inject constructor(
                 quickPicks = qPicks.orEmpty(),
                 speedDialItems = kListening.orEmpty().take(24),
                 forgottenFavorites = fFavorites.orEmpty(),
-                keepListening = kListening.orEmpty(),
             )
         }
 
@@ -347,13 +344,15 @@ class HomeViewModel @Inject constructor(
             isLoading,
             loadError,
         ) { content, prefs, loading, err ->
-            if (content.hasContent) {
+            if (loading && !hasLoadedOnce) {
+                HomeScreenState.Loading
+            } else if (content.hasContent) {
                 hasLoadedOnce = true
                 val uiState = HomeUiState(
                     quickPicks = ImmutableList.copyOf(content.local.quickPicks),
                     speedDialItems = ImmutableList.copyOf(content.local.speedDialItems),
                     forgottenFavorites = ImmutableList.copyOf(content.local.forgottenFavorites),
-                    keepListening = ImmutableList.copyOf(content.local.keepListening),
+                    keepListening = ImmutableList.of(),
                     similarRecommendations = ImmutableList.copyOf(content.remote.similarRecommendations),
                     accountPlaylists = ImmutableList.copyOf(content.remote.accountPlaylists),
                     homePage = content.remote.homePage,
@@ -808,7 +807,20 @@ class HomeViewModel @Inject constructor(
         loadError.value = null
 
         try {
-            loadPrimaryFeedPhase()
+            coroutineScope {
+                val localJob = launch(Dispatchers.IO) {
+                    try {
+                        loadLocalDataPhase()
+                    } catch (e: Exception) {
+                        reportException(e)
+                    }
+                }
+                val remoteJob = launch(Dispatchers.IO) {
+                    loadPrimaryFeedPhase()
+                }
+                localJob.join()
+                remoteJob.join()
+            }
         } finally {
             isLoading.value = false
             isRefreshing.value = false
@@ -817,14 +829,6 @@ class HomeViewModel @Inject constructor(
         allYtItems.value = similarRecommendations.value?.flatMap { it.items }.orEmpty() +
             homePage.value?.sections?.flatMap { it.items }.orEmpty()
 
-        // Background local and secondary recommendations
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                loadLocalDataPhase()
-            } catch (e: Exception) {
-                reportException(e)
-            }
-        }
         viewModelScope.launch(Dispatchers.IO) { getDailyDiscover() }
         viewModelScope.launch(Dispatchers.IO) { getCommunityPlaylists() }
         viewModelScope.launch(Dispatchers.IO) {
@@ -947,6 +951,15 @@ class HomeViewModel @Inject constructor(
     }
 
     init {
+        // Pre-hydrate local history immediately from cache/DB
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                loadLocalDataPhase()
+            } catch (e: Exception) {
+                reportException(e)
+            }
+        }
+
         // Trigger Public Remote Browse Immediately
         viewModelScope.launch(Dispatchers.IO) {
             load()

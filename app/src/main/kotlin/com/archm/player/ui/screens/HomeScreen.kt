@@ -10,7 +10,6 @@ package com.archm.player.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -18,7 +17,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -95,6 +93,7 @@ import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
+import com.archm.player.constants.AppBarHeight
 import com.archm.player.constants.QuickPicks
 import com.archm.player.constants.ShowHomeFilterChipsKey
 import com.archm.player.utils.rememberPreference
@@ -196,9 +195,13 @@ fun HomeScreen(
                     },
                 ),
     ) {
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val chipsExtra = if (showHomeFilterChips) 48.dp else 0.dp
+        val topClearance = statusBarTop + AppBarHeight + chipsExtra
+
         when (val state = screenState) {
             HomeScreenState.Loading -> {
-                HomeLoadingSkeleton()
+                HomeLoadingSkeleton(topClearance = topClearance)
             }
 
             HomeScreenState.Empty -> {
@@ -206,6 +209,7 @@ fun HomeScreen(
                     iconResId = R.drawable.music_note,
                     messageResId = R.string.no_results_found,
                     actionResId = R.string.retry,
+                    topClearance = topClearance,
                     onAction = { viewModel.onAction(HomeAction.Refresh) },
                 )
             }
@@ -215,6 +219,7 @@ fun HomeScreen(
                     iconResId = R.drawable.info,
                     messageResId = state.messageResId,
                     actionResId = R.string.retry,
+                    topClearance = topClearance,
                     onAction = { viewModel.onAction(HomeAction.Refresh) },
                 )
             }
@@ -241,25 +246,52 @@ fun HomeScreen(
 
 @Composable
 private fun HomeLoadingSkeleton(
+    topClearance: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
+    val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+    val layoutDirection = LocalLayoutDirection.current
     ShimmerHost(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
+                .padding(
+                    start = playerAwarePadding.calculateStartPadding(layoutDirection),
+                    end = playerAwarePadding.calculateEndPadding(layoutDirection),
+                    top = topClearance + 8.dp,
+                    bottom = playerAwarePadding.calculateBottomPadding(),
+                ),
     ) {
-        Spacer(
+        // 1. 2xN Resumed Listening Grid Shimmer
+        Column(
             modifier =
                 Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
                     .fillMaxWidth()
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-        )
+                    .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            repeat(2) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    repeat(2) {
+                        Spacer(
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .height(56.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                        )
+                    }
+                }
+            }
+        }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
+
+        // 2. Quick Picks Hero Title
         Row(
             modifier =
                 Modifier
@@ -275,6 +307,7 @@ private fun HomeLoadingSkeleton(
         }
         Spacer(Modifier.height(12.dp))
 
+        // 3. Quick Picks Carousel Cards
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier =
@@ -288,6 +321,8 @@ private fun HomeLoadingSkeleton(
         }
 
         Spacer(Modifier.height(24.dp))
+
+        // 4. Discovery Shelf Title
         Row(
             modifier =
                 Modifier
@@ -314,17 +349,25 @@ private fun HomeLoadingSkeleton(
 private fun HomeStatePane(
     @DrawableRes iconResId: Int?,
     @StringRes messageResId: Int?,
+    topClearance: androidx.compose.ui.unit.Dp = 0.dp,
     modifier: Modifier = Modifier,
     @StringRes actionResId: Int? = null,
     showLoadingIndicator: Boolean = false,
     onAction: (() -> Unit)? = null,
 ) {
+    val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+    val layoutDirection = LocalLayoutDirection.current
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
+                .padding(
+                    start = playerAwarePadding.calculateStartPadding(layoutDirection),
+                    end = playerAwarePadding.calculateEndPadding(layoutDirection),
+                    top = topClearance + 8.dp,
+                    bottom = playerAwarePadding.calculateBottomPadding(),
+                ),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -410,14 +453,6 @@ private fun HomeContent(
             }
                 ?: remoteQuickPicks?.items?.firstOrNull()?.thumbnail
                 ?: uiState.quickPicks.firstOrNull()?.song?.thumbnailUrl
-                ?: uiState.keepListening.firstOrNull()?.let {
-                    when (it) {
-                        is Song -> it.song.thumbnailUrl
-                        is Album -> it.album.thumbnailUrl
-                        is Artist -> it.artist.thumbnailUrl
-                        is Playlist -> it.thumbnails.firstOrNull()
-                    }
-                }
                 ?: uiState.homePage?.sections?.firstOrNull()?.items?.firstOrNull()?.thumbnail
         }
 
@@ -461,8 +496,8 @@ private fun HomeContent(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val chipsExtra = if (showHomeFilterChips && !uiState.homePage?.chips.isNullOrEmpty()) 48.dp else 0.dp
     val measuredTopBarDp = if (topAppBarHeightPx > 0) with(density) { topAppBarHeightPx.toDp() } else 0.dp
-    val topBarHeightDp = maxOf(measuredTopBarDp, statusBarTop + 64.dp + chipsExtra)
-    val feedTopPadding = topBarHeightDp + 12.dp
+    val topBarHeightDp = maxOf(measuredTopBarDp, statusBarTop + AppBarHeight + chipsExtra)
+    val feedTopPadding = topBarHeightDp + 8.dp
 
     Box(modifier = modifier.fillMaxSize()) {
         ExpressivePullToRefreshBox(
@@ -531,22 +566,6 @@ private fun HomeContent(
                         menuState = menuState,
                         haptic = haptic,
                     )
-                }
-
-                // 3. Keep Listening Section
-                if (uiState.keepListening.isNotEmpty()) {
-                    item(key = "home_keep_listening") {
-                        KeepListeningShelf(
-                            keepListening = uiState.keepListening,
-                            mediaMetadata = mediaMetadata,
-                            isPlaying = isPlaying,
-                            navController = navController,
-                            playerConnection = playerConnection,
-                            menuState = menuState,
-                            haptic = haptic,
-                            scope = scope,
-                        )
-                    }
                 }
 
                 // Recently Visited Section
@@ -645,59 +664,46 @@ private fun HomeContent(
         }
 
         // Sticky Top App Bar & Category Chips Overlay
-        AnimatedContent(
-            targetState = lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0,
-            transitionSpec = {
-                fadeIn(tween(300)).togetherWith(fadeOut(tween(300)))
-            },
-            label = "HomeTopBarOverlay",
-        ) { isAtTop ->
-            Column(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .then(
-                            if (isAtTop) {
-                                Modifier.background(Color.Transparent)
-                            } else {
-                                Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
-                            },
-                        ).onGloballyPositioned { coordinates ->
-                            topAppBarHeightPx = coordinates.size.height
-                        },
+        Column(
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .onGloballyPositioned { coordinates ->
+                        topAppBarHeightPx = coordinates.size.height
+                    },
+        ) {
+            AnimatedVisibility(
+                visible = isScrollingUp,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
             ) {
-                AnimatedVisibility(
-                    visible = isScrollingUp,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically(),
-                ) {
-                    MainTopBar(
-                        navController = navController,
-                        accountName = uiState.accountName,
-                        accountImageUrl = uiState.accountImageUrl,
-                    )
-                }
-                AnimatedVisibility(
-                    visible = !isScrollingUp,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically(),
-                ) {
-                    Spacer(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .windowInsetsPadding(WindowInsets.statusBars),
-                    )
-                }
-                val chipsList = uiState.homePage?.chips
-                if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
-                    HomeCategoryChips(
-                        chips = chipsList,
-                        selectedChip = uiState.selectedChip,
-                        onChipSelected = { onAction(HomeAction.SelectChip(it)) },
-                    )
-                }
+                MainTopBar(
+                    navController = navController,
+                    accountName = uiState.accountName,
+                    accountImageUrl = uiState.accountImageUrl,
+                )
+            }
+            AnimatedVisibility(
+                visible = !isScrollingUp,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                Spacer(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.statusBars),
+                )
+            }
+            val chipsList = uiState.homePage?.chips
+            if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
+                HomeCategoryChips(
+                    chips = chipsList,
+                    selectedChip = uiState.selectedChip,
+                    onChipSelected = { onAction(HomeAction.SelectChip(it)) },
+                )
             }
         }
     }
