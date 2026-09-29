@@ -39,6 +39,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import com.music.innertube.models.BrowseEndpoint
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkModel
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkUrl
@@ -65,6 +67,8 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import com.archm.player.ui.component.CyclingSearchPlaceholder
 import com.archm.player.ui.component.InputFieldHeight
 import com.archm.player.viewmodels.HomeViewModel
@@ -82,6 +86,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -191,47 +196,67 @@ fun SearchScreen(
                 key = "landing_header",
                 contentType = "landing_header",
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier =
-                        Modifier
-                            .windowInsetsPadding(WindowInsets.statusBars)
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 0.dp),
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color(30, 30, 30))
-                                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), CircleShape)
-                                .clickable { navController.navigate("account") },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.person),
-                            contentDescription = stringResource(R.string.account),
-                            tint = Color.White.copy(alpha = 0.4f),
-                            modifier = Modifier.size(20.dp),
-                        )
-                        if (!vmAccountImageUrl.isNullOrBlank()) {
-                            AsyncImage(
-                                model = vmAccountImageUrl,
-                                contentDescription = stringResource(R.string.account),
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                TopAppBar(
+                    windowInsets =
+                        TopAppBarDefaults.windowInsets.exclude(
+                            TopAppBarDefaults.windowInsets.only(WindowInsetsSides.Start),
+                        ),
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { navController.navigate("account") },
+                        ) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(30, 30, 30))
+                                        .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.person),
+                                    contentDescription = stringResource(R.string.account),
+                                    tint = Color.White.copy(alpha = 0.4f),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                if (!vmAccountImageUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model =
+                                            ImageRequest.Builder(LocalContext.current)
+                                                .data(vmAccountImageUrl)
+                                                .diskCachePolicy(CachePolicy.ENABLED)
+                                                .diskCacheKey(vmAccountImageUrl)
+                                                .crossfade(true)
+                                                .build(),
+                                        contentDescription = stringResource(R.string.account),
+                                        contentScale = ContentScale.Crop,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .clip(CircleShape),
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = stringResource(R.string.search),
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                                maxLines = 1,
                             )
                         }
-                    }
-
-                    Text(
-                        text = stringResource(R.string.search),
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                    )
-                }
+                    },
+                    colors =
+                        TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                        ),
+                )
             }
 
             stickyHeader(
