@@ -137,7 +137,7 @@ fun OnlineSearchScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.arrow_back),
-                                    contentDescription = stringResource(R.string.back),
+                                    contentDescription = null,
                                     tint = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(20.dp),
                                 )
