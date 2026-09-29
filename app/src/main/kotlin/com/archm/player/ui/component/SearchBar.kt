@@ -53,9 +53,15 @@ import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -90,6 +96,8 @@ import com.archm.player.constants.AppBarHeight
 import kotlin.math.max
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -97,7 +105,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 
 @Composable
 fun CyclingSearchPlaceholder(
@@ -114,7 +121,7 @@ fun CyclingSearchPlaceholder(
     var currentIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
-        while (isActive) {
+        while (true) {
             delay(2800)
             currentIndex = (currentIndex + 1) % placeholders.size
         }

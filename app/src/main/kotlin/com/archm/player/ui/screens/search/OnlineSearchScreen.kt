@@ -91,6 +91,7 @@ fun OnlineSearchScreen(
 
     val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
     val distinctResultItems = remember(viewState.items) { viewState.items.distinctBy { it.id } }
+    val top5Suggestions = remember(viewState.suggestions) { viewState.suggestions.take(5) }
 
     Box(
         modifier =
@@ -250,7 +251,6 @@ fun OnlineSearchScreen(
                 }
             } else {
                 if (viewState.suggestions.isNotEmpty()) {
-                    val top5Suggestions = remember(viewState.suggestions) { viewState.suggestions.take(5) }
                     itemsIndexed(
                         items = top5Suggestions,
                         key = { _, suggestion -> "suggestion_$suggestion" },
