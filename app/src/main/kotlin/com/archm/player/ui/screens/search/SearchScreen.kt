@@ -273,7 +273,6 @@ fun SearchScreen(
                         shape = RoundedCornerShape(10.dp),
                         color = Color(35, 35, 38),
                         contentColor = Color.White,
-                        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
                         modifier =
                             Modifier
                                 .windowInsetsPadding(WindowInsets.statusBars)

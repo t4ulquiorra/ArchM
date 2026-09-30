@@ -104,6 +104,7 @@ import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.PlayingIndicator
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.durationText
+import com.archm.player.ui.component.formatReleaseSubtitle
 import com.archm.player.ui.component.formattedDuration
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
@@ -115,6 +116,7 @@ import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.screens.artist.OutlinedFollowPillButton
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.utils.joinByBullet
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.utils.reportException
@@ -339,38 +341,43 @@ fun OnlineSearchResult(
                     )
                 }
 
-                else -> {
-                    YouTubeListItem(
-                        item = item,
-                        isVideo = isVideo,
-                        containerColor = Color.Transparent,
-                        color = Color.Transparent,
-                        showActiveContainer = true,
-                        showLike = false,
-                        isActive = (item as? AlbumItem)?.let { it.id == mediaMetadata?.album?.id } ?: false,
+                is AlbumItem -> {
+                    SearchCollectionListItem(
+                        title = item.title,
+                        subtitle = joinByBullet(item.artists?.joinToString { it.name }, formatReleaseSubtitle(item)),
+                        thumbnailUrl = item.thumbnail,
+                        isActive = item.id == mediaMetadata?.album?.id,
                         isPlaying = isPlaying,
+                        onClick = { navController.navigate("album/${item.id}") },
+                        onLongClick = longClick,
                         trailingContent = {
-                            when (item) {
-                                is AlbumItem -> AlbumTrailingAction(album = item)
-                                is PlaylistItem -> PlaylistTrailingAction(playlist = item)
-                                else -> {}
-                            }
+                            AlbumTrailingAction(
+                                album = item,
+                                onMenuClick = longClick,
+                            )
                         },
-                        modifier =
-                            Modifier.combinedClickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = {
-                                    when (item) {
-                                        is AlbumItem -> navController.navigate("album/${item.id}")
-                                        is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
-                                        else -> {}
-                                    }
-                                },
-                                onLongClick = longClick,
-                            ),
                     )
                 }
+
+                is PlaylistItem -> {
+                    SearchCollectionListItem(
+                        title = item.title,
+                        subtitle = joinByBullet(item.author?.name, item.songCountText),
+                        thumbnailUrl = item.thumbnail,
+                        isActive = false,
+                        isPlaying = false,
+                        onClick = { navController.navigate("online_playlist/${item.id}") },
+                        onLongClick = longClick,
+                        trailingContent = {
+                            PlaylistTrailingAction(
+                                playlist = item,
+                                onMenuClick = longClick,
+                            )
+                        },
+                    )
+                }
+
+                else -> {}
             }
         }
     }
@@ -468,7 +475,7 @@ fun OnlineSearchResult(
                             HeroArtistCard(
                                 artist = heroArtist,
                                 onClick = { navController.navigate("artist/${heroArtist.id}") },
-                                modifier = Modifier.padding(bottom = 12.6.dp),
+                                modifier = Modifier.padding(bottom = 13.2.dp),
                             )
                         }
                     }
@@ -479,7 +486,7 @@ fun OnlineSearchResult(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 4.dp),
+                                    .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -518,7 +525,7 @@ fun OnlineSearchResult(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -575,7 +582,7 @@ fun OnlineSearchResult(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -643,7 +650,7 @@ fun OnlineSearchResult(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -784,7 +791,7 @@ private fun SearchSongListItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(horizontal = 16.dp, vertical = 2.dp),
+            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
     ) {
         val thumbModifier = if (isVideo) {
             Modifier.height(ListThumbnailSize).width(ListThumbnailSize * (16f / 9f))
@@ -881,7 +888,7 @@ private fun HeroArtistCard(
                 indication = null,
                 onClick = onClick,
             )
-            .padding(horizontal = 16.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
     ) {
         // Circular avatar
         Box(
@@ -950,6 +957,106 @@ private fun HeroArtistCard(
 }
 
 @Composable
+private fun SearchCollectionListItem(
+    title: String,
+    subtitle: String?,
+    thumbnailUrl: String?,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    trailingContent: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isActivelyPlaying = isActive && isPlaying
+
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            isActivelyPlaying -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "coll_thumb_alpha",
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(ListThumbnailSize)
+                .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                .background(Color(30, 30, 30)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (!thumbnailUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = thumbnailUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = thumbAlpha },
+                )
+            }
+
+            if (isActivelyPlaying) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PlayingIndicator(
+                        color = LocalAccentColor.current,
+                        modifier = Modifier.height(20.dp),
+                        isPlaying = true,
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = if (isActive) LocalAccentColor.current else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Spacer(Modifier.width(8.dp))
+
+        trailingContent()
+    }
+}
+
+@Composable
 internal fun SongTrailingActions(
     song: SongItem,
     onMenuClick: () -> Unit,
@@ -1011,87 +1118,123 @@ internal fun SongTrailingActions(
 @Composable
 internal fun AlbumTrailingAction(
     album: AlbumItem,
+    onMenuClick: (() -> Unit)? = null,
 ) {
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
     val dbAlbum by database.album(album.id).collectAsState(initial = null)
     val isSaved = dbAlbum?.album?.bookmarkedAt != null
 
-    IconButton(
-        onClick = {
-            coroutineScope.launch(Dispatchers.IO) {
-                val existing = database.album(album.id).firstOrNull()
-                if (existing != null) {
-                    database.update(existing.album.toggleLike())
-                } else {
-                    YouTube.album(album.id)
-                        .onSuccess { albumPage ->
-                            database.transaction { insert(albumPage) }
-                        }.onFailure { reportException(it) }
-                    // After the network call: read+toggle in the coroutine body (suspend ok here)
-                    val inserted = database.album(album.id).firstOrNull()
-                    inserted?.album?.toggleLike()?.let { database.update(it) }
-                }
-            }
-        },
-        modifier = Modifier.size(36.dp),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
-            contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
-            tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
-            modifier = Modifier.size(22.dp),
-        )
+        IconButton(
+            onClick = {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val existing = database.album(album.id).firstOrNull()
+                    if (existing != null) {
+                        database.update(existing.album.toggleLike())
+                    } else {
+                        YouTube.album(album.id)
+                            .onSuccess { albumPage ->
+                                database.transaction { insert(albumPage) }
+                            }.onFailure { reportException(it) }
+                        // After the network call: read+toggle in the coroutine body (suspend ok here)
+                        val inserted = database.album(album.id).firstOrNull()
+                        inserted?.album?.toggleLike()?.let { database.update(it) }
+                    }
+                }
+            },
+            modifier = Modifier.size(36.dp),
+        ) {
+            Icon(
+                painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
+                contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
+                tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        if (onMenuClick != null) {
+            IconButton(
+                onClick = onMenuClick,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.more_vert),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
     }
 }
 
 @Composable
 internal fun PlaylistTrailingAction(
     playlist: PlaylistItem,
+    onMenuClick: (() -> Unit)? = null,
 ) {
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
     val dbPlaylist by database.playlist(playlist.id).collectAsState(initial = null)
     val isSaved = dbPlaylist?.playlist?.bookmarkedAt != null
 
-    IconButton(
-        onClick = {
-            coroutineScope.launch(Dispatchers.IO) {
-                val existing = database.playlist(playlist.id).firstOrNull()
-                if (existing != null) {
-                    database.update(existing.playlist.toggleLike())
-                } else {
-                    YouTube.playlist(playlist.id).onSuccess { _ ->
-                        database.transaction {
-                            insert(
-                                PlaylistEntity(
-                                    name = playlist.title,
-                                    browseId = playlist.id,
-                                    thumbnailUrl = playlist.thumbnail,
-                                    isEditable = playlist.isEditable,
-                                    remoteSongCount = playlist.songCountText?.let {
-                                        Regex("""\d+""").find(it)?.value?.toIntOrNull()
-                                    },
-                                    playEndpointParams = playlist.playEndpoint?.params,
-                                    shuffleEndpointParams = playlist.shuffleEndpoint?.params,
-                                    radioEndpointParams = playlist.radioEndpoint?.params,
-                                ).toggleLike()
-                            )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(
+            onClick = {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val existing = database.playlist(playlist.id).firstOrNull()
+                    if (existing != null) {
+                        database.update(existing.playlist.toggleLike())
+                    } else {
+                        YouTube.playlist(playlist.id).onSuccess { _ ->
+                            database.transaction {
+                                insert(
+                                    PlaylistEntity(
+                                        name = playlist.title,
+                                        browseId = playlist.id,
+                                        thumbnailUrl = playlist.thumbnail,
+                                        isEditable = playlist.isEditable,
+                                        remoteSongCount = playlist.songCountText?.let {
+                                            Regex("""\d+""").find(it)?.value?.toIntOrNull()
+                                        },
+                                        playEndpointParams = playlist.playEndpoint?.params,
+                                        shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                        radioEndpointParams = playlist.radioEndpoint?.params,
+                                    ).toggleLike()
+                                )
+                            }
+                        }.onFailure {
+                            reportException(it)
                         }
-                    }.onFailure {
-                        reportException(it)
                     }
                 }
+            },
+            modifier = Modifier.size(36.dp),
+        ) {
+            Icon(
+                painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
+                contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
+                tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        if (onMenuClick != null) {
+            IconButton(
+                onClick = onMenuClick,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.more_vert),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp),
+                )
             }
-        },
-        modifier = Modifier.size(36.dp),
-    ) {
-        Icon(
-            painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
-            contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
-            tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
-            modifier = Modifier.size(22.dp),
-        )
+        }
     }
 }
 

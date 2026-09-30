@@ -56,7 +56,11 @@ class SearchDiscoveryViewModel
         private var loadJob: Job? = null
 
         init {
-            load()
+            val cached = loadSearchDiscovery.getCached()
+            if (cached != null && !cached.isEmpty) {
+                _state.value = SearchDiscoveryScreenState.Success(cached)
+            }
+            load(force = false)
         }
 
         fun selectTab(tab: SearchDiscoveryTab) {
@@ -70,28 +74,38 @@ class SearchDiscoveryViewModel
         private fun load(force: Boolean = false) {
             if (!force && loadJob?.isActive == true) return
             loadJob?.cancel()
-            _state.value = SearchDiscoveryScreenState.Loading
+            if (_state.value !is SearchDiscoveryScreenState.Success) {
+                _state.value = SearchDiscoveryScreenState.Loading
+            }
             loadJob =
                 viewModelScope.launch {
-                    _state.value =
-                        try {
-                            loadSearchDiscovery()
-                                .fold(
-                                    onSuccess = { data ->
-                                        if (data.isEmpty) {
-                                            SearchDiscoveryScreenState.Empty
-                                        } else {
-                                            SearchDiscoveryScreenState.Success(data)
+                    try {
+                        loadSearchDiscovery()
+                            .fold(
+                                onSuccess = { data ->
+                                    if (data.isEmpty) {
+                                        if (_state.value !is SearchDiscoveryScreenState.Success) {
+                                            _state.value = SearchDiscoveryScreenState.Empty
                                         }
-                                    },
-                                    onFailure = {
-                                        SearchDiscoveryScreenState.Error(R.string.error_unknown)
-                                    },
-                                )
-                        } catch (throwable: Throwable) {
-                            if (throwable is CancellationException) throw throwable
-                            SearchDiscoveryScreenState.Error(R.string.error_unknown)
+                                    } else {
+                                        val currentState = _state.value
+                                        if (currentState !is SearchDiscoveryScreenState.Success || currentState.data != data) {
+                                            _state.value = SearchDiscoveryScreenState.Success(data)
+                                        }
+                                    }
+                                },
+                                onFailure = {
+                                    if (_state.value !is SearchDiscoveryScreenState.Success) {
+                                        _state.value = SearchDiscoveryScreenState.Error(R.string.error_unknown)
+                                    }
+                                },
+                            )
+                    } catch (throwable: Throwable) {
+                        if (throwable is CancellationException) throw throwable
+                        if (_state.value !is SearchDiscoveryScreenState.Success) {
+                            _state.value = SearchDiscoveryScreenState.Error(R.string.error_unknown)
                         }
+                    }
                 }
         }
     }
