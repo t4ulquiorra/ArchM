@@ -144,7 +144,7 @@ fun OnlineSearchResult(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
-    val lazyListState = rememberLazyListState()
+    val lazyListState = key(viewModel.query) { rememberLazyListState() }
 
     val searchFilter by viewModel.filter.collectAsStateWithLifecycle()
     val searchSummary = viewModel.summaryPage
@@ -226,8 +226,11 @@ fun OnlineSearchResult(
                 FILTER_FEATURED_PLAYLIST,
             ).all { viewModel.viewStateMap.containsKey(it.value) }
 
-    LaunchedEffect(viewModel.query) {
-        lazyListState.scrollToItem(0)
+    // Scroll to top the moment results first appear (state is already fresh per query via key())
+    LaunchedEffect(searchSummary) {
+        if (searchSummary != null) {
+            lazyListState.scrollToItem(0)
+        }
     }
 
     LaunchedEffect(lazyListState) {
@@ -442,7 +445,7 @@ fun OnlineSearchResult(
                         HeroArtistCard(
                             artist = heroArtist,
                             onClick = { navController.navigate("artist/${heroArtist.id}") },
-                            modifier = Modifier.padding(bottom = 6.dp),
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
                     }
                 }
@@ -451,7 +454,7 @@ fun OnlineSearchResult(
                 if (allTabSongs.isNotEmpty()) {
                     item(key = "all_songs_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
