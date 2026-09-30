@@ -921,7 +921,9 @@ class MainActivity : ComponentActivity() {
                             currentRoute != "settings" &&
                             currentRoute != Screens.Home.route &&
                             currentRoute != Screens.Library.route &&
-                            currentRoute != Screens.Search.route
+                            currentRoute != Screens.Search.route &&
+                            currentRoute != Screens.New.route &&
+                            currentRoute != Screens.Mix.route
                 }
 
                 val coroutineScope = rememberCoroutineScope()

@@ -11,7 +11,9 @@
     <string name="home">Home</string>
     <string name="nav_new">New</string>
     <string name="nav_mix">Mix</string>
-    <string name="mix_for_you">Mix for you</string>
+    <string name="new_releases">New Releases</string>
+    <string name="mixed_for_you">Mixed For You</string>
+    <string name="mix_for_you">Mixed for you</string>
     <string name="no_mixes_found">No mixes found</string>
     <string name="music">Music</string>
     <string name="songs">Songs</string>

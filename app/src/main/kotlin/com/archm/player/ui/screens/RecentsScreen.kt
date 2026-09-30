@@ -120,12 +120,12 @@ fun RecentsScreen(
     val pagerState = rememberPagerState(pageCount = { 2 })
     var showClearConfirmDialog by remember { mutableStateOf(false) }
 
-    val amoledBg = Color.Black
+    val backgroundColor = MaterialTheme.colorScheme.background
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(amoledBg),
+            .background(backgroundColor),
     ) {
         TopAppBar(
             title = {
@@ -135,7 +135,7 @@ fun RecentsScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                     ),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
             },
             navigationIcon = {
@@ -143,7 +143,7 @@ fun RecentsScreen(
                     Icon(
                         painter = painterResource(R.drawable.arrow_back),
                         contentDescription = "Back",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onBackground,
                     )
                 }
             },
@@ -153,24 +153,23 @@ fun RecentsScreen(
                         Icon(
                             painter = painterResource(R.drawable.delete_history),
                             contentDescription = stringResource(R.string.clear_recents),
-                            tint = Color.White.copy(alpha = 0.8f),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                         )
                     }
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = amoledBg,
-                titleContentColor = Color.White,
-                navigationIconContentColor = Color.White,
-                actionIconContentColor = Color.White,
+                containerColor = backgroundColor,
+                titleContentColor = MaterialTheme.colorScheme.onBackground,
+                navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                actionIconContentColor = MaterialTheme.colorScheme.onBackground,
             ),
         )
 
-        // AMOLED-native Tab Row
         TabRow(
             selectedTabIndex = pagerState.currentPage,
-            containerColor = amoledBg,
-            contentColor = Color.White,
+            containerColor = backgroundColor,
+            contentColor = MaterialTheme.colorScheme.primary,
             indicator = { tabPositions ->
                 if (pagerState.currentPage < tabPositions.size) {
                     TabRowDefaults.SecondaryIndicator(
@@ -185,7 +184,7 @@ fun RecentsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(Color.White.copy(alpha = 0.1f)),
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
                 )
             },
         ) {
@@ -207,7 +206,7 @@ fun RecentsScreen(
                             text = title,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                             fontSize = 14.sp,
-                            color = if (selected) Color.White else Color.White.copy(alpha = 0.5f),
+                            color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                         )
                     },
                 )

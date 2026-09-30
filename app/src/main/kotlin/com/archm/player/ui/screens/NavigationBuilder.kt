@@ -13,8 +13,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import com.archm.player.R
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -90,11 +92,21 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(Screens.New.route) {
-        ExploreScreen(navController = navController)
+        NewReleaseScreen(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+            showNavigationIcon = false,
+        )
     }
 
     composable(Screens.Mix.route) {
-        MixScreen(navController = navController)
+        BrowseScreen(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+            browseId = "FEmusic_mixed_for_you",
+            initialTitle = stringResource(R.string.mixed_for_you),
+            showNavigationIcon = false,
+        )
     }
 
     composable(Screens.Search.route) {

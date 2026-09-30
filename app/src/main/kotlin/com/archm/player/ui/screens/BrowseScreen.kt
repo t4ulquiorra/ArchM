@@ -92,6 +92,7 @@ fun BrowseScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     browseId: String?,
     initialTitle: String? = null,
+    showNavigationIcon: Boolean = true,
     viewModel: BrowseViewModel = hiltViewModel(),
 ) {
     val menuState = LocalMenuState.current
@@ -108,7 +109,17 @@ fun BrowseScreen(
     val lazyGridState = rememberLazyGridState()
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
-    Box(Modifier.fillMaxSize()) {
+    LaunchedEffect(browseId) {
+        if (browseId != null && items == null) {
+            viewModel.load(browseId, fallbackTitle = initialTitle)
+        }
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
         LazyVerticalGrid(
             state = lazyGridState,
@@ -167,7 +178,6 @@ fun BrowseScreen(
                             isPlaying = isPlaying,
                             fillMaxWidth = true,
                             coroutineScope = coroutineScope,
-                            containerColor = Color(0xFF141414),
                             onClick = {
                                 when (item) {
                                     is SongItem -> playerConnection.playQueue(
@@ -228,9 +238,13 @@ fun BrowseScreen(
             title = {
                 Text(
                     text = displayTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    style = if (showNavigationIcon) {
+                        MaterialTheme.typography.titleMedium
+                    } else {
+                        MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    },
+                    fontWeight = if (showNavigationIcon) FontWeight.SemiBold else FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -240,28 +254,30 @@ fun BrowseScreen(
                 )
             },
             navigationIcon = {
-                Box(Modifier.padding(horizontal = 5.dp)) {
-                    CombinedIconButton(
-                        onClick = navController::navigateUp,
-                        onLongClick = navController::backToMain,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.arrow_back),
-                            contentDescription = "Back",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp),
-                        )
+                if (showNavigationIcon) {
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        CombinedIconButton(
+                            onClick = navController::navigateUp,
+                            onLongClick = navController::backToMain,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                navigationIconContentColor = Color.White,
-                titleContentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.background,
+                navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                titleContentColor = MaterialTheme.colorScheme.onBackground,
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)),
+                .background(MaterialTheme.colorScheme.background),
         )
     }
 }
@@ -300,7 +316,7 @@ private fun BrowseArtistItem(
                 }
                 .clip(CircleShape)
                 .background(cardBgColor)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f), CircleShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -329,7 +345,7 @@ private fun BrowseArtistItem(
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(align = Alignment.CenterVertically)
