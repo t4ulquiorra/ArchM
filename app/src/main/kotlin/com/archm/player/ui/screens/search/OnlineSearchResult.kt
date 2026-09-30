@@ -856,16 +856,13 @@ internal fun AlbumTrailingAction(
                 if (existing != null) {
                     database.update(existing.album.toggleLike())
                 } else {
-                    YouTube.album(album.id).onSuccess { albumPage ->
-                        database.transaction {
-                            insert(albumPage)
-                        }
-                        database.query {
-                            album(album.id).firstOrNull()?.album?.toggleLike()?.let(::update)
-                        }
-                    }.onFailure {
-                        reportException(it)
-                    }
+                    YouTube.album(album.id)
+                        .onSuccess { albumPage ->
+                            database.transaction { insert(albumPage) }
+                        }.onFailure { reportException(it) }
+                    // After the network call: read+toggle in the coroutine body (suspend ok here)
+                    val inserted = database.album(album.id).firstOrNull()
+                    inserted?.album?.toggleLike()?.let { database.update(it) }
                 }
             }
         },
@@ -942,8 +939,8 @@ internal fun ArtistTrailingAction(
     Surface(
         onClick = {
             coroutineScope.launch(Dispatchers.IO) {
+                val existing = database.artist(artist.id).firstOrNull()
                 database.query {
-                    val existing = database.artist(artist.id).firstOrNull()
                     if (existing != null) {
                         update(existing.artist.toggleLike())
                     } else {
