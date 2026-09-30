@@ -159,6 +159,7 @@ fun OnlineSearchResult(
     val haptic = LocalHapticFeedback.current
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
+    val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = remember(viewModel.query) { LazyListState(0, 0) }
@@ -302,7 +303,6 @@ fun OnlineSearchResult(
                 }
             }
         }
-        val currentMediaId = mediaMetadata?.id ?: playerConnection.player.currentMediaItem?.mediaId
         Column(
             modifier =
                 Modifier
