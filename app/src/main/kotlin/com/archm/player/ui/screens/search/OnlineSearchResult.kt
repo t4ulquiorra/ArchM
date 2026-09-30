@@ -82,6 +82,7 @@ import com.archm.player.R
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.PureBlackKey
 import com.archm.player.db.entities.ArtistEntity
+import com.archm.player.db.entities.PlaylistEntity
 import com.archm.player.extensions.togglePlayPause
 import com.archm.player.models.toMediaMetadata
 import com.archm.player.playback.queues.YouTubeQueue
@@ -858,6 +859,8 @@ internal fun AlbumTrailingAction(
                     YouTube.album(album.id).onSuccess { albumPage ->
                         database.transaction {
                             insert(albumPage)
+                        }
+                        database.query {
                             album(album.id).firstOrNull()?.album?.toggleLike()?.let(::update)
                         }
                     }.onFailure {
@@ -893,10 +896,22 @@ internal fun PlaylistTrailingAction(
                 if (existing != null) {
                     database.update(existing.playlist.toggleLike())
                 } else {
-                    YouTube.playlist(playlist.id).onSuccess { playlistPage ->
+                    YouTube.playlist(playlist.id).onSuccess { _ ->
                         database.transaction {
-                            insert(playlistPage)
-                            playlist(playlist.id).firstOrNull()?.playlist?.toggleLike()?.let(::update)
+                            insert(
+                                PlaylistEntity(
+                                    name = playlist.title,
+                                    browseId = playlist.id,
+                                    thumbnailUrl = playlist.thumbnail,
+                                    isEditable = playlist.isEditable,
+                                    remoteSongCount = playlist.songCountText?.let {
+                                        Regex("""\d+""").find(it)?.value?.toIntOrNull()
+                                    },
+                                    playEndpointParams = playlist.playEndpoint?.params,
+                                    shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                    radioEndpointParams = playlist.radioEndpoint?.params,
+                                ).toggleLike()
+                            )
                         }
                     }.onFailure {
                         reportException(it)
@@ -1113,7 +1128,7 @@ private fun VideoShelfCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            val durationText = video.durationText ?: video.formattedDuration()
+            val durationText = video.durationText
             if (!durationText.isNullOrBlank()) {
                 Surface(
                     shape = RoundedCornerShape(4.dp),
