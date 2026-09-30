@@ -19,6 +19,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -190,15 +191,19 @@ fun OnlineSearchResult(
         } else null
     }
 
-    // Top Songs strictly capped to 4 items on "All" tab
+    // Top Results (Songs & Videos) strictly capped to 4 items on "All" tab
     val songsFromSummary = searchSummary?.summaries?.find { it.title.equals("Songs", ignoreCase = true) }?.items?.filterIsInstance<SongItem>()
+    val videosFromSummary = searchSummary?.summaries?.find { it.title.contains("Video", ignoreCase = true) }?.items?.filterIsInstance<SongItem>()
     val songsFromFilter = viewModel.viewStateMap[FILTER_SONG.value]?.items?.filterIsInstance<SongItem>()
-    val allTabSongs = remember(songsFromSummary, songsFromFilter, searchSort, firstSummaryItem) {
-        val items = (songsFromFilter ?: songsFromSummary ?: emptyList())
-        val withTopSong = if (firstSummaryItem is SongItem && items.none { it.id == firstSummaryItem.id }) {
-            listOf(firstSummaryItem) + items
-        } else items
-        viewModel.sortedItems(withTopSong.distinctBy { it.id }, searchSort).filterIsInstance<SongItem>().take(4)
+    val allTabResults = remember(songsFromSummary, videosFromSummary, songsFromFilter, searchSort, firstSummaryItem) {
+        val baseItems = songsFromFilter ?: run {
+            val s = songsFromSummary.orEmpty()
+            if (s.isEmpty()) videosFromSummary.orEmpty() else s
+        }
+        val withTopItem = if (firstSummaryItem is SongItem && baseItems.none { it.id == firstSummaryItem.id }) {
+            listOf(firstSummaryItem) + baseItems
+        } else baseItems
+        viewModel.sortedItems(withTopItem.distinctBy { it.id }, searchSort).filterIsInstance<SongItem>().take(4)
     }
 
     // Albums for horizontal carousel on "All" tab
@@ -213,7 +218,6 @@ fun OnlineSearchResult(
     }
 
     // Videos for horizontal carousel on "All" tab
-    val videosFromSummary = searchSummary?.summaries?.find { it.title.contains("Video", ignoreCase = true) }?.items?.filterIsInstance<SongItem>()
     val videosFromFilter = viewModel.viewStateMap[FILTER_VIDEO.value]?.items?.filterIsInstance<SongItem>()
     val allTabVideos = remember(videosFromSummary, videosFromFilter) {
         (videosFromFilter ?: videosFromSummary ?: emptyList()).distinctBy { it.id }
@@ -233,7 +237,7 @@ fun OnlineSearchResult(
         withTopPlaylist.distinctBy { it.id }
     }
 
-    val hasAnyAllContent = heroArtist != null || allTabSongs.isNotEmpty() || allTabAlbums.isNotEmpty() || allTabVideos.isNotEmpty() || allTabPlaylists.isNotEmpty()
+    val hasAnyAllContent = heroArtist != null || allTabResults.isNotEmpty() || allTabAlbums.isNotEmpty() || allTabVideos.isNotEmpty() || allTabPlaylists.isNotEmpty()
 
     val isAllModeLoaded =
         searchSummary != null ||
@@ -313,9 +317,10 @@ fun OnlineSearchResult(
         ) {
             when (item) {
                 is SongItem -> {
+                    val isItemVideo = isVideo || item.isVideoSong
                     SearchSongListItem(
                         song = item,
-                        isVideo = isVideo,
+                        isVideo = isItemVideo,
                         isActive = item.id == currentMediaId,
                         isPlaying = isPlaying,
                         onClick = {
@@ -480,9 +485,9 @@ fun OnlineSearchResult(
                         }
                     }
 
-                    // 2. Songs Section (Capped at 4 items)
-                    if (allTabSongs.isNotEmpty()) {
-                        item(key = "all_songs_header", contentType = "section_header") {
+                    // 2. Results Section (Capped at 4 items)
+                    if (allTabResults.isNotEmpty()) {
+                        item(key = "all_results_header", contentType = "section_header") {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -491,7 +496,7 @@ fun OnlineSearchResult(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = stringResource(R.string.filter_songs),
+                                    text = stringResource(R.string.results),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
@@ -511,11 +516,12 @@ fun OnlineSearchResult(
                         }
 
                         itemsIndexed(
-                            items = allTabSongs,
-                            key = { index, item -> "all_song_${item.id}_$index" },
+                            items = allTabResults,
+                            key = { index, item -> "all_result_${item.id}_$index" },
                             contentType = { _, _ -> "search_result" },
                         ) { _, item ->
-                            ytItemContent(item, false, false)
+                            val isItemVideo = item.isVideoSong
+                            ytItemContent(item, false, isItemVideo)
                         }
                     }
 
@@ -794,7 +800,7 @@ private fun SearchSongListItem(
             .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
     ) {
         val thumbModifier = if (isVideo) {
-            Modifier.height(ListThumbnailSize).width(ListThumbnailSize * (16f / 9f))
+            Modifier.height(ListThumbnailSize).aspectRatio(16f / 9f)
         } else {
             Modifier.size(ListThumbnailSize)
         }

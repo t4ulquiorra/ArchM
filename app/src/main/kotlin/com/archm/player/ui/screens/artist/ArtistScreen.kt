@@ -3050,8 +3050,8 @@ fun OutlinedFollowPillButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     height: Dp = 32.dp,
-    borderAlpha: Float = 0.5f,
-    horizontalPadding: Dp = 20.dp,
+    borderAlpha: Float = 0.25f,
+    horizontalPadding: Dp = 16.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -3062,17 +3062,13 @@ fun OutlinedFollowPillButton(
         dampingRatio = Spring.DampingRatioMediumBouncy,
     )
 
-    val containerColor = if (isFollowed) {
-        if (isPressed) Marble.copy(alpha = 0.85f) else Marble
+    val borderColor = if (isFollowed) {
+        Marble
     } else {
-        if (isPressed) Color(0xFF3A3A3C) else Color(0xFF2C2C2E)
+        Color.White.copy(alpha = borderAlpha)
     }
 
-    val contentColor = if (isFollowed) {
-        Color(0xFF121212)
-    } else {
-        Marble
-    }
+    val backgroundColor = if (isPressed) Color.White.copy(alpha = 0.08f) else Color.Transparent
 
     Box(
         modifier = modifier
@@ -3082,7 +3078,11 @@ fun OutlinedFollowPillButton(
             }
             .height(height)
             .clip(RoundedCornerShape(50))
-            .background(containerColor)
+            .border(
+                border = BorderStroke(1.dp, borderColor),
+                shape = RoundedCornerShape(50),
+            )
+            .background(backgroundColor)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -3097,7 +3097,7 @@ fun OutlinedFollowPillButton(
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
             ),
-            color = contentColor,
+            color = Marble,
         )
     }
 }
