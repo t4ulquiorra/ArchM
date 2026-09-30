@@ -633,7 +633,7 @@ fun SongListItem(
                 modifier = Modifier.size(24.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Star,
+                    painter = painterResource(R.drawable.star),
                     contentDescription = stringResource(R.string.liked),
                     tint = accentColor,
                     modifier = Modifier.size(20.dp),
@@ -1248,7 +1248,7 @@ fun MediaMetadataListItem(
                 modifier = Modifier.size(24.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Star,
+                    painter = painterResource(R.drawable.star),
                     contentDescription = stringResource(R.string.liked),
                     tint = accentColor,
                     modifier = Modifier.size(20.dp),
@@ -1372,6 +1372,7 @@ fun YouTubeListItem(
     isSwipeable: Boolean = true,
     showActiveContainer: Boolean = true,
     showDuration: Boolean = true,
+    showLike: Boolean = true,
     trailingContent: @Composable RowScope.() -> Unit = {},
     badges: @Composable RowScope.() -> Unit = {
         val database = LocalDatabase.current
@@ -1405,7 +1406,7 @@ fun YouTubeListItem(
     val isVideoItem = isVideo || (item as? SongItem)?.isVideoSong == true
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
-        if (isLiked && item is SongItem) {
+        if (showLike && isLiked && item is SongItem) {
             IconButton(
                 onClick = {
                     savedInSheetState.show(item.toMediaMetadata())
@@ -1414,7 +1415,7 @@ fun YouTubeListItem(
                 modifier = Modifier.size(24.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Star,
+                    painter = painterResource(R.drawable.star),
                     contentDescription = stringResource(R.string.liked),
                     tint = accentColor,
                     modifier = Modifier.size(20.dp),

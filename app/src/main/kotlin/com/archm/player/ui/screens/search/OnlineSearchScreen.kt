@@ -331,6 +331,7 @@ fun OnlineSearchScreen(
                                 containerColor = Color.Transparent,
                                 color = Color.Transparent,
                                 showActiveContainer = true,
+                                showLike = false,
                                 isActive =
                                     when (item) {
                                         is SongItem -> item.id == currentMediaId

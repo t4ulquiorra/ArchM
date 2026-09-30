@@ -7,7 +7,6 @@
 
 package com.archm.player.ui.screens.search
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -81,23 +80,28 @@ import coil3.compose.AsyncImage
 import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
+import com.archm.player.LocalSyncUtils
 import com.archm.player.R
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.PureBlackKey
 import com.archm.player.db.entities.ArtistEntity
 import com.archm.player.db.entities.PlaylistEntity
+import com.archm.player.db.entities.SongEntity
 import com.archm.player.extensions.togglePlayPause
 import com.archm.player.models.toMediaMetadata
+import com.archm.player.models.toSongEntity
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
+import com.archm.player.ui.menu.LocalSavedInSheetState
 import com.archm.player.ui.menu.YouTubeAlbumMenu
 import com.archm.player.ui.menu.YouTubeArtistMenu
 import com.archm.player.ui.menu.YouTubePlaylistMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
+import com.archm.player.ui.screens.artist.OutlinedFollowPillButton
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
@@ -286,7 +290,7 @@ fun OnlineSearchResult(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 2.4.dp)
                     .animateItem(),
         ) {
             YouTubeListItem(
@@ -296,6 +300,7 @@ fun OnlineSearchResult(
                 containerColor = Color.Transparent,
                 color = Color.Transparent,
                 showActiveContainer = true,
+                showLike = false,
                 isActive =
                     when (item) {
                         is SongItem -> item.id == currentMediaId
@@ -446,7 +451,7 @@ fun OnlineSearchResult(
                         HeroArtistCard(
                             artist = heroArtist,
                             onClick = { navController.navigate("artist/${heroArtist.id}") },
-                            modifier = Modifier.padding(bottom = 16.dp),
+                            modifier = Modifier.padding(bottom = 12.dp),
                         )
                     }
                 }
@@ -455,7 +460,7 @@ fun OnlineSearchResult(
                 if (allTabSongs.isNotEmpty()) {
                     item(key = "all_songs_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 0.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -492,7 +497,7 @@ fun OnlineSearchResult(
                 if (allTabAlbums.isNotEmpty()) {
                     item(key = "all_albums_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 6.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -528,7 +533,7 @@ fun OnlineSearchResult(
                                     onLongClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         menuState.show {
-                                            YouTubeAlbumMenu(
+                                             YouTubeAlbumMenu(
                                                 albumItem = album,
                                                 navController = navController,
                                                 onDismiss = menuState::dismiss,
@@ -545,7 +550,7 @@ fun OnlineSearchResult(
                 if (allTabVideos.isNotEmpty()) {
                     item(key = "all_videos_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 6.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -609,7 +614,7 @@ fun OnlineSearchResult(
                 if (allTabPlaylists.isNotEmpty()) {
                     item(key = "all_playlists_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 6.dp),
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -800,31 +805,41 @@ internal fun SongTrailingActions(
 ) {
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
+    val syncUtils = LocalSyncUtils.current
+    val savedInSheetState = LocalSavedInSheetState.current
     val dbSong by database.song(song.id).collectAsState(initial = null)
-    val isInLibrary = dbSong?.song?.inLibrary != null
+    val isLiked = dbSong?.song?.liked == true
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    val existing = database.song(song.id).firstOrNull()
-                    if (existing != null) {
-                        database.update(existing.song.toggleLibrary())
-                    } else {
-                        database.transaction {
-                            insert(song.toMediaMetadata()) { it.toggleLibrary() }
+                if (isLiked) {
+                    savedInSheetState.show(song.toMediaMetadata())
+                } else {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val existing = database.song(song.id).firstOrNull()
+                        val s: SongEntity
+                        if (existing != null) {
+                            s = existing.song.toggleLike()
+                            database.update(s)
+                        } else {
+                            database.transaction {
+                                insert(song.toMediaMetadata(), SongEntity::toggleLike)
+                            }
+                            s = song.toMediaMetadata().toSongEntity().let(SongEntity::toggleLike)
                         }
+                        syncUtils.likeSong(s)
                     }
                 }
             },
             modifier = Modifier.size(36.dp),
         ) {
             Icon(
-                painter = painterResource(if (isInLibrary) R.drawable.check_circle else R.drawable.add_circle),
-                contentDescription = stringResource(if (isInLibrary) R.string.remove_from_library else R.string.add_to_library),
-                tint = if (isInLibrary) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
+                painter = painterResource(if (isLiked) R.drawable.star else R.drawable.star_border),
+                contentDescription = if (isLiked) stringResource(R.string.liked) else stringResource(R.string.like),
+                tint = if (isLiked) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -871,7 +886,7 @@ internal fun AlbumTrailingAction(
         modifier = Modifier.size(36.dp),
     ) {
         Icon(
-            painter = painterResource(if (isSaved) R.drawable.check_circle else R.drawable.add_circle),
+            painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
             contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
             tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
             modifier = Modifier.size(22.dp),
@@ -921,7 +936,7 @@ internal fun PlaylistTrailingAction(
         modifier = Modifier.size(36.dp),
     ) {
         Icon(
-            painter = painterResource(if (isSaved) R.drawable.check_circle else R.drawable.add_circle),
+            painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
             contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
             tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
             modifier = Modifier.size(22.dp),
@@ -932,13 +947,15 @@ internal fun PlaylistTrailingAction(
 @Composable
 internal fun ArtistTrailingAction(
     artist: ArtistItem,
+    modifier: Modifier = Modifier,
 ) {
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
     val dbArtist by database.artist(artist.id).collectAsState(initial = null)
     val isFollowed = dbArtist?.artist?.bookmarkedAt != null
 
-    Surface(
+    OutlinedFollowPillButton(
+        isFollowed = isFollowed,
         onClick = {
             coroutineScope.launch(Dispatchers.IO) {
                 val existing = database.artist(artist.id).firstOrNull()
@@ -958,31 +975,8 @@ internal fun ArtistTrailingAction(
                 }
             }
         },
-        shape = RoundedCornerShape(50),
-        color = if (isFollowed) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary,
-        border = if (isFollowed) BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)) else null,
-        modifier = Modifier.padding(end = 4.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-        ) {
-            if (isFollowed) {
-                Icon(
-                    painter = painterResource(R.drawable.check),
-                    contentDescription = null,
-                    modifier = Modifier.size(13.dp),
-                    tint = Color.White.copy(alpha = 0.9f),
-                )
-            }
-            Text(
-                text = if (isFollowed) stringResource(R.string.following) else stringResource(R.string.follow),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = if (isFollowed) Color.White.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onPrimary,
-            )
-        }
-    }
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -1151,7 +1145,7 @@ private fun VideoShelfCard(
             text = video.title,
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         val subtitle = listOfNotNull(video.artists.joinToString { it.name }.takeIf { it.isNotBlank() }, video.viewCountText).joinToString(" • ")
