@@ -1305,7 +1305,10 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     trailingIcon = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(end = 8.dp),
+                                        ) {
                                             if (query.text.isNotEmpty()) {
                                                 IconButton(
                                                     onClick = {

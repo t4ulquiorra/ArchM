@@ -61,4 +61,6 @@
     <string name="news">News</string>
     <string name="news_tooltip_title">New Announcements</string>
     <string name="news_tooltip_body">You have unread announcements from developers.</string>
+    <string name="follow">Follow</string>
+    <string name="following">Following</string>
 </resources>

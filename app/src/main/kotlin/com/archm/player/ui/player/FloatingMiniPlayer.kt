@@ -6,6 +6,7 @@
 package com.archm.player.ui.player
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -80,7 +81,10 @@ fun FloatingMiniPlayer(
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
+    val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
+
+    val isVideo = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
 
     val swipeSensitivity by rememberPreference(SwipeSensitivityKey, 0.73f)
     val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
@@ -102,6 +106,10 @@ fun FloatingMiniPlayer(
     }
 
     val artSize = if (isInline) 32.dp else 44.dp
+    val artWidth by animateDpAsState(
+        targetValue = if (isVideo) (artSize * (16f / 9f)) else artSize,
+        label = "floatingMiniPlayerArtWidth",
+    )
     val artCornerRadius = if (isInline) 8.dp else 10.dp
     val controlSize = if (isInline) 32.dp else 40.dp
 
@@ -211,7 +219,8 @@ fun FloatingMiniPlayer(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(artSize)
+                    .height(artSize)
+                    .width(artWidth)
                     .clip(RoundedCornerShape(artCornerRadius)),
             )
 

@@ -235,17 +235,6 @@ fun OnlineSearchScreen(
                                 )
                             }
                         }
-
-                        if (index < viewState.history.lastIndex) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 16.dp)
-                                        .height(0.5.dp)
-                                        .background(Color.White.copy(alpha = 0.28f)),
-                            )
-                        }
                     }
                 }
             }
@@ -309,17 +298,6 @@ fun OnlineSearchScreen(
                                     )
                                 }
                             }
-
-                            if (index < top5Suggestions.lastIndex) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 16.dp)
-                                            .height(0.5.dp)
-                                            .background(Color.White.copy(alpha = 0.28f)),
-                                )
-                            }
                         }
                     }
                 }
@@ -361,60 +339,25 @@ fun OnlineSearchScreen(
                                     },
                                 isPlaying = isPlaying,
                                 trailingContent = {
-                                    IconButton(
-                                        onClick = {
-                                            menuState.show {
-                                                when (item) {
-                                                    is SongItem -> {
-                                                        YouTubeSongMenu(
-                                                            song = item,
-                                                            navController = navController,
-                                                            onDismiss = {
-                                                                menuState.dismiss()
-                                                                onDismiss()
-                                                            },
-                                                        )
-                                                    }
-
-                                                    is AlbumItem -> {
-                                                        YouTubeAlbumMenu(
-                                                            albumItem = item,
-                                                            navController = navController,
-                                                            onDismiss = {
-                                                                menuState.dismiss()
-                                                                onDismiss()
-                                                            },
-                                                        )
-                                                    }
-
-                                                    is ArtistItem -> {
-                                                        YouTubeArtistMenu(
-                                                            artist = item,
-                                                            onDismiss = {
-                                                                menuState.dismiss()
-                                                                onDismiss()
-                                                            },
-                                                        )
-                                                    }
-
-                                                    is PlaylistItem -> {
-                                                        YouTubePlaylistMenu(
-                                                            playlist = item,
-                                                            coroutineScope = coroutineScope,
-                                                            onDismiss = {
-                                                                menuState.dismiss()
-                                                                onDismiss()
-                                                            },
-                                                        )
-                                                    }
+                                    when (item) {
+                                        is SongItem -> SongTrailingActions(
+                                            song = item,
+                                            onMenuClick = {
+                                                menuState.show {
+                                                    YouTubeSongMenu(
+                                                        song = item,
+                                                        navController = navController,
+                                                        onDismiss = {
+                                                            menuState.dismiss()
+                                                            onDismiss()
+                                                        },
+                                                    )
                                                 }
-                                            }
-                                        },
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.more_vert),
-                                            contentDescription = null,
+                                            },
                                         )
+                                        is AlbumItem -> AlbumTrailingAction(album = item)
+                                        is PlaylistItem -> PlaylistTrailingAction(playlist = item)
+                                        is ArtistItem -> ArtistTrailingAction(artist = item)
                                     }
                                 },
                                 modifier =
@@ -500,16 +443,6 @@ fun OnlineSearchScreen(
                                             },
                                         ),
                             )
-                            if (index < distinctResultItems.lastIndex) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 16.dp)
-                                            .height(0.5.dp)
-                                            .background(Color.White.copy(alpha = 0.28f)),
-                                )
-                            }
                         }
                     }
                 }
@@ -526,12 +459,12 @@ private fun SearchSectionHeader(
 ) {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
         color =
             if (pureBlack) {
-                Color.White.copy(alpha = 0.72f)
+                Color.White
             } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
+                MaterialTheme.colorScheme.onSurface
             },
         modifier =
             modifier

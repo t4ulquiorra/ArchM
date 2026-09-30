@@ -7,6 +7,7 @@
 
 package com.archm.player.ui.player
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -113,9 +114,16 @@ private fun AppleMusicMiniPlayer(
     val swipeSensitivity by rememberPreference(SwipeSensitivityKey, 0.73f)
     val swipeThumbnail by rememberPreference(SwipeThumbnailKey, true)
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
+    val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     val playbackState by playerConnection.playbackState.collectAsStateWithLifecycle()
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
+
+    val isVideo = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
+    val thumbnailWidth by animateDpAsState(
+        targetValue = if (isVideo) 85.dp else 48.dp,
+        label = "miniPlayerThumbnailWidth",
+    )
 
     val miniPlayerBg = if (pureBlack) Color.Black else DockedDockBackground
 
@@ -148,10 +156,11 @@ private fun AppleMusicMiniPlayer(
                     .fillMaxSize()
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
-                // Left: Square thumbnail (RoundedCornerShape(6.dp))
+                // Left: Dynamic thumbnail (48.dp height, 1:1 or 16:9 widescreen)
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .height(48.dp)
+                        .width(thumbnailWidth)
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color(30, 30, 30))
                         .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(6.dp)),
