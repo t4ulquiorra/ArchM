@@ -1313,6 +1313,7 @@ class MainActivity : ComponentActivity() {
                                                 IconButton(
                                                     onClick = {
                                                         onQueryChange(TextFieldValue(""))
+                                                        onActiveChange(true)
                                                         searchBarFocusRequester.requestFocus()
                                                         keyboardController?.show()
                                                     },

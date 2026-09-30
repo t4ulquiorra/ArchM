@@ -10,6 +10,7 @@ package com.archm.player.ui.screens.search
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -224,6 +226,10 @@ fun OnlineSearchResult(
                 FILTER_FEATURED_PLAYLIST,
             ).all { viewModel.viewStateMap.containsKey(it.value) }
 
+    LaunchedEffect(viewModel.query) {
+        lazyListState.scrollToItem(0)
+    }
+
     LaunchedEffect(lazyListState) {
         snapshotFlow {
             lazyListState.layoutInfo.visibleItemsInfo.any { it.key == "loading" }
@@ -379,7 +385,10 @@ fun OnlineSearchResult(
             indicator = { tabPositions ->
                 if (selectedTabIndex < tabPositions.size) {
                     TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                        Modifier
+                            .tabIndicatorOffset(tabPositions[selectedTabIndex])
+                            .wrapContentWidth()
+                            .padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.primary,
                         height = 2.5.dp,
                     )
@@ -422,7 +431,7 @@ fun OnlineSearchResult(
             contentPadding =
                 LocalPlayerAwareWindowInsets.current
                     .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                    .add(WindowInsets(top = 8.dp))
+                    .add(WindowInsets(top = 12.dp))
                     .asPaddingValues(),
             modifier = Modifier.weight(1f),
         ) {
@@ -708,86 +717,75 @@ private fun HeroArtistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        // Circular avatar
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(Color(40, 40, 40)),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color(30, 30, 30)),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (!artist.thumbnail.isNullOrBlank()) {
-                    AsyncImage(
-                        model = artist.thumbnail,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape),
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.person),
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.4f),
-                        modifier = Modifier.size(32.dp),
-                    )
-                }
+            if (!artist.thumbnail.isNullOrBlank()) {
+                AsyncImage(
+                    model = artist.thumbnail,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.person),
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.4f),
+                    modifier = Modifier.size(28.dp),
+                )
             }
+        }
 
-            Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(14.dp))
 
-            Column(
-                modifier = Modifier.weight(1f),
+        // Name + "Artist" subtitle
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.artist_subtitle),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
+                    text = artist.title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
-                Spacer(Modifier.height(2.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = artist.title,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
+                if (artist.isVerified) {
+                    Icon(
+                        painter = painterResource(R.drawable.check),
+                        contentDescription = "Verified",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(15.dp),
                     )
-                    if (artist.isVerified) {
-                        Icon(
-                            painter = painterResource(R.drawable.check),
-                            contentDescription = "Verified",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
                 }
             }
-
-            Spacer(Modifier.width(8.dp))
-
-            ArtistTrailingAction(artist = artist)
+            Text(
+                text = stringResource(R.string.artist_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
+
+        Spacer(Modifier.width(8.dp))
+
+        ArtistTrailingAction(artist = artist)
     }
 }
 
@@ -1027,7 +1025,8 @@ private fun AlbumShelfCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        val subtitle = listOfNotNull(album.artists?.joinToString { it.name }, album.year?.toString()).joinToString(" • ")
+        val releaseLabel = album.explicitType?.takeIf { it.isNotBlank() } ?: "Album"
+        val subtitle = listOfNotNull(releaseLabel, album.year?.toString()).joinToString(" • ")
         if (subtitle.isNotBlank()) {
             Text(
                 text = subtitle,
