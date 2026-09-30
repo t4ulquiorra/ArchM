@@ -47,11 +47,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -290,7 +290,6 @@ fun OnlineSearchResult(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 2.4.dp)
                     .animateItem(),
         ) {
             YouTubeListItem(
@@ -460,7 +459,9 @@ fun OnlineSearchResult(
                 if (allTabSongs.isNotEmpty()) {
                     item(key = "all_songs_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 0.dp, bottom = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 2.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -469,18 +470,18 @@ fun OnlineSearchResult(
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            TextButton(
-                                onClick = {
+                            Text(
+                                text = stringResource(R.string.see_all),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
                                     viewModel.filter.value = FILTER_SONG
                                     coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                 },
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
+                            )
                         }
                     }
 
@@ -497,7 +498,9 @@ fun OnlineSearchResult(
                 if (allTabAlbums.isNotEmpty()) {
                     item(key = "all_albums_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -506,18 +509,18 @@ fun OnlineSearchResult(
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            TextButton(
-                                onClick = {
+                            Text(
+                                text = stringResource(R.string.see_all),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
                                     viewModel.filter.value = FILTER_ALBUM
                                     coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                 },
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
+                            )
                         }
                     }
 
@@ -550,7 +553,9 @@ fun OnlineSearchResult(
                 if (allTabVideos.isNotEmpty()) {
                     item(key = "all_videos_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -559,18 +564,18 @@ fun OnlineSearchResult(
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            TextButton(
-                                onClick = {
+                            Text(
+                                text = stringResource(R.string.see_all),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
                                     viewModel.filter.value = FILTER_VIDEO
                                     coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                 },
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
+                            )
                         }
                     }
 
@@ -614,7 +619,9 @@ fun OnlineSearchResult(
                 if (allTabPlaylists.isNotEmpty()) {
                     item(key = "all_playlists_header", contentType = "section_header") {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -623,18 +630,18 @@ fun OnlineSearchResult(
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            TextButton(
-                                onClick = {
+                            Text(
+                                text = stringResource(R.string.see_all),
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
                                     viewModel.filter.value = FILTER_FEATURED_PLAYLIST
                                     coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                 },
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
+                            )
                         }
                     }
 
@@ -731,7 +738,7 @@ private fun HeroArtistCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp),
     ) {
         // Circular avatar
         Box(
