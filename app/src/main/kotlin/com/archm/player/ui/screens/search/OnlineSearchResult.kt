@@ -7,10 +7,16 @@
 
 package com.archm.player.ui.screens.search
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,7 +53,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -64,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -83,7 +89,9 @@ import com.archm.player.LocalPlayerConnection
 import com.archm.player.LocalSyncUtils
 import com.archm.player.R
 import com.archm.player.constants.DarkModeKey
+import com.archm.player.constants.ListThumbnailSize
 import com.archm.player.constants.PureBlackKey
+import com.archm.player.constants.ThumbnailCornerRadius
 import com.archm.player.db.entities.ArtistEntity
 import com.archm.player.db.entities.PlaylistEntity
 import com.archm.player.db.entities.SongEntity
@@ -93,7 +101,10 @@ import com.archm.player.models.toSongEntity
 import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.PlayingIndicator
 import com.archm.player.ui.component.YouTubeListItem
+import com.archm.player.ui.component.durationText
+import com.archm.player.ui.component.formattedDuration
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
 import com.archm.player.ui.menu.LocalSavedInSheetState
@@ -103,6 +114,7 @@ import com.archm.player.ui.menu.YouTubePlaylistMenu
 import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.screens.artist.OutlinedFollowPillButton
 import com.archm.player.ui.screens.settings.DarkMode
+import com.archm.player.ui.theme.LocalAccentColor
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
 import com.archm.player.utils.reportException
@@ -231,9 +243,14 @@ fun OnlineSearchResult(
                 FILTER_FEATURED_PLAYLIST,
             ).all { viewModel.viewStateMap.containsKey(it.value) }
 
-    // Scroll to top the moment results first appear (state is already fresh per query via key())
-    LaunchedEffect(searchSummary) {
-        if (searchSummary != null) {
+    val isPrimaryResolved =
+        searchSummary != null ||
+            (viewModel.viewStateMap.containsKey(FILTER_SONG.value) && viewModel.viewStateMap.containsKey(FILTER_ARTIST.value)) ||
+            isAllModeLoaded
+
+    // Scroll to top the moment primary results first resolve
+    LaunchedEffect(isPrimaryResolved) {
+        if (isPrimaryResolved) {
             lazyListState.scrollToItem(0)
         }
     }
@@ -292,77 +309,69 @@ fun OnlineSearchResult(
                     .fillMaxWidth()
                     .animateItem(),
         ) {
-            YouTubeListItem(
-                item = item,
-                isVideo = isVideo,
-                viewCountText = (item as? SongItem)?.viewCountText,
-                containerColor = Color.Transparent,
-                color = Color.Transparent,
-                showActiveContainer = true,
-                showLike = false,
-                isActive =
-                    when (item) {
-                        is SongItem -> item.id == currentMediaId
-                        is AlbumItem -> mediaMetadata?.album?.id == item.id
-                        else -> false
-                    },
-                isPlaying = isPlaying,
-                trailingContent = {
-                    when (item) {
-                        is SongItem -> {
-                            SongTrailingActions(
-                                song = item,
-                                onMenuClick = longClick,
-                            )
-                        }
+            when (item) {
+                is SongItem -> {
+                    SearchSongListItem(
+                        song = item,
+                        isVideo = isVideo,
+                        isActive = item.id == currentMediaId,
+                        isPlaying = isPlaying,
+                        onClick = {
+                            if (item.id == mediaMetadata?.id) {
+                                playerConnection.player.togglePlayPause()
+                            } else {
+                                playerConnection.playQueue(
+                                    YouTubeQueue(
+                                        WatchEndpoint(videoId = item.id),
+                                        item.toMediaMetadata(),
+                                    ),
+                                )
+                            }
+                        },
+                        onLongClick = longClick,
+                    )
+                }
 
-                        is AlbumItem -> {
-                            AlbumTrailingAction(album = item)
-                        }
+                is ArtistItem -> {
+                    HeroArtistCard(
+                        artist = item,
+                        onClick = { navController.navigate("artist/${item.id}") },
+                    )
+                }
 
-                        is PlaylistItem -> {
-                            PlaylistTrailingAction(playlist = item)
-                        }
-
-                        is ArtistItem -> {
-                            ArtistTrailingAction(artist = item)
-                        }
-                    }
-                },
-                modifier =
-                    Modifier
-                        .combinedClickable(
-                            onClick = {
-                                when (item) {
-                                    is SongItem -> {
-                                        if (item.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                YouTubeQueue(
-                                                    WatchEndpoint(videoId = item.id),
-                                                    item.toMediaMetadata(),
-                                                ),
-                                            )
-                                        }
+                else -> {
+                    YouTubeListItem(
+                        item = item,
+                        isVideo = isVideo,
+                        containerColor = Color.Transparent,
+                        color = Color.Transparent,
+                        showActiveContainer = true,
+                        showLike = false,
+                        isActive = (item as? AlbumItem)?.let { it.id == mediaMetadata?.album?.id } ?: false,
+                        isPlaying = isPlaying,
+                        trailingContent = {
+                            when (item) {
+                                is AlbumItem -> AlbumTrailingAction(album = item)
+                                is PlaylistItem -> PlaylistTrailingAction(playlist = item)
+                                else -> {}
+                            }
+                        },
+                        modifier =
+                            Modifier.combinedClickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
+                                    when (item) {
+                                        is AlbumItem -> navController.navigate("album/${item.id}")
+                                        is PlaylistItem -> navController.navigate("online_playlist/${item.id}")
+                                        else -> {}
                                     }
-
-                                    is AlbumItem -> {
-                                        navController.navigate("album/${item.id}")
-                                    }
-
-                                    is ArtistItem -> {
-                                        navController.navigate("artist/${item.id}")
-                                    }
-
-                                    is PlaylistItem -> {
-                                        navController.navigate("online_playlist/${item.id}")
-                                    }
-                                }
-                            },
-                            onLongClick = longClick,
-                        ),
-            )
+                                },
+                                onLongClick = longClick,
+                            ),
+                    )
+                }
+            }
         }
     }
 
@@ -439,247 +448,261 @@ fun OnlineSearchResult(
             contentPadding =
                 LocalPlayerAwareWindowInsets.current
                     .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                    .add(WindowInsets(top = 12.dp))
+                    .add(WindowInsets(top = 13.2.dp))
                     .asPaddingValues(),
             modifier = Modifier.weight(1f),
         ) {
             if (searchFilter == null) {
-                // 1. Hero Artist Row/Card
-                if (heroArtist != null) {
-                    item(key = "hero_artist_${heroArtist.id}", contentType = "hero_artist") {
-                        HeroArtistCard(
-                            artist = heroArtist,
-                            onClick = { navController.navigate("artist/${heroArtist.id}") },
-                            modifier = Modifier.padding(bottom = 12.dp),
-                        )
+                if (!isPrimaryResolved) {
+                    item(key = "all_primary_placeholder", contentType = "loading") {
+                        ShimmerHost {
+                            repeat(8) {
+                                ListItemPlaceHolder()
+                            }
+                        }
                     }
-                }
-
-                // 2. Songs Section (Capped at 4 items)
-                if (allTabSongs.isNotEmpty()) {
-                    item(key = "all_songs_header", contentType = "section_header") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 2.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.filter_songs),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = stringResource(R.string.see_all),
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
-                                    viewModel.filter.value = FILTER_SONG
-                                    coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                },
+                } else {
+                    // 1. Hero Artist Row/Card
+                    if (heroArtist != null) {
+                        item(key = "hero_artist_${heroArtist.id}", contentType = "hero_artist") {
+                            HeroArtistCard(
+                                artist = heroArtist,
+                                onClick = { navController.navigate("artist/${heroArtist.id}") },
+                                modifier = Modifier.padding(bottom = 12.6.dp),
                             )
                         }
                     }
 
-                    itemsIndexed(
-                        items = allTabSongs,
-                        key = { index, item -> "all_song_${item.id}_$index" },
-                        contentType = { _, _ -> "search_result" },
-                    ) { _, item ->
-                        ytItemContent(item, false, false)
-                    }
-                }
-
-                // 3. Albums Shelf (Horizontal Carousel)
-                if (allTabAlbums.isNotEmpty()) {
-                    item(key = "all_albums_header", contentType = "section_header") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.filter_albums),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = stringResource(R.string.see_all),
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
-                                    viewModel.filter.value = FILTER_ALBUM
-                                    coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                },
-                            )
-                        }
-                    }
-
-                    item(key = "all_albums_shelf", contentType = "horizontal_shelf") {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        ) {
-                            items(allTabAlbums, key = { "album_shelf_${it.id}" }) { album ->
-                                AlbumShelfCard(
-                                    album = album,
-                                    onClick = { navController.navigate("album/${album.id}") },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                             YouTubeAlbumMenu(
-                                                albumItem = album,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
+                    // 2. Songs Section (Capped at 4 items)
+                    if (allTabSongs.isNotEmpty()) {
+                        item(key = "all_songs_header", contentType = "section_header") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.filter_songs),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(R.string.see_all),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_SONG
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                     },
                                 )
                             }
                         }
-                    }
-                }
 
-                // 4. Videos Shelf (Horizontal Carousel with 16:9 Widescreen Cards)
-                if (allTabVideos.isNotEmpty()) {
-                    item(key = "all_videos_header", contentType = "section_header") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.filter_videos),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = stringResource(R.string.see_all),
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
-                                    viewModel.filter.value = FILTER_VIDEO
-                                    coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                },
-                            )
+                        itemsIndexed(
+                            items = allTabSongs,
+                            key = { index, item -> "all_song_${item.id}_$index" },
+                            contentType = { _, _ -> "search_result" },
+                        ) { _, item ->
+                            ytItemContent(item, false, false)
                         }
                     }
 
-                    item(key = "all_videos_shelf", contentType = "horizontal_shelf") {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        ) {
-                            items(allTabVideos, key = { "video_shelf_${it.id}" }) { video ->
-                                VideoShelfCard(
-                                    video = video,
-                                    onClick = {
-                                        if (video.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                YouTubeQueue(
-                                                    WatchEndpoint(videoId = video.id),
-                                                    video.toMediaMetadata(),
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                            YouTubeSongMenu(
-                                                song = video,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
+                    // 3. Albums Shelf (Horizontal Carousel)
+                    if (allTabAlbums.isNotEmpty()) {
+                        item(key = "all_albums_header", contentType = "section_header") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.filter_albums),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(R.string.see_all),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_ALBUM
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                     },
                                 )
                             }
                         }
-                    }
-                }
 
-                // 5. Playlists Shelf (Horizontal Carousel)
-                if (allTabPlaylists.isNotEmpty()) {
-                    item(key = "all_playlists_header", contentType = "section_header") {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.filter_featured_playlists),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = stringResource(R.string.see_all),
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
-                                    viewModel.filter.value = FILTER_FEATURED_PLAYLIST
-                                    coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                },
-                            )
+                        item(key = "all_albums_shelf", contentType = "horizontal_shelf") {
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                items(allTabAlbums, key = { "album_shelf_${it.id}" }) { album ->
+                                    AlbumShelfCard(
+                                        album = album,
+                                        isActive = mediaMetadata?.album?.id == album.id,
+                                        isPlaying = isPlaying,
+                                        onClick = { navController.navigate("album/${album.id}") },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                YouTubeAlbumMenu(
+                                                    albumItem = album,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
 
-                    item(key = "all_playlists_shelf", contentType = "horizontal_shelf") {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        ) {
-                            items(allTabPlaylists, key = { "playlist_shelf_${it.id}" }) { playlist ->
-                                PlaylistShelfCard(
-                                    playlist = playlist,
-                                    onClick = { navController.navigate("online_playlist/${playlist.id}") },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                            YouTubePlaylistMenu(
-                                                playlist = playlist,
-                                                coroutineScope = coroutineScope,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
+                    // 4. Videos Shelf (Horizontal Carousel with 16:9 Widescreen Cards)
+                    if (allTabVideos.isNotEmpty()) {
+                        item(key = "all_videos_header", contentType = "section_header") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.filter_videos),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(R.string.see_all),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_VIDEO
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
                                     },
                                 )
                             }
                         }
+
+                        item(key = "all_videos_shelf", contentType = "horizontal_shelf") {
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                items(allTabVideos, key = { "video_shelf_${it.id}" }) { video ->
+                                    VideoShelfCard(
+                                        video = video,
+                                        isActive = video.id == currentMediaId,
+                                        isPlaying = isPlaying,
+                                        onClick = {
+                                            if (video.id == mediaMetadata?.id) {
+                                                playerConnection.player.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = video.id),
+                                                        video.toMediaMetadata(),
+                                                    ),
+                                                )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                YouTubeSongMenu(
+                                                    song = video,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
                     }
-                }
 
-                item(key = "all_bottom_spacer", contentType = "bottom_spacer") {
-                    Spacer(Modifier.height(16.dp))
-                }
+                    // 5. Playlists Shelf (Horizontal Carousel)
+                    if (allTabPlaylists.isNotEmpty()) {
+                        item(key = "all_playlists_header", contentType = "section_header") {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.filter_featured_playlists),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(R.string.see_all),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_FEATURED_PLAYLIST
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+                                    },
+                                )
+                            }
+                        }
 
-                if (!hasAnyAllContent && isAllModeLoaded) {
-                    item(key = "empty_all", contentType = "empty") {
-                        EmptyPlaceholder(
-                            icon = R.drawable.search,
-                            text = stringResource(R.string.no_results_found),
-                        )
+                        item(key = "all_playlists_shelf", contentType = "horizontal_shelf") {
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                items(allTabPlaylists, key = { "playlist_shelf_${it.id}" }) { playlist ->
+                                    PlaylistShelfCard(
+                                        playlist = playlist,
+                                        onClick = { navController.navigate("online_playlist/${playlist.id}") },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                YouTubePlaylistMenu(
+                                                    playlist = playlist,
+                                                    coroutineScope = coroutineScope,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item(key = "all_bottom_spacer", contentType = "bottom_spacer") {
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    if (!hasAnyAllContent && isAllModeLoaded) {
+                        item(key = "empty_all", contentType = "empty") {
+                            EmptyPlaceholder(
+                                icon = R.drawable.search,
+                                text = stringResource(R.string.no_results_found),
+                            )
+                        }
                     }
                 }
             } else {
@@ -714,7 +737,7 @@ fun OnlineSearchResult(
                 }
             }
 
-            if (searchFilter == null && !hasAnyAllContent && !isAllModeLoaded || searchFilter != null && itemsPage == null) {
+            if (searchFilter != null && itemsPage == null) {
                 item(key = "initial_loading", contentType = "loading") {
                     ShimmerHost {
                         repeat(8) {
@@ -728,22 +751,143 @@ fun OnlineSearchResult(
 }
 
 @Composable
+private fun SearchSongListItem(
+    song: SongItem,
+    isVideo: Boolean,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isActivelyPlaying = isActive && isPlaying
+
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            isActivelyPlaying -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "song_thumb_alpha",
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .padding(horizontal = 16.dp, vertical = 2.dp),
+    ) {
+        val thumbModifier = if (isVideo) {
+            Modifier.height(ListThumbnailSize).width(ListThumbnailSize * (16f / 9f))
+        } else {
+            Modifier.size(ListThumbnailSize)
+        }
+
+        Box(
+            modifier = thumbModifier
+                .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                .background(Color(30, 30, 30)),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = song.thumbnail,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = thumbAlpha },
+            )
+
+            if (isActivelyPlaying) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PlayingIndicator(
+                        color = LocalAccentColor.current,
+                        modifier = Modifier.height(20.dp),
+                        isPlaying = true,
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = song.title,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = if (isActive) LocalAccentColor.current else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val subtitle = listOfNotNull(
+                song.artists.joinToString { it.name }.takeIf { it.isNotBlank() },
+                song.durationText ?: song.formattedDuration()
+            ).joinToString(" • ")
+            if (subtitle.isNotBlank()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Spacer(Modifier.width(8.dp))
+
+        SongTrailingActions(
+            song = song,
+            onMenuClick = onLongClick,
+        )
+    }
+}
+
+@Composable
 private fun HeroArtistCard(
     artist: ArtistItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val avatarAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.7f else 1.0f,
+        animationSpec = tween(150),
+        label = "hero_avatar_alpha",
+    )
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            )
             .padding(horizontal = 16.dp),
     ) {
         // Circular avatar
         Box(
             modifier = Modifier
                 .size(56.dp)
+                .graphicsLayer { alpha = avatarAlpha }
                 .clip(CircleShape)
                 .background(Color(40, 40, 40)),
             contentAlignment = Alignment.Center,
@@ -785,10 +929,10 @@ private fun HeroArtistCard(
                 )
                 if (artist.isVerified) {
                     Icon(
-                        painter = painterResource(R.drawable.check),
+                        painter = painterResource(R.drawable.ic_verified_badge),
                         contentDescription = "Verified",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(15.dp),
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }
@@ -989,14 +1133,51 @@ internal fun ArtistTrailingAction(
 @Composable
 private fun AlbumShelfCard(
     album: AlbumItem,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isActivelyPlaying = isActive && isPlaying
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "album_card_scale",
+    )
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.7f else 1.0f,
+        animationSpec = tween(150),
+        label = "album_card_alpha",
+    )
+
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            isActivelyPlaying -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "album_thumb_alpha",
+    )
+
     Column(
         modifier = modifier
             .width(135.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
                 onClick = onClick,
                 onLongClick = onLongClick,
             ),
@@ -1011,8 +1192,26 @@ private fun AlbumShelfCard(
                 model = album.thumbnail,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = thumbAlpha },
             )
+
+            if (isActivelyPlaying) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PlayingIndicator(
+                        color = LocalAccentColor.current,
+                        modifier = Modifier.height(24.dp),
+                        isPlaying = true,
+                    )
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -1029,6 +1228,7 @@ private fun AlbumShelfCard(
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.graphicsLayer { alpha = contentAlpha },
         )
         val releaseLabel = album.explicitType?.takeIf { it.isNotBlank() } ?: "Album"
         val subtitle = listOfNotNull(releaseLabel, album.year?.toString()).joinToString(" • ")
@@ -1039,6 +1239,7 @@ private fun AlbumShelfCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.graphicsLayer { alpha = contentAlpha },
             )
         }
     }
@@ -1051,10 +1252,34 @@ private fun PlaylistShelfCard(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "playlist_card_scale",
+    )
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.7f else 1.0f,
+        animationSpec = tween(150),
+        label = "playlist_card_alpha",
+    )
+
     Column(
         modifier = modifier
             .width(135.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
                 onClick = onClick,
                 onLongClick = onLongClick,
             ),
@@ -1069,7 +1294,9 @@ private fun PlaylistShelfCard(
                 model = playlist.thumbnail,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = contentAlpha },
             )
             Box(
                 modifier = Modifier
@@ -1087,6 +1314,7 @@ private fun PlaylistShelfCard(
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.graphicsLayer { alpha = contentAlpha },
         )
         val subtitle = playlist.author?.name ?: playlist.songCountText
         if (!subtitle.isNullOrBlank()) {
@@ -1096,6 +1324,7 @@ private fun PlaylistShelfCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.graphicsLayer { alpha = contentAlpha },
             )
         }
     }
@@ -1104,14 +1333,51 @@ private fun PlaylistShelfCard(
 @Composable
 private fun VideoShelfCard(
     video: SongItem,
+    isActive: Boolean = false,
+    isPlaying: Boolean = false,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isActivelyPlaying = isActive && isPlaying
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "video_card_scale",
+    )
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.7f else 1.0f,
+        animationSpec = tween(150),
+        label = "video_card_alpha",
+    )
+
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            isActivelyPlaying -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "video_thumb_alpha",
+    )
+
     Column(
         modifier = modifier
             .width(200.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
                 onClick = onClick,
                 onLongClick = onLongClick,
             ),
@@ -1127,8 +1393,26 @@ private fun VideoShelfCard(
                 model = video.thumbnail,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = thumbAlpha },
             )
+
+            if (isActivelyPlaying) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PlayingIndicator(
+                        color = LocalAccentColor.current,
+                        modifier = Modifier.height(24.dp),
+                        isPlaying = true,
+                    )
+                }
+            }
+
             val durationText = video.durationText
             if (!durationText.isNullOrBlank()) {
                 Surface(
@@ -1154,6 +1438,7 @@ private fun VideoShelfCard(
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.graphicsLayer { alpha = contentAlpha },
         )
         val subtitle = listOfNotNull(video.artists.joinToString { it.name }.takeIf { it.isNotBlank() }, video.viewCountText).joinToString(" • ")
         if (subtitle.isNotBlank()) {
@@ -1163,6 +1448,7 @@ private fun VideoShelfCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.graphicsLayer { alpha = contentAlpha },
             )
         }
     }
