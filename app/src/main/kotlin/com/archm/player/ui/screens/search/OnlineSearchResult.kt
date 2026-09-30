@@ -38,6 +38,7 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -144,7 +145,7 @@ fun OnlineSearchResult(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
-    val lazyListState = key(viewModel.query) { rememberLazyListState() }
+    val lazyListState = remember(viewModel.query) { LazyListState(0, 0) }
 
     val searchFilter by viewModel.filter.collectAsStateWithLifecycle()
     val searchSummary = viewModel.summaryPage
