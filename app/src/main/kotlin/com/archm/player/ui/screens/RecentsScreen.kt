@@ -490,7 +490,7 @@ private fun RecentActivityItemRow(
             modifier = Modifier
                 .size(52.dp)
                 .clip(shape)
-                .background(Color(30, 30, 30)),
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             val context = LocalContext.current
@@ -705,7 +705,7 @@ private fun AccordionPlayGroupItem(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF121212)),
+            .background(MaterialTheme.colorScheme.surfaceContainer),
     ) {
         // Accordion Header Row
         Row(
@@ -726,7 +726,7 @@ private fun AccordionPlayGroupItem(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(parentShape)
-                        .background(Color(30, 30, 30)),
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center,
                 ) {
                     val context = LocalContext.current
@@ -828,7 +828,7 @@ private fun AccordionPlayGroupItem(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 2.dp)
                         .height(1.dp)
-                        .background(Color.White.copy(alpha = 0.07f)),
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
                 )
 
                 group.events.forEachIndexed { index, eventWithSong ->
@@ -857,7 +857,7 @@ private fun AccordionPlayGroupItem(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(30, 30, 30)),
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center,
                         ) {
                             val context = LocalContext.current
