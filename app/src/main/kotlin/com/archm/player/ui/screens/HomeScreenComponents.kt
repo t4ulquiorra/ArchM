@@ -194,6 +194,7 @@ val TitleMorphFadeThresholdDp = 48.dp    // How quickly the title morphs on scro
 fun Modifier.appleMusicTopBarGlass(
     scrolledProgress: Float, // 0f = resting at top, 1f = fully scrolled
     pureBlack: Boolean = false,
+    showDivider: Boolean = true,
 ): Modifier {
     val glassConfig = LocalGlassEffectConfig.current
     val useGlass = glassConfig.globalEnabled && isGlassSupported()
@@ -209,7 +210,7 @@ fun Modifier.appleMusicTopBarGlass(
                 applyEdgeEffects = false,
             )
             .drawBehind {
-                if (alpha > 0.1f) {
+                if (showDivider && alpha > 0.1f) {
                     drawLine(
                         color = Color.White.copy(alpha = 0.06f * alpha),
                         start = Offset(0f, size.height),
@@ -223,7 +224,7 @@ fun Modifier.appleMusicTopBarGlass(
         this
             .background(baseColor.copy(alpha = (0.92f * alpha).coerceIn(0f, 0.95f)))
             .drawBehind {
-                if (alpha > 0.1f) {
+                if (showDivider && alpha > 0.1f) {
                     drawLine(
                         color = Color.White.copy(alpha = 0.06f * alpha),
                         start = Offset(0f, size.height),

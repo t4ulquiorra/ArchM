@@ -230,7 +230,7 @@ fun SearchScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .appleMusicTopBarGlass(scrollProgress, pureBlack = effectivePureBlack),
+                    .appleMusicTopBarGlass(scrollProgress, pureBlack = effectivePureBlack, showDivider = false),
             )
         },
         containerColor = backgroundColor,
@@ -238,11 +238,12 @@ fun SearchScreen(
     ) { paddingValues ->
         LazyColumn(
             state = lazyListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding()),
             contentPadding = PaddingValues(
-                top = paddingValues.calculateTopPadding(),
                 bottom = paddingValues.calculateBottomPadding() + 16.dp,
             ),
-            modifier = Modifier.fillMaxSize(),
         ) {
             // Apple Music Large Header Title
             item(key = "search_large_title") {
@@ -267,8 +268,9 @@ fun SearchScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .appleMusicTopBarGlass(
-                            scrolledProgress = if (lazyListState.firstVisibleItemIndex > 0) 1f else 0f,
+                            scrolledProgress = scrollProgress,
                             pureBlack = effectivePureBlack,
+                            showDivider = true,
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
