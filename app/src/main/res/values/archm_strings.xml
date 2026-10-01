@@ -81,8 +81,5 @@
     <string name="following">Following</string>
     <string name="total_releases">Total releases</string>
     <string name="singles">Singles</string>
-    <string name="ep">EP</string>
     <string name="no_releases_found">No releases found</string>
-    <string name="release_type_album">Album</string>
-    <string name="release_type_single">Single</string>
 </resources>
