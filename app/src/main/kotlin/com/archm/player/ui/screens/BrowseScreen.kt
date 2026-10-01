@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -121,15 +123,17 @@ fun BrowseScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        val insetsPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        val playerAwareBottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
+        val contentTopPadding = statusBarTop + 64.dp + 8.dp
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = (insetsPadding.calculateTopPadding() + 8.dp).coerceAtLeast(0.dp),
-                bottom = 120.dp,
+                top = contentTopPadding,
+                bottom = playerAwareBottom + 16.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -234,27 +238,43 @@ fun BrowseScreen(
             }
         }
 
-        TopAppBar(
-            scrollBehavior = scrollBehavior,
-            title = {
-                Text(
-                    text = displayTitle,
-                    style = if (showNavigationIcon) {
-                        MaterialTheme.typography.titleMedium
-                    } else {
-                        MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            if (!showNavigationIcon) {
+                MainTopBar(
+                    navController = navController,
+                    titleContent = {
+                        Text(
+                            text = displayTitle,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(),
+                        )
                     },
-                    fontWeight = if (showNavigationIcon) FontWeight.SemiBold else FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(align = Alignment.CenterVertically)
-                        .basicMarquee()
-                        .focusable(),
                 )
-            },
-            navigationIcon = {
+            } else {
+                TopAppBar(
+                    scrollBehavior = scrollBehavior,
+                    title = {
+                        Text(
+                            text = displayTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(align = Alignment.CenterVertically)
+                                .basicMarquee()
+                                .focusable(),
+                        )
+                    },
+                    navigationIcon = {
                 if (showNavigationIcon) {
                     Box(Modifier.padding(horizontal = 5.dp)) {
                         CombinedIconButton(
@@ -280,6 +300,8 @@ fun BrowseScreen(
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background),
         )
+            }
+        }
     }
 }
 

@@ -316,18 +316,6 @@ fun MainTopBar(
                 }
                 Spacer(Modifier.width(6.dp))
                 IconButton(
-                    onClick = { navController.navigate("news") },
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.newspaper),
-                        contentDescription = stringResource(R.string.news),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Spacer(Modifier.width(6.dp))
-                IconButton(
                     onClick = { navController.navigate("settings") },
                     modifier = Modifier.size(36.dp),
                 ) {

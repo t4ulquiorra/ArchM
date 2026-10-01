@@ -44,6 +44,7 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.music.innertube.models.BrowseEndpoint
+import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkModel
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkUrl
 import androidx.compose.foundation.lazy.LazyColumn
@@ -171,14 +172,12 @@ fun SearchScreen(
     val homeViewModel: HomeViewModel = hiltViewModel()
     val vmAccountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
 
-    Box(
+    Column(
         modifier =
             Modifier
                 .fillMaxSize()
                 .background(backgroundColor)
                 .then(
-                    // Step 2b: attach the shell's floating-header connection here so Search's
-                    // scroll/fling writes Search's own header state and can't leak elsewhere.
                     if (headerScrollConnection != null) {
                         Modifier.nestedScroll(headerScrollConnection)
                     } else {
@@ -186,6 +185,49 @@ fun SearchScreen(
                     },
                 ),
     ) {
+        MainTopBar(
+            navController = navController,
+            accountImageUrl = vmAccountImageUrl,
+            titleContent = {
+                Text(
+                    text = stringResource(R.string.search),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                )
+            },
+        )
+
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = Color(35, 35, 38),
+            contentColor = Color.White,
+            modifier =
+                Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .height(InputFieldHeight)
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable {
+                        onSearchClick()
+                    },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.search),
+                    contentDescription = stringResource(R.string.search),
+                    tint = Color.White.copy(alpha = 0.7f),
+                )
+                CyclingSearchPlaceholder(
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
         LazyColumn(
             state = lazyListState,
             contentPadding =
@@ -194,114 +236,6 @@ fun SearchScreen(
                     .asPaddingValues(),
             modifier = Modifier.fillMaxSize(),
         ) {
-            item(
-                key = "landing_header",
-                contentType = "landing_header",
-            ) {
-                TopAppBar(
-                    windowInsets =
-                        TopAppBarDefaults.windowInsets.exclude(
-                            TopAppBarDefaults.windowInsets.only(WindowInsetsSides.Start),
-                        ),
-                    title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier =
-                                Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { navController.navigate("account") },
-                        ) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(30, 30, 30))
-                                        .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.person),
-                                    contentDescription = stringResource(R.string.account),
-                                    tint = Color.White.copy(alpha = 0.4f),
-                                    modifier = Modifier.size(20.dp),
-                                )
-                                if (!vmAccountImageUrl.isNullOrBlank()) {
-                                    AsyncImage(
-                                        model =
-                                            ImageRequest.Builder(LocalContext.current)
-                                                .data(vmAccountImageUrl)
-                                                .diskCachePolicy(CachePolicy.ENABLED)
-                                                .diskCacheKey(vmAccountImageUrl)
-                                                .crossfade(true)
-                                                .build(),
-                                        contentDescription = stringResource(R.string.account),
-                                        contentScale = ContentScale.Crop,
-                                        modifier =
-                                            Modifier
-                                                .fillMaxSize()
-                                                .clip(CircleShape),
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = stringResource(R.string.search),
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                                maxLines = 1,
-                            )
-                        }
-                    },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                        ),
-                )
-            }
-
-            stickyHeader(
-                key = "landing_sticky_bar",
-                contentType = "landing_sticky_bar",
-            ) {
-                Surface(
-                    color = backgroundColor,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color(35, 35, 38),
-                        contentColor = Color.White,
-                        modifier =
-                            Modifier
-                                .windowInsetsPadding(WindowInsets.statusBars)
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .fillMaxWidth()
-                                .height(InputFieldHeight)
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable {
-                                    onSearchClick()
-                                },
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.search),
-                                contentDescription = stringResource(R.string.search),
-                                tint = Color.White.copy(alpha = 0.7f),
-                            )
-                            CyclingSearchPlaceholder(
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    }
-                }
-            }
-
             when (val currentState = state) {
                 SearchDiscoveryScreenState.Loading -> {
                     item(

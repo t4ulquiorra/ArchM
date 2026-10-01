@@ -116,9 +116,9 @@ fun NewReleaseScreen(
                     titleContent = {
                         Text(
                             text = stringResource(R.string.new_releases),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
                         )
                     },
                 )
@@ -170,12 +170,19 @@ fun NewReleaseScreen(
                 NewReleaseUiState.Loading -> {
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + 24.dp),
-                        contentPadding = paddingValues,
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = paddingValues.calculateTopPadding() + 8.dp,
+                            bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         items(12) {
                             ShimmerHost {
-                                GridItemPlaceHolder(fillMaxWidth = true)
+                                GridItemPlaceHolder(fillMaxWidth = true, modifier = Modifier.padding(4.dp))
                             }
                         }
                     }
@@ -331,9 +338,18 @@ private fun NewReleaseGridContent(
             if (selectedTab == NewReleaseTab.All) emptyList() else content.releasesFor(selectedTab)
         }
 
+    val contentPadding = PaddingValues(
+        start = 16.dp,
+        end = 16.dp,
+        top = paddingValues.calculateTopPadding() + 8.dp,
+        bottom = paddingValues.calculateBottomPadding() + 16.dp,
+    )
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + 24.dp),
-        contentPadding = paddingValues,
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         item(
@@ -397,7 +413,7 @@ private fun NewReleaseGridContent(
                     isPlaying = isPlaying,
                     fillMaxWidth = true,
                     coroutineScope = coroutineScope,
-                    modifier = Modifier.animateItem(),
+                    modifier = Modifier.padding(4.dp).animateItem(),
                     onClick = { onReleaseClick(album) },
                     onLongClick = { onReleaseLongClick(album) },
                 )
@@ -415,7 +431,7 @@ private fun NewReleaseSectionHeader(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, top = 10.dp, end = 20.dp, bottom = 2.dp),
+                .padding(start = 4.dp, top = 12.dp, end = 4.dp, bottom = 4.dp),
     ) {
         Text(
             text = title,
@@ -443,8 +459,8 @@ private fun NewReleaseHorizontalSection(
 ) {
     LazyHorizontalGrid(
         rows = GridCells.Fixed(1),
-        contentPadding = PaddingValues(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -461,7 +477,7 @@ private fun NewReleaseHorizontalSection(
                 isPlaying = isPlaying,
                 fillMaxWidth = false,
                 coroutineScope = coroutineScope,
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.padding(4.dp).animateItem(),
                 onClick = { onReleaseClick(album) },
                 onLongClick = { onReleaseLongClick(album) },
             )
@@ -484,7 +500,7 @@ private fun NewReleaseSummaryCard(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(vertical = 4.dp),
     ) {
         Column(
             modifier = Modifier.padding(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 10.dp),
