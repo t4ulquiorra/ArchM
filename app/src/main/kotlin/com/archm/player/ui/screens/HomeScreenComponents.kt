@@ -176,9 +176,6 @@ import com.archm.player.LocalPlayerConnection
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-import com.archm.player.ui.component.LocalGlassEffectConfig
-import com.archm.player.ui.component.liquidGlass
-import com.archm.player.ui.component.isGlassSupported
 
 // =========================================================================
 // 🎚️ TOP BAR TUNING (Plain Language Proportions)
@@ -196,44 +193,21 @@ fun Modifier.appleMusicTopBarGlass(
     pureBlack: Boolean = false,
     showDivider: Boolean = true,
 ): Modifier {
-    val glassConfig = LocalGlassEffectConfig.current
-    val useGlass = glassConfig.globalEnabled && isGlassSupported()
     val alpha = scrolledProgress.coerceIn(0f, 1f)
+    val baseColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
-    return if (useGlass && alpha > 0.05f) {
-        this
-            .liquidGlass(
-                config = glassConfig.copy(
-                    surfaceOpacity = glassConfig.surfaceOpacity * alpha,
-                ),
-                shape = RoundedCornerShape(0.dp),
-                applyEdgeEffects = false,
-            )
-            .drawBehind {
-                if (showDivider && alpha > 0.1f) {
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.06f * alpha),
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 1f,
-                    )
-                }
+    return this
+        .background(baseColor.copy(alpha = (0.94f * alpha).coerceIn(0f, 0.94f)))
+        .drawBehind {
+            if (showDivider && alpha > 0.08f) {
+                drawLine(
+                    color = Color.White.copy(alpha = 0.07f * alpha),
+                    start = Offset(0f, size.height),
+                    end = Offset(size.width, size.height),
+                    strokeWidth = 1f,
+                )
             }
-    } else {
-        val baseColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
-        this
-            .background(baseColor.copy(alpha = (0.92f * alpha).coerceIn(0f, 0.95f)))
-            .drawBehind {
-                if (showDivider && alpha > 0.1f) {
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.06f * alpha),
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 1f,
-                    )
-                }
-            }
-    }
+        }
 }
 
 // ==========================================

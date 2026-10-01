@@ -62,8 +62,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import com.archm.player.ui.screens.AppleMusicLargeTitleSize
+import com.archm.player.ui.screens.TitleMorphFadeThresholdDp
 import kotlinx.coroutines.launch
 import com.archm.player.R
 import com.archm.player.constants.ChipSortTypeKey
@@ -154,26 +164,67 @@ fun LibraryScreen(navController: NavController) {
         tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
     }
 
+    val maxCollapsePx = with(density) { TitleMorphFadeThresholdDp.toPx() }
+    var scrollOffsetPx by rememberSaveable { mutableFloatStateOf(0f) }
+
+    val scrollProgress by remember {
+        derivedStateOf {
+            (scrollOffsetPx / maxCollapsePx).coerceIn(0f, 1f)
+        }
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                if (delta < 0f && scrollOffsetPx < maxCollapsePx) {
+                    val newOffset = (scrollOffsetPx - delta).coerceIn(0f, maxCollapsePx)
+                    val consumedY = -(newOffset - scrollOffsetPx)
+                    scrollOffsetPx = newOffset
+                    return Offset(0f, consumedY)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                val delta = available.y
+                if (delta > 0f && scrollOffsetPx > 0f) {
+                    val newOffset = (scrollOffsetPx - delta).coerceIn(0f, maxCollapsePx)
+                    val consumedY = -(newOffset - scrollOffsetPx)
+                    scrollOffsetPx = newOffset
+                    return Offset(0f, consumedY)
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(backgroundColor),
+                .background(backgroundColor)
+                .nestedScroll(nestedScrollConnection),
     ) {
-        // Sticky Header: MainTopBar + Category Filter Pills
+        // Sticky Header: MainTopBar + Large Header + Category Filter Pills
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .appleMusicTopBarGlass(1f, pureBlack = pureBlack),
+                    .appleMusicTopBarGlass(scrollProgress, pureBlack = pureBlack),
         ) {
             MainTopBar(
                 navController = navController,
                 showHistory = false,
                 showListenTogether = false,
                 showSettings = true,
+                titleAlpha = scrollProgress,
                 titleContent = {
                     AnimatedContent(
                         targetState = titleText,
@@ -198,6 +249,30 @@ fun LibraryScreen(navController: NavController) {
                 },
                 containerColor = Color.Transparent,
             )
+
+            // Apple Music Large Header Title
+            val largeTitleHeight = 44.dp
+            val currentLargeTitleHeight = (largeTitleHeight * (1f - scrollProgress)).coerceAtLeast(0.dp)
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(currentLargeTitleHeight)
+                        .graphicsLayer {
+                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                            clip = true
+                        }
+                        .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = stringResource(R.string.filter_library),
+                    fontSize = AppleMusicLargeTitleSize,
+                    fontWeight = FontWeight.Bold,
+                    color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                )
+            }
 
             // Category filter pills
             LazyRow(
