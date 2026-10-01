@@ -34,9 +34,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -92,7 +94,7 @@ import com.music.innertube.models.WatchEndpoint
 @Composable
 fun BrowseScreen(
     navController: NavController,
-    scrollBehavior: TopAppBarScrollBehavior,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     browseId: String?,
     initialTitle: String? = null,
     showNavigationIcon: Boolean = true,
@@ -118,25 +120,87 @@ fun BrowseScreen(
         }
     }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        val playerAwareBottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
-        val contentTopPadding = statusBarTop + 64.dp + 8.dp
+    val defaultScrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val effectiveScrollBehavior = scrollBehavior ?: defaultScrollBehavior
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(effectiveScrollBehavior.nestedScrollConnection),
+        topBar = {
+            if (!showNavigationIcon) {
+                MainTopBar(
+                    navController = navController,
+                    scrollBehavior = effectiveScrollBehavior,
+                    titleContent = {
+                        Text(
+                            text = displayTitle,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(),
+                        )
+                    },
+                )
+            } else {
+                TopAppBar(
+                    scrollBehavior = effectiveScrollBehavior,
+                    title = {
+                        Text(
+                            text = displayTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(align = Alignment.CenterVertically)
+                                .basicMarquee()
+                                .focusable(),
+                        )
+                    },
+                    navigationIcon = {
+                        if (showNavigationIcon) {
+                            Box(Modifier.padding(horizontal = 5.dp)) {
+                                CombinedIconButton(
+                                    onClick = navController::navigateUp,
+                                    onLongClick = navController::backToMain,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.arrow_back),
+                                        contentDescription = "Back",
+                                        tint = MaterialTheme.colorScheme.onBackground,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.background,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background),
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
+    ) { paddingValues ->
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = contentTopPadding,
-                bottom = playerAwareBottom + 16.dp,
+                top = paddingValues.calculateTopPadding() + 8.dp,
+                bottom = paddingValues.calculateBottomPadding() + 16.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
             if (items == null) {
                 items(6) {
@@ -235,71 +299,6 @@ fun BrowseScreen(
                         )
                     }
                 }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            if (!showNavigationIcon) {
-                MainTopBar(
-                    navController = navController,
-                    titleContent = {
-                        Text(
-                            text = displayTitle,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            modifier = Modifier.basicMarquee(),
-                        )
-                    },
-                )
-            } else {
-                TopAppBar(
-                    scrollBehavior = scrollBehavior,
-                    title = {
-                        Text(
-                            text = displayTitle,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(align = Alignment.CenterVertically)
-                                .basicMarquee()
-                                .focusable(),
-                        )
-                    },
-                    navigationIcon = {
-                if (showNavigationIcon) {
-                    Box(Modifier.padding(horizontal = 5.dp)) {
-                        CombinedIconButton(
-                            onClick = navController::navigateUp,
-                            onLongClick = navController::backToMain,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.arrow_back),
-                                contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background,
-                navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-                titleContentColor = MaterialTheme.colorScheme.onBackground,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background),
-        )
             }
         }
     }

@@ -102,17 +102,16 @@ fun NewReleaseScreen(
     val coroutineScope = rememberCoroutineScope()
     var selectedTab by rememberSaveable { mutableStateOf(NewReleaseTab.All) }
 
+    val defaultScrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val effectiveScrollBehavior = scrollBehavior ?: defaultScrollBehavior
+
     Scaffold(
-        modifier =
-            if (scrollBehavior != null) {
-                Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-            } else {
-                Modifier
-            },
+        modifier = Modifier.nestedScroll(effectiveScrollBehavior.nestedScrollConnection),
         topBar = {
             if (!showNavigationIcon) {
                 MainTopBar(
                     navController = navController,
+                    scrollBehavior = effectiveScrollBehavior,
                     titleContent = {
                         Text(
                             text = stringResource(R.string.new_releases),
@@ -124,6 +123,7 @@ fun NewReleaseScreen(
                 )
             } else {
                 TopAppBar(
+                    scrollBehavior = effectiveScrollBehavior,
                     title = {
                         Text(
                             text = stringResource(R.string.new_releases),
@@ -148,10 +148,10 @@ fun NewReleaseScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.background,
                         navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                         titleContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
-                    scrollBehavior = scrollBehavior,
                 )
             }
         },

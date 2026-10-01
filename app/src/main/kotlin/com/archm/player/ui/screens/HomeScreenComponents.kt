@@ -74,6 +74,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -187,6 +188,8 @@ fun MainTopBar(
     accountName: String = "",
     accountImageUrl: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+    containerColor: Color = MaterialTheme.colorScheme.background,
 ) {
     val hour =
         remember {
@@ -215,6 +218,7 @@ fun MainTopBar(
         }
 
     TopAppBar(
+        scrollBehavior = scrollBehavior,
         windowInsets =
             TopAppBarDefaults.windowInsets.exclude(
                 TopAppBarDefaults.windowInsets.only(WindowInsetsSides.Start),
@@ -331,12 +335,16 @@ fun MainTopBar(
         },
         colors =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent,
+                containerColor = containerColor,
+                scrolledContainerColor = containerColor,
+                titleContentColor = MaterialTheme.colorScheme.onBackground,
+                actionIconContentColor = MaterialTheme.colorScheme.onBackground,
             ),
         modifier = modifier,
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopAppBar(
     navController: NavController,
@@ -344,12 +352,16 @@ fun HomeTopAppBar(
     accountName: String = "",
     accountImageUrl: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+    containerColor: Color = MaterialTheme.colorScheme.background,
 ) = MainTopBar(
     navController = navController,
     modifier = modifier,
     accountName = accountName,
     accountImageUrl = accountImageUrl,
     titleContent = titleContent,
+    scrollBehavior = scrollBehavior,
+    containerColor = containerColor,
 )
 
 @Composable

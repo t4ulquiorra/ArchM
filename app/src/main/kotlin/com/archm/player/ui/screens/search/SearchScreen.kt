@@ -7,6 +7,9 @@
 
 package com.archm.player.ui.screens.search
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -78,23 +81,33 @@ import com.archm.player.viewmodels.HomeViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -162,9 +175,43 @@ fun SearchScreen(
             ?.getStateFlow("scrollToTop", false)
             ?.collectAsStateWithLifecycle()
 
+    val density = LocalDensity.current
+    val maxCollapseDp = 72.dp
+    val maxCollapsePx = with(density) { maxCollapseDp.toPx() }
+    var collapseOffsetPx by remember { mutableFloatStateOf(0f) }
+    val collapseOffsetDp = with(density) { collapseOffsetPx.toDp() }
+    val row1Alpha = ((maxCollapsePx + collapseOffsetPx) / maxCollapsePx).coerceIn(0f, 1f)
+
+    val nestedScrollConnection = remember(maxCollapsePx) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                val oldOffset = collapseOffsetPx
+                val newOffset = (oldOffset + delta).coerceIn(-maxCollapsePx, 0f)
+                val consumedY = newOffset - oldOffset
+                collapseOffsetPx = newOffset
+                return Offset(0f, consumedY)
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (collapseOffsetPx != 0f && collapseOffsetPx != -maxCollapsePx) {
+                    val target = if (collapseOffsetPx > -maxCollapsePx / 2f) 0f else -maxCollapsePx
+                    Animatable(collapseOffsetPx).animateTo(
+                        targetValue = target,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    ) {
+                        collapseOffsetPx = value
+                    }
+                }
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
+
     LaunchedEffect(scrollToTop?.value) {
         if (scrollToTop?.value == true) {
             lazyListState.animateScrollToItem(0)
+            collapseOffsetPx = 0f
             backStackEntry?.savedStateHandle?.set("scrollToTop", false)
         }
     }
@@ -172,11 +219,17 @@ fun SearchScreen(
     val homeViewModel: HomeViewModel = hiltViewModel()
     val vmAccountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
 
-    Column(
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val playerAwareBottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
+    val expandedHeaderHeight = statusBarTop + 64.dp + 16.dp + InputFieldHeight + 8.dp
+    val currentHeaderHeight = (expandedHeaderHeight + collapseOffsetDp).coerceAtLeast(statusBarTop + InputFieldHeight + 16.dp)
+
+    Box(
         modifier =
             Modifier
                 .fillMaxSize()
                 .background(backgroundColor)
+                .nestedScroll(nestedScrollConnection)
                 .then(
                     if (headerScrollConnection != null) {
                         Modifier.nestedScroll(headerScrollConnection)
@@ -185,55 +238,12 @@ fun SearchScreen(
                     },
                 ),
     ) {
-        MainTopBar(
-            navController = navController,
-            accountImageUrl = vmAccountImageUrl,
-            titleContent = {
-                Text(
-                    text = stringResource(R.string.search),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                )
-            },
-        )
-
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = Color(35, 35, 38),
-            contentColor = Color.White,
-            modifier =
-                Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .fillMaxWidth()
-                    .height(InputFieldHeight)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        onSearchClick()
-                    },
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.search),
-                    contentDescription = stringResource(R.string.search),
-                    tint = Color.White.copy(alpha = 0.7f),
-                )
-                CyclingSearchPlaceholder(
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-
         LazyColumn(
             state = lazyListState,
-            contentPadding =
-                LocalPlayerAwareWindowInsets.current
-                    .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
-                    .asPaddingValues(),
+            contentPadding = PaddingValues(
+                top = expandedHeaderHeight,
+                bottom = playerAwareBottom + 16.dp,
+            ),
             modifier = Modifier.fillMaxSize(),
         ) {
             when (val currentState = state) {
@@ -368,6 +378,86 @@ fun SearchScreen(
                         }
                     }
                 }
+            }
+        }
+
+        // Two-Tier Sticky Header Container
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(currentHeaderHeight)
+                    .background(backgroundColor)
+                    .clipToBounds()
+                    .zIndex(1f),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .offset { IntOffset(0, collapseOffsetPx.roundToInt()) },
+            ) {
+                Spacer(Modifier.height(statusBarTop))
+
+                // Row 1: Collapsible MainTopBar
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { alpha = row1Alpha },
+                ) {
+                    MainTopBar(
+                        navController = navController,
+                        accountImageUrl = vmAccountImageUrl,
+                        titleContent = {
+                            Text(
+                                text = stringResource(R.string.search),
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                                maxLines = 1,
+                            )
+                        },
+                        containerColor = backgroundColor,
+                    )
+                }
+
+                // Z = 16.dp gap between bottom of Row 1 and top of Row 2
+                Spacer(Modifier.height(16.dp))
+
+                // Row 2: Search input bar (height = InputFieldHeight = 48.dp)
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(35, 35, 38),
+                    contentColor = Color.White,
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .height(InputFieldHeight)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable {
+                                onSearchClick()
+                            },
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.search),
+                            contentDescription = stringResource(R.string.search),
+                            tint = Color.White.copy(alpha = 0.7f),
+                        )
+                        CyclingSearchPlaceholder(
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+
+                // Y2 = 8.dp bottom padding under Row 2
+                Spacer(Modifier.height(8.dp))
             }
         }
     }

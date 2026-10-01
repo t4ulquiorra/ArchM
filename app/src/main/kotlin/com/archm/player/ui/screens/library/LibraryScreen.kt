@@ -71,7 +71,19 @@ import com.archm.player.constants.LibraryFilter
 import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.utils.rememberEnumPreference
 
-internal val LibraryHeaderContentPadding = 64.dp
+import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.foundation.layout.asPaddingValues
+
+internal val LibraryHeaderContentPadding = 0.dp
 internal val LibraryPullToRefreshIndicatorOffset = 0.dp
 
 @Composable
@@ -107,197 +119,255 @@ fun LibraryScreen(navController: NavController) {
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
 
-    Box(
+    val maxCollapseDp = 72.dp
+    val maxCollapsePx = with(density) { maxCollapseDp.toPx() }
+    var collapseOffsetPx by remember { mutableFloatStateOf(0f) }
+    val collapseOffsetDp = with(density) { collapseOffsetPx.toDp() }
+    val row1Alpha = ((maxCollapsePx + collapseOffsetPx) / maxCollapsePx).coerceIn(0f, 1f)
+
+    val nestedScrollConnection = remember(maxCollapsePx) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                val oldOffset = collapseOffsetPx
+                val newOffset = (oldOffset + delta).coerceIn(-maxCollapsePx, 0f)
+                val consumedY = newOffset - oldOffset
+                collapseOffsetPx = newOffset
+                return Offset(0f, consumedY)
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (collapseOffsetPx != 0f && collapseOffsetPx != -maxCollapsePx) {
+                    val target = if (collapseOffsetPx > -maxCollapsePx / 2f) 0f else -maxCollapsePx
+                    Animatable(collapseOffsetPx).animateTo(
+                        targetValue = target,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    ) {
+                        collapseOffsetPx = value
+                    }
+                }
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
+
+    val tabListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(defaultFilter, libraryFilters) {
+        val selectedFilter = defaultFilter.takeIf { it in libraryFilters } ?: LibraryFilter.LIBRARY
+        val selectedPage = libraryFilters.indexOf(selectedFilter).takeIf { it >= 0 } ?: 0
+        if (pagerState.currentPage != selectedPage) {
+            pagerState.scrollToPage(selectedPage)
+        }
+    }
+
+    // Sync Pager -> Preference & lazy list centering
+    LaunchedEffect(pagerState.currentPage, libraryFilters) {
+        val targetPage = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
+        val targetFilter = libraryFilters.getOrElse(targetPage) { LibraryFilter.LIBRARY }
+
+        val tabWidth =
+            when (targetFilter) {
+                LibraryFilter.LIBRARY -> 116.dp
+                LibraryFilter.PLAYLISTS -> 132.dp
+                LibraryFilter.SONGS -> 102.dp
+                LibraryFilter.ARTISTS -> 116.dp
+                LibraryFilter.ALBUMS -> 110.dp
+                else -> 116.dp
+            }
+        val screenWidth = configuration.screenWidthDp.dp
+        val targetOffsetDp = (screenWidth - tabWidth) / 2
+        val targetOffsetPx = with(density) { targetOffsetDp.roundToPx() }
+
+        tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
+    }
+
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val row2Height = 44.dp
+    val expandedHeaderHeight = statusBarTop + 64.dp + 16.dp + row2Height + 8.dp
+    val currentHeaderHeight = (expandedHeaderHeight + collapseOffsetDp).coerceAtLeast(statusBarTop + row2Height + 16.dp)
+
+    Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background)
+                .nestedScroll(nestedScrollConnection),
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
+        // Two-Tier Sticky Header Container
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(currentHeaderHeight)
+                    .background(MaterialTheme.colorScheme.background)
+                    .clipToBounds()
+                    .zIndex(1f),
         ) {
-            MainTopBar(
-                navController = navController,
-                titleContent = {
-                    AnimatedContent(
-                        targetState = titleText,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
-                                    (slideOutVertically { height -> -height / 2 } + fadeOut())
-                            } else {
-                                (slideInVertically { height -> -height / 2 } + fadeIn()) togetherWith
-                                    (slideOutVertically { height -> height / 2 } + fadeOut())
-                            }.using(SizeTransform(clip = false))
-                        },
-                        label = "LibraryTitleAnimation",
-                    ) { targetTitle ->
-                        Text(
-                            text = targetTitle,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                        )
-                    }
-                },
-            )
-
-            val tabListState = rememberLazyListState()
-            val coroutineScope = rememberCoroutineScope()
-
-            LaunchedEffect(defaultFilter, libraryFilters) {
-                val selectedFilter = defaultFilter.takeIf { it in libraryFilters } ?: LibraryFilter.LIBRARY
-                val selectedPage = libraryFilters.indexOf(selectedFilter).takeIf { it >= 0 } ?: 0
-                if (pagerState.currentPage != selectedPage) {
-                    pagerState.scrollToPage(selectedPage)
-                }
-            }
-
-            // Sync Pager -> Preference & lazy list centering
-            LaunchedEffect(pagerState.currentPage, libraryFilters) {
-                val targetPage = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
-                val targetFilter = libraryFilters.getOrElse(targetPage) { LibraryFilter.LIBRARY }
-
-                val tabWidth =
-                    when (targetFilter) {
-                        LibraryFilter.LIBRARY -> 116.dp
-                        LibraryFilter.PLAYLISTS -> 132.dp
-                        LibraryFilter.SONGS -> 102.dp
-                        LibraryFilter.ARTISTS -> 116.dp
-                        LibraryFilter.ALBUMS -> 110.dp
-                        else -> 116.dp
-                    }
-                val screenWidth = configuration.screenWidthDp.dp
-                val targetOffsetDp = (screenWidth - tabWidth) / 2
-                val targetOffsetPx = with(density) { targetOffsetDp.roundToPx() }
-
-                tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
-            }
-
-            Box(
+            Column(
                 modifier =
                     Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .offset { IntOffset(0, collapseOffsetPx.roundToInt()) },
             ) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                ) { page ->
-                    when (libraryFilters.getOrElse(page) { LibraryFilter.LIBRARY }) {
-                        LibraryFilter.LIBRARY -> {
-                            LibraryMixScreen(
-                                navController = navController,
-                                filterContent = null,
-                                selectedTagIds = emptySet(),
-                                onTabSelected = { targetFilter ->
-                                    coroutineScope.launch {
-                                        val targetPage = libraryFilters.indexOf(targetFilter)
-                                        pagerState.animateScrollToPage(targetPage.takeIf { it >= 0 } ?: 0)
-                                    }
-                                },
-                            )
-                        }
+                Spacer(Modifier.height(statusBarTop))
 
-                        LibraryFilter.PLAYLISTS -> {
-                            LibraryPlaylistsScreen(
-                                navController = navController,
-                                filterContent = null,
-                                selectedTagIds = emptySet(),
-                            )
-                        }
-
-                        LibraryFilter.SONGS -> {
-                            LibrarySongsScreen(
-                                navController = navController,
-                                onDeselect = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(0)
-                                    }
-                                },
-                            )
-                        }
-
-                        LibraryFilter.ARTISTS -> {
-                            LibraryArtistsScreen(
-                                navController = navController,
-                                onDeselect = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(0)
-                                    }
-                                },
-                            )
-                        }
-
-                        LibraryFilter.ALBUMS -> {
-                            LibraryAlbumsScreen(
-                                navController = navController,
-                                onDeselect = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(0)
-                                    }
-                                },
-                            )
-                        }
-
-                        else -> Unit
-                    }
-                }
-
+                // Row 1: Collapsible MainTopBar
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background)
-                            .zIndex(1f),
+                            .graphicsLayer { alpha = row1Alpha },
                 ) {
-                    LazyRow(
-                        state = tabListState,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                        contentPadding = PaddingValues(horizontal = 24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        items(
-                            items = libraryFilters,
-                            key = { filter -> filter.name },
-                            contentType = { "library_filter_chip" },
-                        ) { filter ->
-                            val page = libraryFilters.indexOf(filter)
-                            val label =
-                                when (filter) {
-                                    LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-                                    LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                                    LibraryFilter.SONGS -> stringResource(R.string.songs)
-                                    LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-                                    LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-                                    else -> filter.name
-                                }
-                            val iconRes =
-                                when (filter) {
-                                    LibraryFilter.LIBRARY -> R.drawable.graphic_eq
-                                    LibraryFilter.PLAYLISTS -> R.drawable.queue_music
-                                    LibraryFilter.SONGS -> R.drawable.music_note
-                                    LibraryFilter.ARTISTS -> R.drawable.person
-                                    LibraryFilter.ALBUMS -> R.drawable.album
-                                    else -> R.drawable.music_note
-                                }
-                            ExpressiveTabChip(
-                                label = label,
-                                iconRes = iconRes,
-                                selected = currentFilter == filter,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(page)
-                                    }
+                    MainTopBar(
+                        navController = navController,
+                        titleContent = {
+                            AnimatedContent(
+                                targetState = titleText,
+                                transitionSpec = {
+                                    if (targetState > initialState) {
+                                        (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                                            (slideOutVertically { height -> -height / 2 } + fadeOut())
+                                    } else {
+                                        (slideInVertically { height -> -height / 2 } + fadeIn()) togetherWith
+                                            (slideOutVertically { height -> height / 2 } + fadeOut())
+                                    }.using(SizeTransform(clip = false))
                                 },
-                            )
-                        }
+                                label = "LibraryTitleAnimation",
+                            ) { targetTitle ->
+                                Text(
+                                    text = targetTitle,
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    maxLines = 1,
+                                )
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.background,
+                    )
+                }
+
+                // Z = 16.dp gap between bottom of Row 1 and top of Row 2
+                Spacer(Modifier.height(16.dp))
+
+                // Row 2: Category filter pills
+                LazyRow(
+                    state = tabListState,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(row2Height),
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    items(
+                        items = libraryFilters,
+                        key = { filter -> filter.name },
+                        contentType = { "library_filter_chip" },
+                    ) { filter ->
+                        val page = libraryFilters.indexOf(filter)
+                        val label =
+                            when (filter) {
+                                LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+                                LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+                                LibraryFilter.SONGS -> stringResource(R.string.songs)
+                                LibraryFilter.ARTISTS -> stringResource(R.string.artists)
+                                LibraryFilter.ALBUMS -> stringResource(R.string.albums)
+                                else -> filter.name
+                            }
+                        val iconRes =
+                            when (filter) {
+                                LibraryFilter.LIBRARY -> R.drawable.graphic_eq
+                                LibraryFilter.PLAYLISTS -> R.drawable.queue_music
+                                LibraryFilter.SONGS -> R.drawable.music_note
+                                LibraryFilter.ARTISTS -> R.drawable.person
+                                LibraryFilter.ALBUMS -> R.drawable.album
+                                else -> R.drawable.music_note
+                            }
+                        ExpressiveTabChip(
+                            label = label,
+                            iconRes = iconRes,
+                            selected = currentFilter == filter,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(page)
+                                }
+                            },
+                        )
                     }
                 }
+
+                // Y2 = 8.dp bottom padding under Row 2
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+
+        HorizontalPager(
+            state = pagerState,
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+        ) { page ->
+            when (libraryFilters.getOrElse(page) { LibraryFilter.LIBRARY }) {
+                LibraryFilter.LIBRARY -> {
+                    LibraryMixScreen(
+                        navController = navController,
+                        filterContent = null,
+                        selectedTagIds = emptySet(),
+                        onTabSelected = { targetFilter ->
+                            coroutineScope.launch {
+                                val targetPage = libraryFilters.indexOf(targetFilter)
+                                pagerState.animateScrollToPage(targetPage.takeIf { it >= 0 } ?: 0)
+                            }
+                        },
+                    )
+                }
+
+                LibraryFilter.PLAYLISTS -> {
+                    LibraryPlaylistsScreen(
+                        navController = navController,
+                        filterContent = null,
+                        selectedTagIds = emptySet(),
+                    )
+                }
+
+                LibraryFilter.SONGS -> {
+                    LibrarySongsScreen(
+                        navController = navController,
+                        onDeselect = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(0)
+                            }
+                        },
+                    )
+                }
+
+                LibraryFilter.ARTISTS -> {
+                    LibraryArtistsScreen(
+                        navController = navController,
+                        onDeselect = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(0)
+                            }
+                        },
+                    )
+                }
+
+                LibraryFilter.ALBUMS -> {
+                    LibraryAlbumsScreen(
+                        navController = navController,
+                        onDeselect = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(0)
+                            }
+                        },
+                    )
+                }
+
+                else -> Unit
             }
         }
     }

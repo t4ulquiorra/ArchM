@@ -36,14 +36,19 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -93,24 +98,70 @@ fun YouTubeBrowseScreen(
     val browseResult by viewModel.result.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
+    val scrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
 
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        val horizontalLazyGridItemWidthFactor = if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
-        val lazyGridState = rememberLazyGridState()
-        val snapLayoutInfoProvider =
-            remember(lazyGridState) {
-                SnapLayoutInfoProvider(
-                    lazyGridState = lazyGridState,
-                    positionInLayout = { layoutSize, itemSize ->
-                        (layoutSize * horizontalLazyGridItemWidthFactor / 2f - itemSize / 2f)
-                    },
-                )
-            }
-        LazyColumn(
-            contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                scrollBehavior = scrollBehavior,
+                title = {
+                    Text(
+                        text = browseResult?.title.orEmpty(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                    )
+                },
+                navigationIcon = {
+                    Box(Modifier.padding(horizontal = 5.dp)) {
+                        CombinedIconButton(
+                            onClick = navController::navigateUp,
+                            onLongClick = navController::backToMain,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                ),
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
+    ) { paddingValues ->
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
         ) {
+            val horizontalLazyGridItemWidthFactor = if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
+            val lazyGridState = rememberLazyGridState()
+            val snapLayoutInfoProvider =
+                remember(lazyGridState) {
+                    SnapLayoutInfoProvider(
+                        lazyGridState = lazyGridState,
+                        positionInLayout = { layoutSize, itemSize ->
+                            (layoutSize * horizontalLazyGridItemWidthFactor / 2f - itemSize / 2f)
+                        },
+                    )
+                }
+            LazyColumn(
+                contentPadding = PaddingValues(
+                    start = 0.dp,
+                    end = 0.dp,
+                    top = paddingValues.calculateTopPadding() + 8.dp,
+                    bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                ),
+            ) {
             if (browseResult == null) {
                 item {
                     ShimmerHost(
@@ -285,20 +336,6 @@ fun YouTubeBrowseScreen(
                 }
             }
         }
+        }
     }
-
-    TopAppBar(
-        title = { Text(browseResult?.title.orEmpty()) },
-        navigationIcon = {
-            CombinedIconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
 }

@@ -50,12 +50,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -438,8 +441,6 @@ private fun HomeContent(
             }
         }
 
-    val isScrollingUp by lazyListState.isScrollingUp()
-    var topAppBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
 
     val firstThumbnailUrl =
         remember(uiState, remoteQuickPicks) {
@@ -492,18 +493,30 @@ private fun HomeContent(
         }
     }
 
-    val density = LocalDensity.current
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val chipsExtra = if (showHomeFilterChips && !uiState.homePage?.chips.isNullOrEmpty()) 48.dp else 0.dp
-    val measuredTopBarDp = if (topAppBarHeightPx > 0) with(density) { topAppBarHeightPx.toDp() } else 0.dp
-    val topBarHeightDp = maxOf(measuredTopBarDp, statusBarTop + AppBarHeight + chipsExtra)
-    val feedTopPadding = topBarHeightDp + 8.dp
+    val homeScrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val nestedScrollMod = if (headerScrollConnection != null) {
+        Modifier.nestedScroll(headerScrollConnection).nestedScroll(homeScrollBehavior.nestedScrollConnection)
+    } else {
+        Modifier.nestedScroll(homeScrollBehavior.nestedScrollConnection)
+    }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Scaffold(
+        modifier = modifier.fillMaxSize().then(nestedScrollMod),
+        topBar = {
+            MainTopBar(
+                navController = navController,
+                accountName = uiState.accountName,
+                accountImageUrl = uiState.accountImageUrl,
+                scrollBehavior = homeScrollBehavior,
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
+    ) { paddingValues ->
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = topBarHeightDp,
+            indicatorOffset = paddingValues.calculateTopPadding(),
             modifier = Modifier.fillMaxSize(),
         ) {
             val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
@@ -513,11 +526,21 @@ private fun HomeContent(
                 contentPadding = PaddingValues(
                     start = playerAwarePadding.calculateStartPadding(layoutDirection),
                     end = playerAwarePadding.calculateEndPadding(layoutDirection),
-                    top = feedTopPadding,
+                    top = paddingValues.calculateTopPadding() + 8.dp,
                     bottom = playerAwarePadding.calculateBottomPadding(),
                 ),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                val chipsList = uiState.homePage?.chips
+                if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
+                    item(key = "home_category_chips") {
+                        HomeCategoryChips(
+                            chips = chipsList,
+                            selectedChip = uiState.selectedChip,
+                            onChipSelected = { onAction(HomeAction.SelectChip(it)) },
+                        )
+                    }
+                }
                 // 1. Ambient Hero Backdrop + Speed Dial
                 if (uiState.speedDialItems.isNotEmpty()) {
                     item(key = "home_hero_backdrop") {
@@ -660,50 +683,6 @@ private fun HomeContent(
                 item(key = "home_bottom_spacer") {
                     Spacer(Modifier.height(16.dp))
                 }
-            }
-        }
-
-        // Sticky Top App Bar & Category Chips Overlay
-        Column(
-            modifier =
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .onGloballyPositioned { coordinates ->
-                        topAppBarHeightPx = coordinates.size.height
-                    },
-        ) {
-            AnimatedVisibility(
-                visible = isScrollingUp,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-            ) {
-                MainTopBar(
-                    navController = navController,
-                    accountName = uiState.accountName,
-                    accountImageUrl = uiState.accountImageUrl,
-                )
-            }
-            AnimatedVisibility(
-                visible = !isScrollingUp,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-            ) {
-                Spacer(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .windowInsetsPadding(WindowInsets.statusBars),
-                )
-            }
-            val chipsList = uiState.homePage?.chips
-            if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
-                HomeCategoryChips(
-                    chips = chipsList,
-                    selectedChip = uiState.selectedChip,
-                    onChipSelected = { onAction(HomeAction.SelectChip(it)) },
-                )
             }
         }
     }
