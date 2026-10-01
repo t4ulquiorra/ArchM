@@ -92,9 +92,8 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(Screens.New.route) {
-        NewReleaseScreen(
+        NewsScreen(
             navController = navController,
-            scrollBehavior = scrollBehavior,
             showNavigationIcon = false,
         )
     }
@@ -174,6 +173,21 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("news") {
+        NewsScreen(
+            navController = navController,
+            showNavigationIcon = true,
+        )
+    }
+
+    composable(
+        route = "view_news/{newsId}",
+        arguments = listOf(
+            navArgument("newsId") {
+                type = NavType.StringType
+            },
+        ),
+    ) {
+        ViewNewsScreen(navController = navController)
     }
 
     composable("mood_and_genres") {
