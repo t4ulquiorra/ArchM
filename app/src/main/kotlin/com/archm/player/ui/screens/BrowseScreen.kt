@@ -120,7 +120,7 @@ fun BrowseScreen(
         }
     }
 
-    val defaultScrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val defaultScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val effectiveScrollBehavior = scrollBehavior ?: defaultScrollBehavior
 
     Scaffold(

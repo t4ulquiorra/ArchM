@@ -113,6 +113,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.archm.player.LocalPlayerAwareWindowInsets
+import kotlin.math.roundToInt
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
 import com.archm.player.extensions.togglePlayPause

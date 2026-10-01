@@ -241,6 +241,7 @@ fun HomeScreen(
                     lazyListState = lazyListState,
                     recentVisits = recentVisits,
                     onAction = viewModel::onAction,
+                    headerScrollConnection = headerScrollConnection,
                 )
             }
         }
@@ -420,6 +421,7 @@ private fun HomeContent(
     lazyListState: androidx.compose.foundation.lazy.LazyListState,
     recentVisits: List<ActivityLogEntity> = emptyList(),
     onAction: (HomeAction) -> Unit,
+    headerScrollConnection: NestedScrollConnection? = null,
     modifier: Modifier = Modifier,
 ) {
     val remoteQuickPicks =
@@ -493,7 +495,7 @@ private fun HomeContent(
         }
     }
 
-    val homeScrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val homeScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val nestedScrollMod = if (headerScrollConnection != null) {
         Modifier.nestedScroll(headerScrollConnection).nestedScroll(homeScrollBehavior.nestedScrollConnection)
     } else {

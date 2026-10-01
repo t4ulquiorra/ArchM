@@ -72,6 +72,7 @@ import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.utils.rememberEnumPreference
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clipToBounds
@@ -82,6 +83,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.foundation.layout.asPaddingValues
+import kotlin.math.roundToInt
 
 internal val LibraryHeaderContentPadding = 0.dp
 internal val LibraryPullToRefreshIndicatorOffset = 0.dp

@@ -102,7 +102,7 @@ fun NewReleaseScreen(
     val coroutineScope = rememberCoroutineScope()
     var selectedTab by rememberSaveable { mutableStateOf(NewReleaseTab.All) }
 
-    val defaultScrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val defaultScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val effectiveScrollBehavior = scrollBehavior ?: defaultScrollBehavior
 
     Scaffold(
