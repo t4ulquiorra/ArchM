@@ -176,6 +176,65 @@ import com.archm.player.LocalPlayerConnection
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+import com.archm.player.ui.component.LocalGlassEffectConfig
+import com.archm.player.ui.component.liquidGlass
+import com.archm.player.ui.component.isGlassSupported
+
+// =========================================================================
+// 🎚️ TOP BAR TUNING (Plain Language Proportions)
+// Easily adjust these sizes to increase or decrease elements in the app
+// =========================================================================
+val AppleMusicLargeTitleSize = 32.sp     // Prominent large page header text
+val CompactTopBarHeight = 64.dp          // Height of the pinned top navigation bar
+val SearchInputPillHeight = 48.dp        // Height of the search input box
+val FilterChipPillHeight = 40.dp         // Height of the category filter buttons
+val TitleMorphFadeThresholdDp = 48.dp    // How quickly the title morphs on scroll
+
+@Composable
+fun Modifier.appleMusicTopBarGlass(
+    scrolledProgress: Float, // 0f = resting at top, 1f = fully scrolled
+    pureBlack: Boolean = false,
+): Modifier {
+    val glassConfig = LocalGlassEffectConfig.current
+    val useGlass = glassConfig.globalEnabled && isGlassSupported()
+    val alpha = scrolledProgress.coerceIn(0f, 1f)
+
+    return if (useGlass && alpha > 0.05f) {
+        this
+            .liquidGlass(
+                config = glassConfig.copy(
+                    surfaceOpacity = glassConfig.surfaceOpacity * alpha,
+                ),
+                shape = RoundedCornerShape(0.dp),
+                applyEdgeEffects = false,
+            )
+            .drawBehind {
+                if (alpha > 0.1f) {
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.06f * alpha),
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = 1f,
+                    )
+                }
+            }
+    } else {
+        val baseColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+        this
+            .background(baseColor.copy(alpha = (0.92f * alpha).coerceIn(0f, 0.95f)))
+            .drawBehind {
+                if (alpha > 0.1f) {
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.06f * alpha),
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = 1f,
+                    )
+                }
+            }
+    }
+}
+
 // ==========================================
 // 1. SimpMusic Top App Bar & Chip Components
 // ==========================================
@@ -188,8 +247,12 @@ fun MainTopBar(
     accountName: String = "",
     accountImageUrl: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
+    titleAlpha: Float = 1f,
+    showHistory: Boolean = true,
+    showListenTogether: Boolean = true,
+    showSettings: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null,
-    containerColor: Color = MaterialTheme.colorScheme.background,
+    containerColor: Color = Color.Transparent,
 ) {
     val hour =
         remember {
@@ -266,10 +329,15 @@ fun MainTopBar(
                     }
                 }
                 if (titleContent != null) {
-                    titleContent()
+                    Box(
+                        modifier = Modifier.graphicsLayer { alpha = titleAlpha },
+                    ) {
+                        titleContent()
+                    }
                 } else {
                     Column(
                         verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.graphicsLayer { alpha = titleAlpha },
                     ) {
                         Text(
                             text = displayName,
@@ -292,45 +360,51 @@ fun MainTopBar(
         },
         actions = {
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                IconButton(
-                    onClick = { navController.navigate("history") },
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.history),
-                        contentDescription = stringResource(R.string.history),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(20.dp),
-                    )
+                if (showHistory) {
+                    IconButton(
+                        onClick = { navController.navigate("history") },
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.history),
+                            contentDescription = stringResource(R.string.history),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
-                IconButton(
-                    onClick = {
-                        navController.navigate("listen_together_from_topbar") {
-                            launchSingleTop = true
-                        }
-                    },
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.multi_user),
-                        contentDescription = stringResource(R.string.music_together),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(20.dp),
-                    )
+                if (showListenTogether) {
+                    IconButton(
+                        onClick = {
+                            navController.navigate("listen_together_from_topbar") {
+                                launchSingleTop = true
+                            }
+                        },
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.multi_user),
+                            contentDescription = stringResource(R.string.music_together),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(6.dp))
                 }
-                Spacer(Modifier.width(6.dp))
-                IconButton(
-                    onClick = { navController.navigate("settings") },
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.settings),
-                        contentDescription = stringResource(R.string.settings),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(20.dp),
-                    )
+                if (showSettings) {
+                    IconButton(
+                        onClick = { navController.navigate("settings") },
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.settings),
+                            contentDescription = stringResource(R.string.settings),
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(4.dp))
                 }
-                Spacer(Modifier.width(4.dp))
             }
         },
         colors =
@@ -352,14 +426,22 @@ fun HomeTopAppBar(
     accountName: String = "",
     accountImageUrl: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
+    titleAlpha: Float = 1f,
+    showHistory: Boolean = true,
+    showListenTogether: Boolean = true,
+    showSettings: Boolean = true,
     scrollBehavior: TopAppBarScrollBehavior? = null,
-    containerColor: Color = MaterialTheme.colorScheme.background,
+    containerColor: Color = Color.Transparent,
 ) = MainTopBar(
     navController = navController,
     modifier = modifier,
     accountName = accountName,
     accountImageUrl = accountImageUrl,
     titleContent = titleContent,
+    titleAlpha = titleAlpha,
+    showHistory = showHistory,
+    showListenTogether = showListenTogether,
+    showSettings = showSettings,
     scrollBehavior = scrollBehavior,
     containerColor = containerColor,
 )

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -42,9 +43,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -120,29 +123,41 @@ fun BrowseScreen(
         }
     }
 
-    val defaultScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val effectiveScrollBehavior = scrollBehavior ?: defaultScrollBehavior
+    val density = LocalDensity.current
+    val scrollProgress by remember {
+        derivedStateOf {
+            if (lazyGridState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                val offset = lazyGridState.firstVisibleItemScrollOffset.toFloat()
+                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
+            }
+        }
+    }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(effectiveScrollBehavior.nestedScrollConnection),
         topBar = {
             if (!showNavigationIcon) {
                 MainTopBar(
                     navController = navController,
-                    scrollBehavior = effectiveScrollBehavior,
+                    titleAlpha = scrollProgress,
                     titleContent = {
                         Text(
                             text = displayTitle,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.basicMarquee(),
                         )
                     },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .appleMusicTopBarGlass(scrollProgress),
                 )
             } else {
                 TopAppBar(
-                    scrollBehavior = effectiveScrollBehavior,
                     title = {
                         Text(
                             text = displayTitle,
@@ -150,11 +165,10 @@ fun BrowseScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onBackground,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(align = Alignment.CenterVertically)
-                                .basicMarquee()
-                                .focusable(),
+                                .graphicsLayer { alpha = scrollProgress }
+                                .basicMarquee(),
                         )
                     },
                     navigationIcon = {
@@ -175,14 +189,14 @@ fun BrowseScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.background,
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
                         navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                         titleContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background),
+                        .appleMusicTopBarGlass(scrollProgress),
                 )
             }
         },
@@ -202,6 +216,24 @@ fun BrowseScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
+            // Apple Music Large Header Title
+            if (displayTitle.isNotBlank()) {
+                item(key = "browse_large_title", span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = displayTitle,
+                        fontSize = AppleMusicLargeTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
+                            .padding(top = 4.dp, bottom = 12.dp)
+                            .graphicsLayer {
+                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                            },
+                    )
+                }
+            }
             if (items == null) {
                 items(6) {
                     ShimmerHost(

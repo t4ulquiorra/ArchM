@@ -67,29 +67,31 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.archm.player.R
 import com.archm.player.constants.ChipSortTypeKey
+import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.LibraryFilter
+import com.archm.player.constants.PureBlackKey
 import com.archm.player.ui.screens.MainTopBar
+import com.archm.player.ui.screens.appleMusicTopBarGlass
+import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.utils.rememberEnumPreference
-
-import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.layout.offset
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.Velocity
-import androidx.compose.foundation.layout.asPaddingValues
-import kotlin.math.roundToInt
+import com.archm.player.utils.rememberPreference
+import androidx.compose.foundation.isSystemInDarkTheme
 
 internal val LibraryHeaderContentPadding = 0.dp
 internal val LibraryPullToRefreshIndicatorOffset = 0.dp
 
 @Composable
 fun LibraryScreen(navController: NavController) {
+    val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
+    val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+    val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
+        if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+    }
+    val pureBlack = remember(pureBlackEnabled, useDarkTheme) {
+        pureBlackEnabled && useDarkTheme
+    }
+
     val defaultFilter by rememberEnumPreference(ChipSortTypeKey, LibraryFilter.LIBRARY)
     val libraryFilters = remember {
         listOf(
@@ -120,39 +122,6 @@ fun LibraryScreen(navController: NavController) {
 
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-
-    val maxCollapseDp = 72.dp
-    val maxCollapsePx = with(density) { maxCollapseDp.toPx() }
-    var collapseOffsetPx by remember { mutableFloatStateOf(0f) }
-    val collapseOffsetDp = with(density) { collapseOffsetPx.toDp() }
-    val row1Alpha = ((maxCollapsePx + collapseOffsetPx) / maxCollapsePx).coerceIn(0f, 1f)
-
-    val nestedScrollConnection = remember(maxCollapsePx) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                val oldOffset = collapseOffsetPx
-                val newOffset = (oldOffset + delta).coerceIn(-maxCollapsePx, 0f)
-                val consumedY = newOffset - oldOffset
-                collapseOffsetPx = newOffset
-                return Offset(0f, consumedY)
-            }
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (collapseOffsetPx != 0f && collapseOffsetPx != -maxCollapsePx) {
-                    val target = if (collapseOffsetPx > -maxCollapsePx / 2f) 0f else -maxCollapsePx
-                    Animatable(collapseOffsetPx).animateTo(
-                        targetValue = target,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    ) {
-                        collapseOffsetPx = value
-                    }
-                }
-                return super.onPostFling(consumed, available)
-            }
-        }
-    }
-
     val tabListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -185,124 +154,97 @@ fun LibraryScreen(navController: NavController) {
         tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
     }
 
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val row2Height = 44.dp
-    val expandedHeaderHeight = statusBarTop + 64.dp + 16.dp + row2Height + 8.dp
-    val currentHeaderHeight = (expandedHeaderHeight + collapseOffsetDp).coerceAtLeast(statusBarTop + row2Height + 16.dp)
+    val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .nestedScroll(nestedScrollConnection),
+                .background(backgroundColor),
     ) {
-        // Two-Tier Sticky Header Container
-        Box(
+        // Sticky Header: MainTopBar + Category Filter Pills
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(currentHeaderHeight)
-                    .background(MaterialTheme.colorScheme.background)
-                    .clipToBounds()
-                    .zIndex(1f),
+                    .appleMusicTopBarGlass(1f, pureBlack = pureBlack),
         ) {
-            Column(
+            MainTopBar(
+                navController = navController,
+                showHistory = false,
+                showListenTogether = false,
+                showSettings = true,
+                titleContent = {
+                    AnimatedContent(
+                        targetState = titleText,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                                    (slideOutVertically { height -> -height / 2 } + fadeOut())
+                            } else {
+                                (slideInVertically { height -> -height / 2 } + fadeIn()) togetherWith
+                                    (slideOutVertically { height -> height / 2 } + fadeOut())
+                            }.using(SizeTransform(clip = false))
+                        },
+                        label = "LibraryTitleAnimation",
+                    ) { targetTitle ->
+                        Text(
+                            text = targetTitle,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                        )
+                    }
+                },
+                containerColor = Color.Transparent,
+            )
+
+            // Category filter pills
+            LazyRow(
+                state = tabListState,
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .offset { IntOffset(0, collapseOffsetPx.roundToInt()) },
+                        .padding(bottom = 8.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Spacer(Modifier.height(statusBarTop))
-
-                // Row 1: Collapsible MainTopBar
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .graphicsLayer { alpha = row1Alpha },
-                ) {
-                    MainTopBar(
-                        navController = navController,
-                        titleContent = {
-                            AnimatedContent(
-                                targetState = titleText,
-                                transitionSpec = {
-                                    if (targetState > initialState) {
-                                        (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
-                                            (slideOutVertically { height -> -height / 2 } + fadeOut())
-                                    } else {
-                                        (slideInVertically { height -> -height / 2 } + fadeIn()) togetherWith
-                                            (slideOutVertically { height -> height / 2 } + fadeOut())
-                                    }.using(SizeTransform(clip = false))
-                                },
-                                label = "LibraryTitleAnimation",
-                            ) { targetTitle ->
-                                Text(
-                                    text = targetTitle,
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    maxLines = 1,
-                                )
+                items(
+                    items = libraryFilters,
+                    key = { filter -> filter.name },
+                    contentType = { "library_filter_chip" },
+                ) { filter ->
+                    val page = libraryFilters.indexOf(filter)
+                    val label =
+                        when (filter) {
+                            LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+                            LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+                            LibraryFilter.SONGS -> stringResource(R.string.songs)
+                            LibraryFilter.ARTISTS -> stringResource(R.string.artists)
+                            LibraryFilter.ALBUMS -> stringResource(R.string.albums)
+                            else -> filter.name
+                        }
+                    val iconRes =
+                        when (filter) {
+                            LibraryFilter.LIBRARY -> R.drawable.graphic_eq
+                            LibraryFilter.PLAYLISTS -> R.drawable.queue_music
+                            LibraryFilter.SONGS -> R.drawable.music_note
+                            LibraryFilter.ARTISTS -> R.drawable.person
+                            LibraryFilter.ALBUMS -> R.drawable.album
+                            else -> R.drawable.music_note
+                        }
+                    ExpressiveTabChip(
+                        label = label,
+                        iconRes = iconRes,
+                        selected = currentFilter == filter,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(page)
                             }
                         },
-                        containerColor = MaterialTheme.colorScheme.background,
                     )
                 }
-
-                // Z = 16.dp gap between bottom of Row 1 and top of Row 2
-                Spacer(Modifier.height(16.dp))
-
-                // Row 2: Category filter pills
-                LazyRow(
-                    state = tabListState,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(row2Height),
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    items(
-                        items = libraryFilters,
-                        key = { filter -> filter.name },
-                        contentType = { "library_filter_chip" },
-                    ) { filter ->
-                        val page = libraryFilters.indexOf(filter)
-                        val label =
-                            when (filter) {
-                                LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-                                LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                                LibraryFilter.SONGS -> stringResource(R.string.songs)
-                                LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-                                LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-                                else -> filter.name
-                            }
-                        val iconRes =
-                            when (filter) {
-                                LibraryFilter.LIBRARY -> R.drawable.graphic_eq
-                                LibraryFilter.PLAYLISTS -> R.drawable.queue_music
-                                LibraryFilter.SONGS -> R.drawable.music_note
-                                LibraryFilter.ARTISTS -> R.drawable.person
-                                LibraryFilter.ALBUMS -> R.drawable.album
-                                else -> R.drawable.music_note
-                            }
-                        ExpressiveTabChip(
-                            label = label,
-                            iconRes = iconRes,
-                            selected = currentFilter == filter,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(page)
-                                }
-                            },
-                        )
-                    }
-                }
-
-                // Y2 = 8.dp bottom padding under Row 2
-                Spacer(Modifier.height(8.dp))
             }
         }
 

@@ -495,11 +495,30 @@ private fun HomeContent(
         }
     }
 
-    val homeScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val density = LocalDensity.current
+    val scrollProgress by remember {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
+                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    val hour = remember { java.time.LocalTime.now().hour }
+    val greeting = when (hour) {
+        in 6..12 -> stringResource(R.string.good_morning)
+        in 13..17 -> stringResource(R.string.good_afternoon)
+        in 18..23 -> stringResource(R.string.good_evening)
+        else -> stringResource(R.string.good_night)
+    }
+
     val nestedScrollMod = if (headerScrollConnection != null) {
-        Modifier.nestedScroll(headerScrollConnection).nestedScroll(homeScrollBehavior.nestedScrollConnection)
+        Modifier.nestedScroll(headerScrollConnection)
     } else {
-        Modifier.nestedScroll(homeScrollBehavior.nestedScrollConnection)
+        Modifier
     }
 
     Scaffold(
@@ -509,7 +528,20 @@ private fun HomeContent(
                 navController = navController,
                 accountName = uiState.accountName,
                 accountImageUrl = uiState.accountImageUrl,
-                scrollBehavior = homeScrollBehavior,
+                titleAlpha = scrollProgress,
+                titleContent = {
+                    Text(
+                        text = greeting,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .appleMusicTopBarGlass(scrollProgress),
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -533,6 +565,23 @@ private fun HomeContent(
                 ),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                // Apple Music Large Header Title (Greeting)
+                item(key = "home_large_greeting") {
+                    Text(
+                        text = greeting,
+                        fontSize = AppleMusicLargeTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .padding(top = 4.dp, bottom = 12.dp)
+                            .graphicsLayer {
+                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                            },
+                    )
+                }
+
                 val chipsList = uiState.homePage?.chips
                 if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
                     item(key = "home_category_chips") {

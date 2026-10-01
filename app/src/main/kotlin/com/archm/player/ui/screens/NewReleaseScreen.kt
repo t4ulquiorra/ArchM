@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Album
@@ -47,6 +49,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,14 +60,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -102,33 +108,50 @@ fun NewReleaseScreen(
     val coroutineScope = rememberCoroutineScope()
     var selectedTab by rememberSaveable { mutableStateOf(NewReleaseTab.All) }
 
-    val defaultScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val effectiveScrollBehavior = scrollBehavior ?: defaultScrollBehavior
+    val density = LocalDensity.current
+    val gridState = rememberLazyGridState()
+    val scrollProgress by remember {
+        derivedStateOf {
+            if (gridState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                val offset = gridState.firstVisibleItemScrollOffset.toFloat()
+                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
+            }
+        }
+    }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(effectiveScrollBehavior.nestedScrollConnection),
         topBar = {
             if (!showNavigationIcon) {
                 MainTopBar(
                     navController = navController,
-                    scrollBehavior = effectiveScrollBehavior,
+                    titleAlpha = scrollProgress,
                     titleContent = {
                         Text(
                             text = stringResource(R.string.new_releases),
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .appleMusicTopBarGlass(scrollProgress),
                 )
             } else {
                 TopAppBar(
-                    scrollBehavior = effectiveScrollBehavior,
                     title = {
                         Text(
                             text = stringResource(R.string.new_releases),
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.graphicsLayer { alpha = scrollProgress },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     },
                     navigationIcon = {
@@ -147,11 +170,14 @@ fun NewReleaseScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.background,
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
                         navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                         titleContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .appleMusicTopBarGlass(scrollProgress),
                 )
             }
         },
@@ -169,6 +195,7 @@ fun NewReleaseScreen(
             when (state) {
                 NewReleaseUiState.Loading -> {
                     LazyVerticalGrid(
+                        state = gridState,
                         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + 24.dp),
                         contentPadding = PaddingValues(
                             start = 16.dp,
@@ -193,6 +220,8 @@ fun NewReleaseScreen(
                         content = state.content,
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
+                        gridState = gridState,
+                        scrollProgress = scrollProgress,
                         paddingValues = paddingValues,
                         activeAlbumId = mediaMetadata?.album?.id,
                         isPlaying = isPlaying,
@@ -321,6 +350,8 @@ private fun NewReleaseGridContent(
     content: NewReleaseContent,
     selectedTab: NewReleaseTab,
     onTabSelected: (NewReleaseTab) -> Unit,
+    gridState: LazyGridState,
+    scrollProgress: Float,
     paddingValues: PaddingValues,
     activeAlbumId: String?,
     isPlaying: Boolean,
@@ -346,12 +377,34 @@ private fun NewReleaseGridContent(
     )
 
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + 24.dp),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
+        // Apple Music Large Header Title
+        item(
+            key = "new_releases_large_title",
+            span = { GridItemSpan(maxLineSpan) },
+            contentType = "new_releases_large_title",
+        ) {
+            Text(
+                text = stringResource(R.string.new_releases),
+                fontSize = AppleMusicLargeTitleSize,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+                    .padding(top = 4.dp, bottom = 12.dp)
+                    .graphicsLayer {
+                        alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                    },
+            )
+        }
+
         item(
             key = "new_release_summary",
             span = { GridItemSpan(maxLineSpan) },

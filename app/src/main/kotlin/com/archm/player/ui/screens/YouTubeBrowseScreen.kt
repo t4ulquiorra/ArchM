@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,12 +46,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -100,20 +106,33 @@ fun YouTubeBrowseScreen(
     val browseResult by viewModel.result.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val density = LocalDensity.current
+    val lazyListState = rememberLazyListState()
+    val scrollProgress by remember {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
+                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    val pageTitle = browseResult?.title.orEmpty()
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                scrollBehavior = scrollBehavior,
                 title = {
                     Text(
-                        text = browseResult?.title.orEmpty(),
+                        text = pageTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.graphicsLayer { alpha = scrollProgress },
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
@@ -132,11 +151,14 @@ fun YouTubeBrowseScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
                     navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .appleMusicTopBarGlass(scrollProgress),
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -157,6 +179,7 @@ fun YouTubeBrowseScreen(
                     )
                 }
             LazyColumn(
+                state = lazyListState,
                 contentPadding = PaddingValues(
                     start = 0.dp,
                     end = 0.dp,
@@ -164,6 +187,24 @@ fun YouTubeBrowseScreen(
                     bottom = paddingValues.calculateBottomPadding() + 16.dp,
                 ),
             ) {
+                // Apple Music Large Header Title
+                if (pageTitle.isNotBlank()) {
+                    item(key = "youtube_browse_large_title") {
+                        Text(
+                            text = pageTitle,
+                            fontSize = AppleMusicLargeTitleSize,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 4.dp, bottom = 12.dp)
+                                .graphicsLayer {
+                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                                },
+                        )
+                    }
+                }
             if (browseResult == null) {
                 item {
                     ShimmerHost(

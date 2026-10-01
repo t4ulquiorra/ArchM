@@ -47,7 +47,11 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.music.innertube.models.BrowseEndpoint
+import com.archm.player.ui.screens.AppleMusicLargeTitleSize
 import com.archm.player.ui.screens.MainTopBar
+import com.archm.player.ui.screens.SearchInputPillHeight
+import com.archm.player.ui.screens.TitleMorphFadeThresholdDp
+import com.archm.player.ui.screens.appleMusicTopBarGlass
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkModel
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkUrl
 import androidx.compose.foundation.lazy.LazyColumn
@@ -68,6 +72,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
@@ -80,6 +85,7 @@ import com.archm.player.ui.component.InputFieldHeight
 import com.archm.player.viewmodels.HomeViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -177,34 +183,13 @@ fun SearchScreen(
             ?.collectAsStateWithLifecycle()
 
     val density = LocalDensity.current
-    val maxCollapseDp = 72.dp
-    val maxCollapsePx = with(density) { maxCollapseDp.toPx() }
-    var collapseOffsetPx by remember { mutableFloatStateOf(0f) }
-    val collapseOffsetDp = with(density) { collapseOffsetPx.toDp() }
-    val row1Alpha = ((maxCollapsePx + collapseOffsetPx) / maxCollapsePx).coerceIn(0f, 1f)
-
-    val nestedScrollConnection = remember(maxCollapsePx) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                val oldOffset = collapseOffsetPx
-                val newOffset = (oldOffset + delta).coerceIn(-maxCollapsePx, 0f)
-                val consumedY = newOffset - oldOffset
-                collapseOffsetPx = newOffset
-                return Offset(0f, consumedY)
-            }
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (collapseOffsetPx != 0f && collapseOffsetPx != -maxCollapsePx) {
-                    val target = if (collapseOffsetPx > -maxCollapsePx / 2f) 0f else -maxCollapsePx
-                    Animatable(collapseOffsetPx).animateTo(
-                        targetValue = target,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    ) {
-                        collapseOffsetPx = value
-                    }
-                }
-                return super.onPostFling(consumed, available)
+    val scrollProgress by remember {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
+                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
             }
         }
     }
@@ -212,7 +197,6 @@ fun SearchScreen(
     LaunchedEffect(scrollToTop?.value) {
         if (scrollToTop?.value == true) {
             lazyListState.animateScrollToItem(0)
-            collapseOffsetPx = 0f
             backStackEntry?.savedStateHandle?.set("scrollToTop", false)
         }
     }
@@ -220,33 +204,101 @@ fun SearchScreen(
     val homeViewModel: HomeViewModel = hiltViewModel()
     val vmAccountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
 
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val playerAwareBottom = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
-    val expandedHeaderHeight = statusBarTop + 64.dp + 16.dp + InputFieldHeight + 8.dp
-    val currentHeaderHeight = (expandedHeaderHeight + collapseOffsetDp).coerceAtLeast(statusBarTop + InputFieldHeight + 16.dp)
-
-    Box(
-        modifier =
+    Scaffold(
+        modifier = if (headerScrollConnection != null) {
+            Modifier.nestedScroll(headerScrollConnection)
+        } else {
             Modifier
-                .fillMaxSize()
-                .background(backgroundColor)
-                .nestedScroll(nestedScrollConnection)
-                .then(
-                    if (headerScrollConnection != null) {
-                        Modifier.nestedScroll(headerScrollConnection)
-                    } else {
-                        Modifier
-                    },
-                ),
-    ) {
+        },
+        topBar = {
+            MainTopBar(
+                navController = navController,
+                accountImageUrl = vmAccountImageUrl,
+                titleAlpha = scrollProgress,
+                showHistory = false,
+                showListenTogether = false,
+                showSettings = true,
+                titleContent = {
+                    Text(
+                        text = stringResource(R.string.search),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .appleMusicTopBarGlass(scrollProgress, pureBlack = effectivePureBlack),
+            )
+        },
+        containerColor = backgroundColor,
+        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
+    ) { paddingValues ->
         LazyColumn(
             state = lazyListState,
             contentPadding = PaddingValues(
-                top = expandedHeaderHeight,
-                bottom = playerAwareBottom + 16.dp,
+                top = paddingValues.calculateTopPadding(),
+                bottom = paddingValues.calculateBottomPadding() + 16.dp,
             ),
             modifier = Modifier.fillMaxSize(),
         ) {
+            // Apple Music Large Header Title
+            item(key = "search_large_title") {
+                Text(
+                    text = stringResource(R.string.search),
+                    fontSize = AppleMusicLargeTitleSize,
+                    fontWeight = FontWeight.Bold,
+                    color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 4.dp, bottom = 12.dp)
+                        .graphicsLayer {
+                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                        },
+                )
+            }
+
+            // Apple Music Sticky Search Pill (2nd tier)
+            stickyHeader(key = "search_input_sticky") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .appleMusicTopBarGlass(
+                            scrolledProgress = if (lazyListState.firstVisibleItemIndex > 0) 1f else 0f,
+                            pureBlack = effectivePureBlack,
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(35, 35, 38),
+                        contentColor = Color.White,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(SearchInputPillHeight)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onSearchClick() },
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.search),
+                                contentDescription = stringResource(R.string.search),
+                                tint = Color.White.copy(alpha = 0.7f),
+                            )
+                            CyclingSearchPlaceholder(
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+            }
             when (val currentState = state) {
                 SearchDiscoveryScreenState.Loading -> {
                     item(
@@ -379,86 +431,6 @@ fun SearchScreen(
                         }
                     }
                 }
-            }
-        }
-
-        // Two-Tier Sticky Header Container
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(currentHeaderHeight)
-                    .background(backgroundColor)
-                    .clipToBounds()
-                    .zIndex(1f),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .offset { IntOffset(0, collapseOffsetPx.roundToInt()) },
-            ) {
-                Spacer(Modifier.height(statusBarTop))
-
-                // Row 1: Collapsible MainTopBar
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .graphicsLayer { alpha = row1Alpha },
-                ) {
-                    MainTopBar(
-                        navController = navController,
-                        accountImageUrl = vmAccountImageUrl,
-                        titleContent = {
-                            Text(
-                                text = stringResource(R.string.search),
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                                maxLines = 1,
-                            )
-                        },
-                        containerColor = backgroundColor,
-                    )
-                }
-
-                // Z = 16.dp gap between bottom of Row 1 and top of Row 2
-                Spacer(Modifier.height(16.dp))
-
-                // Row 2: Search input bar (height = InputFieldHeight = 48.dp)
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(35, 35, 38),
-                    contentColor = Color.White,
-                    modifier =
-                        Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .height(InputFieldHeight)
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable {
-                                onSearchClick()
-                            },
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.search),
-                            contentDescription = stringResource(R.string.search),
-                            tint = Color.White.copy(alpha = 0.7f),
-                        )
-                        CyclingSearchPlaceholder(
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-
-                // Y2 = 8.dp bottom padding under Row 2
-                Spacer(Modifier.height(8.dp))
             }
         }
     }
