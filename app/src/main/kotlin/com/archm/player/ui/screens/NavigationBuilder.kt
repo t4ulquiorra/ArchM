@@ -92,7 +92,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(Screens.New.route) {
-        NewsScreen(
+        NewReleaseScreen(
             navController = navController,
             showNavigationIcon = false,
         )
@@ -199,7 +199,11 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("new_release") {
-        NewReleaseScreen(navController, scrollBehavior)
+        NewReleaseScreen(
+            navController = navController,
+            scrollBehavior = scrollBehavior,
+            showNavigationIcon = true,
+        )
     }
 
     composable("charts_screen") {
