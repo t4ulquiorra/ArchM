@@ -9,10 +9,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -23,6 +25,11 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import com.archm.player.ui.component.FixedTopStrip
+import com.archm.player.ui.component.LargeTitleHeader
+import com.archm.player.ui.component.getSharedTopClearance
+import com.archm.player.ui.component.rememberTopBarTitleAlphas
+import com.archm.player.ui.theme.Marble
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -40,15 +47,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
@@ -114,49 +114,19 @@ fun NewReleaseScreen(
     val gridState = rememberLazyGridState()
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
 
-    Scaffold(
-        topBar = {
-            if (showNavigationIcon) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = stringResource(R.string.new_releases),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    navigationIcon = {
-                        Box(Modifier.padding(horizontal = 5.dp)) {
-                            CombinedIconButton(
-                                onClick = navController::navigateUp,
-                                onLongClick = navController::backToMain,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.arrow_back),
-                                    contentDescription = "Back",
-                                    tint = MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.background,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-                        titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = if (showNavigationIcon) LocalPlayerAwareWindowInsets.current else WindowInsets(0, 0, 0, 0),
-    ) { paddingValues ->
-        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else 0.dp
+    val topClearance = getSharedTopClearance()
+    val titleAlphas = rememberTopBarTitleAlphas(gridState)
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+    ) {
+        FixedTopStrip(
+            title = "New",
+            alpha = titleAlphas.smallTitleAlpha,
+            navController = navController,
+            showNavigationIcon = showNavigationIcon,
+            onBackClick = { navController.navigateUp() },
+        )
         AnimatedContent(
             targetState = uiState,
             transitionSpec = {
@@ -173,7 +143,7 @@ fun NewReleaseScreen(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = topPadding,
+                            top = topClearance,
                             bottom = playerAwarePadding.calculateBottomPadding() + 16.dp,
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -194,7 +164,8 @@ fun NewReleaseScreen(
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
                         gridState = gridState,
-                        topPadding = topPadding,
+                        topPadding = topClearance,
+                        largeTitleAlpha = titleAlphas.largeTitleAlpha,
                         bottomPadding = playerAwarePadding.calculateBottomPadding() + 16.dp,
                         activeAlbumId = mediaMetadata?.album?.id,
                         isPlaying = isPlaying,
@@ -220,7 +191,7 @@ fun NewReleaseScreen(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(paddingValues)
+                                .padding(top = topClearance)
                                 .padding(horizontal = 24.dp),
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -260,7 +231,7 @@ fun NewReleaseScreen(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(paddingValues)
+                                .padding(top = topClearance)
                                 .padding(horizontal = 24.dp),
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -325,6 +296,7 @@ private fun NewReleaseGridContent(
     onTabSelected: (NewReleaseTab) -> Unit,
     gridState: LazyGridState,
     topPadding: androidx.compose.ui.unit.Dp,
+    largeTitleAlpha: Float,
     bottomPadding: androidx.compose.ui.unit.Dp,
     activeAlbumId: String?,
     isPlaying: Boolean,
@@ -359,12 +331,24 @@ private fun NewReleaseGridContent(
     ) {
 
         item(
-            key = "new_release_summary",
+            key = "new_release_large_title",
             span = { GridItemSpan(maxLineSpan) },
-            contentType = "new_release_summary",
+            contentType = "new_release_large_title",
         ) {
-            NewReleaseSummaryCard(
-                content = content,
+            LargeTitleHeader(
+                title = "New",
+                alpha = largeTitleAlpha,
+                horizontalPadding = 0.dp,
+                bottomSpacer = 8.dp,
+            )
+        }
+
+        item(
+            key = "new_release_chips",
+            span = { GridItemSpan(maxLineSpan) },
+            contentType = "new_release_chips",
+        ) {
+            NewReleaseChipsRow(
                 selectedTab = selectedTab,
                 onTabSelected = onTabSelected,
             )
@@ -429,11 +413,43 @@ private fun NewReleaseGridContent(
 }
 
 @Composable
+private fun NewReleaseChipsRow(
+    selectedTab: NewReleaseTab,
+    onTabSelected: (NewReleaseTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tabs = remember { NewReleaseTab.entries.toList() }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        tabs.forEach { tab ->
+            val selected = tab == selectedTab
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = if (selected) Marble else Color(0xFF262626),
+                contentColor = if (selected) Color.Black else Color.White,
+                modifier = Modifier.clickable { onTabSelected(tab) },
+            ) {
+                Text(
+                    text = stringResource(tab.titleRes),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun NewReleaseSectionHeader(
     title: String,
     count: Int,
 ) {
-    Column(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -445,6 +461,7 @@ private fun NewReleaseSectionHeader(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        Spacer(Modifier.width(8.dp))
         Text(
             text = count.toString(),
             style = MaterialTheme.typography.labelLarge,
@@ -486,116 +503,6 @@ private fun NewReleaseHorizontalSection(
                 modifier = Modifier.padding(4.dp).animateItem(),
                 onClick = { onReleaseClick(album) },
                 onLongClick = { onReleaseLongClick(album) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun NewReleaseSummaryCard(
-    content: NewReleaseContent,
-    selectedTab: NewReleaseTab,
-    onTabSelected: (NewReleaseTab) -> Unit,
-) {
-    val summaryShape = remember { RoundedCornerShape(28.dp) }
-
-    Surface(
-        shape = summaryShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f),
-        tonalElevation = 3.dp,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 10.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.total_releases),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = content.totalReleases.toString(),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(14.dp))
-            NewReleaseTabs(
-                selectedTab = selectedTab,
-                onTabSelected = onTabSelected,
-            )
-        }
-    }
-}
-
-@Composable
-private fun NewReleaseTabs(
-    selectedTab: NewReleaseTab,
-    onTabSelected: (NewReleaseTab) -> Unit,
-) {
-    val tabs = remember { NewReleaseTab.entries.toList() }
-    val selectedTabIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
-    val tabShape = remember { RoundedCornerShape(28.dp) }
-    val selectedContainer = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.56f)
-    val unselectedContainer = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.42f)
-    val selectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-    val unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val indicatorColor = MaterialTheme.colorScheme.primary
-
-    TabRow(
-        selectedTabIndex = selectedTabIndex,
-        containerColor = Color.Transparent,
-        contentColor = selectedContentColor,
-        divider = {},
-        indicator = { tabPositions ->
-            Box(
-                contentAlignment = Alignment.BottomCenter,
-                modifier =
-                    Modifier
-                        .tabIndicatorOffset(tabPositions[selectedTabIndex])
-                        .fillMaxSize(),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .width(76.dp)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(indicatorColor),
-                )
-            }
-        },
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(66.dp),
-    ) {
-        tabs.forEach { tab ->
-            val selected = tab == selectedTab
-            val title = stringResource(tab.titleRes)
-
-            Tab(
-                selected = selected,
-                onClick = { onTabSelected(tab) },
-                icon = {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = title,
-                        modifier = Modifier.size(24.dp),
-                    )
-                },
-                selectedContentColor = selectedContentColor,
-                unselectedContentColor = unselectedContentColor,
-                modifier =
-                    Modifier
-                        .padding(horizontal = 3.dp, vertical = 6.dp)
-                        .height(56.dp)
-                        .clip(tabShape)
-                        .background(if (selected) selectedContainer else unselectedContainer),
             )
         }
     }

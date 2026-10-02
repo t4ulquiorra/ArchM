@@ -58,6 +58,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.layout.onGloballyPositioned
+import com.archm.player.ui.component.FixedTopStrip
+import com.archm.player.ui.component.LargeTitleHeader
+import com.archm.player.ui.component.getSharedTopClearance
+import com.archm.player.ui.component.rememberTopBarTitleAlphas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -84,6 +89,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -186,54 +192,93 @@ fun SearchScreen(
     }
 
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+    val topClearance = getSharedTopClearance()
+    val titleAlphas = rememberTopBarTitleAlphas(lazyListState)
+    val density = LocalDensity.current
+    var largeTitleHeight by remember { mutableStateOf(73.dp) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = backgroundColor,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { _ ->
+    val searchBarYOffset by remember(topClearance, largeTitleHeight) {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                topClearance + 8.dp
+            } else {
+                val offsetDp = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+                val y = topClearance + largeTitleHeight - offsetDp
+                if (y < topClearance + 8.dp) topClearance + 8.dp else y
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(backgroundColor),
+    ) {
+        FixedTopStrip(
+            title = "Search",
+            alpha = titleAlphas.smallTitleAlpha,
+            navController = navController,
+            backgroundColor = backgroundColor,
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset {
+                    val yPx = with(density) { searchBarYOffset.roundToPx() }
+                    IntOffset(0, yPx)
+                }
+                .zIndex(2f)
+                .background(backgroundColor)
+                .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(35, 35, 38),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(SearchInputPillHeight)
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable { onSearchClick() },
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.search),
+                        contentDescription = stringResource(R.string.search),
+                        tint = Color.White.copy(alpha = 0.7f),
+                    )
+                    CyclingSearchPlaceholder(
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+
         LazyColumn(
             state = lazyListState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                top = 0.dp,
+                top = topClearance,
                 bottom = playerAwarePadding.calculateBottomPadding() + 16.dp,
             ),
         ) {
-            // Sticky Search Pill
-            stickyHeader(key = "search_input_sticky") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(backgroundColor)
-                        .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color(35, 35, 38),
-                        contentColor = Color.White,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(SearchInputPillHeight)
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { onSearchClick() },
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.search),
-                                contentDescription = stringResource(R.string.search),
-                                tint = Color.White.copy(alpha = 0.7f),
-                            )
-                            CyclingSearchPlaceholder(
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    }
-                }
+            item(key = "search_large_title", contentType = "search_large_title") {
+                LargeTitleHeader(
+                    title = "Search",
+                    alpha = titleAlphas.largeTitleAlpha,
+                    horizontalPadding = 16.dp,
+                    bottomSpacer = 16.dp,
+                    modifier = Modifier.onGloballyPositioned {
+                        with(density) { largeTitleHeight = it.size.height.toDp() }
+                    },
+                )
+            }
+
+            item(key = "search_input_spacer", contentType = "search_input_spacer") {
+                Spacer(modifier = Modifier.height(SearchInputPillHeight + 8.dp))
             }
             when (val currentState = state) {
                 SearchDiscoveryScreenState.Loading -> {
@@ -287,9 +332,19 @@ fun SearchScreen(
                             key = "search_moods_title",
                             contentType = "section_title",
                         ) {
-                            NavigationTitle(
-                                title = "Moods & moments",
-                                modifier = Modifier.animateItem(),
+                            Text(
+                                text = "Moods & moments",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.W800,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .animateItem(),
                             )
                         }
                         items(
@@ -439,7 +494,6 @@ fun MoodCategoryCard(
                 .height(84.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(cardBg)
-                .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(10.dp))
                 .clickable(onClick = onClick),
     ) {
         if (artworkModel != null) {

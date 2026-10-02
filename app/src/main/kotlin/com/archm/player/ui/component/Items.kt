@@ -495,8 +495,7 @@ fun GridItem(
             modifier =
                 artworkModifier
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(30, 30, 30))
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp)),
+                    .background(Color(30, 30, 30)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -1557,7 +1556,13 @@ fun YouTubeGridItem(
             }
             is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, formatReleaseSubtitle(item))
             is ArtistItem -> null
-            is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
+            is PlaylistItem -> {
+                if (item.author?.name != null && item.author?.name.equals(item.songCountText, ignoreCase = true)) {
+                    item.author?.name
+                } else {
+                    joinByBullet(item.author?.name, item.songCountText)
+                }
+            }
         }
         if (subtitle != null) {
             Text(

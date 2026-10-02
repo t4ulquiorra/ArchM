@@ -35,11 +35,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import com.archm.player.ui.component.FixedTopStrip
+import com.archm.player.ui.component.LargeTitleHeader
+import com.archm.player.ui.component.getSharedTopClearance
+import com.archm.player.ui.component.rememberTopBarTitleAlphas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -124,64 +124,45 @@ fun BrowseScreen(
     }
 
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+    val topClearance = getSharedTopClearance()
+    val titleAlphas = rememberTopBarTitleAlphas(lazyGridState)
+    val screenTitle = if (!showNavigationIcon) "Mix" else displayTitle
 
-    Scaffold(
-        topBar = {
-            if (showNavigationIcon) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = displayTitle,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.basicMarquee(),
-                        )
-                    },
-                    navigationIcon = {
-                        Box(Modifier.padding(horizontal = 5.dp)) {
-                            CombinedIconButton(
-                                onClick = navController::navigateUp,
-                                onLongClick = navController::backToMain,
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.arrow_back),
-                                    contentDescription = "Back",
-                                    tint = MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.background,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-                        titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = if (showNavigationIcon) LocalPlayerAwareWindowInsets.current else WindowInsets(0, 0, 0, 0),
-    ) { paddingValues ->
-        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else 0.dp
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+    ) {
+        FixedTopStrip(
+            title = screenTitle,
+            alpha = titleAlphas.smallTitleAlpha,
+            navController = navController,
+            showNavigationIcon = showNavigationIcon,
+            onBackClick = { navController.navigateUp() },
+        )
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = topPadding,
+                top = topClearance,
                 bottom = playerAwarePadding.calculateBottomPadding() + 16.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
+            item(
+                key = "browse_large_title",
+                span = { GridItemSpan(maxLineSpan) },
+                contentType = "browse_large_title",
+            ) {
+                LargeTitleHeader(
+                    title = screenTitle,
+                    alpha = titleAlphas.largeTitleAlpha,
+                    horizontalPadding = 0.dp,
+                    bottomSpacer = 8.dp,
+                )
+            }
             if (items == null) {
                 items(6) {
                     ShimmerHost(

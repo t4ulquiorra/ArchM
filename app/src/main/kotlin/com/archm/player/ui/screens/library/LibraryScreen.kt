@@ -41,7 +41,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import com.archm.player.ui.component.FixedTopStrip
+import com.archm.player.ui.component.LargeTitleHeader
+import com.archm.player.ui.component.getSharedTopClearance
+import com.archm.player.ui.component.rememberTopBarTitleAlphas
+import kotlin.math.roundToInt
 import com.archm.player.R
 import com.archm.player.constants.ChipSortTypeKey
 import com.archm.player.constants.DarkModeKey
@@ -95,87 +114,174 @@ fun LibraryScreen(navController: NavController) {
 
     val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
-    Column(
+    val topClearance = getSharedTopClearance()
+    val density = LocalDensity.current
+    var largeTitleHeight by remember { mutableStateOf(73.dp) }
+    val maxCollapseDp = remember(largeTitleHeight) { (largeTitleHeight - 8.dp).coerceAtLeast(0.dp) }
+    val maxCollapsePx = with(density) { maxCollapseDp.toPx() }
+
+    var headerOffsetPx by remember { mutableFloatStateOf(0f) }
+    val nestedScrollConnection = remember(maxCollapsePx) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                if (delta < 0f && headerOffsetPx > -maxCollapsePx) {
+                    val newOffset = (headerOffsetPx + delta).coerceIn(-maxCollapsePx, 0f)
+                    val consumed = newOffset - headerOffsetPx
+                    headerOffsetPx = newOffset
+                    return Offset(0f, consumed)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                val delta = available.y
+                if (delta > 0f && headerOffsetPx < 0f) {
+                    val newOffset = (headerOffsetPx + delta).coerceIn(-maxCollapsePx, 0f)
+                    val consumed = newOffset - headerOffsetPx
+                    headerOffsetPx = newOffset
+                    return Offset(0f, consumed)
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
+    val scrollOffset = -headerOffsetPx
+    val isScrolledAway = scrollOffset >= (maxCollapsePx - 2f).coerceAtLeast(0f)
+    val titleAlphas = rememberTopBarTitleAlphas(
+        scrollOffset = scrollOffset,
+        isScrolledAway = isScrolledAway,
+    )
+    val collapseDp = with(density) { (-headerOffsetPx).toDp() }
+
+    Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(backgroundColor),
+                .background(backgroundColor)
+                .nestedScroll(nestedScrollConnection),
     ) {
-        val selectedTabIndex = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
+        FixedTopStrip(
+            title = "Library",
+            alpha = titleAlphas.smallTitleAlpha,
+            navController = navController,
+            backgroundColor = backgroundColor,
+        )
 
-        ScrollableTabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = Color.Transparent,
-            contentColor = Color.White,
-            edgePadding = 16.dp,
-            indicator = { tabPositions ->
-                if (selectedTabIndex < tabPositions.size) {
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier
-                            .tabIndicatorOffset(tabPositions[selectedTabIndex])
-                            .wrapContentWidth()
-                            .padding(horizontal = 16.dp),
-                        color = Color.White,
-                        height = 2.5.dp,
-                    )
-                }
-            },
-            divider = {},
-            modifier = Modifier.fillMaxWidth(),
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = topClearance),
         ) {
-            libraryFilters.forEachIndexed { page, filter ->
-                val selected = selectedTabIndex == page
-                val label =
-                    when (filter) {
-                        LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-                        LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                        LibraryFilter.SONGS -> stringResource(R.string.songs)
-                        LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-                        LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-                        else -> filter.name
-                    }
-                val iconRes =
-                    when (filter) {
-                        LibraryFilter.LIBRARY -> R.drawable.graphic_eq
-                        LibraryFilter.PLAYLISTS -> R.drawable.queue_music
-                        LibraryFilter.SONGS -> R.drawable.music_note
-                        LibraryFilter.ARTISTS -> R.drawable.person
-                        LibraryFilter.ALBUMS -> R.drawable.album
-                        else -> R.drawable.music_note
-                    }
-                Tab(
-                    selected = selected,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(page)
-                        }
-                    },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Icon(
-                                painter = painterResource(iconRes),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
-                            )
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                                    letterSpacing = 0.5.sp,
-                                ),
-                                color = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
-                            )
-                        }
-                    },
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height((largeTitleHeight - collapseDp).coerceAtLeast(8.dp))
+                        .clipToBounds(),
+            ) {
+                LargeTitleHeader(
+                    title = "Library",
+                    alpha = titleAlphas.largeTitleAlpha,
+                    horizontalPadding = 16.dp,
+                    bottomSpacer = 16.dp,
+                    modifier =
+                        Modifier
+                            .offset { IntOffset(0, headerOffsetPx.roundToInt()) }
+                            .onGloballyPositioned {
+                                if (largeTitleHeight == 73.dp && it.size.height > 0) {
+                                    with(density) { largeTitleHeight = it.size.height.toDp() }
+                                }
+                            },
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            val selectedTabIndex = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
+
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(backgroundColor),
+            ) {
+                ScrollableTabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                    edgePadding = 16.dp,
+                    indicator = { tabPositions ->
+                        if (selectedTabIndex < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                Modifier
+                                    .tabIndicatorOffset(tabPositions[selectedTabIndex])
+                                    .wrapContentWidth()
+                                    .padding(horizontal = 16.dp),
+                                color = Color.White,
+                                height = 2.5.dp,
+                            )
+                        }
+                    },
+                    divider = {},
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    libraryFilters.forEachIndexed { page, filter ->
+                        val selected = selectedTabIndex == page
+                        val label =
+                            when (filter) {
+                                LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+                                LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+                                LibraryFilter.SONGS -> stringResource(R.string.songs)
+                                LibraryFilter.ARTISTS -> stringResource(R.string.artists)
+                                LibraryFilter.ALBUMS -> stringResource(R.string.albums)
+                                else -> filter.name
+                            }
+                        val iconRes =
+                            when (filter) {
+                                LibraryFilter.LIBRARY -> R.drawable.graphic_eq
+                                LibraryFilter.PLAYLISTS -> R.drawable.queue_music
+                                LibraryFilter.SONGS -> R.drawable.music_note
+                                LibraryFilter.ARTISTS -> R.drawable.person
+                                LibraryFilter.ALBUMS -> R.drawable.album
+                                else -> R.drawable.music_note
+                            }
+                        Tab(
+                            selected = selected,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(page)
+                                }
+                            },
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(iconRes),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
+                                    )
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                                            letterSpacing = 0.5.sp,
+                                        ),
+                                        color = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
+                                    )
+                                }
+                            },
+                        )
+                    }
+                }
+            }
 
         HorizontalPager(
             state = pagerState,
@@ -244,4 +350,5 @@ fun LibraryScreen(navController: NavController) {
             }
         }
     }
+}
 }
