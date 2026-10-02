@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.draw.clip
@@ -197,6 +196,7 @@ fun SearchScreen(
             state = lazyListState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
+                top = 0.dp,
                 bottom = playerAwarePadding.calculateBottomPadding() + 16.dp,
             ),
         ) {
@@ -206,7 +206,6 @@ fun SearchScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(backgroundColor)
-                        .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     Surface(

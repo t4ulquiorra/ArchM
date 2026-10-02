@@ -112,7 +112,6 @@ fun NewReleaseScreen(
     var selectedTab by rememberSaveable { mutableStateOf(NewReleaseTab.All) }
 
     val gridState = rememberLazyGridState()
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
 
     Scaffold(
@@ -157,7 +156,7 @@ fun NewReleaseScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = if (showNavigationIcon) LocalPlayerAwareWindowInsets.current else WindowInsets(0, 0, 0, 0),
     ) { paddingValues ->
-        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else statusBarTop
+        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else 0.dp
         AnimatedContent(
             targetState = uiState,
             transitionSpec = {

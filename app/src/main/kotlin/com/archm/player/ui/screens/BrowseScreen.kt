@@ -123,7 +123,6 @@ fun BrowseScreen(
         }
     }
 
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
 
     Scaffold(
@@ -169,7 +168,7 @@ fun BrowseScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = if (showNavigationIcon) LocalPlayerAwareWindowInsets.current else WindowInsets(0, 0, 0, 0),
     ) { paddingValues ->
-        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else statusBarTop
+        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else 0.dp
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),

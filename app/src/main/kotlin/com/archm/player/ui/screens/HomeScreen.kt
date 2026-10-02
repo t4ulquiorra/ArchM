@@ -200,9 +200,7 @@ fun HomeScreen(
                     },
                 ),
     ) {
-        val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        val chipsExtra = if (showHomeFilterChips) 48.dp else 0.dp
-        val topClearance = statusBarTop + chipsExtra
+        val topClearance = if (showHomeFilterChips) 48.dp else 0.dp
 
         when (val state = screenState) {
             HomeScreenState.Loading -> {
@@ -499,7 +497,6 @@ private fun HomeContent(
 
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
     val layoutDirection = LocalLayoutDirection.current
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -509,7 +506,7 @@ private fun HomeContent(
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = statusBarTop,
+            indicatorOffset = 0.dp,
             modifier = Modifier.fillMaxSize(),
         ) {
             LazyColumn(
@@ -517,7 +514,7 @@ private fun HomeContent(
                 contentPadding = PaddingValues(
                     start = playerAwarePadding.calculateStartPadding(layoutDirection),
                     end = playerAwarePadding.calculateEndPadding(layoutDirection),
-                    top = statusBarTop,
+                    top = 0.dp,
                     bottom = playerAwarePadding.calculateBottomPadding(),
                 ),
                 modifier = Modifier.fillMaxSize(),
