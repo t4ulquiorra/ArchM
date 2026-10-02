@@ -506,7 +506,7 @@ private fun NewReleaseSummaryCard(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(bottom = 4.dp),
     ) {
         Column(
             modifier = Modifier.padding(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 10.dp),
