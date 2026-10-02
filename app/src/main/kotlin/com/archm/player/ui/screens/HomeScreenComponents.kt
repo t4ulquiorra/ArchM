@@ -523,7 +523,6 @@ fun QuickPicksItem(
                 .width(itemWidth)
                 .clip(cardShape)
                 .background(Color(40, 40, 40))
-                .border(1.dp, Color.White.copy(alpha = 0.08f), cardShape)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -1087,7 +1086,7 @@ fun SimpQuickPicks(
     if (carouselItems.isEmpty()) return
 
     SimpHomeShelf(
-        title = remoteQuickPicks?.title ?: stringResource(R.string.quick_picks),
+        title = "Top Picks for You",
         subtitle = stringResource(R.string.let_s_start_with_a_radio),
         modifier = modifier,
     ) {
@@ -1148,6 +1147,7 @@ fun SimpHomeShelf(
     moreText: String = stringResource(R.string.more),
     content: @Composable () -> Unit,
 ) {
+    val onOpenFullList = onHeaderClick ?: onMoreClick
     Column(
         modifier =
             modifier
@@ -1159,7 +1159,7 @@ fun SimpHomeShelf(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .then(if (onHeaderClick != null) Modifier.clickable(onClick = onHeaderClick) else Modifier)
+                    .then(if (onOpenFullList != null) Modifier.clickable(onClick = onOpenFullList) else Modifier)
                     .padding(horizontal = 16.dp, vertical = 4.dp),
         ) {
             if (avatarUrl != null) {
@@ -1191,32 +1191,27 @@ fun SimpHomeShelf(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Text(
-                    text = title,
-                    style =
-                        MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.W800,
-                        ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            if (onMoreClick != null) {
-                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                    TextButton(
-                        onClick = onMoreClick,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                        modifier = Modifier.heightIn(max = 24.dp),
-                        colors =
-                            ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurface,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = title,
+                        style =
+                            MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.W800,
                             ),
-                    ) {
-                        Text(
-                            text = moreText,
-                            style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (onOpenFullList != null) {
+                        Icon(
+                            painter = painterResource(R.drawable.navigate_next),
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
@@ -1282,8 +1277,7 @@ fun HomeItemContentPlaylist(
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(30, 30, 30))
-                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(16.dp)),
+                    .background(Color(30, 30, 30)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -1421,8 +1415,7 @@ fun HomeItemSong(
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(30, 30, 30))
-                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(16.dp)),
+                    .background(Color(30, 30, 30)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -1583,7 +1576,6 @@ fun HomeItemArtist(
                     .size(avatarSize)
                     .clip(CircleShape)
                     .background(Color(30, 30, 30))
-                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), CircleShape)
                     .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center,
         ) {
@@ -1703,8 +1695,7 @@ fun HomeItemVideo(
                     .fillMaxWidth()
                     .height(HomeVideoThumbnailHeight)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(30, 30, 30))
-                    .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(16.dp)),
+                    .background(Color(30, 30, 30)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

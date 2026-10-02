@@ -81,7 +81,6 @@ private fun SpeedDialPodLayout(
                 }
                 .clip(cardShape)
                 .background(Color(40, 40, 40))
-                .border(1.dp, Color.White.copy(alpha = 0.08f), cardShape)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
