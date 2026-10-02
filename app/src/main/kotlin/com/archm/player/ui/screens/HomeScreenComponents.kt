@@ -65,6 +65,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -195,19 +196,52 @@ fun Modifier.appleMusicTopBarGlass(
 ): Modifier {
     val alpha = scrolledProgress.coerceIn(0f, 1f)
     val baseColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
+    val density = LocalDensity.current
+    val strokePx = with(density) { 1.5.dp.toPx() }
+    val dividerColor = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface
+
+    // Top bar line appears as the in-between header line disappears (scrolled from 0.35f to 1.0f)
+    val lineProgress = ((scrolledProgress - 0.35f) / 0.65f).coerceIn(0f, 1f)
 
     return this
         .background(baseColor.copy(alpha = (0.94f * alpha).coerceIn(0f, 0.94f)))
         .drawBehind {
-            if (showDivider && alpha > 0.08f) {
+            if (showDivider && lineProgress > 0f) {
                 drawLine(
-                    color = Color.White.copy(alpha = 0.07f * alpha),
+                    color = dividerColor.copy(alpha = 0.22f * lineProgress),
                     start = Offset(0f, size.height),
                     end = Offset(size.width, size.height),
-                    strokeWidth = 1f,
+                    strokeWidth = strokePx,
                 )
             }
         }
+}
+
+/**
+ * In-between separator line placed between the Big Header title and the first item below it.
+ * Sits with equal padding above and below (10.dp each), matching the Big Header's 24.dp
+ * horizontal padding, and fades out as the user scrolls away from the top.
+ */
+@Composable
+fun HeaderContentDivider(
+    scrollProgress: Float,
+    modifier: Modifier = Modifier,
+    pureBlack: Boolean = false,
+    horizontalPadding: androidx.compose.ui.unit.Dp = 24.dp,
+) {
+    val alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+    if (alpha > 0.01f) {
+        val lineColor = (if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface)
+            .copy(alpha = 0.14f * alpha)
+        HorizontalDivider(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = horizontalPadding)
+                .padding(top = 10.dp, bottom = 10.dp),
+            thickness = 1.dp,
+            color = lineColor,
+        )
+    }
 }
 
 // ==========================================

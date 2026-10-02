@@ -563,26 +563,29 @@ private fun HomeContent(
                 contentPadding = PaddingValues(
                     start = playerAwarePadding.calculateStartPadding(layoutDirection),
                     end = playerAwarePadding.calculateEndPadding(layoutDirection),
-                    top = paddingValues.calculateTopPadding() + 8.dp,
+                    top = paddingValues.calculateTopPadding(),
                     bottom = playerAwarePadding.calculateBottomPadding(),
                 ),
                 modifier = Modifier.fillMaxSize(),
             ) {
                 // Apple Music Large Header Title (Greeting)
                 item(key = "home_large_greeting") {
-                    Text(
-                        text = greeting,
-                        fontSize = AppleMusicLargeTitleSize,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 4.dp, bottom = 12.dp)
-                            .graphicsLayer {
-                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                            },
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = greeting,
+                            fontSize = AppleMusicLargeTitleSize,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .padding(top = 4.dp)
+                                .graphicsLayer {
+                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                                },
+                        )
+                        HeaderContentDivider(scrollProgress = scrollProgress)
+                    }
                 }
 
                 val chipsList = uiState.homePage?.chips

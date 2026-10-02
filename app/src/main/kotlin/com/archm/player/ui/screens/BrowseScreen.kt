@@ -209,7 +209,7 @@ fun BrowseScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = paddingValues.calculateTopPadding() + 8.dp,
+                top = paddingValues.calculateTopPadding(),
                 bottom = paddingValues.calculateBottomPadding() + 16.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -219,19 +219,25 @@ fun BrowseScreen(
             // Apple Music Large Header Title
             if (displayTitle.isNotBlank()) {
                 item(key = "browse_large_title", span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
-                        text = displayTitle,
-                        fontSize = AppleMusicLargeTitleSize,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp)
-                            .padding(top = 4.dp, bottom = 12.dp)
-                            .graphicsLayer {
-                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                            },
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = displayTitle,
+                            fontSize = AppleMusicLargeTitleSize,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                                .padding(top = 4.dp)
+                                .graphicsLayer {
+                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                                },
+                        )
+                        HeaderContentDivider(
+                            scrollProgress = scrollProgress,
+                            horizontalPadding = 8.dp,
+                        )
+                    }
                 }
             }
             if (items == null) {

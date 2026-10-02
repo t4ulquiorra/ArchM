@@ -48,6 +48,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.music.innertube.models.BrowseEndpoint
 import com.archm.player.ui.screens.AppleMusicLargeTitleSize
+import com.archm.player.ui.screens.HeaderContentDivider
 import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.ui.screens.SearchInputPillHeight
 import com.archm.player.ui.screens.TitleMorphFadeThresholdDp
@@ -247,19 +248,25 @@ fun SearchScreen(
         ) {
             // Apple Music Large Header Title
             item(key = "search_large_title") {
-                Text(
-                    text = stringResource(R.string.search),
-                    fontSize = AppleMusicLargeTitleSize,
-                    fontWeight = FontWeight.Bold,
-                    color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(top = 4.dp, bottom = 12.dp)
-                        .graphicsLayer {
-                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                        },
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.search),
+                        fontSize = AppleMusicLargeTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .padding(top = 4.dp)
+                            .graphicsLayer {
+                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                            },
+                    )
+                    HeaderContentDivider(
+                        scrollProgress = scrollProgress,
+                        pureBlack = effectivePureBlack,
+                    )
+                }
             }
 
             // Apple Music Sticky Search Pill (2nd tier)
@@ -272,7 +279,7 @@ fun SearchScreen(
                             pureBlack = effectivePureBlack,
                             showDivider = true,
                         )
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                 ) {
                     Surface(
                         shape = RoundedCornerShape(10.dp),

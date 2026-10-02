@@ -183,26 +183,29 @@ fun YouTubeBrowseScreen(
                 contentPadding = PaddingValues(
                     start = 0.dp,
                     end = 0.dp,
-                    top = paddingValues.calculateTopPadding() + 8.dp,
+                    top = paddingValues.calculateTopPadding(),
                     bottom = paddingValues.calculateBottomPadding() + 16.dp,
                 ),
             ) {
                 // Apple Music Large Header Title
                 if (pageTitle.isNotBlank()) {
                     item(key = "youtube_browse_large_title") {
-                        Text(
-                            text = pageTitle,
-                            fontSize = AppleMusicLargeTitleSize,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .padding(top = 4.dp, bottom = 12.dp)
-                                .graphicsLayer {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = pageTitle,
+                                fontSize = AppleMusicLargeTitleSize,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp)
+                                    .padding(top = 4.dp),
+                                graphicsLayer = {
                                     alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
                                 },
-                        )
+                            )
+                            HeaderContentDivider(scrollProgress = scrollProgress)
+                        }
                     }
                 }
             if (browseResult == null) {

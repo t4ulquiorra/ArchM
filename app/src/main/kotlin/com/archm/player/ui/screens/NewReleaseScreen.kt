@@ -372,7 +372,7 @@ private fun NewReleaseGridContent(
     val contentPadding = PaddingValues(
         start = 16.dp,
         end = 16.dp,
-        top = paddingValues.calculateTopPadding() + 8.dp,
+        top = paddingValues.calculateTopPadding(),
         bottom = paddingValues.calculateBottomPadding() + 16.dp,
     )
 
@@ -390,19 +390,25 @@ private fun NewReleaseGridContent(
             span = { GridItemSpan(maxLineSpan) },
             contentType = "new_releases_large_title",
         ) {
-            Text(
-                text = stringResource(R.string.new_releases),
-                fontSize = AppleMusicLargeTitleSize,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-                    .padding(top = 4.dp, bottom = 12.dp)
-                    .graphicsLayer {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.new_releases),
+                    fontSize = AppleMusicLargeTitleSize,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                        .padding(top = 4.dp),
+                    graphicsLayer = {
                         alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
                     },
-            )
+                )
+                HeaderContentDivider(
+                    scrollProgress = scrollProgress,
+                    horizontalPadding = 8.dp,
+                )
+            }
         }
 
         item(
