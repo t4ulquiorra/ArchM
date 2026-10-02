@@ -206,7 +206,6 @@ fun LibraryScreen(navController: NavController) {
                     )
                 }
             }
-        }
 
         HorizontalPager(
             state = pagerState,
