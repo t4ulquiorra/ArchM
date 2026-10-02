@@ -510,15 +510,36 @@ private fun HomeContent(
     val topClearance = statusBarTop + topBarHeight
 
     val density = LocalDensity.current
-    val fadeStartPx = with(density) { 36.dp.toPx() }
-    val fadeRangePx = with(density) { 24.dp.toPx() }
-    val headerAlpha by remember {
+    val largeTitleFadeStartPx = with(density) { 8.dp.toPx() }
+    val largeTitleFadeEndPx = with(density) { 46.dp.toPx() }
+    val largeTitleAlpha by remember {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                0f
+            } else {
+                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
+                if (offset <= largeTitleFadeStartPx) {
+                    1f
+                } else {
+                    (1f - (offset - largeTitleFadeStartPx) / (largeTitleFadeEndPx - largeTitleFadeStartPx)).coerceIn(0f, 1f)
+                }
+            }
+        }
+    }
+
+    val smallTitleFadeStartPx = with(density) { 50.dp.toPx() }
+    val smallTitleFadeRangePx = with(density) { 20.dp.toPx() }
+    val smallTitleAlpha by remember {
         derivedStateOf {
             if (lazyListState.firstVisibleItemIndex > 0) {
                 1f
             } else {
                 val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
-                ((offset - fadeStartPx) / fadeRangePx).coerceIn(0f, 1f)
+                if (offset <= smallTitleFadeStartPx) {
+                    0f
+                } else {
+                    ((offset - smallTitleFadeStartPx) / smallTitleFadeRangePx).coerceIn(0f, 1f)
+                }
             }
         }
     }
@@ -539,7 +560,7 @@ private fun HomeContent(
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = topClearance,
+            indicatorOffset = topClearance + 8.dp,
             modifier = Modifier.fillMaxSize(),
         ) {
             LazyColumn(
@@ -561,7 +582,7 @@ private fun HomeContent(
                             text = "Home",
                             fontSize = 34.sp,
                             fontWeight = FontWeight.Normal,
-                            color = Color.White,
+                            color = Color.White.copy(alpha = largeTitleAlpha),
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -734,20 +755,20 @@ private fun HomeContent(
             }
         }
 
-        // Fixed Top Row Strip Overlay (zIndex 1f)
+        // Fixed Top Row Strip Overlay (zIndex 2f, always solid background)
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
-                    .zIndex(1f)
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = headerAlpha))
+                    .zIndex(2f)
+                    .background(MaterialTheme.colorScheme.background)
                     .drawBehind {
-                        if (headerAlpha > 0.01f) {
+                        if (smallTitleAlpha > 0.01f) {
                             val strokePx = 1.dp.toPx()
                             val y = size.height - strokePx / 2f
                             drawLine(
-                                color = Color.White.copy(alpha = 0.15f * headerAlpha),
+                                color = Color.White.copy(alpha = 0.15f * smallTitleAlpha),
                                 start = Offset(0f, y),
                                 end = Offset(size.width, y),
                                 strokeWidth = strokePx,
@@ -768,7 +789,7 @@ private fun HomeContent(
                     text = "Home",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Normal,
-                    color = Color.White.copy(alpha = headerAlpha),
+                    color = Color.White.copy(alpha = smallTitleAlpha),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
