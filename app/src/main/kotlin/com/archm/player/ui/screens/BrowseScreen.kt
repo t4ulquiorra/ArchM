@@ -219,25 +219,19 @@ fun BrowseScreen(
             // Apple Music Large Header Title
             if (displayTitle.isNotBlank()) {
                 item(key = "browse_large_title", span = { GridItemSpan(maxLineSpan) }) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = displayTitle,
-                            fontSize = AppleMusicLargeTitleSize,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp)
-                                .padding(top = 4.dp)
-                                .graphicsLayer {
-                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                                },
-                        )
-                        HeaderContentDivider(
-                            scrollProgress = scrollProgress,
-                            horizontalPadding = 8.dp,
-                        )
-                    }
+                    Text(
+                        text = displayTitle,
+                        fontSize = AppleMusicLargeTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                            .padding(top = 4.dp, bottom = 4.dp)
+                            .graphicsLayer {
+                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                            },
+                    )
                 }
             }
             if (items == null) {

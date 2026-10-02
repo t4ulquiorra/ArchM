@@ -73,7 +73,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.archm.player.ui.screens.AppleMusicLargeTitleSize
-import com.archm.player.ui.screens.HeaderContentDivider
 import com.archm.player.ui.screens.TitleMorphFadeThresholdDp
 import kotlinx.coroutines.launch
 import com.archm.player.R
@@ -251,19 +250,20 @@ fun LibraryScreen(navController: NavController) {
                 containerColor = Color.Transparent,
             )
 
-            // Apple Music Large Header Title + Divider
-            val headerAlpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-            val fullHeaderHeight = 65.dp
-            val currentHeaderHeight = (fullHeaderHeight * (1f - scrollProgress)).coerceAtLeast(0.dp)
-            Column(
+            // Apple Music Large Header Title
+            val largeTitleHeight = 44.dp
+            val currentLargeTitleHeight = (largeTitleHeight * (1f - scrollProgress)).coerceAtLeast(0.dp)
+            Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(currentHeaderHeight)
+                        .height(currentLargeTitleHeight)
                         .graphicsLayer {
-                            alpha = headerAlpha
+                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
                             clip = true
-                        },
+                        }
+                        .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
                     text = stringResource(R.string.filter_library),
@@ -271,15 +271,7 @@ fun LibraryScreen(navController: NavController) {
                     fontWeight = FontWeight.Bold,
                     color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 4.dp),
-                )
-                HeaderContentDivider(
-                    scrollProgress = scrollProgress,
-                    pureBlack = pureBlack,
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
 

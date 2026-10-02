@@ -570,22 +570,19 @@ private fun HomeContent(
             ) {
                 // Apple Music Large Header Title (Greeting)
                 item(key = "home_large_greeting") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = greeting,
-                            fontSize = AppleMusicLargeTitleSize,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
-                                .padding(top = 4.dp)
-                                .graphicsLayer {
-                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                                },
-                        )
-                        HeaderContentDivider(scrollProgress = scrollProgress)
-                    }
+                    Text(
+                        text = greeting,
+                        fontSize = AppleMusicLargeTitleSize,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .padding(top = 4.dp, bottom = 12.dp)
+                            .graphicsLayer {
+                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                            },
+                    )
                 }
 
                 val chipsList = uiState.homePage?.chips
