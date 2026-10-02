@@ -7,44 +7,24 @@
 
 package com.archm.player.ui.screens.library
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,26 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import com.archm.player.R
 import com.archm.player.constants.ChipSortTypeKey
 import com.archm.player.constants.DarkModeKey
@@ -81,7 +48,7 @@ import com.archm.player.constants.PureBlackKey
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
-import androidx.compose.foundation.isSystemInDarkTheme
+import kotlinx.coroutines.launch
 
 internal val LibraryHeaderContentPadding = 0.dp
 internal val LibraryPullToRefreshIndicatorOffset = 0.dp
@@ -114,10 +81,6 @@ fun LibraryScreen(navController: NavController) {
             initialPage = libraryFilters.indexOf(defaultFilter).takeIf { it >= 0 } ?: 0,
         ) { libraryFilters.size }
 
-    val currentFilter = libraryFilters.getOrElse(pagerState.currentPage) { LibraryFilter.LIBRARY }
-    val density = LocalDensity.current
-    val configuration = LocalConfiguration.current
-    val tabListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(defaultFilter, libraryFilters) {
@@ -128,27 +91,6 @@ fun LibraryScreen(navController: NavController) {
         }
     }
 
-    // Sync Pager -> Preference & lazy list centering
-    LaunchedEffect(pagerState.currentPage, libraryFilters) {
-        val targetPage = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
-        val targetFilter = libraryFilters.getOrElse(targetPage) { LibraryFilter.LIBRARY }
-
-        val tabWidth =
-            when (targetFilter) {
-                LibraryFilter.LIBRARY -> 116.dp
-                LibraryFilter.PLAYLISTS -> 132.dp
-                LibraryFilter.SONGS -> 102.dp
-                LibraryFilter.ARTISTS -> 116.dp
-                LibraryFilter.ALBUMS -> 110.dp
-                else -> 116.dp
-            }
-        val screenWidth = configuration.screenWidthDp.dp
-        val targetOffsetDp = (screenWidth - tabWidth) / 2
-        val targetOffsetPx = with(density) { targetOffsetDp.roundToPx() }
-
-        tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
-    }
-
     val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
     Column(
@@ -157,53 +99,79 @@ fun LibraryScreen(navController: NavController) {
                 .fillMaxSize()
                 .background(backgroundColor),
     ) {
-        // Category filter pills
-        LazyRow(
-            state = tabListState,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-            contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-                items(
-                    items = libraryFilters,
-                    key = { filter -> filter.name },
-                    contentType = { "library_filter_chip" },
-                ) { filter ->
-                    val page = libraryFilters.indexOf(filter)
-                    val label =
-                        when (filter) {
-                            LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-                            LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-                            LibraryFilter.SONGS -> stringResource(R.string.songs)
-                            LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-                            LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-                            else -> filter.name
-                        }
-                    val iconRes =
-                        when (filter) {
-                            LibraryFilter.LIBRARY -> R.drawable.graphic_eq
-                            LibraryFilter.PLAYLISTS -> R.drawable.queue_music
-                            LibraryFilter.SONGS -> R.drawable.music_note
-                            LibraryFilter.ARTISTS -> R.drawable.person
-                            LibraryFilter.ALBUMS -> R.drawable.album
-                            else -> R.drawable.music_note
-                        }
-                    ExpressiveTabChip(
-                        label = label,
-                        iconRes = iconRes,
-                        selected = currentFilter == filter,
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(page)
-                            }
-                        },
+        val selectedTabIndex = pagerState.currentPage.coerceIn(0, libraryFilters.lastIndex)
+
+        ScrollableTabRow(
+            selectedTabIndex = selectedTabIndex,
+            containerColor = Color.Transparent,
+            contentColor = Color.White,
+            edgePadding = 16.dp,
+            indicator = { tabPositions ->
+                if (selectedTabIndex < tabPositions.size) {
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier
+                            .tabIndicatorOffset(tabPositions[selectedTabIndex])
+                            .wrapContentWidth()
+                            .padding(horizontal = 16.dp),
+                        color = Color.White,
+                        height = 2.5.dp,
                     )
                 }
+            },
+            divider = {},
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            libraryFilters.forEachIndexed { page, filter ->
+                val selected = selectedTabIndex == page
+                val label =
+                    when (filter) {
+                        LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
+                        LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
+                        LibraryFilter.SONGS -> stringResource(R.string.songs)
+                        LibraryFilter.ARTISTS -> stringResource(R.string.artists)
+                        LibraryFilter.ALBUMS -> stringResource(R.string.albums)
+                        else -> filter.name
+                    }
+                val iconRes =
+                    when (filter) {
+                        LibraryFilter.LIBRARY -> R.drawable.graphic_eq
+                        LibraryFilter.PLAYLISTS -> R.drawable.queue_music
+                        LibraryFilter.SONGS -> R.drawable.music_note
+                        LibraryFilter.ARTISTS -> R.drawable.person
+                        LibraryFilter.ALBUMS -> R.drawable.album
+                        else -> R.drawable.music_note
+                    }
+                Tab(
+                    selected = selected,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(page)
+                        }
+                    },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(iconRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
+                            )
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                                    letterSpacing = 0.5.sp,
+                                ),
+                                color = if (selected) Color.White else Color.White.copy(alpha = 0.6f),
+                            )
+                        }
+                    },
+                )
             }
+        }
 
         HorizontalPager(
             state = pagerState,
@@ -271,81 +239,5 @@ fun LibraryScreen(navController: NavController) {
                 else -> Unit
             }
         }
-    }
-}
-
-@Composable
-fun ExpressiveTabChip(
-    label: String,
-    iconRes: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val scale by animateFloatAsState(
-        targetValue =
-            if (isPressed) {
-                0.92f
-            } else if (selected) {
-                1.05f
-            } else {
-                1.0f
-            },
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "TabChipScale",
-    )
-
-    val bgColor by animateColorAsState(
-        targetValue =
-            if (selected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            },
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
-        label = "TabChipBgColor",
-    )
-
-    val contentColor by animateColorAsState(
-        targetValue =
-            if (selected) {
-                MaterialTheme.colorScheme.onPrimary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
-        label = "TabChipContentColor",
-    )
-
-    Row(
-        modifier =
-            Modifier
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }.clip(CircleShape)
-                .background(bgColor)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick,
-                ).padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-            color = contentColor,
-        )
     }
 }
