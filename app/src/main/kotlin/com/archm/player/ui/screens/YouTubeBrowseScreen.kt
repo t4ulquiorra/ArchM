@@ -17,6 +17,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -199,10 +200,10 @@ fun YouTubeBrowseScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 24.dp)
-                                    .padding(top = 4.dp),
-                                graphicsLayer = {
-                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                                },
+                                    .padding(top = 4.dp)
+                                    .graphicsLayer {
+                                        alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                                    },
                             )
                             HeaderContentDivider(scrollProgress = scrollProgress)
                         }

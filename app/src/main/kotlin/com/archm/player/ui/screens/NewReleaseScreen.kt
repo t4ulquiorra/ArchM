@@ -399,10 +399,10 @@ private fun NewReleaseGridContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
-                        .padding(top = 4.dp),
-                    graphicsLayer = {
-                        alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                    },
+                        .padding(top = 4.dp)
+                        .graphicsLayer {
+                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
+                        },
                 )
                 HeaderContentDivider(
                     scrollProgress = scrollProgress,
