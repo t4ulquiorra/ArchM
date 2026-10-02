@@ -99,7 +99,6 @@ import com.archm.player.LocalDatabase
 import com.archm.player.LocalPlayerAwareWindowInsets
 import com.archm.player.LocalPlayerConnection
 import com.archm.player.R
-import com.archm.player.constants.AppBarHeight
 import com.archm.player.constants.QuickPicks
 import com.archm.player.constants.ShowHomeFilterChipsKey
 import com.archm.player.utils.rememberPreference
@@ -203,7 +202,7 @@ fun HomeScreen(
     ) {
         val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
         val chipsExtra = if (showHomeFilterChips) 48.dp else 0.dp
-        val topClearance = statusBarTop + AppBarHeight + chipsExtra
+        val topClearance = statusBarTop + chipsExtra
 
         when (val state = screenState) {
             HomeScreenState.Loading -> {
@@ -265,7 +264,7 @@ private fun HomeLoadingSkeleton(
                 .padding(
                     start = playerAwarePadding.calculateStartPadding(layoutDirection),
                     end = playerAwarePadding.calculateEndPadding(layoutDirection),
-                    top = topClearance + 8.dp,
+                    top = topClearance,
                     bottom = playerAwarePadding.calculateBottomPadding(),
                 ),
     ) {
@@ -498,93 +497,31 @@ private fun HomeContent(
         }
     }
 
-    val density = LocalDensity.current
-    val scrollProgress by remember {
-        derivedStateOf {
-            if (lazyListState.firstVisibleItemIndex > 0) {
-                1f
-            } else {
-                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
-                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
-            }
-        }
-    }
-
-    val hour = remember { java.time.LocalTime.now().hour }
-    val greeting = when (hour) {
-        in 6..12 -> stringResource(R.string.good_morning)
-        in 13..17 -> stringResource(R.string.good_afternoon)
-        in 18..23 -> stringResource(R.string.good_evening)
-        else -> stringResource(R.string.good_night)
-    }
-
-    val nestedScrollMod = if (headerScrollConnection != null) {
-        Modifier.nestedScroll(headerScrollConnection)
-    } else {
-        Modifier
-    }
+    val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
+    val layoutDirection = LocalLayoutDirection.current
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Scaffold(
-        modifier = modifier.fillMaxSize().then(nestedScrollMod),
-        topBar = {
-            MainTopBar(
-                navController = navController,
-                accountName = uiState.accountName,
-                accountImageUrl = uiState.accountImageUrl,
-                titleAlpha = scrollProgress,
-                titleContent = {
-                    Text(
-                        text = greeting,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .appleMusicTopBarGlass(scrollProgress),
-            )
-        },
+        modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
-    ) { paddingValues ->
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { _ ->
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = paddingValues.calculateTopPadding(),
+            indicatorOffset = statusBarTop,
             modifier = Modifier.fillMaxSize(),
         ) {
-            val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
-            val layoutDirection = LocalLayoutDirection.current
             LazyColumn(
                 state = lazyListState,
                 contentPadding = PaddingValues(
                     start = playerAwarePadding.calculateStartPadding(layoutDirection),
                     end = playerAwarePadding.calculateEndPadding(layoutDirection),
-                    top = paddingValues.calculateTopPadding(),
+                    top = statusBarTop,
                     bottom = playerAwarePadding.calculateBottomPadding(),
                 ),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                // Apple Music Large Header Title (Greeting)
-                item(key = "home_large_greeting") {
-                    Text(
-                        text = greeting,
-                        fontSize = AppleMusicLargeTitleSize,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 4.dp, bottom = 12.dp)
-                            .graphicsLayer {
-                                alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                            },
-                    )
-                }
-
                 val chipsList = uiState.homePage?.chips
                 if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
                     item(key = "home_category_chips") {

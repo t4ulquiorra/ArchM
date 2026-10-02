@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.draw.clip
@@ -47,11 +48,7 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.music.innertube.models.BrowseEndpoint
-import com.archm.player.ui.screens.AppleMusicLargeTitleSize
-import com.archm.player.ui.screens.MainTopBar
 import com.archm.player.ui.screens.SearchInputPillHeight
-import com.archm.player.ui.screens.TitleMorphFadeThresholdDp
-import com.archm.player.ui.screens.appleMusicTopBarGlass
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkModel
 import com.archm.player.ui.screens.rememberMoodAndGenresArtworkUrl
 import androidx.compose.foundation.lazy.LazyColumn
@@ -182,18 +179,6 @@ fun SearchScreen(
             ?.getStateFlow("scrollToTop", false)
             ?.collectAsStateWithLifecycle()
 
-    val density = LocalDensity.current
-    val scrollProgress by remember {
-        derivedStateOf {
-            if (lazyListState.firstVisibleItemIndex > 0) {
-                1f
-            } else {
-                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
-                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
-            }
-        }
-    }
-
     LaunchedEffect(scrollToTop?.value) {
         if (scrollToTop?.value == true) {
             lazyListState.animateScrollToItem(0)
@@ -201,77 +186,27 @@ fun SearchScreen(
         }
     }
 
-    val homeViewModel: HomeViewModel = hiltViewModel()
-    val vmAccountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
+    val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
 
     Scaffold(
-        modifier = if (headerScrollConnection != null) {
-            Modifier.nestedScroll(headerScrollConnection)
-        } else {
-            Modifier
-        },
-        topBar = {
-            MainTopBar(
-                navController = navController,
-                accountImageUrl = vmAccountImageUrl,
-                titleAlpha = scrollProgress,
-                showHistory = false,
-                showListenTogether = false,
-                showSettings = true,
-                titleContent = {
-                    Text(
-                        text = stringResource(R.string.search),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .appleMusicTopBarGlass(scrollProgress, pureBlack = effectivePureBlack, showDivider = false),
-            )
-        },
+        modifier = Modifier.fillMaxSize(),
         containerColor = backgroundColor,
-        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
-    ) { paddingValues ->
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { _ ->
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = paddingValues.calculateTopPadding()),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                bottom = playerAwarePadding.calculateBottomPadding() + 16.dp,
             ),
         ) {
-            // Apple Music Large Header Title
-            item(key = "search_large_title") {
-                Text(
-                    text = stringResource(R.string.search),
-                    fontSize = AppleMusicLargeTitleSize,
-                    fontWeight = FontWeight.Bold,
-                    color = if (effectivePureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(top = 4.dp, bottom = 12.dp)
-                        .graphicsLayer {
-                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                        },
-                )
-            }
-
-            // Apple Music Sticky Search Pill (2nd tier)
+            // Sticky Search Pill
             stickyHeader(key = "search_input_sticky") {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .appleMusicTopBarGlass(
-                            scrolledProgress = scrollProgress,
-                            pureBlack = effectivePureBlack,
-                            showDivider = true,
-                        )
+                        .background(backgroundColor)
+                        .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     Surface(

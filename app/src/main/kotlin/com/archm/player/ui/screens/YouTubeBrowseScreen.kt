@@ -107,19 +107,7 @@ fun YouTubeBrowseScreen(
     val browseResult by viewModel.result.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
     val lazyListState = rememberLazyListState()
-    val scrollProgress by remember {
-        derivedStateOf {
-            if (lazyListState.firstVisibleItemIndex > 0) {
-                1f
-            } else {
-                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
-                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
-            }
-        }
-    }
-
     val pageTitle = browseResult?.title.orEmpty()
 
     Scaffold(
@@ -131,7 +119,6 @@ fun YouTubeBrowseScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.graphicsLayer { alpha = scrollProgress },
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -152,14 +139,12 @@ fun YouTubeBrowseScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background,
                     navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .appleMusicTopBarGlass(scrollProgress),
+                modifier = Modifier.fillMaxWidth(),
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -188,24 +173,6 @@ fun YouTubeBrowseScreen(
                     bottom = paddingValues.calculateBottomPadding() + 16.dp,
                 ),
             ) {
-                // Apple Music Large Header Title
-                if (pageTitle.isNotBlank()) {
-                    item(key = "youtube_browse_large_title") {
-                        Text(
-                            text = pageTitle,
-                            fontSize = AppleMusicLargeTitleSize,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
-                                .padding(top = 4.dp, bottom = 12.dp)
-                                .graphicsLayer {
-                                    alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                                },
-                        )
-                    }
-                }
             if (browseResult == null) {
                 item {
                     ShimmerHost(

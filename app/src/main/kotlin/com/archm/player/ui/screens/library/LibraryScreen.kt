@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
@@ -72,16 +73,12 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
-import com.archm.player.ui.screens.AppleMusicLargeTitleSize
-import com.archm.player.ui.screens.TitleMorphFadeThresholdDp
 import kotlinx.coroutines.launch
 import com.archm.player.R
 import com.archm.player.constants.ChipSortTypeKey
 import com.archm.player.constants.DarkModeKey
 import com.archm.player.constants.LibraryFilter
 import com.archm.player.constants.PureBlackKey
-import com.archm.player.ui.screens.MainTopBar
-import com.archm.player.ui.screens.appleMusicTopBarGlass
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
@@ -119,17 +116,6 @@ fun LibraryScreen(navController: NavController) {
         ) { libraryFilters.size }
 
     val currentFilter = libraryFilters.getOrElse(pagerState.currentPage) { LibraryFilter.LIBRARY }
-    val tabTitle =
-        when (currentFilter) {
-            LibraryFilter.LIBRARY -> stringResource(R.string.filter_library)
-            LibraryFilter.PLAYLISTS -> stringResource(R.string.playlists)
-            LibraryFilter.SONGS -> stringResource(R.string.songs)
-            LibraryFilter.ARTISTS -> stringResource(R.string.artists)
-            LibraryFilter.ALBUMS -> stringResource(R.string.albums)
-            else -> currentFilter.name
-        }
-    val titleText = "Your $tabTitle"
-
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val tabListState = rememberLazyListState()
@@ -164,128 +150,26 @@ fun LibraryScreen(navController: NavController) {
         tabListState.animateScrollToItem(targetPage, scrollOffset = -targetOffsetPx)
     }
 
-    val maxCollapsePx = with(density) { TitleMorphFadeThresholdDp.toPx() }
-    var scrollOffsetPx by rememberSaveable { mutableFloatStateOf(0f) }
-
-    val scrollProgress by remember {
-        derivedStateOf {
-            (scrollOffsetPx / maxCollapsePx).coerceIn(0f, 1f)
-        }
-    }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                if (delta < 0f && scrollOffsetPx < maxCollapsePx) {
-                    val newOffset = (scrollOffsetPx - delta).coerceIn(0f, maxCollapsePx)
-                    val consumedY = -(newOffset - scrollOffsetPx)
-                    scrollOffsetPx = newOffset
-                    return Offset(0f, consumedY)
-                }
-                return Offset.Zero
-            }
-
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                val delta = available.y
-                if (delta > 0f && scrollOffsetPx > 0f) {
-                    val newOffset = (scrollOffsetPx - delta).coerceIn(0f, maxCollapsePx)
-                    val consumedY = -(newOffset - scrollOffsetPx)
-                    scrollOffsetPx = newOffset
-                    return Offset(0f, consumedY)
-                }
-                return Offset.Zero
-            }
-        }
-    }
-
     val backgroundColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(backgroundColor)
-                .nestedScroll(nestedScrollConnection),
+                .background(backgroundColor),
     ) {
-        // Sticky Header: MainTopBar + Large Header + Category Filter Pills
-        Column(
+        // Category filter pills
+        LazyRow(
+            state = tabListState,
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .appleMusicTopBarGlass(scrollProgress, pureBlack = pureBlack),
+                    .statusBarsPadding()
+                    .padding(vertical = 8.dp),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            MainTopBar(
-                navController = navController,
-                showHistory = false,
-                showListenTogether = false,
-                showSettings = true,
-                titleAlpha = scrollProgress,
-                titleContent = {
-                    AnimatedContent(
-                        targetState = titleText,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
-                                    (slideOutVertically { height -> -height / 2 } + fadeOut())
-                            } else {
-                                (slideInVertically { height -> -height / 2 } + fadeIn()) togetherWith
-                                    (slideOutVertically { height -> height / 2 } + fadeOut())
-                            }.using(SizeTransform(clip = false))
-                        },
-                        label = "LibraryTitleAnimation",
-                    ) { targetTitle ->
-                        Text(
-                            text = targetTitle,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                        )
-                    }
-                },
-                containerColor = Color.Transparent,
-            )
-
-            // Apple Music Large Header Title
-            val largeTitleHeight = 44.dp
-            val currentLargeTitleHeight = (largeTitleHeight * (1f - scrollProgress)).coerceAtLeast(0.dp)
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(currentLargeTitleHeight)
-                        .graphicsLayer {
-                            alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                            clip = true
-                        }
-                        .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text(
-                    text = stringResource(R.string.filter_library),
-                    fontSize = AppleMusicLargeTitleSize,
-                    fontWeight = FontWeight.Bold,
-                    color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-
-            // Category filter pills
-            LazyRow(
-                state = tabListState,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                contentPadding = PaddingValues(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
                 items(
                     items = libraryFilters,
                     key = { filter -> filter.name },

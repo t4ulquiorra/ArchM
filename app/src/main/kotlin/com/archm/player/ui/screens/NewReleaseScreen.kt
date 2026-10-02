@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -108,40 +111,13 @@ fun NewReleaseScreen(
     val coroutineScope = rememberCoroutineScope()
     var selectedTab by rememberSaveable { mutableStateOf(NewReleaseTab.All) }
 
-    val density = LocalDensity.current
     val gridState = rememberLazyGridState()
-    val scrollProgress by remember {
-        derivedStateOf {
-            if (gridState.firstVisibleItemIndex > 0) {
-                1f
-            } else {
-                val offset = gridState.firstVisibleItemScrollOffset.toFloat()
-                (offset / with(density) { TitleMorphFadeThresholdDp.toPx() }).coerceIn(0f, 1f)
-            }
-        }
-    }
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
 
     Scaffold(
         topBar = {
-            if (!showNavigationIcon) {
-                MainTopBar(
-                    navController = navController,
-                    titleAlpha = scrollProgress,
-                    titleContent = {
-                        Text(
-                            text = stringResource(R.string.new_releases),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .appleMusicTopBarGlass(scrollProgress),
-                )
-            } else {
+            if (showNavigationIcon) {
                 TopAppBar(
                     title = {
                         Text(
@@ -149,7 +125,6 @@ fun NewReleaseScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.graphicsLayer { alpha = scrollProgress },
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -170,20 +145,19 @@ fun NewReleaseScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.background,
                         navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                         titleContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .appleMusicTopBarGlass(scrollProgress),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = LocalPlayerAwareWindowInsets.current,
+        contentWindowInsets = if (showNavigationIcon) LocalPlayerAwareWindowInsets.current else WindowInsets(0, 0, 0, 0),
     ) { paddingValues ->
+        val topPadding = if (showNavigationIcon) paddingValues.calculateTopPadding() else statusBarTop
         AnimatedContent(
             targetState = uiState,
             transitionSpec = {
@@ -200,8 +174,8 @@ fun NewReleaseScreen(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = paddingValues.calculateTopPadding() + 8.dp,
-                            bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                            top = topPadding,
+                            bottom = playerAwarePadding.calculateBottomPadding() + 16.dp,
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -221,8 +195,8 @@ fun NewReleaseScreen(
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
                         gridState = gridState,
-                        scrollProgress = scrollProgress,
-                        paddingValues = paddingValues,
+                        topPadding = topPadding,
+                        bottomPadding = playerAwarePadding.calculateBottomPadding() + 16.dp,
                         activeAlbumId = mediaMetadata?.album?.id,
                         isPlaying = isPlaying,
                         coroutineScope = coroutineScope,
@@ -351,8 +325,8 @@ private fun NewReleaseGridContent(
     selectedTab: NewReleaseTab,
     onTabSelected: (NewReleaseTab) -> Unit,
     gridState: LazyGridState,
-    scrollProgress: Float,
-    paddingValues: PaddingValues,
+    topPadding: androidx.compose.ui.unit.Dp,
+    bottomPadding: androidx.compose.ui.unit.Dp,
     activeAlbumId: String?,
     isPlaying: Boolean,
     coroutineScope: CoroutineScope,
@@ -372,8 +346,8 @@ private fun NewReleaseGridContent(
     val contentPadding = PaddingValues(
         start = 16.dp,
         end = 16.dp,
-        top = paddingValues.calculateTopPadding(),
-        bottom = paddingValues.calculateBottomPadding() + 16.dp,
+        top = topPadding,
+        bottom = bottomPadding,
     )
 
     LazyVerticalGrid(
@@ -384,26 +358,6 @@ private fun NewReleaseGridContent(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        // Apple Music Large Header Title
-        item(
-            key = "new_releases_large_title",
-            span = { GridItemSpan(maxLineSpan) },
-            contentType = "new_releases_large_title",
-        ) {
-            Text(
-                text = stringResource(R.string.new_releases),
-                fontSize = AppleMusicLargeTitleSize,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .padding(top = 4.dp, bottom = 4.dp)
-                    .graphicsLayer {
-                        alpha = (1f - scrollProgress * 1.5f).coerceIn(0f, 1f)
-                    },
-            )
-        }
 
         item(
             key = "new_release_summary",
