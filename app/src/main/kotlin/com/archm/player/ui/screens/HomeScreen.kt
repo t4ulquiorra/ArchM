@@ -37,14 +37,15 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.lerp
 import com.archm.player.ui.component.shimmer.GridItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ListItemPlaceHolder
 import com.archm.player.ui.component.shimmer.ShimmerHost
@@ -60,12 +61,9 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import com.archm.player.ui.theme.Marble
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -506,13 +504,30 @@ private fun HomeContent(
 
     val playerAwarePadding = LocalPlayerAwareWindowInsets.current.asPaddingValues()
     val layoutDirection = LocalLayoutDirection.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    Scaffold(
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val topBarHeight = 58.dp
+    val topClearance = statusBarTop + topBarHeight
+
+    val density = LocalDensity.current
+    val fadeStartPx = with(density) { 36.dp.toPx() }
+    val fadeRangePx = with(density) { 24.dp.toPx() }
+    val headerAlpha by remember {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                val offset = lazyListState.firstVisibleItemScrollOffset.toFloat()
+                ((offset - fadeStartPx) / fadeRangePx).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    Box(
         modifier =
             modifier
                 .fillMaxSize()
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .background(MaterialTheme.colorScheme.background)
                 .then(
                     if (headerScrollConnection != null) {
                         Modifier.nestedScroll(headerScrollConnection)
@@ -520,117 +535,11 @@ private fun HomeContent(
                         Modifier
                     },
                 ),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    val collapsedFraction = scrollBehavior.state.collapsedFraction
-                    val fontSize = lerp(34.sp, 18.sp, collapsedFraction)
-                    Text(
-                        text = "Home",
-                        fontSize = fontSize,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.White,
-                    )
-                },
-                actions = {
-                    var menuExpanded by remember { mutableStateOf(false) }
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(
-                                painter = painterResource(R.drawable.more_vert),
-                                contentDescription = stringResource(R.string.more_options),
-                                tint = Marble,
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.account)) },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.person),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    menuExpanded = false
-                                    navController.navigate("account")
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.history)) },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.history),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    menuExpanded = false
-                                    navController.navigate("history")
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.music_together)) },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.multi_user),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    menuExpanded = false
-                                    navController.navigate("listen_together_from_topbar") {
-                                        launchSingleTop = true
-                                    }
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.settings)) },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.settings),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    menuExpanded = false
-                                    navController.navigate("settings")
-                                },
-                            )
-                        }
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors =
-                    TopAppBarDefaults.largeTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.background,
-                        titleContentColor = Color.White,
-                        actionIconContentColor = Marble,
-                    ),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .drawBehind {
-                            drawLine(
-                                color = Color.White.copy(alpha = 0.15f),
-                                start = Offset(0f, size.height),
-                                end = Offset(size.width, size.height),
-                                strokeWidth = 1.dp.toPx(),
-                            )
-                        },
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { paddingValues ->
+    ) {
         ExpressivePullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
             onRefresh = { onAction(HomeAction.Refresh) },
-            indicatorOffset = paddingValues.calculateTopPadding(),
+            indicatorOffset = topClearance,
             modifier = Modifier.fillMaxSize(),
         ) {
             LazyColumn(
@@ -639,11 +548,37 @@ private fun HomeContent(
                     PaddingValues(
                         start = playerAwarePadding.calculateStartPadding(layoutDirection),
                         end = playerAwarePadding.calculateEndPadding(layoutDirection),
-                        top = paddingValues.calculateTopPadding(),
+                        top = topClearance,
                         bottom = playerAwarePadding.calculateBottomPadding(),
                     ),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                // Item 0: Scrolling Large Title Header & Inset Divider
+                item(key = "home_large_title_header") {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "Home",
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .height(1.dp)
+                                    .background(Color.White.copy(alpha = 0.15f)),
+                        )
+                        Spacer(Modifier.height(16.dp))
+                    }
+                }
                 val chipsList = uiState.homePage?.chips
                 if (showHomeFilterChips && !chipsList.isNullOrEmpty()) {
                     item(key = "home_category_chips") {
@@ -795,6 +730,117 @@ private fun HomeContent(
                 // Bottom spacer for comfortable end-of-list spacing
                 item(key = "home_bottom_spacer") {
                     Spacer(Modifier.height(16.dp))
+                }
+            }
+        }
+
+        // Fixed Top Row Strip Overlay (zIndex 1f)
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .zIndex(1f)
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = headerAlpha))
+                    .drawBehind {
+                        if (headerAlpha > 0.01f) {
+                            val strokePx = 1.dp.toPx()
+                            val y = size.height - strokePx / 2f
+                            drawLine(
+                                color = Color.White.copy(alpha = 0.15f * headerAlpha),
+                                start = Offset(0f, y),
+                                end = Offset(size.width, y),
+                                strokeWidth = strokePx,
+                            )
+                        }
+                    }
+                    .statusBarsPadding(),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(topBarHeight)
+                        .padding(start = 16.dp, end = 4.dp),
+            ) {
+                Text(
+                    text = "Home",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White.copy(alpha = headerAlpha),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                var menuExpanded by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            contentDescription = stringResource(R.string.more_options),
+                            tint = Marble,
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.account)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.person),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                navController.navigate("account")
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.history)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.history),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                navController.navigate("history")
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.music_together)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.multi_user),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                navController.navigate("listen_together_from_topbar") {
+                                    launchSingleTop = true
+                                }
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.settings)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.settings),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                navController.navigate("settings")
+                            },
+                        )
+                    }
                 }
             }
         }
