@@ -834,12 +834,14 @@ private fun SearchSongListItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Bottom,
             ) {
                 if (isActive) {
                     PlayingIndicator(
                         color = LocalAccentColor.current,
-                        modifier = Modifier.height(15.dp),
+                        modifier = Modifier
+                            .alignByBaseline()
+                            .height(12.dp),
                         isPlaying = isPlaying,
                     )
                     Spacer(Modifier.width(6.dp))
@@ -850,7 +852,9 @@ private fun SearchSongListItem(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier
+                        .alignByBaseline()
+                        .weight(1f, fill = false),
                 )
             }
             val subtitle = listOfNotNull(
@@ -1039,12 +1043,14 @@ private fun SearchCollectionListItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Bottom,
             ) {
                 if (isActive) {
                     PlayingIndicator(
                         color = LocalAccentColor.current,
-                        modifier = Modifier.height(15.dp),
+                        modifier = Modifier
+                            .alignByBaseline()
+                            .height(12.dp),
                         isPlaying = isPlaying,
                     )
                     Spacer(Modifier.width(6.dp))
@@ -1055,7 +1061,9 @@ private fun SearchCollectionListItem(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier
+                        .alignByBaseline()
+                        .weight(1f, fill = false),
                 )
             }
             if (!subtitle.isNullOrBlank()) {

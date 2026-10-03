@@ -39,9 +39,9 @@ fun PlayingIndicator(
     color: Color,
     modifier: Modifier = Modifier,
     bars: Int = 3,
-    barWidth: Dp = 4.dp,
-    barSpacing: Dp = 4.dp,
-    cornerRadius: Dp = ThumbnailCornerRadius,
+    barWidth: Dp = 2.5.dp,
+    barSpacing: Dp = 2.dp,
+    cornerRadius: Dp = 1.dp,
     isPlaying: Boolean = true,
 ) {
     val animatables =
@@ -126,6 +126,9 @@ fun PlayingIndicatorBox(
                 PlayingIndicator(
                     color = color,
                     modifier = Modifier.height(24.dp),
+                    barWidth = 4.dp,
+                    barSpacing = 4.dp,
+                    cornerRadius = ThumbnailCornerRadius,
                 )
             } else {
                 Icon(

@@ -707,12 +707,14 @@ fun UnifiedSongRow(
                 modifier = Modifier.weight(1f),
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Bottom,
                 ) {
                     if (isActive) {
                         PlayingIndicator(
                             color = accentColor,
-                            modifier = Modifier.height(15.dp),
+                            modifier = Modifier
+                                .alignByBaseline()
+                                .height(12.dp),
                             isPlaying = isPlaying,
                         )
                         Spacer(Modifier.width(6.dp))
@@ -723,7 +725,9 @@ fun UnifiedSongRow(
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
+                        modifier = Modifier
+                            .alignByBaseline()
+                            .weight(1f, fill = false),
                     )
                 }
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
