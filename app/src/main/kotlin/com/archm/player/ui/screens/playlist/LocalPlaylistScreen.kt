@@ -155,6 +155,7 @@ import com.archm.player.ui.component.ExpandableText
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.OverlayEditButton
 import com.archm.player.ui.component.PlaylistHeader
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.SortHeader
 import com.archm.player.ui.component.TextFieldDialog
@@ -1254,7 +1255,8 @@ fun LocalPlaylistScreen(
                                     accentColor = screenAccentColor,
                                     shape = RoundedCornerShape(12.dp),
                                     trailingContent = {
-                                        IconButton(
+                                        val hasDragHandle = sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable
+                                        RowMoreMenuButton(
                                             onClick = {
                                                 menuState.show {
                                                     SongMenu(
@@ -1265,15 +1267,11 @@ fun LocalPlaylistScreen(
                                                         onDismiss = menuState::dismiss,
                                                     )
                                                 }
-                                            }
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
-                                            )
-                                        }
+                                            },
+                                            endPadding = if (hasDragHandle) 0.dp else 16.dp,
+                                        )
 
-                                        if (sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable) {
+                                        if (hasDragHandle) {
                                             IconButton(
                                                 onClick = { },
                                                 modifier = Modifier.draggableHandle(),

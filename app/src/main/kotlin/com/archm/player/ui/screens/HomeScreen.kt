@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -783,6 +784,7 @@ private fun HomeContent(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .wrapContentHeight()
                         .heightIn(min = topBarHeight)
                         .padding(start = 16.dp, end = 4.dp),
             ) {

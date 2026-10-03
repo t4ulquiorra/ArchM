@@ -122,6 +122,7 @@ import com.archm.player.ui.component.GridCardPod
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
 import com.archm.player.ui.component.PlaylistHeader
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.YouTubeGridItem
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.menu.YouTubeAlbumMenu
@@ -732,15 +733,13 @@ fun OnlinePlaylistScreen(
                                     )
                                     .animateItem(),
                             trailingContent = {
-                                IconButton(
+                                RowMoreMenuButton(
                                     onClick = {
                                         menuState.show {
                                             YouTubeSongMenu(songItem, navController, menuState::dismiss)
                                         }
-                                    }
-                                ) {
-                                    Icon(painterResource(R.drawable.more_vert), null)
-                                }
+                                    },
+                                )
                             }
                         )
                     }

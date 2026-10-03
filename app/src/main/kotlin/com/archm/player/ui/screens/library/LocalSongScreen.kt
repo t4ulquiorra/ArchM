@@ -111,6 +111,7 @@ import com.archm.player.localmedia.LocalSongScanConfig
 import com.archm.player.localmedia.SupportedLocalAudio
 import com.archm.player.playback.queues.ListQueue
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.SortHeader
 import com.archm.player.ui.menu.SongMenu
@@ -486,7 +487,7 @@ fun LocalSongScreen(
                         isActive = song.id == mediaMetadata?.id,
                         isPlaying = isPlaying,
                         trailingContent = {
-                            IconButton(
+                            RowMoreMenuButton(
                                 onClick = {
                                     menuState.show {
                                         SongMenu(
@@ -496,12 +497,7 @@ fun LocalSongScreen(
                                         )
                                     }
                                 },
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.more_vert),
-                                    contentDescription = null,
-                                )
-                            }
+                            )
                         },
                         modifier =
                             Modifier

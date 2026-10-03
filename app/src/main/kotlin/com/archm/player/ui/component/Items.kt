@@ -165,6 +165,33 @@ fun currentGridThumbnailHeight(): Dp {
     return if (gridItemSize == GridItemSize.BIG) GridThumbnailHeight else SmallGridThumbnailHeight
 }
 
+@Composable
+fun RowMoreMenuButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    endPadding: Dp = 16.dp,
+) {
+    Box(
+        modifier = modifier
+            .size(width = 48.dp, height = 48.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = false, radius = 24.dp),
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.more_vert),
+            contentDescription = stringResource(R.string.more_options),
+            tint = tint,
+            modifier = Modifier
+                .padding(end = endPadding)
+                .size(20.dp),
+        )
+    }
+}
 
 @Composable
 inline fun ListItem(
@@ -180,7 +207,7 @@ inline fun ListItem(
     showActiveContainer: Boolean = true,
     shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
-    horizontalPadding: Dp = 12.dp,
+    horizontalPadding: Dp = 16.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
     accentColor: Color = LocalAccentColor.current,
@@ -207,7 +234,7 @@ inline fun ListItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(vertical = 2.dp)
-            .padding(horizontal = horizontalPadding)
+            .padding(start = horizontalPadding, end = 0.dp)
             .clip(itemShape)
             .background(animatedBackgroundColor)
             .then(
@@ -312,7 +339,6 @@ inline fun ListItem(
         CompositionLocalProvider(LocalContentColor provides trailingContentColor) {
             trailingContent()
         }
-        Spacer(modifier = Modifier.width(4.dp))
     }
 }
 
@@ -330,7 +356,7 @@ fun ListItem(
     showActiveContainer: Boolean = true,
     shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
-    horizontalPadding: Dp = 12.dp,
+    horizontalPadding: Dp = 16.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
     accentColor: Color = LocalAccentColor.current,
@@ -378,7 +404,7 @@ fun ListItem(
     showActiveContainer: Boolean = true,
     shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
-    horizontalPadding: Dp = 12.dp,
+    horizontalPadding: Dp = 16.dp,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
     accentColor: Color = LocalAccentColor.current,
@@ -619,7 +645,7 @@ fun SongListItem(
     shape: Shape = RoundedCornerShape(12.dp),
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
-    horizontalPadding: Dp = 12.dp,
+    horizontalPadding: Dp = 16.dp,
     accentColor: Color = LocalAccentColor.current,
 ) {
     val menuState = LocalMenuState.current
@@ -652,21 +678,27 @@ fun SongListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (song.song.liked) {
-            IconButton(
-                onClick = {
-                    savedInSheetState.show(song.toMediaMetadata())
-                },
-                indication = ripple(bounded = false, color = accentColor),
-                modifier = Modifier.size(24.dp),
+            Box(
+                modifier = Modifier
+                    .size(width = 44.dp, height = 48.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = false, radius = 22.dp),
+                        onClick = {
+                            savedInSheetState.show(song.toMediaMetadata())
+                        },
+                    ),
+                contentAlignment = Alignment.CenterEnd,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.star),
                     contentDescription = stringResource(R.string.liked),
                     tint = accentColor,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier
+                        .padding(end = 2.dp)
+                        .size(22.dp),
                 )
             }
-            Spacer(modifier = Modifier.width(4.dp))
         }
         trailingContent()
     }
@@ -1421,6 +1453,7 @@ fun YouTubeListItem(
     },
     shape: Shape = RoundedCornerShape(12.dp),
     drawHighlight: Boolean = true,
+    horizontalPadding: Dp = 16.dp,
     accentColor: Color = LocalAccentColor.current,
 ) {
     val database = LocalDatabase.current
@@ -1461,21 +1494,27 @@ fun YouTubeListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (showLike && isLiked && item is SongItem) {
-            IconButton(
-                onClick = {
-                    savedInSheetState.show(item.toMediaMetadata())
-                },
-                indication = ripple(bounded = false, color = accentColor),
-                modifier = Modifier.size(24.dp),
+            Box(
+                modifier = Modifier
+                    .size(width = 44.dp, height = 48.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = false, radius = 22.dp),
+                        onClick = {
+                            savedInSheetState.show(item.toMediaMetadata())
+                        },
+                    ),
+                contentAlignment = Alignment.CenterEnd,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.star),
                     contentDescription = stringResource(R.string.liked),
                     tint = accentColor,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier
+                        .padding(end = 2.dp)
+                        .size(22.dp),
                 )
             }
-            Spacer(modifier = Modifier.width(4.dp))
         }
         trailingContent()
     }
@@ -1535,6 +1574,7 @@ fun YouTubeListItem(
             showActiveContainer = showActiveContainer,
             shape = shape,
             drawHighlight = drawHighlight,
+            horizontalPadding = horizontalPadding,
             containerColor = resolvedColor,
             color = resolvedColor,
             accentColor = accentColor,

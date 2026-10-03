@@ -169,6 +169,7 @@ import com.archm.player.playback.queues.YouTubeQueue
 import androidx.compose.material3.IconButton
 import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.bouncyClickable
 import com.archm.player.ui.component.formatReleaseSubtitle
@@ -1438,7 +1439,7 @@ fun ArtistScreen(
                                         showDuration = false,
                                         accentColor = screenAccentColor,
                                         trailingContent = {
-                                            IconButton(
+                                            RowMoreMenuButton(
                                                 onClick = {
                                                     menuState.show {
                                                         YouTubeSongMenu(
@@ -1448,12 +1449,7 @@ fun ArtistScreen(
                                                         )
                                                     }
                                                 },
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.more_vert),
-                                                    contentDescription = null,
-                                                )
-                                            }
+                                            )
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()

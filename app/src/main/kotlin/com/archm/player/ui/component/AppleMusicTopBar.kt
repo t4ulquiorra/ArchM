@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.DropdownMenu
@@ -122,6 +123,7 @@ fun FixedTopStrip(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .wrapContentHeight()
                     .heightIn(min = SharedTopBarHeight)
                     .padding(start = if (showNavigationIcon) 4.dp else 16.dp, end = 4.dp),
         ) {

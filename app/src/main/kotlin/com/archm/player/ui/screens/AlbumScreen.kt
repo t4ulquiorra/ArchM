@@ -118,6 +118,7 @@ import com.archm.player.ui.component.LinkSegment
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
 import com.archm.player.ui.component.PlaylistHeader
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.YouTubeGridItem
 import com.archm.player.ui.menu.AlbumMenu
@@ -672,7 +673,7 @@ fun AlbumScreen(
                             shape = RoundedCornerShape(12.dp),
                             interactionSource = itemInteractionSource,
                             trailingContent = {
-                                IconButton(
+                                RowMoreMenuButton(
                                     onClick = {
                                         menuState.show {
                                             SongMenu(
@@ -682,12 +683,7 @@ fun AlbumScreen(
                                             )
                                         }
                                     },
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null,
-                                    )
-                                }
+                                )
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

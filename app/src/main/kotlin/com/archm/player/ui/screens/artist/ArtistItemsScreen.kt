@@ -131,6 +131,7 @@ import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.CombinedIconButton
 import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.YouTubeGridItem
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.shimmer.GridItemPlaceHolder
@@ -816,7 +817,7 @@ fun ArtistItemsScreen(
                                     }
                                 ),
                             trailingContent = {
-                                IconButton(
+                                RowMoreMenuButton(
                                     onClick = {
                                         menuState.show {
                                             YouTubeSongMenu(
@@ -825,10 +826,8 @@ fun ArtistItemsScreen(
                                                 onDismiss = menuState::dismiss,
                                             )
                                         }
-                                    }
-                                ) {
-                                    Icon(painterResource(R.drawable.more_vert), null)
-                                }
+                                    },
+                                )
                             }
                         )
                     }

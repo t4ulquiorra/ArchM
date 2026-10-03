@@ -90,6 +90,7 @@ import com.archm.player.playback.queues.ListQueue
 import com.archm.player.ui.component.ExpressivePullToRefreshBox
 import com.archm.player.ui.component.ItemThumbnail
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.menu.SongMenu
 import com.archm.player.ui.screens.library.rememberArtworkGradient
 import com.archm.player.ui.utils.ItemWrapper
@@ -521,7 +522,7 @@ fun LibrarySongsScreen(
                                             )
                                         }
                                     },
-                                ).padding(12.dp),
+                                ).padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 0.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         // Thumbnail — fully circular when active
@@ -607,7 +608,7 @@ fun LibrarySongsScreen(
                             }
 
                             // More options
-                            IconButton(
+                            RowMoreMenuButton(
                                 onClick = {
                                     menuState.show {
                                         SongMenu(
@@ -617,14 +618,8 @@ fun LibrarySongsScreen(
                                         )
                                     }
                                 },
-                                modifier = Modifier.size(24.dp),
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.more_vert),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                            }
+                                endPadding = 0.dp,
+                            )
                         }
                     }
                 }

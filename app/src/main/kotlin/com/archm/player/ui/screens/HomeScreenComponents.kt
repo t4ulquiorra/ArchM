@@ -183,7 +183,7 @@ import kotlin.random.Random
 // =========================================================================
 val AppleMusicLargeTitleSize = 32.sp     // Prominent large page header text
 val CompactTopBarHeight = 64.dp          // Height of the pinned top navigation bar
-val SearchInputPillHeight = 48.dp        // Height of the search input box
+val SearchInputPillHeight = 44.dp        // Height of the search input box
 val FilterChipPillHeight = 40.dp         // Height of the category filter buttons
 val TitleMorphFadeThresholdDp = 48.dp    // How quickly the title morphs on scroll
 

@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -134,6 +135,7 @@ fun CyclingSearchPlaceholder(
             (slideInVertically { height -> height / 2 } + fadeIn(tween(400)))
                 .togetherWith(slideOutVertically { height -> -height / 2 } + fadeOut(tween(400)))
         },
+        contentAlignment = Alignment.CenterStart,
         label = "cyclingSearchPlaceholder",
         modifier = modifier,
     ) { targetText ->
@@ -197,6 +199,7 @@ fun TopSearch(
                         .windowInsetsPadding(windowInsets)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .fillMaxWidth()
+                        .wrapContentHeight()
                         .heightIn(min = InputFieldHeight),
             ) {
                 SearchBarInputField(
@@ -205,7 +208,7 @@ fun TopSearch(
                     onSearch = onSearch,
                     active = active,
                     onActiveChange = onActiveChange,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = InputFieldHeight),
+                    modifier = Modifier.fillMaxWidth().wrapContentHeight().heightIn(min = InputFieldHeight),
                     enabled = enabled,
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
@@ -274,6 +277,7 @@ private fun SearchBarInputField(
         modifier =
             modifier
                 .fillMaxWidth()
+                .wrapContentHeight()
                 .heightIn(min = InputFieldHeight),
     ) {
         if (leadingIcon != null) {
@@ -365,7 +369,7 @@ private fun TextRange.coerceInText(textLength: Int): TextRange =
     )
 
 // Measurement specs
-val InputFieldHeight = 48.dp
+val InputFieldHeight = 44.dp
 private val SearchBarCornerRadius: Dp = InputFieldHeight / 2
 internal val SearchBarVerticalPadding: Dp = 8.dp
 internal val SearchBarHorizontalPadding: Dp = 12.dp

@@ -58,6 +58,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -105,6 +106,7 @@ import com.archm.player.playback.queues.YouTubeQueue
 import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.PlayingIndicator
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.durationText
 import com.archm.player.ui.component.formatReleaseSubtitle
@@ -804,7 +806,7 @@ private fun SearchSongListItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+            .padding(start = 16.dp, end = 0.dp, top = 8.dp, bottom = 8.dp),
     ) {
         val thumbModifier = if (isVideo) {
             Modifier.height(ListThumbnailSize).aspectRatio(16f / 9f)
@@ -983,11 +985,21 @@ private fun SearchCollectionListItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    var isHeld by remember { mutableStateOf(false) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            delay(400)
+            isHeld = true
+        } else {
+            isHeld = false
+        }
+    }
     val isActivelyPlaying = isActive && isPlaying
 
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
             isActivelyPlaying -> 0.5f
+            isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
         },
@@ -1005,7 +1017,7 @@ private fun SearchCollectionListItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+            .padding(start = 16.dp, end = 0.dp, top = 8.dp, bottom = 8.dp),
     ) {
         Box(
             modifier = Modifier
@@ -1084,47 +1096,47 @@ internal fun SongTrailingActions(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = {
-                if (isLiked) {
-                    savedInSheetState.show(song.toMediaMetadata())
-                } else {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val existing = database.song(song.id).firstOrNull()
-                        val s: SongEntity
-                        if (existing != null) {
-                            s = existing.song.toggleLike()
-                            database.update(s)
+        Box(
+            modifier = Modifier
+                .size(width = 44.dp, height = 48.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false, radius = 22.dp),
+                    onClick = {
+                        if (isLiked) {
+                            savedInSheetState.show(song.toMediaMetadata())
                         } else {
-                            database.transaction {
-                                insert(song.toMediaMetadata(), SongEntity::toggleLike)
+                            coroutineScope.launch(Dispatchers.IO) {
+                                val existing = database.song(song.id).firstOrNull()
+                                val s: SongEntity
+                                if (existing != null) {
+                                    s = existing.song.toggleLike()
+                                    database.update(s)
+                                } else {
+                                    database.transaction {
+                                        insert(song.toMediaMetadata(), SongEntity::toggleLike)
+                                    }
+                                    s = song.toMediaMetadata().toSongEntity().let(SongEntity::toggleLike)
+                                }
+                                syncUtils.likeSong(s)
                             }
-                            s = song.toMediaMetadata().toSongEntity().let(SongEntity::toggleLike)
                         }
-                        syncUtils.likeSong(s)
-                    }
-                }
-            },
-            modifier = Modifier.size(36.dp),
+                    },
+                ),
+            contentAlignment = Alignment.CenterEnd,
         ) {
             Icon(
                 painter = painterResource(if (isLiked) R.drawable.star else R.drawable.star_border),
                 contentDescription = if (isLiked) stringResource(R.string.liked) else stringResource(R.string.like),
-                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp),
+                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                modifier = Modifier
+                    .padding(end = 2.dp)
+                    .size(22.dp),
             )
         }
-        IconButton(
+        RowMoreMenuButton(
             onClick = onMenuClick,
-            modifier = Modifier.size(36.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.more_vert),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
-            )
-        }
+        )
     }
 }
 
@@ -1141,44 +1153,46 @@ internal fun AlbumTrailingAction(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    val existing = database.album(album.id).firstOrNull()
-                    if (existing != null) {
-                        database.update(existing.album.toggleLike())
-                    } else {
-                        YouTube.album(album.id)
-                            .onSuccess { albumPage ->
-                                database.transaction { insert(albumPage) }
-                            }.onFailure { reportException(it) }
-                        // After the network call: read+toggle in the coroutine body (suspend ok here)
-                        val inserted = database.album(album.id).firstOrNull()
-                        inserted?.album?.toggleLike()?.let { database.update(it) }
-                    }
-                }
-            },
-            modifier = Modifier.size(36.dp),
+        Box(
+            modifier = Modifier
+                .size(width = 44.dp, height = 48.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false, radius = 22.dp),
+                    onClick = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val existing = database.album(album.id).firstOrNull()
+                            if (existing != null) {
+                                database.update(existing.album.toggleLike())
+                            } else {
+                                YouTube.album(album.id)
+                                    .onSuccess { albumPage ->
+                                        database.transaction { insert(albumPage) }
+                                    }.onFailure { reportException(it) }
+                                // After the network call: read+toggle in the coroutine body (suspend ok here)
+                                val inserted = database.album(album.id).firstOrNull()
+                                inserted?.album?.toggleLike()?.let { database.update(it) }
+                            }
+                        }
+                    },
+                ),
+            contentAlignment = Alignment.CenterEnd,
         ) {
             Icon(
                 painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
                 contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
-                tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.size(22.dp),
+                tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                modifier = Modifier
+                    .padding(end = 2.dp)
+                    .size(22.dp),
             )
         }
         if (onMenuClick != null) {
-            IconButton(
+            RowMoreMenuButton(
                 onClick = onMenuClick,
-                modifier = Modifier.size(36.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            )
+        } else {
+            Spacer(Modifier.width(16.dp))
         }
     }
 }
@@ -1196,57 +1210,59 @@ internal fun PlaylistTrailingAction(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    val existing = database.playlist(playlist.id).firstOrNull()
-                    if (existing != null) {
-                        database.update(existing.playlist.toggleLike())
-                    } else {
-                        YouTube.playlist(playlist.id).onSuccess { _ ->
-                            database.transaction {
-                                insert(
-                                    PlaylistEntity(
-                                        name = playlist.title,
-                                        browseId = playlist.id,
-                                        thumbnailUrl = playlist.thumbnail,
-                                        isEditable = playlist.isEditable,
-                                        remoteSongCount = playlist.songCountText?.let {
-                                            Regex("""\d+""").find(it)?.value?.toIntOrNull()
-                                        },
-                                        playEndpointParams = playlist.playEndpoint?.params,
-                                        shuffleEndpointParams = playlist.shuffleEndpoint?.params,
-                                        radioEndpointParams = playlist.radioEndpoint?.params,
-                                    ).toggleLike()
-                                )
+        Box(
+            modifier = Modifier
+                .size(width = 44.dp, height = 48.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false, radius = 22.dp),
+                    onClick = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val existing = database.playlist(playlist.id).firstOrNull()
+                            if (existing != null) {
+                                database.update(existing.playlist.toggleLike())
+                            } else {
+                                YouTube.playlist(playlist.id).onSuccess { _ ->
+                                    database.transaction {
+                                        insert(
+                                            PlaylistEntity(
+                                                name = playlist.title,
+                                                browseId = playlist.id,
+                                                thumbnailUrl = playlist.thumbnail,
+                                                isEditable = playlist.isEditable,
+                                                remoteSongCount = playlist.songCountText?.let {
+                                                    Regex("""\d+""").find(it)?.value?.toIntOrNull()
+                                                },
+                                                playEndpointParams = playlist.playEndpoint?.params,
+                                                shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                                radioEndpointParams = playlist.radioEndpoint?.params,
+                                            ).toggleLike()
+                                        )
+                                    }
+                                }.onFailure {
+                                    reportException(it)
+                                }
                             }
-                        }.onFailure {
-                            reportException(it)
                         }
-                    }
-                }
-            },
-            modifier = Modifier.size(36.dp),
+                    },
+                ),
+            contentAlignment = Alignment.CenterEnd,
         ) {
             Icon(
                 painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
                 contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
-                tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.size(22.dp),
+                tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                modifier = Modifier
+                    .padding(end = 2.dp)
+                    .size(22.dp),
             )
         }
         if (onMenuClick != null) {
-            IconButton(
+            RowMoreMenuButton(
                 onClick = onMenuClick,
-                modifier = Modifier.size(36.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            )
+        } else {
+            Spacer(Modifier.width(16.dp))
         }
     }
 }

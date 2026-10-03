@@ -52,6 +52,7 @@ import com.archm.player.playback.queues.ListQueue
 import com.archm.player.ui.component.HideOnScrollFAB
 import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.SortHeader
 import com.archm.player.ui.menu.SongMenu
@@ -139,7 +140,7 @@ fun ArtistSongsScreen(
                     isPlaying = isPlaying,
                     shape = RoundedCornerShape(12.dp),
                     trailingContent = {
-                        IconButton(
+                        RowMoreMenuButton(
                             onClick = {
                                 menuState.show {
                                     SongMenu(
@@ -149,12 +150,7 @@ fun ArtistSongsScreen(
                                     )
                                 }
                             },
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.more_vert),
-                                contentDescription = null,
-                            )
-                        }
+                        )
                     },
                     modifier =
                     Modifier
