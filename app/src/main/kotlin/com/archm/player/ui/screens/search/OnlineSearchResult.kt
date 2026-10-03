@@ -107,6 +107,7 @@ import com.archm.player.ui.component.EmptyPlaceholder
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.PlayingIndicator
 import com.archm.player.ui.component.RowMoreMenuButton
+import com.archm.player.ui.component.RowStarButton
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.component.durationText
 import com.archm.player.ui.component.formatReleaseSubtitle
@@ -1096,44 +1097,31 @@ internal fun SongTrailingActions(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(width = 44.dp, height = 48.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = false, radius = 22.dp),
-                    onClick = {
-                        if (isLiked) {
-                            savedInSheetState.show(song.toMediaMetadata())
+        RowStarButton(
+            isLiked = isLiked,
+            contentDescription = if (isLiked) stringResource(R.string.liked) else stringResource(R.string.like),
+            likedTint = MaterialTheme.colorScheme.primary,
+            onClick = {
+                if (isLiked) {
+                    savedInSheetState.show(song.toMediaMetadata())
+                } else {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val existing = database.song(song.id).firstOrNull()
+                        val s: SongEntity
+                        if (existing != null) {
+                            s = existing.song.toggleLike()
+                            database.update(s)
                         } else {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                val existing = database.song(song.id).firstOrNull()
-                                val s: SongEntity
-                                if (existing != null) {
-                                    s = existing.song.toggleLike()
-                                    database.update(s)
-                                } else {
-                                    database.transaction {
-                                        insert(song.toMediaMetadata(), SongEntity::toggleLike)
-                                    }
-                                    s = song.toMediaMetadata().toSongEntity().let(SongEntity::toggleLike)
-                                }
-                                syncUtils.likeSong(s)
+                            database.transaction {
+                                insert(song.toMediaMetadata(), SongEntity::toggleLike)
                             }
+                            s = song.toMediaMetadata().toSongEntity().let(SongEntity::toggleLike)
                         }
-                    },
-                ),
-            contentAlignment = Alignment.CenterEnd,
-        ) {
-            Icon(
-                painter = painterResource(if (isLiked) R.drawable.star else R.drawable.star_border),
-                contentDescription = if (isLiked) stringResource(R.string.liked) else stringResource(R.string.like),
-                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                modifier = Modifier
-                    .padding(end = 2.dp)
-                    .size(22.dp),
-            )
-        }
+                        syncUtils.likeSong(s)
+                    }
+                }
+            },
+        )
         RowMoreMenuButton(
             onClick = onMenuClick,
         )
@@ -1153,40 +1141,27 @@ internal fun AlbumTrailingAction(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(width = 44.dp, height = 48.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = false, radius = 22.dp),
-                    onClick = {
-                        coroutineScope.launch(Dispatchers.IO) {
-                            val existing = database.album(album.id).firstOrNull()
-                            if (existing != null) {
-                                database.update(existing.album.toggleLike())
-                            } else {
-                                YouTube.album(album.id)
-                                    .onSuccess { albumPage ->
-                                        database.transaction { insert(albumPage) }
-                                    }.onFailure { reportException(it) }
-                                // After the network call: read+toggle in the coroutine body (suspend ok here)
-                                val inserted = database.album(album.id).firstOrNull()
-                                inserted?.album?.toggleLike()?.let { database.update(it) }
-                            }
-                        }
-                    },
-                ),
-            contentAlignment = Alignment.CenterEnd,
-        ) {
-            Icon(
-                painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
-                contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
-                tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                modifier = Modifier
-                    .padding(end = 2.dp)
-                    .size(22.dp),
-            )
-        }
+        RowStarButton(
+            isLiked = isSaved,
+            contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
+            likedTint = MaterialTheme.colorScheme.primary,
+            onClick = {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val existing = database.album(album.id).firstOrNull()
+                    if (existing != null) {
+                        database.update(existing.album.toggleLike())
+                    } else {
+                        YouTube.album(album.id)
+                            .onSuccess { albumPage ->
+                                database.transaction { insert(albumPage) }
+                            }.onFailure { reportException(it) }
+                        // After the network call: read+toggle in the coroutine body (suspend ok here)
+                        val inserted = database.album(album.id).firstOrNull()
+                        inserted?.album?.toggleLike()?.let { database.update(it) }
+                    }
+                }
+            },
+        )
         if (onMenuClick != null) {
             RowMoreMenuButton(
                 onClick = onMenuClick,
@@ -1210,53 +1185,40 @@ internal fun PlaylistTrailingAction(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(width = 44.dp, height = 48.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = false, radius = 22.dp),
-                    onClick = {
-                        coroutineScope.launch(Dispatchers.IO) {
-                            val existing = database.playlist(playlist.id).firstOrNull()
-                            if (existing != null) {
-                                database.update(existing.playlist.toggleLike())
-                            } else {
-                                YouTube.playlist(playlist.id).onSuccess { _ ->
-                                    database.transaction {
-                                        insert(
-                                            PlaylistEntity(
-                                                name = playlist.title,
-                                                browseId = playlist.id,
-                                                thumbnailUrl = playlist.thumbnail,
-                                                isEditable = playlist.isEditable,
-                                                remoteSongCount = playlist.songCountText?.let {
-                                                    Regex("""\d+""").find(it)?.value?.toIntOrNull()
-                                                },
-                                                playEndpointParams = playlist.playEndpoint?.params,
-                                                shuffleEndpointParams = playlist.shuffleEndpoint?.params,
-                                                radioEndpointParams = playlist.radioEndpoint?.params,
-                                            ).toggleLike()
-                                        )
-                                    }
-                                }.onFailure {
-                                    reportException(it)
-                                }
+        RowStarButton(
+            isLiked = isSaved,
+            contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
+            likedTint = MaterialTheme.colorScheme.primary,
+            onClick = {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val existing = database.playlist(playlist.id).firstOrNull()
+                    if (existing != null) {
+                        database.update(existing.playlist.toggleLike())
+                    } else {
+                        YouTube.playlist(playlist.id).onSuccess { _ ->
+                            database.transaction {
+                                insert(
+                                    PlaylistEntity(
+                                        name = playlist.title,
+                                        browseId = playlist.id,
+                                        thumbnailUrl = playlist.thumbnail,
+                                        isEditable = playlist.isEditable,
+                                        remoteSongCount = playlist.songCountText?.let {
+                                            Regex("""\d+""").find(it)?.value?.toIntOrNull()
+                                        },
+                                        playEndpointParams = playlist.playEndpoint?.params,
+                                        shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                        radioEndpointParams = playlist.radioEndpoint?.params,
+                                    ).toggleLike()
+                                )
                             }
+                        }.onFailure {
+                            reportException(it)
                         }
-                    },
-                ),
-            contentAlignment = Alignment.CenterEnd,
-        ) {
-            Icon(
-                painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
-                contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
-                tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                modifier = Modifier
-                    .padding(end = 2.dp)
-                    .size(22.dp),
-            )
-        }
+                    }
+                }
+            },
+        )
         if (onMenuClick != null) {
             RowMoreMenuButton(
                 onClick = onMenuClick,
@@ -1264,6 +1226,94 @@ internal fun PlaylistTrailingAction(
         } else {
             Spacer(Modifier.width(16.dp))
         }
+    }
+}
+
+@Composable
+private fun AlbumArtworkBookmarkButton(
+    album: AlbumItem,
+    modifier: Modifier = Modifier,
+) {
+    val database = LocalDatabase.current
+    val coroutineScope = rememberCoroutineScope()
+    val dbAlbum by database.album(album.id).collectAsState(initial = null)
+    val isSaved = dbAlbum?.album?.bookmarkedAt != null
+
+    IconButton(
+        onClick = {
+            coroutineScope.launch(Dispatchers.IO) {
+                val existing = database.album(album.id).firstOrNull()
+                if (existing != null) {
+                    database.update(existing.album.toggleLike())
+                } else {
+                    YouTube.album(album.id)
+                        .onSuccess { albumPage ->
+                            database.transaction { insert(albumPage) }
+                        }.onFailure { reportException(it) }
+                    val inserted = database.album(album.id).firstOrNull()
+                    inserted?.album?.toggleLike()?.let { database.update(it) }
+                }
+            }
+        },
+        modifier = modifier.size(36.dp),
+    ) {
+        Icon(
+            painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
+            contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
+            tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White,
+            modifier = Modifier.size(22.dp),
+        )
+    }
+}
+
+@Composable
+private fun PlaylistArtworkBookmarkButton(
+    playlist: PlaylistItem,
+    modifier: Modifier = Modifier,
+) {
+    val database = LocalDatabase.current
+    val coroutineScope = rememberCoroutineScope()
+    val dbPlaylist by database.playlist(playlist.id).collectAsState(initial = null)
+    val isSaved = dbPlaylist?.playlist?.bookmarkedAt != null
+
+    IconButton(
+        onClick = {
+            coroutineScope.launch(Dispatchers.IO) {
+                val existing = database.playlist(playlist.id).firstOrNull()
+                if (existing != null) {
+                    database.update(existing.playlist.toggleLike())
+                } else {
+                    YouTube.playlist(playlist.id).onSuccess { _ ->
+                        database.transaction {
+                            insert(
+                                PlaylistEntity(
+                                    name = playlist.title,
+                                    browseId = playlist.id,
+                                    thumbnailUrl = playlist.thumbnail,
+                                    isEditable = playlist.isEditable,
+                                    remoteSongCount = playlist.songCountText?.let {
+                                        Regex("""\d+""").find(it)?.value?.toIntOrNull()
+                                    },
+                                    playEndpointParams = playlist.playEndpoint?.params,
+                                    shuffleEndpointParams = playlist.shuffleEndpoint?.params,
+                                    radioEndpointParams = playlist.radioEndpoint?.params,
+                                ).toggleLike()
+                            )
+                        }
+                    }.onFailure {
+                        reportException(it)
+                    }
+                }
+            }
+        },
+        modifier = modifier.size(36.dp),
+    ) {
+        Icon(
+            painter = painterResource(if (isSaved) R.drawable.star else R.drawable.star_border),
+            contentDescription = stringResource(if (isSaved) R.string.remove_from_library else R.string.add_to_library),
+            tint = if (isSaved) MaterialTheme.colorScheme.primary else Color.White,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 
@@ -1390,7 +1440,7 @@ private fun AlbumShelfCard(
                     .padding(4.dp)
                     .background(Color.Black.copy(alpha = 0.55f), CircleShape),
             ) {
-                AlbumTrailingAction(album = album)
+                AlbumArtworkBookmarkButton(album = album)
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -1476,7 +1526,7 @@ private fun PlaylistShelfCard(
                     .padding(4.dp)
                     .background(Color.Black.copy(alpha = 0.55f), CircleShape),
             ) {
-                PlaylistTrailingAction(playlist = playlist)
+                PlaylistArtworkBookmarkButton(playlist = playlist)
             }
         }
         Spacer(Modifier.height(8.dp))

@@ -170,14 +170,22 @@ fun RowMoreMenuButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    endPadding: Dp = 16.dp,
+    endPadding: Dp = 6.dp,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val alpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.5f else 1.0f,
+        animationSpec = tween(150),
+        label = "row_more_menu_alpha",
+    )
+
     Box(
         modifier = modifier
             .size(width = 48.dp, height = 48.dp)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = false, radius = 24.dp),
+                interactionSource = interactionSource,
+                indication = null,
                 onClick = onClick,
             ),
         contentAlignment = Alignment.CenterEnd,
@@ -187,8 +195,49 @@ fun RowMoreMenuButton(
             contentDescription = stringResource(R.string.more_options),
             tint = tint,
             modifier = Modifier
+                .graphicsLayer { this.alpha = alpha }
                 .padding(end = endPadding)
-                .size(20.dp),
+                .size(24.dp),
+        )
+    }
+}
+
+@Composable
+fun RowStarButton(
+    isLiked: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+    likedTint: Color = LocalAccentColor.current,
+    unlikedTint: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val alpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.5f else 1.0f,
+        animationSpec = tween(150),
+        label = "row_star_alpha",
+    )
+
+    Box(
+        modifier = modifier
+            .offset(x = 6.dp)
+            .size(width = 44.dp, height = 48.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Icon(
+            painter = painterResource(if (isLiked) R.drawable.star else R.drawable.star_border),
+            contentDescription = contentDescription,
+            tint = if (isLiked) likedTint else unlikedTint,
+            modifier = Modifier
+                .graphicsLayer { this.alpha = alpha }
+                .padding(end = 2.dp)
+                .size(22.dp),
         )
     }
 }
@@ -678,27 +727,14 @@ fun SongListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (song.song.liked) {
-            Box(
-                modifier = Modifier
-                    .size(width = 44.dp, height = 48.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = false, radius = 22.dp),
-                        onClick = {
-                            savedInSheetState.show(song.toMediaMetadata())
-                        },
-                    ),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.star),
-                    contentDescription = stringResource(R.string.liked),
-                    tint = accentColor,
-                    modifier = Modifier
-                        .padding(end = 2.dp)
-                        .size(22.dp),
-                )
-            }
+            RowStarButton(
+                isLiked = true,
+                onClick = {
+                    savedInSheetState.show(song.toMediaMetadata())
+                },
+                contentDescription = stringResource(R.string.liked),
+                likedTint = accentColor,
+            )
         }
         trailingContent()
     }
@@ -1300,21 +1336,14 @@ fun MediaMetadataListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (isLiked) {
-            IconButton(
+            RowStarButton(
+                isLiked = true,
                 onClick = {
                     savedInSheetState.show(mediaMetadata)
                 },
-                indication = ripple(bounded = false, color = accentColor),
-                modifier = Modifier.size(24.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.star),
-                    contentDescription = stringResource(R.string.liked),
-                    tint = accentColor,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Spacer(modifier = Modifier.width(4.dp))
+                contentDescription = stringResource(R.string.liked),
+                likedTint = accentColor,
+            )
         }
         trailingContent()
     }
@@ -1494,27 +1523,14 @@ fun YouTubeListItem(
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (showLike && isLiked && item is SongItem) {
-            Box(
-                modifier = Modifier
-                    .size(width = 44.dp, height = 48.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = false, radius = 22.dp),
-                        onClick = {
-                            savedInSheetState.show(item.toMediaMetadata())
-                        },
-                    ),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.star),
-                    contentDescription = stringResource(R.string.liked),
-                    tint = accentColor,
-                    modifier = Modifier
-                        .padding(end = 2.dp)
-                        .size(22.dp),
-                )
-            }
+            RowStarButton(
+                isLiked = true,
+                onClick = {
+                    savedInSheetState.show(item.toMediaMetadata())
+                },
+                contentDescription = stringResource(R.string.liked),
+                likedTint = accentColor,
+            )
         }
         trailingContent()
     }

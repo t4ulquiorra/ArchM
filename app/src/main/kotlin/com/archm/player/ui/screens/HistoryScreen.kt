@@ -75,6 +75,7 @@ import com.archm.player.ui.component.HideOnScrollFAB
 import com.archm.player.ui.component.LongClickIconButton
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.NavigationTitle
+import com.archm.player.ui.component.RowMoreMenuButton
 import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.component.YouTubeListItem
 import com.archm.player.ui.menu.SelectionMediaMetadataMenu
@@ -249,7 +250,7 @@ fun HistoryScreen(
                             isPlaying = isPlaying,
                             shape = RoundedCornerShape(12.dp),
                             trailingContent = {
-                                IconButton(
+                                RowMoreMenuButton(
                                     onClick = {
                                         menuState.show {
                                             YouTubeSongMenu(
@@ -262,12 +263,7 @@ fun HistoryScreen(
                                             )
                                         }
                                     }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null
-                                    )
-                                }
+                                )
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -331,7 +327,7 @@ fun HistoryScreen(
                             showInLibraryIcon = true,
                             shape = RoundedCornerShape(12.dp),
                             trailingContent = {
-                                IconButton(
+                                RowMoreMenuButton(
                                     onClick = {
                                         menuState.show {
                                             SongMenu(
@@ -342,12 +338,7 @@ fun HistoryScreen(
                                             )
                                         }
                                     }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_vert),
-                                        contentDescription = null
-                                    )
-                                }
+                                )
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

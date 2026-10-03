@@ -207,7 +207,7 @@ fun LocalSearchScreen(
                                 isActive = item.id == mediaMetadata?.id,
                                 isPlaying = isPlaying,
                                 trailingContent = {
-                                    IconButton(
+                                    RowMoreMenuButton(
                                         onClick = {
                                             menuState.show {
                                                 SongMenu(
@@ -221,12 +221,7 @@ fun LocalSearchScreen(
                                                 )
                                             }
                                         },
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.more_vert),
-                                            contentDescription = null,
-                                        )
-                                    }
+                                    )
                                 },
                                 modifier =
                                     Modifier
