@@ -248,7 +248,27 @@ fun HistoryScreen(
                             item = song,
                             isActive = song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
-                            shape = RoundedCornerShape(12.dp),
+                            onClick = {
+                                if (song.id == mediaMetadata?.id) {
+                                    playerConnection.togglePlayPause()
+                                } else {
+                                    playerConnection.playQueue(
+                                        YouTubeQueue.radio(song.toMediaMetadata())
+                                    )
+                                }
+                            },
+                            onLongClick = {
+                                menuState.show {
+                                    YouTubeSongMenu(
+                                        song = song,
+                                        navController = navController,
+                                        onDismiss = menuState::dismiss,
+                                        onHistoryRemoved = {
+                                            viewModel.fetchRemoteHistory()
+                                        }
+                                    )
+                                }
+                            },
                             trailingContent = {
                                 RowMoreMenuButton(
                                     onClick = {
@@ -267,31 +287,7 @@ fun HistoryScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    onClick = {
-                                        if (song.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                YouTubeQueue.radio(song.toMediaMetadata())
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        menuState.show {
-                                            YouTubeSongMenu(
-                                                song = song,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                                onHistoryRemoved = {
-                                                    viewModel.fetchRemoteHistory()
-                                                }
-                                            )
-                                        }
-                                    }
-                                )
-                                .animateItem()
+                                .animateItem(),
                         )
                     }
                 }
@@ -325,7 +321,41 @@ fun HistoryScreen(
                             inSelectionMode = inSelectMode,
                             isSelected = inSelectMode && event.event.id in selection,
                             showInLibraryIcon = true,
-                            shape = RoundedCornerShape(12.dp),
+                            onClick = {
+                                if (inSelectMode) {
+                                    onCheckedChange(event.event.id !in selection)
+                                } else if (event.song.id == mediaMetadata?.id) {
+                                    playerConnection.togglePlayPause()
+                                } else {
+                                    playerConnection.playQueue(
+                                        ListQueue(
+                                            title = dateAgoToString(dateAgo),
+                                            items = dateEvents.map { it.song.toMediaItem() },
+                                            startIndex = index
+                                        )
+                                    )
+                                }
+                            },
+                            onLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = event.song,
+                                            event = event.event,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss
+                                        )
+                                    }
+                                }
+                            },
+                            onThumbnailLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    inSelectMode = true
+                                    onCheckedChange(true)
+                                }
+                            },
                             trailingContent = {
                                 RowMoreMenuButton(
                                     onClick = {
@@ -342,32 +372,7 @@ fun HistoryScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    onClick = {
-                                        if (inSelectMode) {
-                                            onCheckedChange(event.event.id !in selection)
-                                        } else if (event.song.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                ListQueue(
-                                                    title = dateAgoToString(dateAgo),
-                                                    items = dateEvents.map { it.song.toMediaItem() },
-                                                    startIndex = index
-                                                )
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        if (!inSelectMode) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            inSelectMode = true
-                                            onCheckedChange(true)
-                                        }
-                                    }
-                                )
-                                .animateItem()
+                                .animateItem(),
                         )
                     }
                 }

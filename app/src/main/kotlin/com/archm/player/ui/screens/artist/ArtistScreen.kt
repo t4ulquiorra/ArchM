@@ -1431,13 +1431,44 @@ fun ArtistScreen(
                                     val itemInteractionSource = remember { MutableInteractionSource() }
                                     YouTubeListItem(
                                         item = song,
-                                        interactionSource = itemInteractionSource,
                                         isActive = song.id == mediaMetadata?.id,
                                         isPlaying = isPlaying,
                                         inSelectionMode = selectionState.isActive,
                                         isSelected = selectionState.isSelected(song.id),
                                         showDuration = false,
                                         accentColor = screenAccentColor,
+                                        onClick = {
+                                            if (selectionState.isActive) {
+                                                selectionState.toggle(song.id)
+                                            } else if (song.id == mediaMetadata?.id) {
+                                                playerConnection.togglePlayPause()
+                                            } else {
+                                                playerConnection.playQueue(
+                                                    YouTubeQueue(
+                                                        WatchEndpoint(videoId = song.id),
+                                                        song.toMediaMetadata(),
+                                                    ),
+                                                )
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!selectionState.isActive) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                menuState.show {
+                                                    YouTubeSongMenu(
+                                                        song = song,
+                                                        navController = navController,
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onThumbnailLongClick = {
+                                            if (!selectionState.isActive) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                selectionState.start(song.id)
+                                            }
+                                        },
                                         trailingContent = {
                                             RowMoreMenuButton(
                                                 onClick = {
@@ -1452,32 +1483,7 @@ fun ArtistScreen(
                                             )
                                         },
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .combinedClickable(
-                                                interactionSource = itemInteractionSource,
-                                                indication = null,
-                                                onClick = {
-                                                    if (selectionState.isActive) {
-                                                        selectionState.toggle(song.id)
-                                                    } else if (song.id == mediaMetadata?.id) {
-                                                        playerConnection.togglePlayPause()
-                                                    } else {
-                                                        playerConnection.playQueue(
-                                                            YouTubeQueue(
-                                                                WatchEndpoint(videoId = song.id),
-                                                                song.toMediaMetadata(),
-                                                            ),
-                                                        )
-                                                    }
-                                                },
-                                                onLongClick = {
-                                                    if (!selectionState.isActive) {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                        selectionState.start(song.id)
-                                                    }
-                                                },
-                                            ),
+                                            .fillMaxWidth(),
                                     )
                                 }
                             }

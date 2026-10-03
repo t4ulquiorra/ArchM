@@ -776,46 +776,47 @@ fun ArtistItemsScreen(
                             }
                         }
 
-                        val itemInteractionSource = remember { MutableInteractionSource() }
                         YouTubeListItem(
                             item = songItem,
-                            interactionSource = itemInteractionSource,
                             isActive = mediaMetadata?.id == songItem.id,
                             isPlaying = isPlaying,
                             inSelectionMode = inSelectMode,
                             isSelected = inSelectMode && songItem.id in selection,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    interactionSource = itemInteractionSource,
-                                    indication = null,
-                                    enabled = !hideExplicit || !songItem.explicit,
-                                    onClick = {
-                                        if (inSelectMode) {
-                                            onCheckedChange(songItem.id !in selection)
-                                        } else if (songItem.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                ListQueue(
-                                                    title = displayTitle,
-                                                    items = filteredSongs.map { it.toMediaItem() },
-                                                    startIndex = index,
-                                                )
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        if (!inSelectMode) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            inSelectMode = true
-                                            onCheckedChange(true)
-                                        }
+                            onClick = {
+                                if (hideExplicit && songItem.explicit) return@YouTubeListItem
+                                if (inSelectMode) {
+                                    onCheckedChange(songItem.id !in selection)
+                                } else if (songItem.id == mediaMetadata?.id) {
+                                    playerConnection.togglePlayPause()
+                                } else {
+                                    playerConnection.playQueue(
+                                        ListQueue(
+                                            title = displayTitle,
+                                            items = filteredSongs.map { it.toMediaItem() },
+                                            startIndex = index,
+                                        )
+                                    )
+                                }
+                            },
+                            onLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    menuState.show {
+                                        YouTubeSongMenu(
+                                            song = songItem,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
                                     }
-                                ),
+                                }
+                            },
+                            onThumbnailLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    inSelectMode = true
+                                    onCheckedChange(true)
+                                }
+                            },
                             trailingContent = {
                                 RowMoreMenuButton(
                                     onClick = {
@@ -828,7 +829,10 @@ fun ArtistItemsScreen(
                                         }
                                     },
                                 )
-                            }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
                         )
                     }
 

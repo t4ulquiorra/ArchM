@@ -670,8 +670,37 @@ fun AlbumScreen(
                             isSelected = inSelectMode && song.id in selection,
                             showInLibraryIcon = true,
                             accentColor = screenAccentColor,
-                            shape = RoundedCornerShape(12.dp),
-                            interactionSource = itemInteractionSource,
+                            onClick = {
+                                if (inSelectMode) {
+                                    onCheckedChange(song.id !in selection)
+                                } else if (song.id == mediaMetadata?.id) {
+                                    playerConnection.togglePlayPause()
+                                } else {
+                                    playerConnection.service.getAutomix(playlistId)
+                                    playerConnection.playQueue(
+                                        LocalAlbumRadio(currentAlbumWithSongs, startIndex = index),
+                                    )
+                                }
+                            },
+                            onLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                }
+                            },
+                            onThumbnailLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    inSelectMode = true
+                                    onCheckedChange(true)
+                                }
+                            },
                             trailingContent = {
                                 RowMoreMenuButton(
                                     onClick = {
@@ -687,31 +716,7 @@ fun AlbumScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .animateItem()
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    interactionSource = itemInteractionSource,
-                                    indication = null,
-                                    onClick = {
-                                        if (inSelectMode) {
-                                            onCheckedChange(song.id !in selection)
-                                        } else if (song.id == mediaMetadata?.id) {
-                                            playerConnection.togglePlayPause()
-                                        } else {
-                                            playerConnection.service.getAutomix(playlistId)
-                                            playerConnection.playQueue(
-                                                LocalAlbumRadio(currentAlbumWithSongs, startIndex = index),
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        if (!inSelectMode) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            inSelectMode = true
-                                            onCheckedChange(true)
-                                        }
-                                    },
-                                ),
+                                .animateItem(),
                         )
                     }
                 }

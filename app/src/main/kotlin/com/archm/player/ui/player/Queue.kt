@@ -1216,10 +1216,74 @@ fun Queue(
                                         isSelected = inSelectMode && window.mediaItem.mediaId in selection,
                                         isActive = isActive,
                                         isPlaying = isPlaying && isActive,
-                                        shape = RoundedCornerShape(12.dp),
+                                        onClick = {
+                                            if (inSelectMode) {
+                                                onCheckedChange(window.mediaItem.mediaId !in selection)
+                                            } else if (!isListenTogetherGuest) {
+                                                if (index == currentWindowIndex) {
+                                                    if (isCasting) {
+                                                        if (castIsPlaying) {
+                                                            castHandler?.pause()
+                                                        } else {
+                                                            castHandler?.play()
+                                                        }
+                                                    } else {
+                                                        playerConnection.togglePlayPause()
+                                                    }
+                                                } else {
+                                                    if (isCasting) {
+                                                        val mediaId =
+                                                            window.mediaItem.mediaId
+                                                        val navigated =
+                                                            castHandler?.navigateToMediaIfInQueue(
+                                                                mediaId
+                                                            ) ?: false
+                                                        if (!navigated) {
+                                                            playerConnection.player.seekToDefaultPosition(
+                                                                window.firstPeriodIndex
+                                                            )
+                                                        }
+                                                    } else {
+                                                        playerConnection.player.seekToDefaultPosition(
+                                                            window.firstPeriodIndex,
+                                                        )
+                                                        playerConnection.player.playWhenReady =
+                                                            true
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!inSelectMode) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                menuState.show {
+                                                    QueueMenu(
+                                                        mediaMetadata = window.mediaItem.metadata!!,
+                                                        navController = navController,
+                                                        playerBottomSheetState = playerBottomSheetState,
+                                                        onShowDetailsDialog = {
+                                                            window.mediaItem.mediaId.let {
+                                                                bottomSheetPageState.show {
+                                                                    ShowMediaInfo(it)
+                                                                }
+                                                            }
+                                                        },
+                                                        onDismiss = menuState::dismiss,
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onThumbnailLongClick = {
+                                            if (!inSelectMode) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                inSelectMode = true
+                                                onCheckedChange(true)
+                                            }
+                                        },
                                         trailingContent = {
+                                            val hasDragHandle = !locked && !isListenTogetherGuest && !inSelectMode
                                             if (!isListenTogetherGuest) {
-                                                IconButton(
+                                                RowMoreMenuButton(
                                                     onClick = {
                                                         menuState.show {
                                                             QueueMenu(
@@ -1236,15 +1300,11 @@ fun Queue(
                                                                 onDismiss = menuState::dismiss,
                                                             )
                                                         }
-                                                    }
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.more_vert),
-                                                        contentDescription = null,
-                                                    )
-                                                }
+                                                    },
+                                                    endPadding = if (hasDragHandle) 0.dp else 6.dp,
+                                                )
                                             }
-                                            if (!locked && !isListenTogetherGuest && !inSelectMode) {
+                                            if (hasDragHandle) {
                                                 IconButton(
                                                     onClick = { },
                                                     modifier = Modifier.draggableHandle()
@@ -1256,59 +1316,7 @@ fun Queue(
                                                 }
                                             }
                                         },
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(background)
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        if (inSelectMode) {
-                                                            onCheckedChange(window.mediaItem.mediaId !in selection)
-                                                        } else if (!isListenTogetherGuest) {
-                                                            if (index == currentWindowIndex) {
-                                                                if (isCasting) {
-                                                                    if (castIsPlaying) {
-                                                                        castHandler?.pause()
-                                                                    } else {
-                                                                        castHandler?.play()
-                                                                    }
-                                                                } else {
-                                                                    playerConnection.togglePlayPause()
-                                                                }
-                                                            } else {
-                                                                if (isCasting) {
-                                                                    val mediaId =
-                                                                        window.mediaItem.mediaId
-                                                                    val navigated =
-                                                                        castHandler?.navigateToMediaIfInQueue(
-                                                                            mediaId
-                                                                        ) ?: false
-                                                                    if (!navigated) {
-                                                                        playerConnection.player.seekToDefaultPosition(
-                                                                            window.firstPeriodIndex
-                                                                        )
-                                                                    }
-                                                                } else {
-                                                                    playerConnection.player.seekToDefaultPosition(
-                                                                        window.firstPeriodIndex,
-                                                                    )
-                                                                    playerConnection.player.playWhenReady =
-                                                                        true
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    onLongClick = {
-                                                        if (!inSelectMode) {
-                                                            haptic.performHapticFeedback(
-                                                                HapticFeedbackType.LongPress
-                                                            )
-                                                            inSelectMode = true
-                                                            onCheckedChange(true)
-                                                        }
-                                                    },
-                                                ),
+                                        modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
                             }
@@ -1344,7 +1352,24 @@ fun Queue(
                             ) {
                                 MediaMetadataListItem(
                                     mediaMetadata = item.metadata!!,
-                                    shape = RoundedCornerShape(12.dp),
+                                    onClick = {},
+                                    onLongClick = {
+                                        menuState.show {
+                                            QueueMenu(
+                                                mediaMetadata = item.metadata!!,
+                                                navController = navController,
+                                                playerBottomSheetState = playerBottomSheetState,
+                                                onShowDetailsDialog = {
+                                                    item.mediaId.let {
+                                                        bottomSheetPageState.show {
+                                                            ShowMediaInfo(it)
+                                                        }
+                                                    }
+                                                },
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    },
                                     trailingContent = {
                                         if (!isListenTogetherGuest) {
                                             IconButton(
@@ -1375,31 +1400,9 @@ fun Queue(
                                             }
                                         }
                                     },
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .combinedClickable(
-                                                onClick = {},
-                                                onLongClick = {
-                                                    menuState.show {
-                                                        QueueMenu(
-                                                            mediaMetadata = item.metadata!!,
-                                                            navController = navController,
-                                                            playerBottomSheetState = playerBottomSheetState,
-                                                            onShowDetailsDialog = {
-                                                                item.mediaId.let {
-                                                                    bottomSheetPageState.show {
-                                                                        ShowMediaInfo(it)
-                                                                    }
-                                                                }
-                                                            },
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    }
-                                                },
-                                            )
-                                            .animateItem(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .animateItem(),
                                 )
                             }
                         }

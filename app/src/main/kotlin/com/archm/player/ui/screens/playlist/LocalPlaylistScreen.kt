@@ -1243,17 +1243,50 @@ fun LocalPlaylistScreen(
                                 LocalAccentColor provides screenAccentColor,
                                 LocalIndication provides ripple(color = screenAccentColor),
                             ) {
-                                val itemInteractionSource = remember { MutableInteractionSource() }
                                 SongListItem(
                                     song = song.song,
-                                    interactionSource = itemInteractionSource,
                                     isActive = song.song.id == mediaMetadata?.id,
                                     isPlaying = isPlaying,
                                     inSelectionMode = inSelectMode,
                                     isSelected = inSelectMode && selection.contains(song.map.id),
                                     showInLibraryIcon = true,
                                     accentColor = screenAccentColor,
-                                    shape = RoundedCornerShape(12.dp),
+                                    onClick = {
+                                        if (inSelectMode) {
+                                            onCheckedChange(!selection.contains(song.map.id))
+                                        } else if (song.song.id == mediaMetadata?.id) {
+                                            playerConnection.togglePlayPause()
+                                        } else {
+                                            playerConnection.playQueue(
+                                                ListQueue(
+                                                    title = pl.playlist.name,
+                                                    items = songs.map { it.song.toMediaItem() },
+                                                    startIndex = songs.indexOfFirst { it.map.id == song.map.id },
+                                                ),
+                                            )
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!inSelectMode) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            menuState.show {
+                                                SongMenu(
+                                                    originalSong = song.song,
+                                                    playlistSong = song,
+                                                    playlistBrowseId = pl.playlist.browseId,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onThumbnailLongClick = {
+                                        if (!inSelectMode) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            inSelectMode = true
+                                            onCheckedChange(true)
+                                        }
+                                    },
                                     trailingContent = {
                                         val hasDragHandle = sortType == PlaylistSongSortType.CUSTOM && !locked && !inSelectMode && !isSearching && editable
                                         RowMoreMenuButton(
@@ -1268,7 +1301,7 @@ fun LocalPlaylistScreen(
                                                     )
                                                 }
                                             },
-                                            endPadding = if (hasDragHandle) 0.dp else 16.dp,
+                                            endPadding = if (hasDragHandle) 0.dp else 6.dp,
                                         )
 
                                         if (hasDragHandle) {
@@ -1283,35 +1316,7 @@ fun LocalPlaylistScreen(
                                             }
                                         }
                                     },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .combinedClickable(
-                                            interactionSource = itemInteractionSource,
-                                            indication = null,
-                                            onClick = {
-                                                if (inSelectMode) {
-                                                    onCheckedChange(!selection.contains(song.map.id))
-                                                } else if (song.song.id == mediaMetadata?.id) {
-                                                    playerConnection.togglePlayPause()
-                                                } else {
-                                                    playerConnection.playQueue(
-                                                        ListQueue(
-                                                            title = pl.playlist.name,
-                                                            items = songs.map { it.song.toMediaItem() },
-                                                            startIndex = songs.indexOfFirst { it.map.id == song.map.id },
-                                                        ),
-                                                    )
-                                                }
-                                            },
-                                            onLongClick = {
-                                                if (!inSelectMode) {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    inSelectMode = true
-                                                    onCheckedChange(true)
-                                                }
-                                            },
-                                        ),
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                             }
                         }

@@ -710,16 +710,47 @@ fun AutoPlaylistScreen(
                             }
                         }
 
-                        val itemInteractionSource = remember { MutableInteractionSource() }
                         SongListItem(
                             song = song,
-                            interactionSource = itemInteractionSource,
                             isActive = song.song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
                             inSelectionMode = inSelectMode,
                             isSelected = inSelectMode && song.id in selection,
                             showInLibraryIcon = true,
-                            shape = RoundedCornerShape(12.dp),
+                            onClick = {
+                                if (inSelectMode) {
+                                    onCheckedChange(song.id !in selection)
+                                } else if (song.song.id == mediaMetadata?.id) {
+                                    playerConnection?.togglePlayPause()
+                                } else {
+                                    playerConnection?.playQueue(
+                                        ListQueue(
+                                            title = playlist,
+                                            items = songList.map { it.toMediaItem() },
+                                            startIndex = songList.indexOfFirst { it.id == song.id }
+                                        ),
+                                    )
+                                }
+                            },
+                            onLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                }
+                            },
+                            onThumbnailLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    inSelectMode = true
+                                    onCheckedChange(true)
+                                }
+                            },
                             trailingContent = {
                                 RowMoreMenuButton(
                                     onClick = {
@@ -735,34 +766,7 @@ fun AutoPlaylistScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .combinedClickable(
-                                    interactionSource = itemInteractionSource,
-                                    indication = null,
-                                    onClick = {
-                                        if (inSelectMode) {
-                                            onCheckedChange(song.id !in selection)
-                                        } else if (song.song.id == mediaMetadata?.id) {
-                                            playerConnection?.togglePlayPause()
-                                        } else {
-                                            playerConnection?.playQueue(
-                                                ListQueue(
-                                                    title = playlist,
-                                                    items = songList.map { it.toMediaItem() },
-                                                    startIndex = songList.indexOfFirst { it.id == song.id }
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        if (!inSelectMode) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            inSelectMode = true
-                                            onCheckedChange(true)
-                                        }
-                                    },
-                                )
-                                .animateItem()
+                                .animateItem(),
                         )
                     }
                 }

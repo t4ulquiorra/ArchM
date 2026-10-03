@@ -296,40 +296,6 @@ inline fun ListItem(
             .then(modifier)
             .height(ListItemHeight)
     ) {
-        AnimatedVisibility(
-            visible = inSelectionMode,
-            enter = fadeIn() + expandHorizontally(),
-            exit = fadeOut() + shrinkHorizontally(),
-        ) {
-            Box(
-                modifier = Modifier.padding(start = 10.dp, end = 2.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (isSelected == true) {
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .background(accentColor, CircleShape)
-                            .border(1.5.dp, accentColor, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = Color.Black,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape),
-                    )
-                }
-            }
-        }
-
         Box(
             modifier = Modifier.padding(start = 4.dp, top = 6.dp, end = 6.dp, bottom = 6.dp),
             contentAlignment = Alignment.Center
@@ -659,6 +625,112 @@ fun GridItem(
     onLongClick = onLongClick,
 )
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun UnifiedSongRow(
+    title: String,
+    subtitle: @Composable () -> Unit,
+    thumbnailContent: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+    isSelected: Boolean = false,
+    inSelectionMode: Boolean = isSelected,
+    isActive: Boolean = false,
+    showActiveContainer: Boolean = true,
+    drawHighlight: Boolean = true,
+    accentColor: Color = LocalAccentColor.current,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    onThumbnailLongClick: (() -> Unit)? = null,
+    thumbInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    rowInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
+    val showHighlight = (isSelected && drawHighlight) || (isActive && showActiveContainer)
+    val highlightColor by animateColorAsState(
+        targetValue = if (showHighlight) accentColor.copy(alpha = 0.12f) else Color.Transparent,
+        animationSpec = tween(150),
+        label = "unified_song_row_highlight",
+    )
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        if (showHighlight) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(highlightColor),
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (onClick != null || onLongClick != null) {
+                        Modifier.combinedClickable(
+                            interactionSource = rowInteractionSource,
+                            indication = null,
+                            onClick = { onClick?.invoke() },
+                            onLongClick = if (inSelectionMode) null else onLongClick,
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
+                .padding(start = 16.dp, end = 0.dp, top = 8.dp, bottom = 8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .then(
+                        if (onClick != null || onThumbnailLongClick != null || onLongClick != null) {
+                            Modifier.combinedClickable(
+                                interactionSource = thumbInteractionSource,
+                                indication = null,
+                                onClick = { onClick?.invoke() },
+                                onLongClick = if (inSelectionMode) null else (onThumbnailLongClick ?: onLongClick),
+                            )
+                        } else {
+                            Modifier
+                        }
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                thumbnailContent()
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (isActive) accentColor else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                    subtitle()
+                }
+            }
+
+            Spacer(Modifier.width(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                trailingContent()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SongListItem(
     song: Song,
@@ -696,14 +768,19 @@ fun SongListItem(
     color: Color = containerColor,
     horizontalPadding: Dp = 16.dp,
     accentColor: Color = LocalAccentColor.current,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    onThumbnailLongClick: (() -> Unit)? = null,
 ) {
-    val menuState = LocalMenuState.current
     val savedInSheetState = LocalSavedInSheetState.current
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
-    val resolvedColor = if (color != Color.Transparent) color else containerColor
 
-    val songInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
-    val isPressed by songInteractionSource.collectIsPressedAsState()
+    val rowInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    val thumbInteractionSource = remember { MutableInteractionSource() }
+    val isThumbPressed by thumbInteractionSource.collectIsPressedAsState()
+    val isRowPressed by rowInteractionSource.collectIsPressedAsState()
+    val isPressed = isThumbPressed || isRowPressed
+
     var isHeld by remember { mutableStateOf(false) }
     LaunchedEffect(isPressed) {
         if (isPressed) {
@@ -739,22 +816,40 @@ fun SongListItem(
         trailingContent()
     }
 
+    val subtitleText = joinByBullet(
+        song.artists.joinToString { it.name },
+        if (showDuration) makeTimeString(song.song.duration * 1000L) else null,
+        if (showSize && song.format?.contentLength != null) {
+            android.text.format.Formatter.formatFileSize(LocalContext.current, song.format!!.contentLength)
+        } else null
+    )
+
     val content: @Composable () -> Unit = {
-        ListItem(
+        UnifiedSongRow(
             title = song.song.title,
-            subtitle = joinByBullet(
-                song.artists.joinToString { it.name },
-                if (showDuration) makeTimeString(song.song.duration * 1000L) else null,
-                if (showSize && song.format?.contentLength != null) {
-                    android.text.format.Formatter.formatFileSize(LocalContext.current, song.format!!.contentLength)
-                } else null
-            ),
-            badges = badges,
+            subtitle = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    badges()
+                    if (!subtitleText.isNullOrEmpty()) {
+                        Text(
+                            text = subtitleText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            },
             thumbnailContent = {
                 ItemThumbnail(
                     thumbnailUrl = song.thumbnailUrl,
                     albumIndex = albumIndex,
                     isSelected = isSelected,
+                    inSelectionMode = inSelectionMode,
                     isActive = isActive,
                     isPlaying = isPlaying,
                     shape = RoundedCornerShape(ThumbnailCornerRadius),
@@ -768,16 +863,17 @@ fun SongListItem(
             isSelected = isSelected,
             inSelectionMode = inSelectionMode,
             isActive = isActive,
-            shape = shape,
-            containerColor = resolvedColor,
-            color = resolvedColor,
             drawHighlight = drawHighlight,
-            horizontalPadding = horizontalPadding,
             accentColor = accentColor,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            onThumbnailLongClick = onThumbnailLongClick,
+            rowInteractionSource = rowInteractionSource,
+            thumbInteractionSource = thumbInteractionSource,
         )
     }
 
-    if (isSwipeable && swipeEnabled) {
+    if (isSwipeable && swipeEnabled && !inSelectionMode) {
         SwipeToSongBox(
             mediaItem = song.toMediaItem(),
             modifier = Modifier.fillMaxWidth()
@@ -1311,6 +1407,7 @@ fun PlaylistGridItem(
     modifier = modifier
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MediaMetadataListItem(
     mediaMetadata: MediaMetadata,
@@ -1324,15 +1421,43 @@ fun MediaMetadataListItem(
     color: Color = containerColor,
     accentColor: Color = LocalAccentColor.current,
     trailingContent: @Composable RowScope.() -> Unit = {},
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    onThumbnailLongClick: (() -> Unit)? = null,
 ) {
-    val resolvedColor = if (color != Color.Transparent) color else containerColor
     val database = LocalDatabase.current
-    val menuState = LocalMenuState.current
     val savedInSheetState = LocalSavedInSheetState.current
     val dbSong by produceState<Song?>(initialValue = null, mediaMetadata.id) {
         database.song(mediaMetadata.id).collect { value = it }
     }
     val isLiked = dbSong?.song?.liked == true
+
+    val rowInteractionSource = remember { MutableInteractionSource() }
+    val thumbInteractionSource = remember { MutableInteractionSource() }
+    val isThumbPressed by thumbInteractionSource.collectIsPressedAsState()
+    val isRowPressed by rowInteractionSource.collectIsPressedAsState()
+    val isPressed = isThumbPressed || isRowPressed
+
+    var isHeld by remember { mutableStateOf(false) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            delay(400)
+            isHeld = true
+        } else {
+            isHeld = false
+        }
+    }
+    val isActivelyPlaying = isActive && isPlaying
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            isActivelyPlaying -> 0.5f
+            isHeld -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "meta_thumb_alpha",
+    )
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (isLiked) {
@@ -1348,39 +1473,48 @@ fun MediaMetadataListItem(
         trailingContent()
     }
 
-    ListItem(
+    val subtitleText = if (mediaMetadata.suggestedBy != null) {
+        joinByBullet(
+            mediaMetadata.artists.joinToString { it.name },
+            makeTimeString(mediaMetadata.duration * 1000L),
+            mediaMetadata.suggestedBy,
+        )
+    } else {
+        joinByBullet(
+            mediaMetadata.artists.joinToString { it.name },
+            makeTimeString(mediaMetadata.duration * 1000L),
+        )
+    }
+
+    UnifiedSongRow(
         title = mediaMetadata.title,
-        subtitle = if (mediaMetadata.suggestedBy != null) {
-            buildAnnotatedString {
-                append(mediaMetadata.artists.joinToString { it.name })
-                append(" • ")
-                append(makeTimeString(mediaMetadata.duration * 1000L))
-                append(" • ")
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(mediaMetadata.suggestedBy)
-                }
-            }
-        } else {
-            AnnotatedString(
-                joinByBullet(
-                    mediaMetadata.artists.joinToString { it.name },
-                    makeTimeString(mediaMetadata.duration * 1000L)
+        subtitle = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (mediaMetadata.explicit) Icon.Explicit()
+                Text(
+                    text = subtitleText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-            )
-        },
-        badges = {
-            if (mediaMetadata.explicit) Icon.Explicit()
+            }
         },
         thumbnailContent = {
             ItemThumbnail(
                 thumbnailUrl = mediaMetadata.thumbnailUrl,
                 albumIndex = null,
                 isSelected = isSelected,
+                inSelectionMode = inSelectionMode,
                 isActive = isActive,
                 isPlaying = isPlaying,
                 shape = RoundedCornerShape(ThumbnailCornerRadius),
                 modifier = Modifier.size(ListThumbnailSize),
                 accentColor = accentColor,
+                thumbAlpha = thumbAlpha,
             )
         },
         trailingContent = resolvedTrailingContent,
@@ -1388,10 +1522,12 @@ fun MediaMetadataListItem(
         isSelected = isSelected,
         inSelectionMode = inSelectionMode,
         isActive = isActive,
-        shape = shape,
-        containerColor = resolvedColor,
-        color = resolvedColor,
         accentColor = accentColor,
+        onClick = onClick,
+        onLongClick = onLongClick,
+        onThumbnailLongClick = onThumbnailLongClick,
+        rowInteractionSource = rowInteractionSource,
+        thumbInteractionSource = thumbInteractionSource,
     )
 }
 
@@ -1444,7 +1580,7 @@ fun formatReleaseSubtitle(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun YouTubeListItem(
     item: YTItem,
@@ -1484,21 +1620,27 @@ fun YouTubeListItem(
     drawHighlight: Boolean = true,
     horizontalPadding: Dp = 16.dp,
     accentColor: Color = LocalAccentColor.current,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    onThumbnailLongClick: (() -> Unit)? = null,
 ) {
     val database = LocalDatabase.current
-    val menuState = LocalMenuState.current
     val savedInSheetState = LocalSavedInSheetState.current
+    val isSong = item is SongItem
     val dbSong by produceState<Song?>(initialValue = null, item.id) {
-        if (item is SongItem) {
+        if (isSong) {
             database.song(item.id).collect { value = it }
         }
     }
-    val isLiked = item is SongItem && dbSong?.song?.liked == true
+    val isLiked = isSong && dbSong?.song?.liked == true
     val isVideoItem = isVideo || (item as? SongItem)?.isVideoSong == true
 
-    val isSong = item is SongItem
-    val songInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
-    val isPressed by songInteractionSource.collectIsPressedAsState()
+    val rowInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    val thumbInteractionSource = remember { MutableInteractionSource() }
+    val isThumbPressed by thumbInteractionSource.collectIsPressedAsState()
+    val isRowPressed by rowInteractionSource.collectIsPressedAsState()
+    val isPressed = isThumbPressed || isRowPressed
+
     var isHeld by remember { mutableStateOf(false) }
     LaunchedEffect(isPressed) {
         if (isSong && isPressed) {
@@ -1538,32 +1680,98 @@ fun YouTubeListItem(
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
     val resolvedColor = if (color != Color.Transparent) color else containerColor
 
-    val content: @Composable () -> Unit = {
-        val isArtist = item is ArtistItem
+    if (item is SongItem) {
+        val validArtists = item.artists.filter { !it.name.contains(":") && it.name.parseTime() == null }.map { it.name }
+        val artistsText = validArtists.joinToString(", ").takeIf { it.isNotBlank() }
+        val durationText = if (showDuration) {
+            (item.durationText ?: item.formattedDuration())
+                ?.takeIf { it.isNotBlank() }
+                ?: dbSong?.song?.duration?.takeIf { it > 0 }?.let { makeTimeString(it * 1000L) }?.takeIf { it.isNotBlank() }
+        } else null
+        val subtitleText = if (artistsText.isNullOrBlank() || artistsText == durationText) {
+            listOfNotNull(durationText, viewCountText).joinToString(" • ")
+        } else {
+            listOfNotNull(artistsText, durationText, viewCountText).joinToString(" • ")
+        }
+
+        val content: @Composable () -> Unit = {
+            val thumbModifier = if (isVideoItem) {
+                Modifier.height(ListThumbnailSize).aspectRatio(16f / 9f)
+            } else {
+                Modifier.size(ListThumbnailSize)
+            }
+            UnifiedSongRow(
+                title = item.title,
+                subtitle = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        badges()
+                        if (subtitleText.isNotEmpty()) {
+                            Text(
+                                text = subtitleText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                },
+                thumbnailContent = {
+                    ItemThumbnail(
+                        thumbnailUrl = item.thumbnail,
+                        albumIndex = albumIndex,
+                        isSelected = isSelected,
+                        inSelectionMode = inSelectionMode,
+                        isActive = isActive,
+                        isPlaying = isPlaying,
+                        shape = RoundedCornerShape(ThumbnailCornerRadius),
+                        modifier = thumbModifier,
+                        thumbnailRatio = if (isVideoItem) 16f / 9f else 1f,
+                        accentColor = accentColor,
+                        thumbAlpha = thumbAlpha,
+                    )
+                },
+                trailingContent = resolvedTrailingContent,
+                modifier = modifier,
+                isSelected = isSelected,
+                inSelectionMode = inSelectionMode,
+                isActive = isActive,
+                showActiveContainer = showActiveContainer,
+                drawHighlight = drawHighlight,
+                accentColor = accentColor,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onThumbnailLongClick = onThumbnailLongClick,
+                rowInteractionSource = rowInteractionSource,
+                thumbInteractionSource = thumbInteractionSource,
+            )
+        }
+
+        if (isSwipeable && swipeEnabled && !inSelectionMode) {
+            SwipeToSongBox(
+                mediaItem = item.copy(thumbnail = item.thumbnail.resize(544, 544)).toMediaItem(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                content()
+            }
+        } else {
+            content()
+        }
+    } else {
         ListItem(
             title = item.title,
             subtitle = when (item) {
-                is SongItem -> {
-                    val validArtists = item.artists.filter { !it.name.contains(":") && it.name.parseTime() == null }.map { it.name }
-                    val artistsText = validArtists.joinToString(", ").takeIf { it.isNotBlank() }
-                    val durationText = if (showDuration) {
-                        (item.durationText ?: item.formattedDuration())
-                            ?.takeIf { it.isNotBlank() }
-                            ?: dbSong?.song?.duration?.takeIf { it > 0 }?.let { makeTimeString(it * 1000L) }?.takeIf { it.isNotBlank() }
-                    } else null
-                    val subtitleText = if (artistsText.isNullOrBlank() || artistsText == durationText) {
-                        listOfNotNull(durationText, viewCountText).joinToString(" • ")
-                    } else {
-                        listOfNotNull(artistsText, durationText, viewCountText).joinToString(" • ")
-                    }
-                    subtitleText.takeIf { it.isNotEmpty() }
-                }
                 is AlbumItem -> joinByBullet(item.artists?.joinToString { it.name }, formatReleaseSubtitle(item))
                 is ArtistItem -> null
                 is PlaylistItem -> joinByBullet(item.author?.name, item.songCountText)
+                else -> null
             },
             badges = badges,
             thumbnailContent = {
+                val isArtist = item is ArtistItem
                 val thumbModifier = if (isVideoItem) {
                     Modifier.height(ListThumbnailSize).aspectRatio(16f / 9f)
                 } else {
@@ -1595,17 +1803,6 @@ fun YouTubeListItem(
             color = resolvedColor,
             accentColor = accentColor,
         )
-    }
-
-    if (item is SongItem && isSwipeable && swipeEnabled) {
-        SwipeToSongBox(
-            mediaItem = item.copy(thumbnail = item.thumbnail.resize(544,544)).toMediaItem(),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            content()
-        }
-    } else {
-        content()
     }
 }
 
@@ -2089,6 +2286,7 @@ fun ItemThumbnail(
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
     isSelected: Boolean = false,
+    inSelectionMode: Boolean = isSelected,
     thumbnailRatio: Float = 1f,
     contentScale: ContentScale? = null,
     accentColor: Color = LocalAccentColor.current,
@@ -2157,6 +2355,43 @@ fun ItemThumbnail(
                     shape = shape
                 )
         )
+
+        AnimatedVisibility(
+            visible = inSelectionMode,
+            enter = fadeIn(tween(150)),
+            exit = fadeOut(tween(150)),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(if (isSelected) Color.Black.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.35f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .background(accentColor, CircleShape)
+                            .border(1.5.dp, accentColor, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(15.dp),
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .border(1.5.dp, Color.White.copy(alpha = 0.85f), CircleShape),
+                    )
+                }
+            }
+        }
     }
 }
 

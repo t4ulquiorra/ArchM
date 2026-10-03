@@ -91,6 +91,7 @@ import com.archm.player.ui.component.ExpressivePullToRefreshBox
 import com.archm.player.ui.component.ItemThumbnail
 import com.archm.player.ui.component.LocalMenuState
 import com.archm.player.ui.component.RowMoreMenuButton
+import com.archm.player.ui.component.SongListItem
 import com.archm.player.ui.menu.SongMenu
 import com.archm.player.ui.screens.library.rememberArtworkGradient
 import com.archm.player.ui.utils.ItemWrapper
@@ -443,171 +444,44 @@ fun LibrarySongsScreen(
                     val song = songWrapper.item
                     val isActive = song.id == mediaMetadata?.id
 
-                    // Issue 7: active song gets fully rounded shape + artwork-based color
-                    // inactive songs use theme color and are more rounded than before
-                    val activeCardColor =
-                        rememberArtworkCardColor(
-                            thumbnailUrl = song.song.thumbnailUrl,
-                            fallbackColor = MaterialTheme.colorScheme.primaryContainer,
-                        )
-                    val inactiveCardColor = MaterialTheme.colorScheme.surfaceContainerLow
-
-                    // Issue 6: divider between cards visible in pure black dark theme
-                    val showDivider = isDarkTheme && pureBlack && index > 0
-                    if (showDivider) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
-                            thickness = 0.5.dp,
-                        )
-                    }
-
-                    // Issue 7: Active corners 36.dp, inactive 24.dp
-                    val cornerRadius = if (isActive) 36.dp else 24.dp
-                    val topPadding = if (index == 0 || showDivider) 0.dp else 8.dp
-
-                    val itemInteractionSource = remember { MutableInteractionSource() }
-                    val isRowPressed by itemInteractionSource.collectIsPressedAsState()
-                    var isRowHeld by remember { mutableStateOf(false) }
-                    LaunchedEffect(isRowPressed) {
-                        if (isRowPressed) {
-                            delay(400)
-                            isRowHeld = true
-                        } else {
-                            isRowHeld = false
-                        }
-                    }
-                    val isActivelyPlaying = isActive && isPlaying
-                    val thumbAlpha by animateFloatAsState(
-                        targetValue = when {
-                            isActivelyPlaying -> 0.5f
-                            isRowHeld -> 0.5f
-                            isRowPressed -> 0.7f
-                            else -> 1.0f
-                        },
-                        label = "librarySongThumbAlpha",
-                    )
-
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = topPadding, bottom = 0.dp)
-                                .clip(RoundedCornerShape(cornerRadius))
-                                .background(
-                                    if (isActive) activeCardColor else inactiveCardColor,
-                                ).combinedClickable(
-                                    interactionSource = itemInteractionSource,
-                                    indication = null,
-                                    onClick = {
-                                        if (song.id == mediaMetadata?.id) {
-                                            playerConnection.player.togglePlayPause()
-                                        } else {
-                                            playerConnection.playQueue(
-                                                ListQueue(
-                                                    title = context.getString(R.string.queue_all_songs),
-                                                    items = filteredSongs.map { it.item.toMediaItem() },
-                                                    startIndex = index,
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        menuState.show {
-                                            SongMenu(
-                                                originalSong = song,
-                                                navController = navController,
-                                                onDismiss = menuState::dismiss,
-                                            )
-                                        }
-                                    },
-                                ).padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 0.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // Thumbnail — fully circular when active
-                        val thumbCorner = if (isActive) 26.dp else 8.dp
-                        ItemThumbnail(
-                            thumbnailUrl = song.song.thumbnailUrl,
-                            isActive = isActive,
-                            isPlaying = isPlaying,
-                            thumbAlpha = thumbAlpha,
-                            shape = RoundedCornerShape(thumbCorner),
-                            modifier =
-                                Modifier
-                                    .size(52.dp),
-                        )
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        // Song Details (Issue 7: onPrimaryContainer on active dynamic background for legibility)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = song.song.title,
-                                style =
-                                    MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 16.sp,
+                    SongListItem(
+                        song = song,
+                        isActive = isActive,
+                        isPlaying = isPlaying,
+                        onClick = {
+                            if (song.id == mediaMetadata?.id) {
+                                playerConnection.player.togglePlayPause()
+                            } else {
+                                playerConnection.playQueue(
+                                    ListQueue(
+                                        title = context.getString(R.string.queue_all_songs),
+                                        items = filteredSongs.map { it.item.toMediaItem() },
+                                        startIndex = index,
                                     ),
-                                color = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = song.artists.joinToString(", ") { it.name },
-                                style = MaterialTheme.typography.bodySmall,
-                                color =
-                                    if (isActive) {
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.60f)
-                                    },
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-
-                        // Play/Wave indicators & duration pill
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            if (isActive && isPlaying) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.graphic_eq),
-                                    contentDescription = stringResource(R.string.playing_desc),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(16.dp),
                                 )
                             }
-
-                            // Issue 1: Real duration pill using makeTimeString
-                            val durationText = makeTimeString(song.song.duration * 1000L)
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (isActive) 0.5f else 0.8f))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                            ) {
-                                Text(
-                                    text = durationText,
-                                    style =
-                                        MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                        ),
-                                    color =
-                                        if (isActive) {
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        },
+                        },
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            menuState.show {
+                                SongMenu(
+                                    originalSong = song,
+                                    navController = navController,
+                                    onDismiss = menuState::dismiss,
                                 )
                             }
-
-                            // More options
+                        },
+                        onThumbnailLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            menuState.show {
+                                SongMenu(
+                                    originalSong = song,
+                                    navController = navController,
+                                    onDismiss = menuState::dismiss,
+                                )
+                            }
+                        },
+                        trailingContent = {
                             RowMoreMenuButton(
                                 onClick = {
                                     menuState.show {
@@ -618,10 +492,12 @@ fun LibrarySongsScreen(
                                         )
                                     }
                                 },
-                                endPadding = 0.dp,
                             )
-                        }
-                    }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
+                    )
                 }
             }
         }
