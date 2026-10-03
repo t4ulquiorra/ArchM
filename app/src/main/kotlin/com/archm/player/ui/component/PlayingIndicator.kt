@@ -82,9 +82,7 @@ fun PlayingIndicator(
 
     val totalWidth = barWidth * bars + barSpacing * (bars - 1)
     Canvas(
-        modifier = modifier
-            .width(totalWidth)
-            .fillMaxHeight(),
+        modifier = modifier.width(totalWidth),
     ) {
         val barWidthPx = barWidth.toPx()
         val spacingPx = barSpacing.toPx()

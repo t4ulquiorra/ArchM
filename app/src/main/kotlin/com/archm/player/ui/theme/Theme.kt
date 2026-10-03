@@ -56,6 +56,37 @@ val CardImagePlaceholderColor = Color(30, 30, 30)
 val DefaultThemeColor = Marble
 val LocalAccentColor = compositionLocalOf { Marble }
 
+fun getReadablePlayingAccent(
+    accent: Color,
+    fallback: Color = Marble,
+    background: Color = BaseDarkBackground,
+): Color {
+    val hsl = FloatArray(3)
+    androidx.core.graphics.ColorUtils.colorToHSL(accent.toArgb(), hsl)
+    val origH = hsl[0]
+    val origS = hsl[1]
+
+    // If the accent has almost no color (low saturation, such as grey, black or white covers), use Marble
+    if (origS < 0.12f) {
+        return fallback
+    }
+
+    // Set saturation to roughly 45 to 75% and lightness to roughly 68 to 78%
+    val targetS = origS.coerceIn(0.45f, 0.75f)
+    var targetL = hsl[2].coerceIn(0.68f, 0.78f)
+
+    var resArgb = androidx.core.graphics.ColorUtils.HSLToColor(floatArrayOf(origH, targetS, targetL))
+    val bgArgb = background.toArgb()
+
+    // Check contrast against screen background; if below 4.5:1, raise lightness until it passes
+    while (androidx.core.graphics.ColorUtils.calculateContrast(resArgb, bgArgb) < 4.5 && targetL < 0.98f) {
+        targetL = (targetL + 0.02f).coerceAtMost(0.98f)
+        resArgb = androidx.core.graphics.ColorUtils.HSLToColor(floatArrayOf(origH, targetS, targetL))
+    }
+
+    return Color(resArgb)
+}
+
 fun getDarkColorScheme(pureBlack: Boolean): ColorScheme {
     val bg = if (pureBlack) Color.Black else BaseDarkBackground
     return materialKolorDynamicColorScheme(

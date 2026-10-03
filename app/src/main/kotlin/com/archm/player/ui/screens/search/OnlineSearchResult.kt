@@ -123,6 +123,7 @@ import com.archm.player.ui.screens.artist.OutlinedFollowPillButton
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.theme.LocalAccentColor
 import com.archm.player.ui.theme.Marble
+import com.archm.player.ui.theme.getReadablePlayingAccent
 import com.archm.player.utils.joinByBullet
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
@@ -832,24 +833,38 @@ private fun SearchSongListItem(
 
         Spacer(Modifier.width(12.dp))
 
+        val titleStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+        val accent = LocalAccentColor.current
+        val playingAccent = remember(accent) {
+            getReadablePlayingAccent(accent = accent, fallback = Marble)
+        }
+        val titleColor = if (isActive) playingAccent else MaterialTheme.colorScheme.onSurface
+        val fontSizeSp = titleStyle.fontSize.value
+        val barsHeight = (fontSizeSp * 0.75f).dp
+        val barWidth = (fontSizeSp * 0.16f).dp
+        val barGap = (fontSizeSp * 0.125f).dp
+        val barToTitleGap = (fontSizeSp * 0.4f).dp
+
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 verticalAlignment = Alignment.Bottom,
             ) {
                 if (isActive) {
                     PlayingIndicator(
-                        color = LocalAccentColor.current,
+                        color = playingAccent,
                         modifier = Modifier
                             .alignByBaseline()
-                            .height(12.dp),
+                            .height(barsHeight),
+                        barWidth = barWidth,
+                        barSpacing = barGap,
                         isPlaying = isPlaying,
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(barToTitleGap))
                 }
                 Text(
                     text = song.title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = titleStyle,
+                    color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -1041,24 +1056,38 @@ private fun SearchCollectionListItem(
 
         Spacer(Modifier.width(12.dp))
 
+        val titleStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+        val accent = LocalAccentColor.current
+        val playingAccent = remember(accent) {
+            getReadablePlayingAccent(accent = accent, fallback = Marble)
+        }
+        val titleColor = if (isActive) playingAccent else MaterialTheme.colorScheme.onSurface
+        val fontSizeSp = titleStyle.fontSize.value
+        val barsHeight = (fontSizeSp * 0.75f).dp
+        val barWidth = (fontSizeSp * 0.16f).dp
+        val barGap = (fontSizeSp * 0.125f).dp
+        val barToTitleGap = (fontSizeSp * 0.4f).dp
+
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 verticalAlignment = Alignment.Bottom,
             ) {
                 if (isActive) {
                     PlayingIndicator(
-                        color = LocalAccentColor.current,
+                        color = playingAccent,
                         modifier = Modifier
                             .alignByBaseline()
-                            .height(12.dp),
+                            .height(barsHeight),
+                        barWidth = barWidth,
+                        barSpacing = barGap,
                         isPlaying = isPlaying,
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(barToTitleGap))
                 }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = titleStyle,
+                    color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier

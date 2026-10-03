@@ -65,6 +65,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import com.archm.player.ui.theme.LocalAccentColor
 import com.archm.player.ui.theme.Marble
+import com.archm.player.ui.theme.getReadablePlayingAccent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -703,6 +704,17 @@ fun UnifiedSongRow(
 
             Spacer(Modifier.width(12.dp))
 
+            val titleStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+            val playingAccent = remember(accentColor) {
+                getReadablePlayingAccent(accent = accentColor, fallback = Marble)
+            }
+            val titleColor = if (isActive && !isSelected) playingAccent else MaterialTheme.colorScheme.onSurface
+            val fontSizeSp = titleStyle.fontSize.value
+            val barsHeight = (fontSizeSp * 0.75f).dp
+            val barWidth = (fontSizeSp * 0.16f).dp
+            val barGap = (fontSizeSp * 0.125f).dp
+            val barToTitleGap = (fontSizeSp * 0.4f).dp
+
             Column(
                 modifier = Modifier.weight(1f),
             ) {
@@ -711,18 +723,20 @@ fun UnifiedSongRow(
                 ) {
                     if (isActive) {
                         PlayingIndicator(
-                            color = accentColor,
+                            color = playingAccent,
                             modifier = Modifier
                                 .alignByBaseline()
-                                .height(12.dp),
+                                .height(barsHeight),
+                            barWidth = barWidth,
+                            barSpacing = barGap,
                             isPlaying = isPlaying,
                         )
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(barToTitleGap))
                     }
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = titleStyle,
+                        color = titleColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
