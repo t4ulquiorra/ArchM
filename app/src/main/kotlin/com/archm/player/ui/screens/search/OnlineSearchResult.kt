@@ -788,7 +788,6 @@ private fun SearchSongListItem(
 
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
-            isActivelyPlaying -> 0.5f
             isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
@@ -829,33 +828,31 @@ private fun SearchSongListItem(
                     .fillMaxSize()
                     .graphicsLayer { alpha = thumbAlpha },
             )
-
-            if (isActivelyPlaying) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.35f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    PlayingIndicator(
-                        color = LocalAccentColor.current,
-                        modifier = Modifier.height(20.dp),
-                        isPlaying = true,
-                    )
-                }
-            }
         }
 
         Spacer(Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = song.title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isActive) {
+                    PlayingIndicator(
+                        color = LocalAccentColor.current,
+                        modifier = Modifier.height(15.dp),
+                        isPlaying = isPlaying,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    text = song.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
             val subtitle = listOfNotNull(
                 song.artists.joinToString { it.name }.takeIf { it.isNotBlank() },
                 song.durationText ?: song.formattedDuration()
@@ -999,7 +996,6 @@ private fun SearchCollectionListItem(
 
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
-            isActivelyPlaying -> 0.5f
             isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
@@ -1037,33 +1033,31 @@ private fun SearchCollectionListItem(
                         .graphicsLayer { alpha = thumbAlpha },
                 )
             }
-
-            if (isActivelyPlaying) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.35f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    PlayingIndicator(
-                        color = LocalAccentColor.current,
-                        modifier = Modifier.height(20.dp),
-                        isPlaying = true,
-                    )
-                }
-            }
         }
 
         Spacer(Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isActive) {
+                    PlayingIndicator(
+                        color = LocalAccentColor.current,
+                        modifier = Modifier.height(15.dp),
+                        isPlaying = isPlaying,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
             if (!subtitle.isNullOrBlank()) {
                 Spacer(Modifier.height(2.dp))
                 Text(

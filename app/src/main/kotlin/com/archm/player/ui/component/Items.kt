@@ -636,6 +636,7 @@ fun UnifiedSongRow(
     isSelected: Boolean = false,
     inSelectionMode: Boolean = isSelected,
     isActive: Boolean = false,
+    isPlaying: Boolean = false,
     showActiveContainer: Boolean = true,
     drawHighlight: Boolean = true,
     accentColor: Color = LocalAccentColor.current,
@@ -705,13 +706,26 @@ fun UnifiedSongRow(
             Column(
                 modifier = Modifier.weight(1f),
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (isActive) {
+                        PlayingIndicator(
+                            color = accentColor,
+                            modifier = Modifier.height(15.dp),
+                            isPlaying = isPlaying,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
                     subtitle()
                 }
@@ -795,7 +809,6 @@ fun SongListItem(
     val isActivelyPlaying = isActive && isPlaying
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
-            isActivelyPlaying -> 0.5f
             isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
@@ -865,6 +878,7 @@ fun SongListItem(
             isSelected = isSelected,
             inSelectionMode = inSelectionMode,
             isActive = isActive,
+            isPlaying = isPlaying,
             drawHighlight = drawHighlight,
             accentColor = accentColor,
             onClick = onClick,
@@ -1452,7 +1466,6 @@ fun MediaMetadataListItem(
     val isActivelyPlaying = isActive && isPlaying
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
-            isActivelyPlaying -> 0.5f
             isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
@@ -1524,6 +1537,7 @@ fun MediaMetadataListItem(
         isSelected = isSelected,
         inSelectionMode = inSelectionMode,
         isActive = isActive,
+        isPlaying = isPlaying,
         accentColor = accentColor,
         onClick = onClick,
         onLongClick = onLongClick,
@@ -1656,7 +1670,6 @@ fun YouTubeListItem(
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
             !isSong -> 1.0f
-            isActivelyPlaying -> 0.5f
             isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
@@ -1741,6 +1754,7 @@ fun YouTubeListItem(
                 isSelected = isSelected,
                 inSelectionMode = inSelectionMode,
                 isActive = isActive,
+                isPlaying = isPlaying,
                 showActiveContainer = showActiveContainer,
                 drawHighlight = drawHighlight,
                 accentColor = accentColor,
@@ -2342,21 +2356,6 @@ fun ItemThumbnail(
                 )
             }
         }
-
-        PlayingIndicatorBox(
-            isActive = isActive,
-            playWhenReady = isPlaying,
-            color = accentColor,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = if (albumIndex != null)
-                        Color.Transparent
-                    else
-                        Color.Black.copy(alpha = ActiveBoxAlpha),
-                    shape = shape
-                )
-        )
 
         AnimatedVisibility(
             visible = inSelectionMode,
