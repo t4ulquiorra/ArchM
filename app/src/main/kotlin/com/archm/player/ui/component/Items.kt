@@ -169,7 +169,7 @@ fun currentGridThumbnailHeight(): Dp {
 fun RowMoreMenuButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    tint: Color = LocalContentColor.current,
     endPadding: Dp = 6.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -645,7 +645,7 @@ fun UnifiedSongRow(
     thumbInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     rowInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val showHighlight = (isSelected && drawHighlight) || (isActive && showActiveContainer)
+    val showHighlight = isSelected && drawHighlight
     val highlightColor by animateColorAsState(
         targetValue = if (showHighlight) accentColor.copy(alpha = 0.12f) else Color.Transparent,
         animationSpec = tween(150),
@@ -659,8 +659,6 @@ fun UnifiedSongRow(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(12.dp))
                     .background(highlightColor),
             )
         }
@@ -710,7 +708,7 @@ fun UnifiedSongRow(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (isActive) accentColor else MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -724,7 +722,11 @@ fun UnifiedSongRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                trailingContent()
+                CompositionLocalProvider(
+                    LocalContentColor provides if (isSelected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    trailingContent()
+                }
             }
         }
     }

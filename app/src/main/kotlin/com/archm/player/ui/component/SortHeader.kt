@@ -3,26 +3,33 @@
 package com.archm.player.ui.component
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,80 +64,58 @@ inline fun <reified T : Enum<T>> SortHeader(
 
     val displayDescending = showDescending == true && sortType != PlaylistSongSortType.CUSTOM
 
-    SplitButtonLayout(
-        leadingButton = {
-            SplitButtonDefaults.LeadingButton(
-                onClick = { menuExpanded = !menuExpanded },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                modifier = Modifier.widthIn(min = 120.dp)
+    Row(
+        modifier = modifier.padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Button(
+            onClick = { menuExpanded = !menuExpanded },
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.height(40.dp).widthIn(min = 120.dp),
+        ) {
+            Text(
+                text = stringResource(sortTypeText(sortType)),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+
+        if (displayDescending) {
+            val description = "Toggle sort order"
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                tooltip = { PlainTooltip { Text(description) } },
+                state = rememberTooltipState(),
             ) {
-                Text(
-                    text = stringResource(sortTypeText(sortType)),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        },
-        trailingButton = {
-            if (displayDescending) {
-                val description = "Toggle sort order"
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                    tooltip = { PlainTooltip { Text(description) } },
-                    state = rememberTooltipState(),
-                ) {
-                    SplitButtonDefaults.TrailingButton(
-                        checked = sortDescending,
-                        onCheckedChange = { onSortDescendingChange(it) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.semantics {
+                FilledTonalIconButton(
+                    onClick = { onSortDescendingChange(!sortDescending) },
+                    shape = CircleShape,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .semantics {
                             stateDescription = if (sortDescending) "Descending" else "Ascending"
                             contentDescription = description
                         },
-                    ) {
-                        val rotation: Float by animateFloatAsState(
-                            targetValue = if (sortDescending) 180f else 0f,
-                            label = "Trailing Icon Rotation",
-                        )
-                        Icon(
-                            imageVector = Icons.Filled.KeyboardArrowDown,
-                            modifier = Modifier
-                                .size(SplitButtonDefaults.TrailingIconSize)
-                                .graphicsLayer {
-                                    this.rotationZ = rotation
-                                },
-                            contentDescription = null,
-                        )
-                    }
-                }
-            } else {
-                SplitButtonDefaults.TrailingButton(
-                    checked = menuExpanded,
-                    onCheckedChange = { menuExpanded = it },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    modifier = Modifier.semantics {
-                        stateDescription = if (menuExpanded) "Expanded" else "Collapsed"
-                        contentDescription = "Show sort options"
-                    },
                 ) {
                     val rotation: Float by animateFloatAsState(
-                        targetValue = if (menuExpanded) 180f else 0f,
+                        targetValue = if (sortDescending) 180f else 0f,
                         label = "Trailing Icon Rotation",
                     )
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowDown,
                         modifier = Modifier
-                            .size(SplitButtonDefaults.TrailingIconSize)
+                            .size(20.dp)
                             .graphicsLayer {
                                 this.rotationZ = rotation
                             },
@@ -138,9 +123,37 @@ inline fun <reified T : Enum<T>> SortHeader(
                     )
                 }
             }
-        },
-        modifier = modifier.padding(vertical = 8.dp)
-    )
+        } else {
+            FilledTonalIconButton(
+                onClick = { menuExpanded = !menuExpanded },
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+                modifier = Modifier
+                    .size(40.dp)
+                    .semantics {
+                        stateDescription = if (menuExpanded) "Expanded" else "Collapsed"
+                        contentDescription = "Show sort options"
+                    },
+            ) {
+                val rotation: Float by animateFloatAsState(
+                    targetValue = if (menuExpanded) 180f else 0f,
+                    label = "Trailing Icon Rotation",
+                )
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .graphicsLayer {
+                            this.rotationZ = rotation
+                        },
+                    contentDescription = null,
+                )
+            }
+        }
+    }
 
     DropdownMenu(
         expanded = menuExpanded,

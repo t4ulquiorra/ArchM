@@ -852,7 +852,7 @@ private fun SearchSongListItem(
             Text(
                 text = song.title,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = if (isActive) LocalAccentColor.current else MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1060,7 +1060,7 @@ private fun SearchCollectionListItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = if (isActive) LocalAccentColor.current else MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

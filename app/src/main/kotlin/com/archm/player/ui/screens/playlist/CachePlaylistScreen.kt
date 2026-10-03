@@ -7,11 +7,17 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.CompositionLocalProvider
+import com.archm.player.ui.screens.library.rememberArtworkGradient
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -289,6 +295,13 @@ fun CachePlaylistScreen(
 
     val titleText = stringResource(R.string.cached_playlist)
     val backdropThumbnail = sortedSongs.firstOrNull()?.thumbnailUrl
+    val artworkGradientColors = rememberArtworkGradient(
+        thumbnailUrl = backdropThumbnail,
+        fallbackColor = Marble,
+    )
+    val screenAccentColor = remember(artworkGradientColors) {
+        artworkGradientColors.firstOrNull()?.takeIf { it != Color.Transparent && it != Color.Black } ?: Marble
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -598,64 +611,70 @@ fun CachePlaylistScreen(
                         }
                     }
 
-                    SongListItem(
-                        song = song,
-                        isActive = song.id == mediaMetadata?.id,
-                        isPlaying = isPlaying,
-                        inSelectionMode = inSelectMode,
-                        isSelected = inSelectMode && song.id in selection,
-                        showInLibraryIcon = true,
-                        onClick = {
-                            if (inSelectMode) {
-                                onCheckedChange(song.id !in selection)
-                            } else if (song.id == mediaMetadata?.id) {
-                                playerConnection.togglePlayPause()
-                            } else {
-                                playerConnection.playQueue(
-                                    ListQueue(
-                                        title = titleText,
-                                        items = cachedSongs.map { it.toMediaItem() },
-                                        startIndex = cachedSongs.indexOfFirst { it.id == song.id }
-                                    )
-                                )
-                            }
-                        },
-                        onLongClick = {
-                            if (!inSelectMode) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                menuState.show {
-                                    SongMenu(
-                                        originalSong = song,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                        isFromCache = true,
+                    CompositionLocalProvider(
+                        LocalAccentColor provides screenAccentColor,
+                        LocalIndication provides ripple(color = screenAccentColor),
+                    ) {
+                        SongListItem(
+                            song = song,
+                            isActive = song.id == mediaMetadata?.id,
+                            isPlaying = isPlaying,
+                            inSelectionMode = inSelectMode,
+                            isSelected = inSelectMode && song.id in selection,
+                            showInLibraryIcon = true,
+                            accentColor = screenAccentColor,
+                            onClick = {
+                                if (inSelectMode) {
+                                    onCheckedChange(song.id !in selection)
+                                } else if (song.id == mediaMetadata?.id) {
+                                    playerConnection.togglePlayPause()
+                                } else {
+                                    playerConnection.playQueue(
+                                        ListQueue(
+                                            title = titleText,
+                                            items = cachedSongs.map { it.toMediaItem() },
+                                            startIndex = cachedSongs.indexOfFirst { it.id == song.id }
+                                        )
                                     )
                                 }
-                            }
-                        },
-                        onThumbnailLongClick = {
-                            if (!inSelectMode) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                inSelectMode = true
-                                onCheckedChange(true)
-                            }
-                        },
-                        trailingContent = {
-                            RowMoreMenuButton(onClick = {
-                                menuState.show {
-                                    SongMenu(
-                                        originalSong = song,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                        isFromCache = true,
-                                    )
+                            },
+                            onLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                            isFromCache = true,
+                                        )
+                                    }
                                 }
-                            })
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
-                    )
+                            },
+                            onThumbnailLongClick = {
+                                if (!inSelectMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    inSelectMode = true
+                                    onCheckedChange(true)
+                                }
+                            },
+                            trailingContent = {
+                                RowMoreMenuButton(onClick = {
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                            isFromCache = true,
+                                        )
+                                    }
+                                })
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
                 }
             }
         }

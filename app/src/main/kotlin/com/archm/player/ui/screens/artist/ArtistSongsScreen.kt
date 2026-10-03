@@ -3,10 +3,17 @@
 package com.archm.player.ui.screens.artist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.archm.player.ui.screens.library.rememberArtworkGradient
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -86,6 +93,14 @@ fun ArtistSongsScreen(
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
     val artist by viewModel.artist.collectAsState()
     val songs by viewModel.songs.collectAsState()
+    val backdropThumbnail = artist?.artist?.thumbnailUrl ?: songs.firstOrNull()?.thumbnailUrl
+    val artworkGradientColors = rememberArtworkGradient(
+        thumbnailUrl = backdropThumbnail,
+        fallbackColor = Marble,
+    )
+    val screenAccentColor = remember(artworkGradientColors) {
+        artworkGradientColors.firstOrNull()?.takeIf { it != Color.Transparent && it != Color.Black } ?: Marble
+    }
     val lazyListState = rememberLazyListState()
 
     Box(
@@ -132,59 +147,63 @@ fun ArtistSongsScreen(
                 key = { _, item -> item.id },
             ) { index, song ->
                 val itemInteractionSource = remember { MutableInteractionSource() }
-                SongListItem(
-                    song = song,
-                    interactionSource = itemInteractionSource,
-                    showInLibraryIcon = true,
-                    isActive = song.id == mediaMetadata?.id,
-                    isPlaying = isPlaying,
-                    shape = RoundedCornerShape(12.dp),
-                    trailingContent = {
-                        RowMoreMenuButton(
-                            onClick = {
-                                menuState.show {
-                                    SongMenu(
-                                        originalSong = song,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            },
-                        )
-                    },
-                    modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .combinedClickable(
-                            interactionSource = itemInteractionSource,
-                            indication = null,
-                            onClick = {
-                                if (song.id == mediaMetadata?.id) {
-                                    playerConnection.togglePlayPause()
-                                } else {
-                                    playerConnection.playQueue(
-                                        ListQueue(
-                                            title = context.getString(R.string.queue_all_songs),
-                                            items = songs.map { it.toMediaItem() },
-                                            startIndex = index,
-                                        ),
-                                    )
-                                }
-                            },
-                            onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                menuState.show {
-                                    SongMenu(
-                                        originalSong = song,
-                                        navController = navController,
-                                        onDismiss = menuState::dismiss,
-                                    )
-                                }
-                            },
-                        )
-                        .animateItem(),
-                )
+                CompositionLocalProvider(
+                    LocalAccentColor provides screenAccentColor,
+                    LocalIndication provides ripple(color = screenAccentColor),
+                ) {
+                    SongListItem(
+                        song = song,
+                        interactionSource = itemInteractionSource,
+                        showInLibraryIcon = true,
+                        isActive = song.id == mediaMetadata?.id,
+                        isPlaying = isPlaying,
+                        accentColor = screenAccentColor,
+                        trailingContent = {
+                            RowMoreMenuButton(
+                                onClick = {
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                },
+                            )
+                        },
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                interactionSource = itemInteractionSource,
+                                indication = null,
+                                onClick = {
+                                    if (song.id == mediaMetadata?.id) {
+                                        playerConnection.togglePlayPause()
+                                    } else {
+                                        playerConnection.playQueue(
+                                            ListQueue(
+                                                title = context.getString(R.string.queue_all_songs),
+                                                items = songs.map { it.toMediaItem() },
+                                                startIndex = index,
+                                            ),
+                                        )
+                                    }
+                                },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    menuState.show {
+                                        SongMenu(
+                                            originalSong = song,
+                                            navController = navController,
+                                            onDismiss = menuState::dismiss,
+                                        )
+                                    }
+                                },
+                            )
+                            .animateItem(),
+                    )
+                }
             }
         }
 

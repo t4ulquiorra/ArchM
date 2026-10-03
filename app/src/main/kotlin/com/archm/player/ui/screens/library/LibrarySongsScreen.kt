@@ -345,8 +345,7 @@ fun LibrarySongsScreen(
 
             LazyColumn(
                 state = lazyListState,
-                // Issue 2: use player-aware window insets for bottom padding
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = playerAwareBottomPadding),
+                contentPadding = PaddingValues(bottom = playerAwareBottomPadding),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -356,6 +355,7 @@ fun LibrarySongsScreen(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
                                 .clip(RoundedCornerShape(28.dp))
                                 .background(
                                     Brush.verticalGradient(

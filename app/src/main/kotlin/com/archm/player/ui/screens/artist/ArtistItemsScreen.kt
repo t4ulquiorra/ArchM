@@ -23,9 +23,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.CompositionLocalProvider
+import com.archm.player.ui.screens.library.rememberArtworkGradient
+import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
@@ -359,6 +365,13 @@ fun ArtistItemsScreen(
         val backdropThumbnail = dbPlaylist?.playlist?.thumbnailUrl
             ?: distinctSongs.firstOrNull()?.thumbnail
             ?: itemsPage?.items?.firstOrNull()?.thumbnail
+        val artworkGradientColors = rememberArtworkGradient(
+            thumbnailUrl = backdropThumbnail,
+            fallbackColor = Marble,
+        )
+        val screenAccentColor = remember(artworkGradientColors) {
+            artworkGradientColors.firstOrNull()?.takeIf { it != Color.Transparent && it != Color.Black } ?: Marble
+        }
 
         val isPlaylistPlaying = distinctSongs.any { it.id == mediaMetadata?.id }
 
@@ -776,50 +789,36 @@ fun ArtistItemsScreen(
                             }
                         }
 
-                        YouTubeListItem(
-                            item = songItem,
-                            isActive = mediaMetadata?.id == songItem.id,
-                            isPlaying = isPlaying,
-                            inSelectionMode = inSelectMode,
-                            isSelected = inSelectMode && songItem.id in selection,
-                            onClick = {
-                                if (hideExplicit && songItem.explicit) return@YouTubeListItem
-                                if (inSelectMode) {
-                                    onCheckedChange(songItem.id !in selection)
-                                } else if (songItem.id == mediaMetadata?.id) {
-                                    playerConnection.togglePlayPause()
-                                } else {
-                                    playerConnection.playQueue(
-                                        ListQueue(
-                                            title = displayTitle,
-                                            items = filteredSongs.map { it.toMediaItem() },
-                                            startIndex = index,
-                                        )
-                                    )
-                                }
-                            },
-                            onLongClick = {
-                                if (!inSelectMode) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuState.show {
-                                        YouTubeSongMenu(
-                                            song = songItem,
-                                            navController = navController,
-                                            onDismiss = menuState::dismiss,
+                        CompositionLocalProvider(
+                            LocalAccentColor provides screenAccentColor,
+                            LocalIndication provides ripple(color = screenAccentColor),
+                        ) {
+                            YouTubeListItem(
+                                item = songItem,
+                                isActive = mediaMetadata?.id == songItem.id,
+                                isPlaying = isPlaying,
+                                inSelectionMode = inSelectMode,
+                                isSelected = inSelectMode && songItem.id in selection,
+                                accentColor = screenAccentColor,
+                                onClick = {
+                                    if (hideExplicit && songItem.explicit) return@YouTubeListItem
+                                    if (inSelectMode) {
+                                        onCheckedChange(songItem.id !in selection)
+                                    } else if (songItem.id == mediaMetadata?.id) {
+                                        playerConnection.togglePlayPause()
+                                    } else {
+                                        playerConnection.playQueue(
+                                            ListQueue(
+                                                title = displayTitle,
+                                                items = filteredSongs.map { it.toMediaItem() },
+                                                startIndex = index,
+                                            )
                                         )
                                     }
-                                }
-                            },
-                            onThumbnailLongClick = {
-                                if (!inSelectMode) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    inSelectMode = true
-                                    onCheckedChange(true)
-                                }
-                            },
-                            trailingContent = {
-                                RowMoreMenuButton(
-                                    onClick = {
+                                },
+                                onLongClick = {
+                                    if (!inSelectMode) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         menuState.show {
                                             YouTubeSongMenu(
                                                 song = songItem,
@@ -827,13 +826,33 @@ fun ArtistItemsScreen(
                                                 onDismiss = menuState::dismiss,
                                             )
                                         }
-                                    },
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem(),
-                        )
+                                    }
+                                },
+                                onThumbnailLongClick = {
+                                    if (!inSelectMode) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        inSelectMode = true
+                                        onCheckedChange(true)
+                                    }
+                                },
+                                trailingContent = {
+                                    RowMoreMenuButton(
+                                        onClick = {
+                                            menuState.show {
+                                                YouTubeSongMenu(
+                                                    song = songItem,
+                                                    navController = navController,
+                                                    onDismiss = menuState::dismiss,
+                                                )
+                                            }
+                                        },
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                            )
+                        }
                     }
 
                     if (itemsPage?.continuation != null) {
