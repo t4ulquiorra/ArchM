@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -237,7 +238,7 @@ fun SearchScreen(
                 contentColor = Color.White,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(SearchInputPillHeight)
+                    .heightIn(min = SearchInputPillHeight)
                     .clip(RoundedCornerShape(10.dp))
                     .clickable { onSearchClick() },
             ) {

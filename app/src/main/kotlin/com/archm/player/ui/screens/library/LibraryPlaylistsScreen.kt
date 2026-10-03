@@ -18,6 +18,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import com.archm.player.ui.theme.Marble
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -208,7 +209,7 @@ fun LibraryPlaylistsScreen(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -244,13 +245,22 @@ fun LibraryPlaylistsScreen(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box {
+                    val sortInteractionSource = remember { MutableInteractionSource() }
+                    val isSortPressed by sortInteractionSource.collectIsPressedAsState()
+                    val sortScale by animateFloatAsState(if (isSortPressed) 0.96f else 1f, label = "playlistSortScale")
+                    Box(
+                        modifier = Modifier.graphicsLayer { scaleX = sortScale; scaleY = sortScale }
+                    ) {
                         Row(
                             modifier =
                                 Modifier
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                    .clickable { showSortMenu = true }
+                                    .background(Color(0xFF262626))
+                                    .clickable(
+                                        interactionSource = sortInteractionSource,
+                                        indication = null,
+                                        onClick = { showSortMenu = true }
+                                    )
                                     .padding(horizontal = 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -258,7 +268,7 @@ fun LibraryPlaylistsScreen(
                                 text = currentSortLabel,
                                 modifier = Modifier.weight(1f, fill = false),
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = Color.White,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -266,7 +276,7 @@ fun LibraryPlaylistsScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.expand_more),
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = Color.White.copy(alpha = 0.7f),
                                 modifier = Modifier.size(16.dp),
                             )
                         }
@@ -320,14 +330,20 @@ fun LibraryPlaylistsScreen(
 
                     if (showSortDirection) {
                         Spacer(modifier = Modifier.width(4.dp))
+                        val dirInteractionSource = remember { MutableInteractionSource() }
+                        val isDirPressed by dirInteractionSource.collectIsPressedAsState()
+                        val dirScale by animateFloatAsState(if (isDirPressed) 0.96f else 1f, label = "playlistDirScale")
                         IconButton(
                             onClick = { onSortDescendingChange(!sortDescending) },
+                            interactionSource = dirInteractionSource,
                             colors =
                                 IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    containerColor = Color(0xFF262626),
+                                    contentColor = Color.White.copy(alpha = 0.7f),
                                 ),
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier
+                                .graphicsLayer { scaleX = dirScale; scaleY = dirScale }
+                                .size(40.dp),
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.arrow_downward),
@@ -351,43 +367,61 @@ fun LibraryPlaylistsScreen(
                 // Right: list/grid toggle & add button
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // List/Grid Toggle
+                    val listInteractionSource = remember { MutableInteractionSource() }
+                    val isListPressed by listInteractionSource.collectIsPressedAsState()
+                    val listScale by animateFloatAsState(if (isListPressed) 0.96f else 1f, label = "playlistListScale")
+
+                    val gridInteractionSource = remember { MutableInteractionSource() }
+                    val isGridPressed by gridInteractionSource.collectIsPressedAsState()
+                    val gridScale by animateFloatAsState(if (isGridPressed) 0.96f else 1f, label = "playlistGridScale")
+
                     Row(
                         modifier =
                             Modifier
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .background(Color(0xFF262626))
                                 .padding(horizontal = 4.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier =
                                 Modifier
+                                    .graphicsLayer { scaleX = listScale; scaleY = listScale }
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(if (!isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                    .clickable { isGridView = false },
+                                    .background(if (!isGridView) Marble.copy(alpha = 0.20f) else Color.Transparent)
+                                    .clickable(
+                                        interactionSource = listInteractionSource,
+                                        indication = null,
+                                        onClick = { isGridView = false }
+                                    ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.queue_music),
                                 contentDescription = stringResource(R.string.list_view),
-                                tint = if (!isGridView) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (!isGridView) Color.White else Color.White.copy(alpha = 0.7f),
                                 modifier = Modifier.size(16.dp),
                             )
                         }
                         Box(
                             modifier =
                                 Modifier
+                                    .graphicsLayer { scaleX = gridScale; scaleY = gridScale }
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(if (isGridView) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                    .clickable { isGridView = true },
+                                    .background(if (isGridView) Marble.copy(alpha = 0.20f) else Color.Transparent)
+                                    .clickable(
+                                        interactionSource = gridInteractionSource,
+                                        indication = null,
+                                        onClick = { isGridView = true }
+                                    ),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.album),
                                 contentDescription = stringResource(R.string.grid_view),
-                                tint = if (isGridView) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (isGridView) Color.White else Color.White.copy(alpha = 0.7f),
                                 modifier = Modifier.size(16.dp),
                             )
                         }
@@ -424,7 +458,7 @@ fun LibraryPlaylistsScreen(
             if (isGridView) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = playerAwareBottomPadding),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = playerAwareBottomPadding),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxSize(),
@@ -464,7 +498,7 @@ fun LibraryPlaylistsScreen(
                 val showDragHandles = false
                 LazyColumn(
                     state = lazyListState,
-                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = playerAwareBottomPadding),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = playerAwareBottomPadding),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {

@@ -7,12 +7,16 @@
 
 package com.archm.player.ui.screens.library
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +58,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import com.archm.player.ui.theme.Marble
+import kotlinx.coroutines.delay
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -179,7 +187,7 @@ fun LibrarySongsScreen(
                     Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -232,26 +240,35 @@ fun LibrarySongsScreen(
                         }
                     }
 
-                Box {
+                val sortInteractionSource = remember { MutableInteractionSource() }
+                val isSortPressed by sortInteractionSource.collectIsPressedAsState()
+                val sortScale by animateFloatAsState(if (isSortPressed) 0.96f else 1f, label = "sortScale")
+                Box(
+                    modifier = Modifier.graphicsLayer { scaleX = sortScale; scaleY = sortScale }
+                ) {
                     Row(
                         modifier =
                             Modifier
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .clickable { showSortMenu = true }
+                                .background(Color(0xFF262626))
+                                .clickable(
+                                    interactionSource = sortInteractionSource,
+                                    indication = null,
+                                    onClick = { showSortMenu = true }
+                                )
                                 .padding(horizontal = 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = currentSortLabel,
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White,
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             painter = painterResource(id = R.drawable.expand_more),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(16.dp),
                         )
                     }
@@ -287,12 +304,20 @@ fun LibrarySongsScreen(
 
                 // Sort direction toggle button
                 Spacer(modifier = Modifier.width(4.dp))
+                val dirInteractionSource = remember { MutableInteractionSource() }
+                val isDirPressed by dirInteractionSource.collectIsPressedAsState()
+                val dirScale by animateFloatAsState(if (isDirPressed) 0.96f else 1f, label = "dirScale")
                 Box(
                     modifier =
                         Modifier
+                            .graphicsLayer { scaleX = dirScale; scaleY = dirScale }
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .clickable { onSortDescendingChange(!sortDescending) }
+                            .background(Color(0xFF262626))
+                            .clickable(
+                                interactionSource = dirInteractionSource,
+                                indication = null,
+                                onClick = { onSortDescendingChange(!sortDescending) }
+                            )
                             .padding(horizontal = 10.dp, vertical = 8.dp),
                 ) {
                     Icon(
@@ -308,7 +333,7 @@ fun LibrarySongsScreen(
                             } else {
                                 stringResource(R.string.sort_ascending)
                             },
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = Color.White.copy(alpha = 0.7f),
                         modifier = Modifier.size(16.dp),
                     )
                 }
@@ -319,7 +344,7 @@ fun LibrarySongsScreen(
             LazyColumn(
                 state = lazyListState,
                 // Issue 2: use player-aware window insets for bottom padding
-                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = playerAwareBottomPadding),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = playerAwareBottomPadding),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -440,6 +465,28 @@ fun LibrarySongsScreen(
                     val cornerRadius = if (isActive) 36.dp else 24.dp
                     val topPadding = if (index == 0 || showDivider) 0.dp else 8.dp
 
+                    val itemInteractionSource = remember { MutableInteractionSource() }
+                    val isRowPressed by itemInteractionSource.collectIsPressedAsState()
+                    var isRowHeld by remember { mutableStateOf(false) }
+                    LaunchedEffect(isRowPressed) {
+                        if (isRowPressed) {
+                            delay(400)
+                            isRowHeld = true
+                        } else {
+                            isRowHeld = false
+                        }
+                    }
+                    val isActivelyPlaying = isActive && isPlaying
+                    val thumbAlpha by animateFloatAsState(
+                        targetValue = when {
+                            isActivelyPlaying -> 0.5f
+                            isRowHeld -> 0.5f
+                            isRowPressed -> 0.7f
+                            else -> 1.0f
+                        },
+                        label = "librarySongThumbAlpha",
+                    )
+
                     Row(
                         modifier =
                             Modifier
@@ -449,6 +496,8 @@ fun LibrarySongsScreen(
                                 .background(
                                     if (isActive) activeCardColor else inactiveCardColor,
                                 ).combinedClickable(
+                                    interactionSource = itemInteractionSource,
+                                    indication = null,
                                     onClick = {
                                         if (song.id == mediaMetadata?.id) {
                                             playerConnection.player.togglePlayPause()
@@ -476,11 +525,12 @@ fun LibrarySongsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         // Thumbnail — fully circular when active
-                        val thumbCorner = if (isActive) 26.dp else 10.dp
+                        val thumbCorner = if (isActive) 26.dp else 8.dp
                         ItemThumbnail(
                             thumbnailUrl = song.song.thumbnailUrl,
                             isActive = isActive,
                             isPlaying = isPlaying,
+                            thumbAlpha = thumbAlpha,
                             shape = RoundedCornerShape(thumbCorner),
                             modifier =
                                 Modifier
@@ -589,26 +639,35 @@ fun SongSubFilterChip(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "chipScale")
+
     val bgColor =
         if (selected) {
-            MaterialTheme.colorScheme.secondary
+            Marble.copy(alpha = 0.20f)
         } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            Color(0xFF262626)
         }
 
     val contentColor =
         if (selected) {
-            MaterialTheme.colorScheme.onSecondary
+            Color.White
         } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
+            Color.White.copy(alpha = 0.7f)
         }
 
     Box(
         modifier =
             Modifier
+                .graphicsLayer { scaleX = scale; scaleY = scale }
                 .clip(CircleShape)
                 .background(bgColor)
-                .clickable(onClick = onClick)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                )
                 .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         Text(

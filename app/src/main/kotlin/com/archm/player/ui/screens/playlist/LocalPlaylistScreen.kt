@@ -1245,6 +1245,7 @@ fun LocalPlaylistScreen(
                                 val itemInteractionSource = remember { MutableInteractionSource() }
                                 SongListItem(
                                     song = song.song,
+                                    interactionSource = itemInteractionSource,
                                     isActive = song.song.id == mediaMetadata?.id,
                                     isPlaying = isPlaying,
                                     inSelectionMode = inSelectMode,
@@ -1289,7 +1290,7 @@ fun LocalPlaylistScreen(
                                         .clip(RoundedCornerShape(12.dp))
                                         .combinedClickable(
                                             interactionSource = itemInteractionSource,
-                                            indication = ripple(color = screenAccentColor),
+                                            indication = null,
                                             onClick = {
                                                 if (inSelectMode) {
                                                     onCheckedChange(!selection.contains(song.map.id))

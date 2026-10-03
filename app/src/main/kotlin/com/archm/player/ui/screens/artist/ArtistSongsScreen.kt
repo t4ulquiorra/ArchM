@@ -4,6 +4,7 @@ package com.archm.player.ui.screens.artist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -128,8 +130,10 @@ fun ArtistSongsScreen(
                 items = songs,
                 key = { _, item -> item.id },
             ) { index, song ->
+                val itemInteractionSource = remember { MutableInteractionSource() }
                 SongListItem(
                     song = song,
+                    interactionSource = itemInteractionSource,
                     showInLibraryIcon = true,
                     isActive = song.id == mediaMetadata?.id,
                     isPlaying = isPlaying,
@@ -157,6 +161,8 @@ fun ArtistSongsScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
+                            interactionSource = itemInteractionSource,
+                            indication = null,
                             onClick = {
                                 if (song.id == mediaMetadata?.id) {
                                     playerConnection.togglePlayPause()

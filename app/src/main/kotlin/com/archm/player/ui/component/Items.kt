@@ -66,16 +66,22 @@ import androidx.compose.material3.ripple
 import com.archm.player.ui.theme.LocalAccentColor
 import com.archm.player.ui.theme.Marble
 import androidx.compose.material3.Text
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -584,6 +590,7 @@ fun GridItem(
 fun SongListItem(
     song: Song,
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource? = null,
     albumIndex: Int? = null,
     showLikedIcon: Boolean = false,
     showInLibraryIcon: Boolean = false,
@@ -621,6 +628,29 @@ fun SongListItem(
     val savedInSheetState = LocalSavedInSheetState.current
     val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = true)
     val resolvedColor = if (color != Color.Transparent) color else containerColor
+
+    val songInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    val isPressed by songInteractionSource.collectIsPressedAsState()
+    var isHeld by remember { mutableStateOf(false) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            delay(400)
+            isHeld = true
+        } else {
+            isHeld = false
+        }
+    }
+    val isActivelyPlaying = isActive && isPlaying
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            isActivelyPlaying -> 0.5f
+            isHeld -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "song_thumb_alpha",
+    )
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (song.song.liked) {
@@ -664,6 +694,7 @@ fun SongListItem(
                     shape = RoundedCornerShape(ThumbnailCornerRadius),
                     modifier = Modifier.size(ListThumbnailSize),
                     accentColor = accentColor,
+                    thumbAlpha = thumbAlpha,
                 )
             },
             trailingContent = resolvedTrailingContent,
@@ -1359,6 +1390,7 @@ fun formatReleaseSubtitle(
 fun YouTubeListItem(
     item: YTItem,
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource? = null,
     isVideo: Boolean = false,
     containerColor: Color = Color.Transparent,
     color: Color = containerColor,
@@ -1403,6 +1435,31 @@ fun YouTubeListItem(
     }
     val isLiked = item is SongItem && dbSong?.song?.liked == true
     val isVideoItem = isVideo || (item as? SongItem)?.isVideoSong == true
+
+    val isSong = item is SongItem
+    val songInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    val isPressed by songInteractionSource.collectIsPressedAsState()
+    var isHeld by remember { mutableStateOf(false) }
+    LaunchedEffect(isPressed) {
+        if (isSong && isPressed) {
+            delay(400)
+            isHeld = true
+        } else {
+            isHeld = false
+        }
+    }
+    val isActivelyPlaying = isActive && isPlaying
+    val thumbAlpha by animateFloatAsState(
+        targetValue = when {
+            !isSong -> 1.0f
+            isActivelyPlaying -> 0.5f
+            isHeld -> 0.5f
+            isPressed -> 0.7f
+            else -> 1.0f
+        },
+        animationSpec = tween(150),
+        label = "yt_song_thumb_alpha",
+    )
 
     val resolvedTrailingContent: @Composable RowScope.() -> Unit = {
         if (showLike && isLiked && item is SongItem) {
@@ -1469,6 +1526,7 @@ fun YouTubeListItem(
                     modifier = thumbModifier,
                     thumbnailRatio = if (isVideoItem) 16f / 9f else 1f,
                     accentColor = accentColor,
+                    thumbAlpha = thumbAlpha,
                 )
             },
             trailingContent = resolvedTrailingContent,
@@ -1980,6 +2038,7 @@ fun ItemThumbnail(
     thumbnailRatio: Float = 1f,
     contentScale: ContentScale? = null,
     accentColor: Color = LocalAccentColor.current,
+    thumbAlpha: Float = 1f,
 ) {
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val isArtist = shape == CircleShape
@@ -2012,6 +2071,7 @@ fun ItemThumbnail(
                 contentScale = resolvedContentScale,
                 modifier = Modifier
                     .fillMaxSize()
+                    .graphicsLayer { alpha = thumbAlpha }
                     .clip(shape)
             )
         }

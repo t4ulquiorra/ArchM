@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -121,7 +122,7 @@ fun FixedTopStrip(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(SharedTopBarHeight)
+                    .heightIn(min = SharedTopBarHeight)
                     .padding(start = if (showNavigationIcon) 4.dp else 16.dp, end = 4.dp),
         ) {
             if (showNavigationIcon) {

@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -190,14 +191,13 @@ fun TopSearch(
                 shape = RoundedCornerShape(10.dp),
                 color = Color(35, 35, 38),
                 contentColor = Color.White,
-                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.08f)),
                 tonalElevation = tonalElevation,
                 modifier =
                     Modifier
                         .windowInsetsPadding(windowInsets)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .fillMaxWidth()
-                        .height(InputFieldHeight),
+                        .heightIn(min = InputFieldHeight),
             ) {
                 SearchBarInputField(
                     query = query,
@@ -205,7 +205,7 @@ fun TopSearch(
                     onSearch = onSearch,
                     active = active,
                     onActiveChange = onActiveChange,
-                    modifier = Modifier.fillMaxWidth().height(InputFieldHeight),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = InputFieldHeight),
                     enabled = enabled,
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
@@ -274,7 +274,7 @@ private fun SearchBarInputField(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(InputFieldHeight),
+                .heightIn(min = InputFieldHeight),
     ) {
         if (leadingIcon != null) {
             Spacer(Modifier.width(SearchBarIconOffsetX))

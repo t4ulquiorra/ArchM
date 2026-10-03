@@ -10,6 +10,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -708,8 +709,10 @@ fun AutoPlaylistScreen(
                             }
                         }
 
+                        val itemInteractionSource = remember { MutableInteractionSource() }
                         SongListItem(
                             song = song,
+                            interactionSource = itemInteractionSource,
                             isActive = song.song.id == mediaMetadata?.id,
                             isPlaying = isPlaying,
                             inSelectionMode = inSelectMode,
@@ -738,6 +741,8 @@ fun AutoPlaylistScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
+                                    interactionSource = itemInteractionSource,
+                                    indication = null,
                                     onClick = {
                                         if (inSelectMode) {
                                             onCheckedChange(song.id !in selection)

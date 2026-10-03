@@ -698,11 +698,12 @@ fun OnlinePlaylistScreen(
                                 isSelected = inSelectMode && songItem.id in selection,
                                 accentColor = screenAccentColor,
                                 shape = RoundedCornerShape(12.dp),
+                                interactionSource = itemInteractionSource,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .combinedClickable(
                                         interactionSource = itemInteractionSource,
-                                        indication = ripple(color = screenAccentColor),
+                                        indication = null,
                                         enabled = !hideExplicit || !songItem.explicit,
                                         onClick = {
                                             if (inSelectMode) {

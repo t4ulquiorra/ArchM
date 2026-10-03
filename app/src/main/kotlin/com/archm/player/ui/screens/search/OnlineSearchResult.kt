@@ -117,6 +117,7 @@ import com.archm.player.ui.menu.YouTubeSongMenu
 import com.archm.player.ui.screens.artist.OutlinedFollowPillButton
 import com.archm.player.ui.screens.settings.DarkMode
 import com.archm.player.ui.theme.LocalAccentColor
+import com.archm.player.ui.theme.Marble
 import com.archm.player.utils.joinByBullet
 import com.archm.player.utils.rememberEnumPreference
 import com.archm.player.utils.rememberPreference
@@ -137,6 +138,7 @@ import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.models.YTItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -405,35 +407,28 @@ fun OnlineSearchResult(
         val selectedTabIndex = tabs.indexOfFirst {
             it.first == searchFilter
         }.coerceAtLeast(0)
+        val tabListState = rememberLazyListState()
+        LaunchedEffect(selectedTabIndex) {
+            tabListState.animateScrollToItem(selectedTabIndex)
+        }
 
-        ScrollableTabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = backgroundColor,
-            contentColor = Color.White,
-            edgePadding = 16.dp,
-            indicator = { tabPositions ->
-                if (selectedTabIndex < tabPositions.size) {
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier
-                            .tabIndicatorOffset(tabPositions[selectedTabIndex])
-                            .wrapContentWidth()
-                            .padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        height = 2.5.dp,
-                    )
-                }
-            },
-            divider = {},
+        LazyRow(
+            state = tabListState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier =
                 Modifier
                     .windowInsetsPadding(WindowInsets.statusBars.add(WindowInsets(top = 58.dp)))
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
         ) {
-            tabs.forEachIndexed { index, (filter, label) ->
+            itemsIndexed(tabs) { index, (filter, label) ->
                 val selected = selectedTabIndex == index
-                Tab(
-                    selected = selected,
-                    onClick = {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (selected) Marble else Color(0xFF262626),
+                    contentColor = if (selected) Color.Black else Color.White,
+                    modifier = Modifier.clickable {
                         if (viewModel.filter.value != filter) {
                             viewModel.filter.value = filter
                         }
@@ -441,17 +436,13 @@ fun OnlineSearchResult(
                             lazyListState.animateScrollToItem(0)
                         }
                     },
-                    text = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                                letterSpacing = 0.5.sp,
-                            ),
-                            color = if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.6f),
-                        )
-                    },
-                )
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
             }
         }
 
@@ -489,28 +480,29 @@ fun OnlineSearchResult(
                     if (allTabResults.isNotEmpty()) {
                         item(key = "all_results_header", contentType = "section_header") {
                             Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_SONG
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+                                    }
                                     .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = stringResource(R.string.results),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
-                                        viewModel.filter.value = FILTER_SONG
-                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                    },
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    painter = painterResource(R.drawable.navigate_next),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
@@ -529,28 +521,29 @@ fun OnlineSearchResult(
                     if (allTabAlbums.isNotEmpty()) {
                         item(key = "all_albums_header", contentType = "section_header") {
                             Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_ALBUM
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+                                    }
                                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = stringResource(R.string.filter_albums),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
-                                        viewModel.filter.value = FILTER_ALBUM
-                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                    },
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    painter = painterResource(R.drawable.navigate_next),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
@@ -586,28 +579,29 @@ fun OnlineSearchResult(
                     if (allTabVideos.isNotEmpty()) {
                         item(key = "all_videos_header", contentType = "section_header") {
                             Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_VIDEO
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+                                    }
                                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = stringResource(R.string.filter_videos),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
-                                        viewModel.filter.value = FILTER_VIDEO
-                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                    },
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    painter = painterResource(R.drawable.navigate_next),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
@@ -654,28 +648,29 @@ fun OnlineSearchResult(
                     if (allTabPlaylists.isNotEmpty()) {
                         item(key = "all_playlists_header", contentType = "section_header") {
                             Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        viewModel.filter.value = FILTER_FEATURED_PLAYLIST
+                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
+                                    }
                                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = stringResource(R.string.filter_featured_playlists),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-                                Text(
-                                    text = stringResource(R.string.see_all),
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
-                                        viewModel.filter.value = FILTER_FEATURED_PLAYLIST
-                                        coroutineScope.launch { lazyListState.animateScrollToItem(0) }
-                                    },
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    painter = painterResource(R.drawable.navigate_next),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
@@ -775,11 +770,21 @@ private fun SearchSongListItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    var isHeld by remember { mutableStateOf(false) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            delay(400)
+            isHeld = true
+        } else {
+            isHeld = false
+        }
+    }
     val isActivelyPlaying = isActive && isPlaying
 
     val thumbAlpha by animateFloatAsState(
         targetValue = when {
             isActivelyPlaying -> 0.5f
+            isHeld -> 0.5f
             isPressed -> 0.7f
             else -> 1.0f
         },
@@ -797,7 +802,7 @@ private fun SearchSongListItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
     ) {
         val thumbModifier = if (isVideo) {
             Modifier.height(ListThumbnailSize).aspectRatio(16f / 9f)
@@ -1103,7 +1108,7 @@ internal fun SongTrailingActions(
             Icon(
                 painter = painterResource(if (isLiked) R.drawable.star else R.drawable.star_border),
                 contentDescription = if (isLiked) stringResource(R.string.liked) else stringResource(R.string.like),
-                tint = if (isLiked) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
+                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -1114,7 +1119,7 @@ internal fun SongTrailingActions(
             Icon(
                 painter = painterResource(R.drawable.more_vert),
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.7f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
         }

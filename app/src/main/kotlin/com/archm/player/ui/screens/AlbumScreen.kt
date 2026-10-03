@@ -670,6 +670,7 @@ fun AlbumScreen(
                             showInLibraryIcon = true,
                             accentColor = screenAccentColor,
                             shape = RoundedCornerShape(12.dp),
+                            interactionSource = itemInteractionSource,
                             trailingContent = {
                                 IconButton(
                                     onClick = {
@@ -694,7 +695,7 @@ fun AlbumScreen(
                                 .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
                                     interactionSource = itemInteractionSource,
-                                    indication = ripple(color = screenAccentColor),
+                                    indication = null,
                                     onClick = {
                                         if (inSelectMode) {
                                             onCheckedChange(song.id !in selection)

@@ -1430,6 +1430,7 @@ fun ArtistScreen(
                                     val itemInteractionSource = remember { MutableInteractionSource() }
                                     YouTubeListItem(
                                         item = song,
+                                        interactionSource = itemInteractionSource,
                                         isActive = song.id == mediaMetadata?.id,
                                         isPlaying = isPlaying,
                                         inSelectionMode = selectionState.isActive,
@@ -1459,7 +1460,7 @@ fun ArtistScreen(
                                             .clip(RoundedCornerShape(12.dp))
                                             .combinedClickable(
                                                 interactionSource = itemInteractionSource,
-                                                indication = ripple(color = screenAccentColor),
+                                                indication = null,
                                                 onClick = {
                                                     if (selectionState.isActive) {
                                                         selectionState.toggle(song.id)

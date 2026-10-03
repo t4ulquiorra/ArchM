@@ -29,6 +29,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -774,8 +775,10 @@ fun ArtistItemsScreen(
                             }
                         }
 
+                        val itemInteractionSource = remember { MutableInteractionSource() }
                         YouTubeListItem(
                             item = songItem,
+                            interactionSource = itemInteractionSource,
                             isActive = mediaMetadata?.id == songItem.id,
                             isPlaying = isPlaying,
                             inSelectionMode = inSelectMode,
@@ -786,6 +789,8 @@ fun ArtistItemsScreen(
                                 .animateItem()
                                 .clip(RoundedCornerShape(12.dp))
                                 .combinedClickable(
+                                    interactionSource = itemInteractionSource,
+                                    indication = null,
                                     enabled = !hideExplicit || !songItem.explicit,
                                     onClick = {
                                         if (inSelectMode) {

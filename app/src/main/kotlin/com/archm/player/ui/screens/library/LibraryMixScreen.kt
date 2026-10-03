@@ -166,7 +166,7 @@ fun LibraryMixScreen(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp),
+                                .padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Row(
@@ -249,11 +249,11 @@ fun LibraryMixScreen(
                             Text(
                                 text = stringResource(R.string.recently_played),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 color = MaterialTheme.colorScheme.onBackground,
                             )
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 24.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
@@ -334,7 +334,7 @@ fun LibraryMixScreen(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -363,7 +363,7 @@ fun LibraryMixScreen(
                             val playlistCardShape = RoundedCornerShape(16.dp)
 
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 24.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth(),
@@ -539,7 +539,7 @@ fun LibraryMixScreen(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -563,7 +563,7 @@ fun LibraryMixScreen(
                                 )
                             }
                             LazyRow(
-                                contentPadding = PaddingValues(horizontal = 24.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth(),
