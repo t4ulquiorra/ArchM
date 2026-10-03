@@ -116,8 +116,8 @@ fun LibraryScreen(navController: NavController) {
 
     val topClearance = getSharedTopClearance()
     val density = LocalDensity.current
-    var largeTitleHeight by remember { mutableStateOf(73.dp) }
-    val maxCollapseDp = remember(largeTitleHeight) { (largeTitleHeight - 8.dp).coerceAtLeast(0.dp) }
+    var largeTitleHeight by remember { mutableStateOf(65.dp) }
+    val maxCollapseDp = remember(largeTitleHeight) { largeTitleHeight }
     val maxCollapsePx = with(density) { maxCollapseDp.toPx() }
 
     var headerOffsetPx by remember { mutableFloatStateOf(0f) }
@@ -183,19 +183,19 @@ fun LibraryScreen(navController: NavController) {
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height((largeTitleHeight - collapseDp).coerceAtLeast(8.dp))
+                        .height((largeTitleHeight - collapseDp).coerceAtLeast(0.dp))
                         .clipToBounds(),
             ) {
                 LargeTitleHeader(
                     title = "Library",
                     alpha = titleAlphas.largeTitleAlpha,
                     horizontalPadding = 16.dp,
-                    bottomSpacer = 16.dp,
+                    bottomSpacer = 8.dp,
                     modifier =
                         Modifier
                             .offset { IntOffset(0, headerOffsetPx.roundToInt()) }
                             .onGloballyPositioned {
-                                if (largeTitleHeight == 73.dp && it.size.height > 0) {
+                                if (largeTitleHeight == 65.dp && it.size.height > 0) {
                                     with(density) { largeTitleHeight = it.size.height.toDp() }
                                 }
                             },
@@ -208,7 +208,8 @@ fun LibraryScreen(navController: NavController) {
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(backgroundColor),
+                        .background(backgroundColor)
+                        .padding(top = 8.dp),
             ) {
                 ScrollableTabRow(
                     selectedTabIndex = selectedTabIndex,

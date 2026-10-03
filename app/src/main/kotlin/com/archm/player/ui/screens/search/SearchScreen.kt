@@ -201,11 +201,11 @@ fun SearchScreen(
     val searchBarYOffset by remember(topClearance, largeTitleHeight) {
         derivedStateOf {
             if (lazyListState.firstVisibleItemIndex > 0) {
-                topClearance + 8.dp
+                topClearance
             } else {
                 val offsetDp = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
                 val y = topClearance + largeTitleHeight - offsetDp
-                if (y < topClearance + 8.dp) topClearance + 8.dp else y
+                if (y < topClearance) topClearance else y
             }
         }
     }
@@ -229,7 +229,7 @@ fun SearchScreen(
                 }
                 .zIndex(2f)
                 .background(backgroundColor)
-                .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
         ) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
@@ -271,7 +271,7 @@ fun SearchScreen(
                     title = "Search",
                     alpha = titleAlphas.largeTitleAlpha,
                     horizontalPadding = 16.dp,
-                    bottomSpacer = 16.dp,
+                    bottomSpacer = 8.dp,
                     modifier = Modifier.onGloballyPositioned {
                         with(density) { largeTitleHeight = it.size.height.toDp() }
                     },
@@ -279,7 +279,7 @@ fun SearchScreen(
             }
 
             item(key = "search_input_spacer", contentType = "search_input_spacer") {
-                Spacer(modifier = Modifier.height(SearchInputPillHeight + 8.dp))
+                Spacer(modifier = Modifier.height(SearchInputPillHeight + 16.dp))
             }
             when (val currentState = state) {
                 SearchDiscoveryScreenState.Loading -> {
