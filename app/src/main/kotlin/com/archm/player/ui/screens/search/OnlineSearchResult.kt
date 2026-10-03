@@ -904,7 +904,7 @@ private fun HeroArtistCard(
                 indication = null,
                 onClick = onClick,
             )
-            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
+            .padding(start = 16.dp, end = 0.dp, top = 8.dp, bottom = 8.dp),
     ) {
         // Circular avatar
         Box(
@@ -1348,7 +1348,7 @@ internal fun ArtistTrailingAction(
                 }
             }
         },
-        modifier = modifier,
+        modifier = modifier.padding(end = 16.dp),
     )
 }
 

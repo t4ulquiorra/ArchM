@@ -324,7 +324,14 @@ fun OnlineSearchScreen(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .animateItem(),
+                                    .animateItem()
+                                    .then(
+                                        if (item is ArtistItem) {
+                                            Modifier.padding(vertical = 8.dp)
+                                        } else {
+                                            Modifier
+                                        }
+                                    ),
                         ) {
                             YouTubeListItem(
                                 item = item,
