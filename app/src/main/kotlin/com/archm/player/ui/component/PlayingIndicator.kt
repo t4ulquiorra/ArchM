@@ -20,6 +20,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -84,14 +87,14 @@ fun PlayingIndicator(
     Canvas(
         modifier = modifier
             .width(totalWidth)
-            .androidx.compose.ui.layout.layout { measurable, constraints ->
+            .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 layout(
                     width = placeable.width,
                     height = placeable.height,
                     alignmentLines = mapOf(
-                        androidx.compose.ui.layout.FirstBaseline to placeable.height,
-                        androidx.compose.ui.layout.LastBaseline to placeable.height,
+                        FirstBaseline to placeable.height,
+                        LastBaseline to placeable.height,
                     ),
                 ) {
                     placeable.placeRelative(0, 0)
