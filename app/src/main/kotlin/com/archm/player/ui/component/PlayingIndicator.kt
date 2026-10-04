@@ -82,7 +82,21 @@ fun PlayingIndicator(
 
     val totalWidth = barWidth * bars + barSpacing * (bars - 1)
     Canvas(
-        modifier = modifier.width(totalWidth),
+        modifier = modifier
+            .width(totalWidth)
+            .androidx.compose.ui.layout.layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(
+                    width = placeable.width,
+                    height = placeable.height,
+                    alignmentLines = mapOf(
+                        androidx.compose.ui.layout.FirstBaseline to placeable.height,
+                        androidx.compose.ui.layout.LastBaseline to placeable.height,
+                    ),
+                ) {
+                    placeable.placeRelative(0, 0)
+                }
+            },
     ) {
         val barWidthPx = barWidth.toPx()
         val spacingPx = barSpacing.toPx()

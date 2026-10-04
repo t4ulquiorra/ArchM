@@ -840,7 +840,7 @@ private fun SearchSongListItem(
         }
         val titleColor = if (isActive) playingAccent else MaterialTheme.colorScheme.onSurface
         val fontSizeSp = titleStyle.fontSize.value
-        val barsHeight = (fontSizeSp * 0.75f).dp
+        val barsHeight = (fontSizeSp * 0.7f).dp
         val barWidth = (fontSizeSp * 0.16f).dp
         val barGap = (fontSizeSp * 0.125f).dp
         val barToTitleGap = (fontSizeSp * 0.4f).dp
@@ -1063,7 +1063,7 @@ private fun SearchCollectionListItem(
         }
         val titleColor = if (isActive) playingAccent else MaterialTheme.colorScheme.onSurface
         val fontSizeSp = titleStyle.fontSize.value
-        val barsHeight = (fontSizeSp * 0.75f).dp
+        val barsHeight = (fontSizeSp * 0.7f).dp
         val barWidth = (fontSizeSp * 0.16f).dp
         val barGap = (fontSizeSp * 0.125f).dp
         val barToTitleGap = (fontSizeSp * 0.4f).dp
